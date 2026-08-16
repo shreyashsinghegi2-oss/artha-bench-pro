@@ -1,6 +1,7 @@
 import {
   NormalizedMarketQuote,
   NormalizedNewsItem,
+  EconomicIndicator,
   ProviderDiagnostic,
   VerificationReport,
 } from '../types';
@@ -53,7 +54,27 @@ export async function getProviderDiagnostics(): Promise<ProviderDiagnostic[]> {
         lastChecked: new Date().toISOString(),
         message: 'Requires MARKET_DATA_API_KEY environment variable',
       },
+      {
+        id: 'economic-data',
+        name: 'Federal Reserve Economic Data (FRED)',
+        role: 'Inflation, GDP, unemployment, and interest-rate indicators',
+        status: 'not_configured',
+        lastChecked: new Date().toISOString(),
+        message: 'Requires FRED_API_KEY environment variable',
+      },
     ];
+  }
+}
+
+// FRED Economic Data APIs
+export async function fetchEconomicOverview(): Promise<EconomicIndicator[]> {
+  try {
+    const response = await fetchJSON<{ indicators: EconomicIndicator[] }>(
+      '/api/economy/overview',
+    );
+    return Array.isArray(response.indicators) ? response.indicators : [];
+  } catch {
+    return [];
   }
 }
 

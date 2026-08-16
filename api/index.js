@@ -3,7 +3,7 @@ import express from "express";
 
 // server/routes.ts
 import { Router } from "express";
-import { z as z3 } from "zod";
+import { z as z4 } from "zod";
 
 // server/scoringConfig.ts
 var RELIABILITY_DIMENSIONS_CONFIG = {
@@ -2589,6 +2589,214 @@ async function getMarketHistory(symbol, range = "1m") {
   return { points };
 }
 
+// server/providers/fredProvider.ts
+import { z as z3 } from "zod";
+var DEFAULT_FRED_OBSERVATIONS_URL = "https://api.stlouisfed.org/fred/series/observations";
+var fredResponseSchema = z3.object({
+  observations: z3.array(
+    z3.object({
+      date: z3.string(),
+      value: z3.union([z3.string(), z3.number()])
+    }).passthrough()
+  ).default([])
+}).passthrough();
+var INDICATORS = [
+  {
+    id: "inflation",
+    seriesId: "CPIAUCSL",
+    label: "US Inflation",
+    unit: "% YoY",
+    calculation: "year_over_year",
+    decimals: 2
+  },
+  {
+    id: "gdp",
+    seriesId: "GDPC1",
+    label: "US Real GDP",
+    unit: "$T",
+    calculation: "billions_to_trillions",
+    decimals: 2
+  },
+  {
+    id: "unemployment",
+    seriesId: "UNRATE",
+    label: "US Unemployment",
+    unit: "%",
+    decimals: 1
+  },
+  {
+    id: "interest-rate",
+    seriesId: "FEDFUNDS",
+    label: "Federal Funds Rate",
+    unit: "%",
+    decimals: 2
+  },
+  {
+    id: "treasury-10y",
+    seriesId: "DGS10",
+    label: "US 10-Year Treasury",
+    unit: "%",
+    decimals: 2
+  }
+];
+function getConfiguration3() {
+  return {
+    apiKey: process.env.FRED_API_KEY?.trim() || "",
+    baseUrl: process.env.FRED_API_BASE_URL?.trim() || DEFAULT_FRED_OBSERVATIONS_URL
+  };
+}
+function safeSeriesId(seriesId) {
+  const normalized = seriesId.trim().toUpperCase();
+  if (!/^[A-Z0-9._-]{1,64}$/.test(normalized)) {
+    throw new Error("Invalid FRED series identifier.");
+  }
+  return normalized;
+}
+function createFredUrl(baseUrl) {
+  const url = new URL(baseUrl);
+  if (url.protocol !== "https:") {
+    throw new Error("FRED provider URL must use HTTPS.");
+  }
+  return url;
+}
+function classifyError(status, message) {
+  if (status === 429) return "rate_limited";
+  if (status === 401 || status === 403 || /api[_ ]?key|registered|credential/i.test(message)) {
+    return "invalid_credentials";
+  }
+  return "error";
+}
+async function fetchFredSeries(seriesId, limit = 24) {
+  const normalizedSeriesId = safeSeriesId(seriesId);
+  const safeLimit = Math.min(Math.max(Math.trunc(limit), 1), 240);
+  const { apiKey, baseUrl } = getConfiguration3();
+  if (!apiKey) {
+    return {
+      seriesId: normalizedSeriesId,
+      observations: [],
+      status: "not_configured",
+      message: "FRED API key is not configured."
+    };
+  }
+  try {
+    const url = createFredUrl(baseUrl);
+    url.searchParams.set("series_id", normalizedSeriesId);
+    url.searchParams.set("api_key", apiKey);
+    url.searchParams.set("file_type", "json");
+    url.searchParams.set("sort_order", "desc");
+    url.searchParams.set("limit", String(safeLimit));
+    const response = await fetch(url, { signal: AbortSignal.timeout(8e3) });
+    const rawData = await response.json().catch(() => null);
+    if (!response.ok) {
+      const rawMessage = rawData && typeof rawData === "object" && "error_message" in rawData ? String(rawData.error_message || "") : "";
+      const status = classifyError(response.status, rawMessage);
+      return {
+        seriesId: normalizedSeriesId,
+        observations: [],
+        status,
+        message: status === "invalid_credentials" ? "FRED rejected the configured credential." : status === "rate_limited" ? "FRED request limit reached. Please retry shortly." : `FRED request failed with HTTP ${response.status}.`
+      };
+    }
+    const parsed = fredResponseSchema.safeParse(rawData);
+    if (!parsed.success) {
+      return {
+        seriesId: normalizedSeriesId,
+        observations: [],
+        status: "invalid_response",
+        message: "FRED returned an unexpected response."
+      };
+    }
+    const observations = parsed.data.observations.map((observation) => ({
+      date: observation.date,
+      value: Number(observation.value)
+    })).filter((observation) => Number.isFinite(observation.value)).sort((a, b) => a.date.localeCompare(b.date));
+    if (observations.length === 0) {
+      return {
+        seriesId: normalizedSeriesId,
+        observations: [],
+        status: "invalid_response",
+        message: "FRED returned no usable observations for this series."
+      };
+    }
+    return {
+      seriesId: normalizedSeriesId,
+      observations,
+      status: "connected",
+      message: "Live FRED observations loaded."
+    };
+  } catch {
+    return {
+      seriesId: normalizedSeriesId,
+      observations: [],
+      status: "error",
+      message: "FRED is temporarily unreachable."
+    };
+  }
+}
+function round(value, decimals = 2) {
+  const multiplier = 10 ** decimals;
+  return Math.round(value * multiplier) / multiplier;
+}
+function toIndicator(definition, result) {
+  const latest = result.observations.at(-1);
+  let value = latest?.value ?? null;
+  if (value !== null && definition.calculation === "billions_to_trillions") {
+    value /= 1e3;
+  }
+  if (definition.calculation === "year_over_year") {
+    const previousYear = result.observations.at(-13);
+    value = latest && previousYear && previousYear.value !== 0 ? (latest.value / previousYear.value - 1) * 100 : null;
+  }
+  return {
+    id: definition.id,
+    seriesId: definition.seriesId,
+    label: definition.label,
+    value: value === null ? null : round(value, definition.decimals),
+    unit: definition.unit,
+    date: latest?.date || null,
+    status: value === null && result.status === "connected" ? "invalid_response" : result.status,
+    sourceName: "FRED",
+    sourceUrl: `https://fred.stlouisfed.org/series/${definition.seriesId}`
+  };
+}
+async function fetchFredOverview() {
+  const results = await Promise.all(
+    INDICATORS.map(
+      (indicator) => fetchFredSeries(
+        indicator.seriesId,
+        indicator.calculation === "year_over_year" ? 13 : 1
+      )
+    )
+  );
+  const indicators = INDICATORS.map(
+    (indicator, index) => toIndicator(indicator, results[index])
+  );
+  const connectedCount = indicators.filter(
+    (indicator) => indicator.status === "connected"
+  ).length;
+  const status = connectedCount > 0 ? "connected" : results[0]?.status || "error";
+  return {
+    indicators,
+    status,
+    providerName: "Federal Reserve Economic Data (FRED)",
+    retrievedAt: (/* @__PURE__ */ new Date()).toISOString(),
+    message: connectedCount > 0 ? `${connectedCount} live FRED economic indicators loaded.` : results[0]?.message || "FRED data is unavailable."
+  };
+}
+async function checkFredDiagnostic() {
+  const startedAt = Date.now();
+  const result = await fetchFredSeries("UNRATE", 1);
+  return {
+    id: "economic-data",
+    name: "Federal Reserve Economic Data (FRED)",
+    role: "Inflation, GDP, unemployment, and interest-rate indicators",
+    status: result.status,
+    lastChecked: (/* @__PURE__ */ new Date()).toISOString(),
+    latencyMs: Date.now() - startedAt,
+    message: result.message
+  };
+}
+
 // server/routes.ts
 var apiRouter = Router();
 var rateLimitMap = /* @__PURE__ */ new Map();
@@ -2619,19 +2827,19 @@ apiRouter.use((req, res, next) => {
   }
   next();
 });
-var querySchema = z3.object({
-  query: z3.string().min(1, "Query parameter is required.").max(2e3, "Query exceeds maximum length of 2000 characters."),
-  profile: z3.enum(["India", "US", "Global"]).optional()
+var querySchema = z4.object({
+  query: z4.string().min(1, "Query parameter is required.").max(2e3, "Query exceeds maximum length of 2000 characters."),
+  profile: z4.enum(["India", "US", "Global"]).optional()
 });
-var tutorSchema = z3.object({
-  userPrompt: z3.string().min(1, "Prompt is required.").max(2e3, "Prompt exceeds maximum length."),
-  systemPrompt: z3.string().optional(),
-  modelName: z3.string().optional(),
-  history: z3.array(z3.object({ role: z3.string(), content: z3.string() })).optional()
+var tutorSchema = z4.object({
+  userPrompt: z4.string().min(1, "Prompt is required.").max(2e3, "Prompt exceeds maximum length."),
+  systemPrompt: z4.string().optional(),
+  modelName: z4.string().optional(),
+  history: z4.array(z4.object({ role: z4.string(), content: z4.string() })).optional()
 });
-var batchRunSchema = z3.object({
-  scenarioIds: z3.array(z3.string()).optional(),
-  profile: z3.enum(["India", "US", "Global"]).optional()
+var batchRunSchema = z4.object({
+  scenarioIds: z4.array(z4.string()).optional(),
+  profile: z4.enum(["India", "US", "Global"]).optional()
 });
 apiRouter.get("/health", (req, res) => {
   res.json({
@@ -2648,13 +2856,14 @@ apiRouter.get("/diagnostics", async (req, res, next) => {
       res.json(diagnosticCache.payload);
       return;
     }
-    const [groqDiagnostics, newsDiagnostic, marketDiagnostic] = await Promise.all([
+    const [groqDiagnostics, newsDiagnostic, marketDiagnostic, fredDiagnostic] = await Promise.all([
       checkGroqDiagnostics(),
       checkNewsProviderDiagnostic(),
-      checkMarketProviderDiagnostic()
+      checkMarketProviderDiagnostic(),
+      checkFredDiagnostic()
     ]);
     const payload = {
-      diagnostics: [...groqDiagnostics, newsDiagnostic, marketDiagnostic],
+      diagnostics: [...groqDiagnostics, newsDiagnostic, marketDiagnostic, fredDiagnostic],
       modelsConfig: getGroqModels()
     };
     diagnosticCache = { expiresAt: Date.now() + DIAGNOSTIC_CACHE_MS, payload };
@@ -2808,6 +3017,27 @@ apiRouter.get("/markets/history", async (req, res, next) => {
     const range = req.query.range || "1m";
     const historyData = await getMarketHistory(symbol, range);
     res.json(historyData);
+  } catch (err) {
+    next(err);
+  }
+});
+apiRouter.get("/economy/overview", async (_req, res, next) => {
+  try {
+    res.json(await fetchFredOverview());
+  } catch (err) {
+    next(err);
+  }
+});
+apiRouter.get("/economy/series", async (req, res, next) => {
+  try {
+    const parsed = z4.object({
+      seriesId: z4.string().min(1).max(64).regex(/^[A-Za-z0-9._-]+$/),
+      limit: z4.coerce.number().int().min(1).max(240).optional()
+    }).safeParse(req.query);
+    if (!parsed.success) {
+      return res.status(400).json({ error: "A valid FRED seriesId is required." });
+    }
+    res.json(await fetchFredSeries(parsed.data.seriesId, parsed.data.limit || 24));
   } catch (err) {
     next(err);
   }

@@ -7,6 +7,11 @@ import {
   fetchHistoryFromProvider,
   fetchQuoteFromProvider,
 } from '../server/providers/marketDataProvider';
+import {
+  checkFredDiagnostic,
+  fetchFredOverview,
+  fetchFredSeries,
+} from '../server/providers/fredProvider';
 
 const trackedEnvironmentKeys = [
   'BUSINESS_NEWS_PROVIDER',
@@ -15,6 +20,8 @@ const trackedEnvironmentKeys = [
   'MARKET_DATA_PROVIDER',
   'MARKET_DATA_API_KEY',
   'MARKET_DATA_BASE_URL',
+  'FRED_API_KEY',
+  'FRED_API_BASE_URL',
 ] as const;
 
 const originalEnvironment = Object.fromEntries(
@@ -180,5 +187,58 @@ describe('Twelve Data provider adapter', () => {
     expect(result.status).toBe('not_configured');
     expect(result.quote.freshness).toBe('demo');
     expect(result.quote.providerName).toContain('Demo');
+  });
+});
+
+describe('FRED provider adapter', () => {
+  it('authenticates server-side and normalizes economic observations', async () => {
+    process.env.FRED_API_KEY = 'fred-test-secret';
+    process.env.FRED_API_BASE_URL =
+      'https://api.stlouisfed.org/fred/series/observations';
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          observations: [
+            { date: '2026-06-01', value: '4.2' },
+            { date: '2026-07-01', value: '4.1' },
+          ],
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } },
+      ),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await fetchFredSeries('UNRATE', 2);
+    expect(result.status).toBe('connected');
+    expect(result.observations).toEqual([
+      { date: '2026-06-01', value: 4.2 },
+      { date: '2026-07-01', value: 4.1 },
+    ]);
+
+    const requestUrl = new URL(String(fetchMock.mock.calls[0][0]));
+    expect(requestUrl.searchParams.get('series_id')).toBe('UNRATE');
+    expect(requestUrl.searchParams.get('api_key')).toBe('fred-test-secret');
+    expect(requestUrl.searchParams.get('file_type')).toBe('json');
+  });
+
+  it('returns a non-live response when the FRED key is absent', async () => {
+    delete process.env.FRED_API_KEY;
+    const overview = await fetchFredOverview();
+    expect(overview.status).toBe('not_configured');
+    expect(overview.indicators.every((indicator) => indicator.value === null)).toBe(true);
+  });
+
+  it('never exposes the FRED credential in diagnostics', async () => {
+    process.env.FRED_API_KEY = 'never-return-this-fred-key';
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ error_message: 'Bad api_key' }), { status: 400 }),
+      ),
+    );
+
+    const diagnostic = await checkFredDiagnostic();
+    expect(diagnostic.status).toBe('invalid_credentials');
+    expect(diagnostic.message).not.toContain('never-return-this-fred-key');
   });
 });

@@ -240,6 +240,24 @@ export interface MarketHistoryPoint {
   volume?: number;
 }
 
+// Macroeconomic Data Types
+export interface EconomicIndicator {
+  id: string;
+  seriesId: string;
+  label: string;
+  value: number | null;
+  unit: string;
+  date: string | null;
+  status: ConnectionStatus;
+  sourceName: 'FRED';
+  sourceUrl: string;
+}
+
+export interface EconomicObservation {
+  date: string;
+  value: number;
+}
+
 // Batch Benchmark & Persistence Types
 export interface BenchmarkScenario {
   scenarioId: string;

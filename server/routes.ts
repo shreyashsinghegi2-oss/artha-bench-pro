@@ -16,6 +16,11 @@ import { getBusinessNews, explainNewsArticle } from './businessNewsService';
 import { getMarketQuote, searchMarketQuotes, getMarketHistory } from './marketDataService';
 import { checkNewsProviderDiagnostic } from './providers/newsProvider';
 import { checkMarketProviderDiagnostic } from './providers/marketDataProvider';
+import {
+  checkFredDiagnostic,
+  fetchFredOverview,
+  fetchFredSeries,
+} from './providers/fredProvider';
 
 export const apiRouter = Router();
 
@@ -97,13 +102,14 @@ apiRouter.get('/diagnostics', async (req: Request, res: Response, next: NextFunc
       res.json(diagnosticCache.payload);
       return;
     }
-    const [groqDiagnostics, newsDiagnostic, marketDiagnostic] = await Promise.all([
+    const [groqDiagnostics, newsDiagnostic, marketDiagnostic, fredDiagnostic] = await Promise.all([
       checkGroqDiagnostics(),
       checkNewsProviderDiagnostic(),
       checkMarketProviderDiagnostic(),
+      checkFredDiagnostic(),
     ]);
     const payload = {
-      diagnostics: [...groqDiagnostics, newsDiagnostic, marketDiagnostic],
+      diagnostics: [...groqDiagnostics, newsDiagnostic, marketDiagnostic, fredDiagnostic],
       modelsConfig: getGroqModels(),
     };
     diagnosticCache = { expiresAt: Date.now() + DIAGNOSTIC_CACHE_MS, payload };
@@ -284,6 +290,34 @@ apiRouter.get('/markets/history', async (req: Request, res: Response, next: Next
     const range = (req.query.range as string) || '1m';
     const historyData = await getMarketHistory(symbol, range);
     res.json(historyData);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// 9. FRED Economic Data Routes
+apiRouter.get('/economy/overview', async (_req: Request, res: Response, next: NextFunction) => {
+  try {
+    res.json(await fetchFredOverview());
+  } catch (err) {
+    next(err);
+  }
+});
+
+apiRouter.get('/economy/series', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const parsed = z
+      .object({
+        seriesId: z.string().min(1).max(64).regex(/^[A-Za-z0-9._-]+$/),
+        limit: z.coerce.number().int().min(1).max(240).optional(),
+      })
+      .safeParse(req.query);
+
+    if (!parsed.success) {
+      return res.status(400).json({ error: 'A valid FRED seriesId is required.' });
+    }
+
+    res.json(await fetchFredSeries(parsed.data.seriesId, parsed.data.limit || 24));
   } catch (err) {
     next(err);
   }

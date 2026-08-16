@@ -15,11 +15,11 @@ import {
   Activity,
   Layers
 } from 'lucide-react';
-import { NavigationDestination, ProviderDiagnostic } from '../../types';
+import { EconomicIndicator, NavigationDestination, ProviderDiagnostic } from '../../types';
 import { BentoCard } from '../BentoCard';
 import { SafetyBanner } from '../SafetyBanner';
 import { getOverallProgressPercentage, getPaperPortfolio } from '../../services/learningStorage';
-import { fetchBusinessNews, fetchMarketOverview } from '../../services/learningApi';
+import { fetchBusinessNews, fetchEconomicOverview, fetchMarketOverview } from '../../services/learningApi';
 
 interface DashboardViewProps {
   onNavigate: (destination: NavigationDestination) => void;
@@ -30,6 +30,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
   const [portfolioBalance, setPortfolioBalance] = useState(100000);
   const [topNews, setTopNews] = useState<any[]>([]);
   const [topQuotes, setTopQuotes] = useState<any[]>([]);
+  const [economicIndicators, setEconomicIndicators] = useState<EconomicIndicator[]>([]);
   const [groqModel, setGroqModel] = useState('llama-3.3-70b-versatile');
   const [isConnected, setIsConnected] = useState(false);
 
@@ -45,6 +46,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
     fetchMarketOverview(['AAPL', 'NVDA', 'SPY'])
       .then((quotes) => setTopQuotes(Array.isArray(quotes) ? quotes : []))
       .catch(() => setTopQuotes([]));
+
+    fetchEconomicOverview()
+      .then((indicators) => setEconomicIndicators(indicators.slice(0, 5)))
+      .catch(() => setEconomicIndicators([]));
 
     fetch('/api/diagnostics')
       .then((res) => res.json())
@@ -393,6 +398,42 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
               <span>Start Conversation</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </div>
+          </div>
+        </BentoCard>
+
+        {/* Card 6: FRED Economic Dashboard */}
+        <BentoCard
+          title="Economic Dashboard"
+          subtitle="Official macroeconomic indicators from FRED"
+          icon={<Activity className="w-5 h-5 text-[#00D68F]" />}
+          badge={economicIndicators.some((item) => item.status === 'connected') ? 'Live FRED' : 'Connecting'}
+          badgeColor={economicIndicators.some((item) => item.status === 'connected') ? 'emerald' : 'amber'}
+        >
+          <div className="space-y-2 mt-2">
+            {economicIndicators.length > 0 ? (
+              economicIndicators.map((indicator) => (
+                <div
+                  key={indicator.id}
+                  className="flex items-center justify-between gap-3 text-xs"
+                >
+                  <span className="text-[#9A9AAA] truncate">{indicator.label}</span>
+                  <span className="font-semibold text-[#F7F7FB] whitespace-nowrap">
+                    {indicator.value === null ? '—' : indicator.value.toLocaleString()}{' '}
+                    <span className="text-[10px] text-[#8A8A9E]">{indicator.unit}</span>
+                  </span>
+                </div>
+              ))
+            ) : (
+              <p className="text-xs text-[#9A9AAA]">Loading economic indicators...</p>
+            )}
+            <a
+              href="https://fred.stlouisfed.org/"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex text-[10px] font-semibold text-[#665CFF] hover:text-[#8B7CFF] pt-1"
+            >
+              Source: Federal Reserve Economic Data (FRED)
+            </a>
           </div>
         </BentoCard>
       </div>

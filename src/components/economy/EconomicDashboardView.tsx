@@ -165,6 +165,12 @@ const OBSERVATION_OPTIONS = [
   { value: 240, label: '240 observations' },
 ];
 
+const INDIA_OBSERVATION_OPTIONS = [
+  { value: 10, label: '10 annual observations' },
+  { value: 24, label: '24 annual observations' },
+  { value: 60, label: '60 annual observations' },
+];
+
 function transformObservations(
   observations: EconomicObservation[],
   metadata: IndicatorMetadata,
@@ -274,6 +280,14 @@ export const EconomicDashboardView: React.FC = () => {
   }, [country]);
 
   useEffect(() => {
+    // Loading the India overview already makes five World Bank requests. Wait
+    // for those to finish before requesting chart history so the public API is
+    // not hit by six concurrent requests from one country switch.
+    if (loadingOverview) {
+      setLoadingSeries(true);
+      return;
+    }
+
     let active = true;
     setLoadingSeries(true);
     setError(null);
@@ -298,7 +312,7 @@ export const EconomicDashboardView: React.FC = () => {
     return () => {
       active = false;
     };
-  }, [country, selectedSeriesId, observationLimit]);
+  }, [country, selectedSeriesId, observationLimit, loadingOverview]);
 
   const chartData = useMemo(
     () => transformObservations(observations, selectedMetadata),
@@ -326,8 +340,10 @@ export const EconomicDashboardView: React.FC = () => {
   };
 
   const handleCountryChange = (nextCountry: 'us' | 'india') => {
+    setLoadingOverview(true);
     setCountry(nextCountry);
     setSelectedSeriesId(nextCountry === 'us' ? 'CPIAUCSL' : 'NY.GDP.MKTP.CD');
+    setObservationLimit(nextCountry === 'us' ? 120 : 24);
     setCustomSeriesId('');
     setObservations([]);
     setError(null);
@@ -430,7 +446,7 @@ export const EconomicDashboardView: React.FC = () => {
               onChange={(event) => setObservationLimit(Number(event.target.value))}
               className="bg-[#030303] border border-[#1A1A23] rounded-xl px-3 py-2 text-xs text-[#F7F7FB] focus:outline-none focus:border-[#00D68F]/50"
             >
-              {OBSERVATION_OPTIONS.map((option) => (
+              {(country === 'india' ? INDIA_OBSERVATION_OPTIONS : OBSERVATION_OPTIONS).map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
                 </option>

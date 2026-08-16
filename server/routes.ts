@@ -331,8 +331,14 @@ apiRouter.get('/economy/series', async (req: Request, res: Response, next: NextF
 
 apiRouter.get('/economy/india/overview', async (_req: Request, res: Response, next: NextFunction) => {
   try {
-    res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=86400');
-    res.json(await fetchWorldBankIndiaOverview());
+    const result = await fetchWorldBankIndiaOverview();
+    res.setHeader(
+      'Cache-Control',
+      result.status === 'connected'
+        ? 'public, s-maxage=3600, stale-while-revalidate=86400'
+        : 'no-store',
+    );
+    res.json(result);
   } catch (err) {
     next(err);
   }
@@ -351,13 +357,17 @@ apiRouter.get('/economy/india/series', async (req: Request, res: Response, next:
       return res.status(400).json({ error: 'A valid World Bank indicatorId is required.' });
     }
 
-    res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=86400');
-    res.json(
-      await fetchWorldBankIndiaSeries(
-        parsed.data.indicatorId,
-        parsed.data.limit || 60,
-      ),
+    const result = await fetchWorldBankIndiaSeries(
+      parsed.data.indicatorId,
+      parsed.data.limit || 60,
     );
+    res.setHeader(
+      'Cache-Control',
+      result.status === 'connected'
+        ? 'public, s-maxage=3600, stale-while-revalidate=86400'
+        : 'no-store',
+    );
+    res.json(result);
   } catch (err) {
     next(err);
   }

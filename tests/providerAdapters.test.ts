@@ -12,6 +12,10 @@ import {
   fetchFredOverview,
   fetchFredSeries,
 } from '../server/providers/fredProvider';
+import {
+  fetchWorldBankIndiaOverview,
+  fetchWorldBankIndiaSeries,
+} from '../server/providers/worldBankProvider';
 
 const trackedEnvironmentKeys = [
   'BUSINESS_NEWS_PROVIDER',
@@ -269,5 +273,85 @@ describe('FRED provider adapter', () => {
     const diagnostic = await checkFredDiagnostic();
     expect(diagnostic.status).toBe('invalid_credentials');
     expect(diagnostic.message).not.toContain('never-return-this-fred-key');
+  });
+});
+
+describe('World Bank India provider adapter', () => {
+  it('loads India indicators without sending an API key', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify([
+          { page: 1, pages: 1 },
+          [
+            {
+              indicator: { id: 'NY.GDP.MKTP.KD.ZG', value: 'GDP growth' },
+              country: { id: 'IN', value: 'India' },
+              countryiso3code: 'IND',
+              date: '2025',
+              value: 7.6,
+            },
+            {
+              indicator: { id: 'NY.GDP.MKTP.KD.ZG', value: 'GDP growth' },
+              country: { id: 'IN', value: 'India' },
+              countryiso3code: 'IND',
+              date: '2024',
+              value: 6.5,
+            },
+          ],
+        ]),
+        { status: 200, headers: { 'Content-Type': 'application/json' } },
+      ),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await fetchWorldBankIndiaSeries('NY.GDP.MKTP.KD.ZG', 10);
+    expect(result.status).toBe('connected');
+    expect(result.observations).toEqual([
+      { date: '2024', value: 6.5 },
+      { date: '2025', value: 7.6 },
+    ]);
+
+    const requestUrl = new URL(String(fetchMock.mock.calls[0][0]));
+    expect(requestUrl.pathname).toContain('/country/IND/indicator/NY.GDP.MKTP.KD.ZG');
+    expect(requestUrl.searchParams.get('format')).toBe('json');
+    expect(requestUrl.searchParams.has('api_key')).toBe(false);
+  });
+
+  it('normalizes all configured India overview indicators', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockImplementation((input: string | URL | Request) => {
+        const url = new URL(String(input));
+        const indicatorId = url.pathname.split('/').at(-1) || '';
+        const value = indicatorId === 'NY.GDP.MKTP.CD' ? 4_000_000_000_000 : 6.25;
+        return Promise.resolve(
+          new Response(
+            JSON.stringify([
+              { page: 1, pages: 1 },
+              [
+                {
+                  indicator: { id: indicatorId, value: indicatorId },
+                  country: { id: 'IN', value: 'India' },
+                  countryiso3code: 'IND',
+                  date: '2025',
+                  value,
+                },
+              ],
+            ]),
+            { status: 200, headers: { 'Content-Type': 'application/json' } },
+          ),
+        );
+      }),
+    );
+
+    const overview = await fetchWorldBankIndiaOverview();
+    expect(overview.status).toBe('connected');
+    expect(overview.indicators).toHaveLength(5);
+    expect(overview.indicators[0]).toMatchObject({
+      label: 'India GDP',
+      value: 4,
+      unit: 'US$T',
+      sourceName: 'World Bank',
+    });
   });
 });

@@ -3,7 +3,7 @@ import express from "express";
 
 // server/routes.ts
 import { Router } from "express";
-import { z as z4 } from "zod";
+import { z as z5 } from "zod";
 
 // server/scoringConfig.ts
 var RELIABILITY_DIMENSIONS_CONFIG = {
@@ -2802,6 +2802,181 @@ async function checkFredDiagnostic() {
   };
 }
 
+// server/providers/worldBankProvider.ts
+import { z as z4 } from "zod";
+var DEFAULT_WORLD_BANK_BASE_URL = "https://api.worldbank.org/v2/country/IND/indicator";
+var worldBankObservationSchema = z4.object({
+  indicator: z4.object({ id: z4.string(), value: z4.string().nullable().optional() }).passthrough(),
+  country: z4.object({ id: z4.string(), value: z4.string() }).passthrough(),
+  countryiso3code: z4.string().optional(),
+  date: z4.string(),
+  value: z4.number().nullable()
+}).passthrough();
+var worldBankResponseSchema = z4.tuple([
+  z4.object({ page: z4.number().optional(), pages: z4.number().optional() }).passthrough(),
+  z4.array(worldBankObservationSchema)
+]);
+var INDIA_INDICATORS = [
+  {
+    id: "india-gdp",
+    seriesId: "NY.GDP.MKTP.CD",
+    label: "India GDP",
+    unit: "US$T",
+    transform: "usd_to_trillions",
+    decimals: 2
+  },
+  {
+    id: "india-gdp-growth",
+    seriesId: "NY.GDP.MKTP.KD.ZG",
+    label: "India GDP Growth",
+    unit: "%",
+    decimals: 2
+  },
+  {
+    id: "india-inflation",
+    seriesId: "FP.CPI.TOTL.ZG",
+    label: "India Inflation",
+    unit: "% annual",
+    decimals: 2
+  },
+  {
+    id: "india-unemployment",
+    seriesId: "SL.UEM.TOTL.ZS",
+    label: "India Unemployment",
+    unit: "%",
+    decimals: 2
+  },
+  {
+    id: "india-interest",
+    seriesId: "FR.INR.LEND",
+    label: "India Lending Rate",
+    unit: "%",
+    decimals: 2
+  }
+];
+function safeIndicatorId(indicatorId) {
+  const normalized = indicatorId.trim().toUpperCase();
+  if (!/^[A-Z0-9._-]{2,64}$/.test(normalized)) {
+    throw new Error("Invalid World Bank indicator identifier.");
+  }
+  return normalized;
+}
+function getBaseUrl() {
+  const baseUrl = process.env.WORLD_BANK_API_BASE_URL?.trim() || DEFAULT_WORLD_BANK_BASE_URL;
+  const parsed = new URL(baseUrl);
+  if (parsed.protocol !== "https:") {
+    throw new Error("World Bank provider URL must use HTTPS.");
+  }
+  return parsed.toString().replace(/\/$/, "");
+}
+async function fetchWorldBankIndiaSeries(indicatorId, limit = 60) {
+  const normalizedIndicatorId = safeIndicatorId(indicatorId);
+  const safeLimit = Math.min(Math.max(Math.trunc(limit), 1), 240);
+  try {
+    const url = new URL(`${getBaseUrl()}/${normalizedIndicatorId}`);
+    url.searchParams.set("format", "json");
+    url.searchParams.set("per_page", String(safeLimit));
+    url.searchParams.set("date", `1960:${(/* @__PURE__ */ new Date()).getUTCFullYear()}`);
+    const response = await fetch(url, { signal: AbortSignal.timeout(8e3) });
+    if (!response.ok) {
+      return {
+        seriesId: normalizedIndicatorId,
+        observations: [],
+        status: response.status === 429 ? "rate_limited" : "error",
+        message: response.status === 429 ? "World Bank request limit reached. Please retry shortly." : `World Bank request failed with HTTP ${response.status}.`
+      };
+    }
+    const parsed = worldBankResponseSchema.safeParse(await response.json());
+    if (!parsed.success) {
+      return {
+        seriesId: normalizedIndicatorId,
+        observations: [],
+        status: "invalid_response",
+        message: "World Bank returned an unexpected response."
+      };
+    }
+    const observations = parsed.data[1].filter((observation) => observation.value !== null).map((observation) => ({ date: observation.date, value: observation.value })).sort((a, b) => a.date.localeCompare(b.date));
+    if (observations.length === 0) {
+      return {
+        seriesId: normalizedIndicatorId,
+        observations: [],
+        status: "invalid_response",
+        message: "World Bank returned no usable observations for this indicator."
+      };
+    }
+    return {
+      seriesId: normalizedIndicatorId,
+      observations,
+      status: "connected",
+      message: "Live World Bank India observations loaded."
+    };
+  } catch {
+    return {
+      seriesId: normalizedIndicatorId,
+      observations: [],
+      status: "error",
+      message: "World Bank data is temporarily unreachable."
+    };
+  }
+}
+function round2(value, decimals = 2) {
+  const multiplier = 10 ** decimals;
+  return Math.round(value * multiplier) / multiplier;
+}
+function toIndicator2(definition, result) {
+  const latest = result.observations.at(-1);
+  let value = latest?.value ?? null;
+  if (value !== null && definition.transform === "usd_to_trillions") {
+    value /= 1e12;
+  }
+  return {
+    id: definition.id,
+    seriesId: definition.seriesId,
+    label: definition.label,
+    value: value === null ? null : round2(value, definition.decimals),
+    unit: definition.unit,
+    date: latest?.date || null,
+    status: value === null && result.status === "connected" ? "invalid_response" : result.status,
+    sourceName: "World Bank",
+    sourceUrl: `https://data.worldbank.org/indicator/${definition.seriesId}?locations=IN`
+  };
+}
+async function fetchWorldBankIndiaOverview() {
+  const results = await Promise.all(
+    INDIA_INDICATORS.map(
+      (indicator) => fetchWorldBankIndiaSeries(indicator.seriesId, 20)
+    )
+  );
+  const indicators = INDIA_INDICATORS.map(
+    (indicator, index) => toIndicator2(indicator, results[index])
+  );
+  const connectedCount = indicators.filter(
+    (indicator) => indicator.status === "connected"
+  ).length;
+  return {
+    indicators,
+    status: connectedCount > 0 ? "connected" : results[0]?.status || "error",
+    providerName: "World Bank Indicators API",
+    country: "India",
+    countryCode: "IND",
+    retrievedAt: (/* @__PURE__ */ new Date()).toISOString(),
+    message: connectedCount > 0 ? `${connectedCount} live India economic indicators loaded.` : results[0]?.message || "India economic data is unavailable."
+  };
+}
+async function checkWorldBankIndiaDiagnostic() {
+  const startedAt = Date.now();
+  const result = await fetchWorldBankIndiaSeries("NY.GDP.MKTP.KD.ZG", 10);
+  return {
+    id: "india-economic-data",
+    name: "World Bank India Indicators",
+    role: "India GDP, inflation, unemployment, and interest-rate indicators",
+    status: result.status,
+    lastChecked: (/* @__PURE__ */ new Date()).toISOString(),
+    latencyMs: Date.now() - startedAt,
+    message: result.message
+  };
+}
+
 // server/routes.ts
 var apiRouter = Router();
 var rateLimitMap = /* @__PURE__ */ new Map();
@@ -2832,19 +3007,19 @@ apiRouter.use((req, res, next) => {
   }
   next();
 });
-var querySchema = z4.object({
-  query: z4.string().min(1, "Query parameter is required.").max(2e3, "Query exceeds maximum length of 2000 characters."),
-  profile: z4.enum(["India", "US", "Global"]).optional()
+var querySchema = z5.object({
+  query: z5.string().min(1, "Query parameter is required.").max(2e3, "Query exceeds maximum length of 2000 characters."),
+  profile: z5.enum(["India", "US", "Global"]).optional()
 });
-var tutorSchema = z4.object({
-  userPrompt: z4.string().min(1, "Prompt is required.").max(2e3, "Prompt exceeds maximum length."),
-  systemPrompt: z4.string().optional(),
-  modelName: z4.string().optional(),
-  history: z4.array(z4.object({ role: z4.string(), content: z4.string() })).optional()
+var tutorSchema = z5.object({
+  userPrompt: z5.string().min(1, "Prompt is required.").max(2e3, "Prompt exceeds maximum length."),
+  systemPrompt: z5.string().optional(),
+  modelName: z5.string().optional(),
+  history: z5.array(z5.object({ role: z5.string(), content: z5.string() })).optional()
 });
-var batchRunSchema = z4.object({
-  scenarioIds: z4.array(z4.string()).optional(),
-  profile: z4.enum(["India", "US", "Global"]).optional()
+var batchRunSchema = z5.object({
+  scenarioIds: z5.array(z5.string()).optional(),
+  profile: z5.enum(["India", "US", "Global"]).optional()
 });
 apiRouter.get("/health", (req, res) => {
   res.json({
@@ -2861,14 +3036,15 @@ apiRouter.get("/diagnostics", async (req, res, next) => {
       res.json(diagnosticCache.payload);
       return;
     }
-    const [groqDiagnostics, newsDiagnostic, marketDiagnostic, fredDiagnostic] = await Promise.all([
+    const [groqDiagnostics, newsDiagnostic, marketDiagnostic, fredDiagnostic, indiaDiagnostic] = await Promise.all([
       checkGroqDiagnostics(),
       checkNewsProviderDiagnostic(),
       checkMarketProviderDiagnostic(),
-      checkFredDiagnostic()
+      checkFredDiagnostic(),
+      checkWorldBankIndiaDiagnostic()
     ]);
     const payload = {
-      diagnostics: [...groqDiagnostics, newsDiagnostic, marketDiagnostic, fredDiagnostic],
+      diagnostics: [...groqDiagnostics, newsDiagnostic, marketDiagnostic, fredDiagnostic, indiaDiagnostic],
       modelsConfig: getGroqModels()
     };
     diagnosticCache = { expiresAt: Date.now() + DIAGNOSTIC_CACHE_MS, payload };
@@ -3035,14 +3211,40 @@ apiRouter.get("/economy/overview", async (_req, res, next) => {
 });
 apiRouter.get("/economy/series", async (req, res, next) => {
   try {
-    const parsed = z4.object({
-      seriesId: z4.string().min(1).max(64).regex(/^[A-Za-z0-9._-]+$/),
-      limit: z4.coerce.number().int().min(1).max(240).optional()
+    const parsed = z5.object({
+      seriesId: z5.string().min(1).max(64).regex(/^[A-Za-z0-9._-]+$/),
+      limit: z5.coerce.number().int().min(1).max(240).optional()
     }).safeParse(req.query);
     if (!parsed.success) {
       return res.status(400).json({ error: "A valid FRED seriesId is required." });
     }
     res.json(await fetchFredSeries(parsed.data.seriesId, parsed.data.limit || 24));
+  } catch (err) {
+    next(err);
+  }
+});
+apiRouter.get("/economy/india/overview", async (_req, res, next) => {
+  try {
+    res.json(await fetchWorldBankIndiaOverview());
+  } catch (err) {
+    next(err);
+  }
+});
+apiRouter.get("/economy/india/series", async (req, res, next) => {
+  try {
+    const parsed = z5.object({
+      indicatorId: z5.string().min(2).max(64).regex(/^[A-Za-z0-9._-]+$/),
+      limit: z5.coerce.number().int().min(1).max(240).optional()
+    }).safeParse(req.query);
+    if (!parsed.success) {
+      return res.status(400).json({ error: "A valid World Bank indicatorId is required." });
+    }
+    res.json(
+      await fetchWorldBankIndiaSeries(
+        parsed.data.indicatorId,
+        parsed.data.limit || 60
+      )
+    );
   } catch (err) {
     next(err);
   }

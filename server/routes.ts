@@ -21,6 +21,11 @@ import {
   fetchFredOverview,
   fetchFredSeries,
 } from './providers/fredProvider';
+import {
+  checkWorldBankIndiaDiagnostic,
+  fetchWorldBankIndiaOverview,
+  fetchWorldBankIndiaSeries,
+} from './providers/worldBankProvider';
 
 export const apiRouter = Router();
 
@@ -102,14 +107,15 @@ apiRouter.get('/diagnostics', async (req: Request, res: Response, next: NextFunc
       res.json(diagnosticCache.payload);
       return;
     }
-    const [groqDiagnostics, newsDiagnostic, marketDiagnostic, fredDiagnostic] = await Promise.all([
+    const [groqDiagnostics, newsDiagnostic, marketDiagnostic, fredDiagnostic, indiaDiagnostic] = await Promise.all([
       checkGroqDiagnostics(),
       checkNewsProviderDiagnostic(),
       checkMarketProviderDiagnostic(),
       checkFredDiagnostic(),
+      checkWorldBankIndiaDiagnostic(),
     ]);
     const payload = {
-      diagnostics: [...groqDiagnostics, newsDiagnostic, marketDiagnostic, fredDiagnostic],
+      diagnostics: [...groqDiagnostics, newsDiagnostic, marketDiagnostic, fredDiagnostic, indiaDiagnostic],
       modelsConfig: getGroqModels(),
     };
     diagnosticCache = { expiresAt: Date.now() + DIAGNOSTIC_CACHE_MS, payload };
@@ -318,6 +324,38 @@ apiRouter.get('/economy/series', async (req: Request, res: Response, next: NextF
     }
 
     res.json(await fetchFredSeries(parsed.data.seriesId, parsed.data.limit || 24));
+  } catch (err) {
+    next(err);
+  }
+});
+
+apiRouter.get('/economy/india/overview', async (_req: Request, res: Response, next: NextFunction) => {
+  try {
+    res.json(await fetchWorldBankIndiaOverview());
+  } catch (err) {
+    next(err);
+  }
+});
+
+apiRouter.get('/economy/india/series', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const parsed = z
+      .object({
+        indicatorId: z.string().min(2).max(64).regex(/^[A-Za-z0-9._-]+$/),
+        limit: z.coerce.number().int().min(1).max(240).optional(),
+      })
+      .safeParse(req.query);
+
+    if (!parsed.success) {
+      return res.status(400).json({ error: 'A valid World Bank indicatorId is required.' });
+    }
+
+    res.json(
+      await fetchWorldBankIndiaSeries(
+        parsed.data.indicatorId,
+        parsed.data.limit || 60,
+      ),
+    );
   } catch (err) {
     next(err);
   }

@@ -34,7 +34,7 @@ export const ConnectionsView: React.FC = () => {
             <div>
               <h1 className="text-2xl font-bold text-[#F7F7FB]">AI Connections & Health Diagnostics</h1>
               <p className="text-xs text-[#9A9AAA]">
-                Real server-side checks for Groq, NewsData.io, Twelve Data, and FRED. Secrets never reach the browser.
+                Live server-side checks for Groq, NewsData.io, Twelve Data, FRED, and World Bank India data. Secrets never reach the browser.
               </p>
             </div>
           </div>

@@ -250,7 +250,7 @@ export interface EconomicIndicator {
   unit: string;
   date: string | null;
   status: ConnectionStatus;
-  sourceName: 'FRED';
+  sourceName: 'FRED' | 'World Bank';
   sourceUrl: string;
 }
 

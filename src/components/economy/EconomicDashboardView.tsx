@@ -23,6 +23,8 @@ import {
 import {
   fetchEconomicOverview,
   fetchEconomicSeries,
+  fetchIndiaEconomicOverview,
+  fetchIndiaEconomicSeries,
 } from '../../services/learningApi';
 import {
   EconomicIndicator,
@@ -38,7 +40,7 @@ interface IndicatorMetadata {
   description: string;
   frequency: string;
   whyItMatters: string;
-  transform?: 'inflation_yoy' | 'gdp_trillions';
+  transform?: 'inflation_yoy' | 'gdp_trillions' | 'usd_to_trillions';
 }
 
 const INDICATOR_METADATA: Record<string, IndicatorMetadata> = {
@@ -99,6 +101,62 @@ const INDICATOR_METADATA: Record<string, IndicatorMetadata> = {
     whyItMatters:
       'It is widely used as a long-term benchmark for mortgages, valuation discount rates, and market expectations.',
   },
+  'NY.GDP.MKTP.CD': {
+    seriesId: 'NY.GDP.MKTP.CD',
+    label: 'India Gross Domestic Product',
+    shortLabel: 'India GDP',
+    unit: 'US$T',
+    description:
+      'The total market value of goods and services produced in India, expressed in current US dollars.',
+    frequency: 'Annual',
+    whyItMatters:
+      'GDP provides a broad measure of the size of India’s economy and its long-term economic development.',
+    transform: 'usd_to_trillions',
+  },
+  'NY.GDP.MKTP.KD.ZG': {
+    seriesId: 'NY.GDP.MKTP.KD.ZG',
+    label: 'India Real GDP Growth',
+    shortLabel: 'GDP Growth',
+    unit: '%',
+    description:
+      'Annual percentage growth rate of India’s GDP at constant prices, adjusted for inflation.',
+    frequency: 'Annual',
+    whyItMatters:
+      'Real GDP growth shows whether inflation-adjusted economic production is expanding or contracting.',
+  },
+  'FP.CPI.TOTL.ZG': {
+    seriesId: 'FP.CPI.TOTL.ZG',
+    label: 'India Consumer Inflation',
+    shortLabel: 'India Inflation',
+    unit: '% annual',
+    description:
+      'Annual percentage change in the consumer price index for India.',
+    frequency: 'Annual',
+    whyItMatters:
+      'Consumer inflation affects household purchasing power, savings, wages, and monetary-policy decisions.',
+  },
+  'SL.UEM.TOTL.ZS': {
+    seriesId: 'SL.UEM.TOTL.ZS',
+    label: 'India Unemployment Rate',
+    shortLabel: 'India Unemployment',
+    unit: '%',
+    description:
+      'Share of India’s total labor force that is without work but available for and seeking employment.',
+    frequency: 'Annual modeled estimate',
+    whyItMatters:
+      'Unemployment is an important measure of labor-market conditions and household income pressure.',
+  },
+  'FR.INR.LEND': {
+    seriesId: 'FR.INR.LEND',
+    label: 'India Lending Interest Rate',
+    shortLabel: 'Lending Rate',
+    unit: '%',
+    description:
+      'Bank lending rate that usually meets the short- and medium-term financing needs of India’s private sector.',
+    frequency: 'Annual',
+    whyItMatters:
+      'Lending rates influence the cost of household borrowing, business credit, and investment activity.',
+  },
 };
 
 const OBSERVATION_OPTIONS = [
@@ -115,6 +173,13 @@ function transformObservations(
     return observations.map((observation) => ({
       date: observation.date,
       value: Math.round((observation.value / 1_000) * 100) / 100,
+    }));
+  }
+
+  if (metadata.transform === 'usd_to_trillions') {
+    return observations.map((observation) => ({
+      date: observation.date,
+      value: Math.round((observation.value / 1_000_000_000_000) * 100) / 100,
     }));
   }
 
@@ -142,13 +207,24 @@ function transformObservations(
 }
 
 function formatChartDate(date: string) {
+  if (/^\d{4}$/.test(date)) return date;
   return new Date(`${date}T00:00:00Z`).toLocaleDateString('en-US', {
     month: 'short',
     year: '2-digit',
   });
 }
 
+function formatFullDate(date: string) {
+  if (/^\d{4}$/.test(date)) return date;
+  return new Date(`${date}T00:00:00Z`).toLocaleDateString('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  });
+}
+
 export const EconomicDashboardView: React.FC = () => {
+  const [country, setCountry] = useState<'us' | 'india'>('us');
   const [indicators, setIndicators] = useState<EconomicIndicator[]>([]);
   const [selectedSeriesId, setSelectedSeriesId] = useState('CPIAUCSL');
   const [observations, setObservations] = useState<EconomicObservation[]>([]);
@@ -161,44 +237,60 @@ export const EconomicDashboardView: React.FC = () => {
   const selectedMetadata =
     INDICATOR_METADATA[selectedSeriesId] || {
       seriesId: selectedSeriesId,
-      label: `FRED Series ${selectedSeriesId}`,
+      label: `${country === 'us' ? 'FRED Series' : 'World Bank Indicator'} ${selectedSeriesId}`,
       shortLabel: selectedSeriesId,
       unit: 'Value',
-      description: 'A custom economic time series loaded directly from FRED.',
+      description: `A custom economic time series loaded directly from ${country === 'us' ? 'FRED' : 'the World Bank Indicators API'}.`,
       frequency: 'Defined by source series',
       whyItMatters:
-        'Use the official FRED series page to review its definition, units, frequency, and methodology.',
+        `Use the official ${country === 'us' ? 'FRED series' : 'World Bank indicator'} page to review its definition, units, frequency, and methodology.`,
     };
+
+  const providerName = country === 'us' ? 'Federal Reserve Economic Data' : 'World Bank India Data';
+  const providerShortName = country === 'us' ? 'FRED' : 'World Bank';
+  const officialSeriesUrl =
+    country === 'us'
+      ? `https://fred.stlouisfed.org/series/${selectedSeriesId}`
+      : `https://data.worldbank.org/indicator/${selectedSeriesId}?locations=IN`;
 
   const loadOverview = async () => {
     setLoadingOverview(true);
     try {
-      setIndicators(await fetchEconomicOverview());
+      setIndicators(
+        country === 'us'
+          ? await fetchEconomicOverview()
+          : await fetchIndiaEconomicOverview(),
+      );
     } catch {
-      setError('The FRED economic overview is temporarily unavailable.');
+      setError(`The ${providerShortName} economic overview is temporarily unavailable.`);
     } finally {
       setLoadingOverview(false);
     }
   };
 
   useEffect(() => {
+    setIndicators([]);
     loadOverview();
-  }, []);
+  }, [country]);
 
   useEffect(() => {
     let active = true;
     setLoadingSeries(true);
     setError(null);
-    fetchEconomicSeries(selectedSeriesId, observationLimit)
+    const request =
+      country === 'us'
+        ? fetchEconomicSeries(selectedSeriesId, observationLimit)
+        : fetchIndiaEconomicSeries(selectedSeriesId, observationLimit);
+    request
       .then((response) => {
         if (!active) return;
         setObservations(response.observations || []);
         if (response.status !== 'connected') {
-          setError(response.message || 'FRED series data is unavailable.');
+          setError(response.message || `${providerShortName} series data is unavailable.`);
         }
       })
       .catch((requestError: Error) => {
-        if (active) setError(requestError.message || 'Unable to load FRED data.');
+        if (active) setError(requestError.message || `Unable to load ${providerShortName} data.`);
       })
       .finally(() => {
         if (active) setLoadingSeries(false);
@@ -206,7 +298,7 @@ export const EconomicDashboardView: React.FC = () => {
     return () => {
       active = false;
     };
-  }, [selectedSeriesId, observationLimit]);
+  }, [country, selectedSeriesId, observationLimit]);
 
   const chartData = useMemo(
     () => transformObservations(observations, selectedMetadata),
@@ -223,10 +315,22 @@ export const EconomicDashboardView: React.FC = () => {
     event.preventDefault();
     const normalized = customSeriesId.trim().toUpperCase();
     if (!/^[A-Z0-9._-]{1,64}$/.test(normalized)) {
-      setError('Enter a valid FRED series ID, such as PCE, M2SL, or DEXINUS.');
+      setError(
+        country === 'us'
+          ? 'Enter a valid FRED series ID, such as PCE, M2SL, or DEXINUS.'
+          : 'Enter a valid World Bank indicator ID, such as SP.POP.TOTL or GC.DOD.TOTL.GD.ZS.',
+      );
       return;
     }
     setSelectedSeriesId(normalized);
+  };
+
+  const handleCountryChange = (nextCountry: 'us' | 'india') => {
+    setCountry(nextCountry);
+    setSelectedSeriesId(nextCountry === 'us' ? 'CPIAUCSL' : 'NY.GDP.MKTP.CD');
+    setCustomSeriesId('');
+    setObservations([]);
+    setError(null);
   };
 
   return (
@@ -237,25 +341,41 @@ export const EconomicDashboardView: React.FC = () => {
           <div className="space-y-4">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#00D68F]/10 border border-[#00D68F]/30 text-[#00D68F] text-[11px] font-bold uppercase tracking-wider">
               <CheckCircle2 className="w-3.5 h-3.5" />
-              Live Federal Reserve Data
+              Live {providerName}
             </div>
             <div>
               <h1 className="text-3xl sm:text-4xl font-extrabold text-[#F7F7FB] tracking-tight">
                 Economic Dashboard
               </h1>
               <p className="text-sm text-[#9A9AAA] leading-relaxed max-w-3xl mt-2">
-                Explore official macroeconomic time series, historical trends, release dates and educational explanations using Federal Reserve Economic Data.
+                Compare official United States and India macroeconomic indicators, historical trends, observation dates, and educational explanations.
               </p>
             </div>
           </div>
-          <button
-            onClick={loadOverview}
-            disabled={loadingOverview}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#00D68F]/10 border border-[#00D68F]/30 text-[#00D68F] hover:bg-[#00D68F]/20 text-xs font-bold transition-all disabled:opacity-60 self-start lg:self-auto"
-          >
-            <RefreshCw className={`w-4 h-4 ${loadingOverview ? 'animate-spin' : ''}`} />
-            Refresh FRED Data
-          </button>
+          <div className="flex flex-col sm:flex-row gap-3 self-start lg:self-auto">
+            <div className="flex items-center p-1 bg-[#030303] border border-[#1A1A23] rounded-xl">
+              <button
+                onClick={() => handleCountryChange('us')}
+                className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${country === 'us' ? 'bg-[#4F32FF] text-white' : 'text-[#9A9AAA] hover:text-white'}`}
+              >
+                🇺🇸 United States
+              </button>
+              <button
+                onClick={() => handleCountryChange('india')}
+                className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${country === 'india' ? 'bg-[#FF8A00] text-[#130900]' : 'text-[#9A9AAA] hover:text-white'}`}
+              >
+                🇮🇳 India
+              </button>
+            </div>
+            <button
+              onClick={loadOverview}
+              disabled={loadingOverview}
+              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#00D68F]/10 border border-[#00D68F]/30 text-[#00D68F] hover:bg-[#00D68F]/20 text-xs font-bold transition-all disabled:opacity-60"
+            >
+              <RefreshCw className={`w-4 h-4 ${loadingOverview ? 'animate-spin' : ''}`} />
+              Refresh {providerShortName}
+            </button>
+          </div>
         </div>
       </section>
 
@@ -341,13 +461,7 @@ export const EconomicDashboardView: React.FC = () => {
                     domain={['auto', 'auto']}
                   />
                   <Tooltip
-                    labelFormatter={(date) =>
-                      new Date(`${String(date)}T00:00:00Z`).toLocaleDateString('en-US', {
-                        month: 'long',
-                        day: 'numeric',
-                        year: 'numeric',
-                      })
-                    }
+                    labelFormatter={(date) => formatFullDate(String(date))}
                     formatter={(value) => [`${Number(value).toLocaleString()} ${selectedMetadata.unit}`, selectedMetadata.shortLabel]}
                     contentStyle={{
                       background: '#08080E',
@@ -407,28 +521,28 @@ export const EconomicDashboardView: React.FC = () => {
               <p className="text-xs text-[#9A9AAA] leading-relaxed mt-2">{selectedMetadata.whyItMatters}</p>
             </div>
             <a
-              href={`https://fred.stlouisfed.org/series/${selectedSeriesId}`}
+              href={officialSeriesUrl}
               target="_blank"
               rel="noreferrer"
               className="inline-flex items-center gap-2 text-xs font-semibold text-[#665CFF] hover:text-[#8B7CFF]"
             >
-              Open official FRED series <ExternalLink className="w-3.5 h-3.5" />
+              Open official {providerShortName} series <ExternalLink className="w-3.5 h-3.5" />
             </a>
           </div>
 
           <div className="bg-[#08080E] border border-[#1A1A23] rounded-3xl p-6 space-y-4 shadow-xl">
             <div className="flex items-center gap-2">
               <Search className="w-4 h-4 text-[#16C7E8]" />
-              <h2 className="text-sm font-bold text-[#F7F7FB]">FRED Series Explorer</h2>
+              <h2 className="text-sm font-bold text-[#F7F7FB]">{providerShortName} Series Explorer</h2>
             </div>
             <p className="text-xs text-[#9A9AAA] leading-relaxed">
-              Enter any public FRED series ID to load its historical values.
+              Enter any public {providerShortName} {country === 'us' ? 'series' : 'indicator'} ID to load its historical values.
             </p>
             <form onSubmit={handleCustomSeries} className="flex gap-2">
               <input
                 value={customSeriesId}
                 onChange={(event) => setCustomSeriesId(event.target.value)}
-                placeholder="Example: PCE or M2SL"
+                placeholder={country === 'us' ? 'Example: PCE or M2SL' : 'Example: SP.POP.TOTL'}
                 className="min-w-0 flex-1 bg-[#030303] border border-[#1A1A23] rounded-xl px-3 py-2 text-xs text-[#F7F7FB] placeholder:text-[#666678] focus:outline-none focus:border-[#16C7E8]/50 uppercase"
               />
               <button
@@ -479,9 +593,9 @@ export const EconomicDashboardView: React.FC = () => {
           </div>
           <div className="space-y-4">
             {[
-              ['Values', 'Each number is an official historical observation retrieved from FRED, not a forecast.'],
-              ['Dates', 'Release frequencies differ: GDP is quarterly, CPI and unemployment are monthly, and Treasury yields are daily.'],
-              ['Inflation', 'ArthaBench calculates the displayed year-over-year percentage from the official CPI index observations.'],
+              ['Values', `Each number is a historical observation retrieved from ${providerShortName}, not a forecast.`],
+              ['Dates', country === 'us' ? 'Release frequencies differ: GDP is quarterly, CPI and unemployment are monthly, and Treasury yields are daily.' : 'World Bank India indicators are generally annual and may have different latest available years.'],
+              ['Inflation', country === 'us' ? 'ArthaBench calculates the displayed year-over-year percentage from the official CPI index observations.' : 'India inflation is the annual percentage change in consumer prices reported through World Development Indicators.'],
               ['Use', 'Compare trends and economic context for education and AI verification—not personalized investment decisions.'],
             ].map(([title, text], index) => (
               <div key={title} className="flex gap-3">
@@ -496,12 +610,12 @@ export const EconomicDashboardView: React.FC = () => {
             ))}
           </div>
           <a
-            href="https://fred.stlouisfed.org/"
+            href={country === 'us' ? 'https://fred.stlouisfed.org/' : 'https://data.worldbank.org/country/india'}
             target="_blank"
             rel="noreferrer"
             className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#4F32FF]/10 border border-[#4F32FF]/25 text-[#665CFF] text-xs font-semibold hover:bg-[#4F32FF]/20"
           >
-            Federal Reserve Economic Data <ExternalLink className="w-3.5 h-3.5" />
+            {providerName} <ExternalLink className="w-3.5 h-3.5" />
           </a>
         </div>
       </section>

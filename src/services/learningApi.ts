@@ -63,6 +63,14 @@ export async function getProviderDiagnostics(): Promise<ProviderDiagnostic[]> {
         lastChecked: new Date().toISOString(),
         message: 'Requires FRED_API_KEY environment variable',
       },
+      {
+        id: 'india-economic-data',
+        name: 'World Bank India Indicators',
+        role: 'India GDP, inflation, unemployment, and interest-rate indicators',
+        status: 'error',
+        lastChecked: new Date().toISOString(),
+        message: 'World Bank India data is temporarily unreachable',
+      },
     ];
   }
 }
@@ -85,6 +93,26 @@ export async function fetchEconomicSeries(
 ): Promise<EconomicSeriesResponse> {
   return fetchJSON<EconomicSeriesResponse>(
     `/api/economy/series?seriesId=${encodeURIComponent(seriesId)}&limit=${limit}`,
+  );
+}
+
+export async function fetchIndiaEconomicOverview(): Promise<EconomicIndicator[]> {
+  try {
+    const response = await fetchJSON<{ indicators: EconomicIndicator[] }>(
+      '/api/economy/india/overview',
+    );
+    return Array.isArray(response.indicators) ? response.indicators : [];
+  } catch {
+    return [];
+  }
+}
+
+export async function fetchIndiaEconomicSeries(
+  indicatorId: string,
+  limit = 60,
+): Promise<EconomicSeriesResponse> {
+  return fetchJSON<EconomicSeriesResponse>(
+    `/api/economy/india/series?indicatorId=${encodeURIComponent(indicatorId)}&limit=${limit}`,
   );
 }
 

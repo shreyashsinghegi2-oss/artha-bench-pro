@@ -401,12 +401,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
           </div>
         </BentoCard>
 
-        {/* Card 6: FRED Economic Dashboard */}
+        {/* Card 6: United States and India Economic Dashboard */}
         <BentoCard
-          title="Economic Dashboard"
-          subtitle="Official macroeconomic indicators from FRED"
+          title="US & India Economic Dashboard"
+          subtitle="Official indicators from FRED and the World Bank"
           icon={<Activity className="w-5 h-5 text-[#00D68F]" />}
-          badge={economicIndicators.some((item) => item.status === 'connected') ? 'Live FRED' : 'Connecting'}
+          badge={economicIndicators.some((item) => item.status === 'connected') ? 'Live Data' : 'Connecting'}
           badgeColor={economicIndicators.some((item) => item.status === 'connected') ? 'emerald' : 'amber'}
           onClick={() => onNavigate('economy')}
         >
@@ -428,7 +428,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
               <p className="text-xs text-[#9A9AAA]">Loading economic indicators...</p>
             )}
             <div className="inline-flex items-center gap-1 text-[10px] font-semibold text-[#665CFF] pt-1">
-              <span>Open full dashboard</span>
+              <span>Open full US & India dashboard</span>
               <ArrowRight className="w-3 h-3" />
             </div>
           </div>

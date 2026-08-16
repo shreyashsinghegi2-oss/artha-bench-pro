@@ -2877,7 +2877,7 @@ async function fetchWorldBankIndiaSeries(indicatorId, limit = 60) {
     url.searchParams.set("format", "json");
     url.searchParams.set("per_page", String(safeLimit));
     url.searchParams.set("date", `1960:${(/* @__PURE__ */ new Date()).getUTCFullYear()}`);
-    const response = await fetch(url, { signal: AbortSignal.timeout(8e3) });
+    const response = await fetch(url, { signal: AbortSignal.timeout(2e4) });
     if (!response.ok) {
       return {
         seriesId: normalizedIndicatorId,
@@ -3225,6 +3225,7 @@ apiRouter.get("/economy/series", async (req, res, next) => {
 });
 apiRouter.get("/economy/india/overview", async (_req, res, next) => {
   try {
+    res.setHeader("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=86400");
     res.json(await fetchWorldBankIndiaOverview());
   } catch (err) {
     next(err);
@@ -3239,6 +3240,7 @@ apiRouter.get("/economy/india/series", async (req, res, next) => {
     if (!parsed.success) {
       return res.status(400).json({ error: "A valid World Bank indicatorId is required." });
     }
+    res.setHeader("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=86400");
     res.json(
       await fetchWorldBankIndiaSeries(
         parsed.data.indicatorId,

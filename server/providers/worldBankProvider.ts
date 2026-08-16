@@ -120,7 +120,10 @@ export async function fetchWorldBankIndiaSeries(
     url.searchParams.set('per_page', String(safeLimit));
     url.searchParams.set('date', `1960:${new Date().getUTCFullYear()}`);
 
-    const response = await fetch(url, { signal: AbortSignal.timeout(8_000) });
+    // World Bank's public endpoint can occasionally take longer than the
+    // commercial providers used elsewhere in the app. Keep this below the
+    // Vercel function limit while allowing a cold upstream request to finish.
+    const response = await fetch(url, { signal: AbortSignal.timeout(20_000) });
     if (!response.ok) {
       return {
         seriesId: normalizedIndicatorId,

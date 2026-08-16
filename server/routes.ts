@@ -331,6 +331,7 @@ apiRouter.get('/economy/series', async (req: Request, res: Response, next: NextF
 
 apiRouter.get('/economy/india/overview', async (_req: Request, res: Response, next: NextFunction) => {
   try {
+    res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=86400');
     res.json(await fetchWorldBankIndiaOverview());
   } catch (err) {
     next(err);
@@ -350,6 +351,7 @@ apiRouter.get('/economy/india/series', async (req: Request, res: Response, next:
       return res.status(400).json({ error: 'A valid World Bank indicatorId is required.' });
     }
 
+    res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=86400');
     res.json(
       await fetchWorldBankIndiaSeries(
         parsed.data.indicatorId,

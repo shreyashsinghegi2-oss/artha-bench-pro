@@ -2744,7 +2744,12 @@ function toIndicator(definition, result) {
     value /= 1e3;
   }
   if (definition.calculation === "year_over_year") {
-    const previousYear = result.observations.at(-13);
+    const targetDate = latest ? /* @__PURE__ */ new Date(`${latest.date}T00:00:00Z`) : null;
+    if (targetDate) targetDate.setUTCFullYear(targetDate.getUTCFullYear() - 1);
+    const targetDateString = targetDate?.toISOString().slice(0, 10);
+    const previousYear = result.observations.find(
+      (observation) => observation.date === targetDateString
+    );
     value = latest && previousYear && previousYear.value !== 0 ? (latest.value / previousYear.value - 1) * 100 : null;
   }
   return {
@@ -2764,7 +2769,7 @@ async function fetchFredOverview() {
     INDICATORS.map(
       (indicator) => fetchFredSeries(
         indicator.seriesId,
-        indicator.calculation === "year_over_year" ? 13 : 1
+        indicator.calculation === "year_over_year" ? 18 : 1
       )
     )
   );

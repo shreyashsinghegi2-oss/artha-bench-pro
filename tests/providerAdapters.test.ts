@@ -228,6 +228,35 @@ describe('FRED provider adapter', () => {
     expect(overview.indicators.every((indicator) => indicator.value === null)).toBe(true);
   });
 
+  it('calculates year-over-year inflation by matching the prior-year month', async () => {
+    process.env.FRED_API_KEY = 'fred-test-secret';
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockImplementation((input: string | URL | Request) => {
+        const url = new URL(String(input));
+        const seriesId = url.searchParams.get('series_id');
+        const observations =
+          seriesId === 'CPIAUCSL'
+            ? [
+                { date: '2025-07-01', value: '320' },
+                // A missing intervening month must not shift the YoY comparison.
+                { date: '2026-07-01', value: '336' },
+              ]
+            : [{ date: '2026-07-01', value: '4.0' }];
+        return Promise.resolve(
+          new Response(JSON.stringify({ observations }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        );
+      }),
+    );
+
+    const overview = await fetchFredOverview();
+    const inflation = overview.indicators.find((indicator) => indicator.id === 'inflation');
+    expect(inflation).toMatchObject({ value: 5, status: 'connected' });
+  });
+
   it('never exposes the FRED credential in diagnostics', async () => {
     process.env.FRED_API_KEY = 'never-return-this-fred-key';
     vi.stubGlobal(

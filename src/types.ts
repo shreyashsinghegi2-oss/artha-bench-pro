@@ -13,6 +13,7 @@ export type NavigationDestination =
   | 'learning'
   | 'news'
   | 'markets'
+  | 'economy'
   | 'batch'
   | 'reports'
   | 'methodology'
@@ -256,6 +257,13 @@ export interface EconomicIndicator {
 export interface EconomicObservation {
   date: string;
   value: number;
+}
+
+export interface EconomicSeriesResponse {
+  seriesId: string;
+  observations: EconomicObservation[];
+  status: ConnectionStatus;
+  message: string;
 }
 
 // Batch Benchmark & Persistence Types

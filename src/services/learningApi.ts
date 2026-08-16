@@ -2,6 +2,7 @@ import {
   NormalizedMarketQuote,
   NormalizedNewsItem,
   EconomicIndicator,
+  EconomicSeriesResponse,
   ProviderDiagnostic,
   VerificationReport,
 } from '../types';
@@ -76,6 +77,15 @@ export async function fetchEconomicOverview(): Promise<EconomicIndicator[]> {
   } catch {
     return [];
   }
+}
+
+export async function fetchEconomicSeries(
+  seriesId: string,
+  limit = 120,
+): Promise<EconomicSeriesResponse> {
+  return fetchJSON<EconomicSeriesResponse>(
+    `/api/economy/series?seriesId=${encodeURIComponent(seriesId)}&limit=${limit}`,
+  );
 }
 
 // Learning Workspace AI APIs

@@ -28,6 +28,7 @@ const SECONDARY_NAV_ITEMS: NavItem[] = [
   { id: 'learning', label: 'Learning Workspace' },
   { id: 'news', label: 'Business News' },
   { id: 'markets', label: 'Market Data' },
+  { id: 'economy', label: 'Economic Data' },
   { id: 'methodology', label: 'Methodology' },
   { id: 'settings', label: 'Settings' },
 ];
@@ -167,7 +168,7 @@ export const Header: React.FC<HeaderProps> = ({
       {/* Mobile Drawer Navigation Menu */}
       {mobileMenuOpen && (
         <div className="lg:hidden mt-3 pt-3 border-t border-[#1A1A23] bg-[#08080E] rounded-2xl p-4 space-y-2">
-          <div className="text-[10px] uppercase font-bold text-[#9A9AAA] px-2 mb-1">Navigation (14 Destinations)</div>
+          <div className="text-[10px] uppercase font-bold text-[#9A9AAA] px-2 mb-1">Navigation (15 Destinations)</div>
           <div className="grid grid-cols-2 gap-1.5">
             {ALL_NAV_ITEMS.map((item) => {
               const isActive = currentDestination === item.id || (item.id === 'overview' && currentDestination === 'dashboard');

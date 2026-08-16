@@ -408,6 +408,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
           icon={<Activity className="w-5 h-5 text-[#00D68F]" />}
           badge={economicIndicators.some((item) => item.status === 'connected') ? 'Live FRED' : 'Connecting'}
           badgeColor={economicIndicators.some((item) => item.status === 'connected') ? 'emerald' : 'amber'}
+          onClick={() => onNavigate('economy')}
         >
           <div className="space-y-2 mt-2">
             {economicIndicators.length > 0 ? (
@@ -426,14 +427,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
             ) : (
               <p className="text-xs text-[#9A9AAA]">Loading economic indicators...</p>
             )}
-            <a
-              href="https://fred.stlouisfed.org/"
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex text-[10px] font-semibold text-[#665CFF] hover:text-[#8B7CFF] pt-1"
-            >
-              Source: Federal Reserve Economic Data (FRED)
-            </a>
+            <div className="inline-flex items-center gap-1 text-[10px] font-semibold text-[#665CFF] pt-1">
+              <span>Open full dashboard</span>
+              <ArrowRight className="w-3 h-3" />
+            </div>
           </div>
         </BentoCard>
       </div>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { lazy, Suspense, useState } from 'react';
 import { NavigationDestination } from './types';
 import { Header } from './components/Header';
 import { Navigation } from './components/Navigation';
@@ -19,6 +19,12 @@ import { ConnectionsView } from './components/evaluation/ConnectionsView';
 import { SettingsView } from './components/evaluation/SettingsView';
 import { AccountView } from './components/account/AccountView';
 
+const EconomicDashboardView = lazy(() =>
+  import('./components/economy/EconomicDashboardView').then((module) => ({
+    default: module.EconomicDashboardView,
+  })),
+);
+
 export default function App() {
   const [currentDestination, setCurrentDestination] = useState<NavigationDestination>('overview');
 
@@ -31,6 +37,18 @@ export default function App() {
         return <LearningView />;
       case 'markets':
         return <MarketView />;
+      case 'economy':
+        return (
+          <Suspense
+            fallback={
+              <div className="max-w-[1500px] mx-auto px-4 py-20 text-center text-sm text-[#9A9AAA]">
+                Loading Economic Dashboard…
+              </div>
+            }
+          >
+            <EconomicDashboardView />
+          </Suspense>
+        );
       case 'news':
         return <NewsView />;
       case 'quick-check':

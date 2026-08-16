@@ -19,6 +19,7 @@ export const NAVIGATION_ITEMS: { id: NavigationDestination; label: string }[] = 
   { id: 'learning', label: 'Learning' },
   { id: 'news', label: 'Business News' },
   { id: 'markets', label: 'Market Data' },
+  { id: 'economy', label: 'Economic Data' },
   { id: 'methodology', label: 'Methodology' },
   { id: 'settings', label: 'Settings' },
 ];

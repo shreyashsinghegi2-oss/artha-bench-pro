@@ -7,7 +7,7 @@ let appPromise: Promise<ApiApp> | undefined;
 
 function getApp() {
   if (!appPromise) {
-    appPromise = import('../server/routes').then(({ apiRouter }) => {
+    appPromise = import('../server/routes.ts').then(({ apiRouter }) => {
       const app = express();
       app.disable('x-powered-by');
       app.use(express.json({ limit: '2mb' }));

@@ -94,7 +94,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#030303] text-[#F7F7FB] flex flex-col font-sans selection:bg-[#4F32FF] selection:text-[#F7F7FB]">
+    <div className="min-h-screen bg-[var(--bg-main)] text-[#F7F7FB] flex flex-col font-sans selection:bg-[#4F32FF] selection:text-[#F7F7FB]">
       {/* Global Header */}
       <Header
         currentDestination={currentDestination}

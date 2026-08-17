@@ -8,7 +8,7 @@
 
 import { z } from 'zod';
 import { MarketHistoryPoint, NormalizedMarketQuote } from '../../src/types';
-import { DEMO_MARKET_HISTORY, DEMO_MARKET_QUOTES } from '../../src/data/marketFixtures';
+import { DEMO_MARKET_QUOTES } from '../../src/data/marketFixtures';
 import type { MarketQuoteProviderResult } from './marketDataProvider';
 
 const DEFAULT_YAHOO_CHART_URL = 'https://query1.finance.yahoo.com/v8/finance/chart';
@@ -315,10 +315,6 @@ export async function fetchYahooFinanceQuote(
   }
 }
 
-function historyFallback(symbol: NormalizedYahooSymbol): MarketHistoryPoint[] {
-  return DEMO_MARKET_HISTORY[symbol.displaySymbol] || [];
-}
-
 function historyConfiguration(range: string) {
   const configurations: Record<string, { range: string; interval: string }> = {
     '1d': { range: '1d', interval: '5m' },
@@ -336,7 +332,6 @@ export async function fetchYahooFinanceHistory(
   range = '1m',
 ): Promise<MarketHistoryPoint[]> {
   const normalizedSymbol = normalizeYahooFinanceSymbol(symbol);
-  const fallback = historyFallback(normalizedSymbol);
 
   try {
     const configuration = historyConfiguration(range);
@@ -349,13 +344,13 @@ export async function fetchYahooFinanceHistory(
       headers: { Accept: 'application/json' },
       signal: AbortSignal.timeout(8_000),
     });
-    if (!response.ok) return fallback;
+    if (!response.ok) return [];
 
     const rawData: unknown = await response.json().catch(() => null);
     const parsed = yahooChartResponseSchema.safeParse(rawData);
     const result = parsed.success ? parsed.data.chart.result?.[0] : null;
     const series = result?.indicators.quote[0];
-    if (!result || !series) return fallback;
+    if (!result || !series) return [];
 
     const points = result.timestamp.flatMap((timestamp, index): MarketHistoryPoint[] => {
       const close = valueAt(series.close, index);
@@ -375,8 +370,8 @@ export async function fetchYahooFinanceHistory(
       }];
     });
 
-    return points.length > 0 ? points : fallback;
+    return points;
   } catch {
-    return fallback;
+    return [];
   }
 }

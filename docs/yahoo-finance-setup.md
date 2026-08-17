@@ -2,6 +2,8 @@
 
 ArthaBench includes an experimental, server-side Yahoo Finance chart adapter. It does not require an API key.
 
+For production, the recommended configuration is the [hybrid Yahoo → Twelve Data provider chain](hybrid-market-data-setup.md), rather than Yahoo alone.
+
 ## Enable it on Vercel
 
 1. Open the [ArthaBench environment-variable settings](https://vercel.com/e25b002702-3723s-projects/artha-bench-pro/settings/environment-variables).

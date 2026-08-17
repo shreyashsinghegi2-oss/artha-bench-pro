@@ -13,7 +13,7 @@ export async function getMarketQuote(symbol: string, assetType = 'equity') {
 export async function searchMarketQuotes(query: string, assetType = 'all') {
   const apiKey = process.env.MARKET_DATA_API_KEY;
   const provider = (process.env.MARKET_DATA_PROVIDER || 'twelvedata').trim().toLowerCase();
-  const providerNeedsApiKey = !['yahoo', 'yahoo-finance', 'yahoofinance'].includes(provider);
+  const providerNeedsApiKey = !['hybrid', 'yahoo', 'yahoo-finance', 'yahoofinance'].includes(provider);
 
   if (providerNeedsApiKey && (!apiKey || apiKey.trim() === '')) {
     const q = query.toLowerCase();

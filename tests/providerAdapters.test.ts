@@ -28,6 +28,8 @@ const trackedEnvironmentKeys = [
   'BUSINESS_NEWS_API_KEY',
   'BUSINESS_NEWS_BASE_URL',
   'MARKET_DATA_PROVIDER',
+  'MARKET_DATA_PRIMARY_PROVIDER',
+  'MARKET_DATA_FALLBACK_PROVIDER',
   'MARKET_DATA_API_KEY',
   'MARKET_DATA_BASE_URL',
   'YAHOO_FINANCE_BASE_URL',
@@ -457,6 +459,147 @@ describe('Yahoo Finance provider adapter', () => {
       freshness: 'demo',
       providerName: 'Demo Fixture Provider',
     });
+  });
+});
+
+describe('Hybrid market-data routing', () => {
+  it('uses a usable Yahoo primary quote without spending a Twelve Data request', async () => {
+    process.env.MARKET_DATA_PROVIDER = 'hybrid';
+    process.env.MARKET_DATA_PRIMARY_PROVIDER = 'yahoo';
+    process.env.MARKET_DATA_FALLBACK_PROVIDER = 'twelvedata';
+    process.env.MARKET_DATA_API_KEY = 'twelve-secret';
+    const now = Math.floor(Date.now() / 1000);
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          chart: {
+            result: [{
+              meta: {
+                currency: 'INR',
+                symbol: 'SBIN.NS',
+                exchangeName: 'NSI',
+                instrumentType: 'EQUITY',
+                regularMarketTime: now - 30,
+                regularMarketPrice: 812.65,
+                previousClose: 806.25,
+                exchangeDataDelayedBy: 0,
+                shortName: 'State Bank of India',
+                currentTradingPeriod: {
+                  regular: { start: now - 3600, end: now + 3600 },
+                },
+              },
+              timestamp: [now - 30],
+              indicators: {
+                quote: [{
+                  open: [806.4],
+                  high: [817.2],
+                  low: [803.9],
+                  close: [812.65],
+                  volume: [12600000],
+                }],
+              },
+            }],
+            error: null,
+          },
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } },
+      ),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await fetchQuoteFromProvider('SBIN:NSE');
+
+    expect(result.status).toBe('connected');
+    expect(result.quote.providerName).toBe('Yahoo Finance (Experimental)');
+    expect(result.message).toContain('Hybrid primary Yahoo Finance');
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('fails over from a rate-limited Yahoo request to Twelve Data', async () => {
+    process.env.MARKET_DATA_PROVIDER = 'hybrid';
+    process.env.MARKET_DATA_PRIMARY_PROVIDER = 'yahoo';
+    process.env.MARKET_DATA_FALLBACK_PROVIDER = 'twelvedata';
+    process.env.MARKET_DATA_API_KEY = 'twelve-secret';
+    process.env.MARKET_DATA_BASE_URL = 'https://api.twelvedata.com/quote';
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(new Response('Too Many Requests', { status: 429 }))
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            symbol: 'SBIN',
+            name: 'State Bank of India',
+            exchange: 'NSE',
+            currency: 'INR',
+            datetime: '2026-08-17',
+            open: '806.40',
+            high: '817.20',
+            low: '803.90',
+            close: '812.65',
+            previous_close: '806.25',
+            change: '6.40',
+            percent_change: '0.79',
+            volume: '12600000',
+          }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } },
+        ),
+      );
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await fetchQuoteFromProvider('SBIN:NSE');
+
+    expect(result.status).toBe('connected');
+    expect(result.quote).toMatchObject({
+      symbol: 'SBIN:NSE',
+      providerName: 'Twelve Data',
+      freshness: 'end_of_day',
+    });
+    expect(result.message).toContain('Hybrid failover used Twelve Data');
+    expect(result.message).toContain('Yahoo Finance returned rate_limited');
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    const fallbackUrl = new URL(String(fetchMock.mock.calls[1][0]));
+    expect(fallbackUrl.pathname).toBe('/quote');
+    expect(fallbackUrl.searchParams.get('symbol')).toBe('SBIN:NSE');
+  });
+
+  it('uses Twelve Data history when the Yahoo health probe is rate-limited', async () => {
+    process.env.MARKET_DATA_PROVIDER = 'hybrid';
+    process.env.MARKET_DATA_PRIMARY_PROVIDER = 'yahoo';
+    process.env.MARKET_DATA_FALLBACK_PROVIDER = 'twelvedata';
+    process.env.MARKET_DATA_API_KEY = 'twelve-secret';
+    process.env.MARKET_DATA_BASE_URL = 'https://api.twelvedata.com/quote';
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(new Response('Too Many Requests', { status: 429 }))
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            values: [{
+              datetime: '2026-08-17',
+              open: '806.40',
+              high: '817.20',
+              low: '803.90',
+              close: '812.65',
+              volume: '12600000',
+            }],
+          }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } },
+        ),
+      );
+    vi.stubGlobal('fetch', fetchMock);
+
+    const points = await fetchHistoryFromProvider('SBIN:NSE', '1m');
+
+    expect(points).toEqual([{
+      date: '2026-08-17',
+      price: 812.65,
+      open: 806.4,
+      high: 817.2,
+      low: 803.9,
+      close: 812.65,
+      volume: 12600000,
+    }]);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    const fallbackUrl = new URL(String(fetchMock.mock.calls[1][0]));
+    expect(fallbackUrl.pathname).toBe('/time_series');
   });
 });
 

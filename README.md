@@ -23,6 +23,8 @@ Never prefix provider secrets with `VITE_`, commit `.env` files, or expose value
 
 For the experimental Yahoo adapter, see [Yahoo Finance setup](docs/yahoo-finance-setup.md). Yahoo quote freshness is derived conservatively from the returned market timestamp, trading session, and delay metadata.
 
+For the recommended sequential Yahoo → Twelve Data configuration, see [Hybrid market-data setup](docs/hybrid-market-data-setup.md). The fallback provider is called only when the primary quote is unusable, which preserves Twelve Data credits and reduces unnecessary provider traffic.
+
 ## Local verification
 
 ```bash

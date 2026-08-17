@@ -64,9 +64,24 @@ export interface MarketQuoteProviderResult {
 function getConfiguration() {
   return {
     provider: (process.env.MARKET_DATA_PROVIDER || 'twelvedata').trim().toLowerCase(),
+    primaryProvider: (process.env.MARKET_DATA_PRIMARY_PROVIDER || 'yahoo').trim().toLowerCase(),
+    fallbackProvider: (process.env.MARKET_DATA_FALLBACK_PROVIDER || 'twelvedata').trim().toLowerCase(),
     apiKey: process.env.MARKET_DATA_API_KEY?.trim() || '',
     baseUrl: process.env.MARKET_DATA_BASE_URL?.trim() || DEFAULT_TWELVE_DATA_QUOTE_URL,
   };
+}
+
+type MarketProviderConfiguration = ReturnType<typeof getConfiguration>;
+type NamedMarketProvider = 'yahoo' | 'twelvedata';
+
+function normalizeProviderName(provider: string): NamedMarketProvider | null {
+  if (isYahooFinanceProvider(provider)) return 'yahoo';
+  if (provider === 'twelvedata' || provider === 'twelve-data') return 'twelvedata';
+  return null;
+}
+
+function providerLabel(provider: NamedMarketProvider) {
+  return provider === 'yahoo' ? 'Yahoo Finance' : 'Twelve Data';
 }
 
 function toNumber(value: unknown): number | null {
@@ -209,32 +224,20 @@ function safeSymbol(symbol: string) {
   return normalized;
 }
 
-export async function fetchQuoteFromProvider(
+async function fetchTwelveDataQuote(
   symbol: string,
-  assetType = 'equity',
+  assetType: string,
+  configuration: MarketProviderConfiguration,
 ): Promise<MarketQuoteProviderResult> {
-  const configuration = getConfiguration();
-  if (isYahooFinanceProvider(configuration.provider)) {
-    return fetchYahooFinanceQuote(symbol, assetType);
-  }
-
   const normalizedSymbol = normalizeTwelveDataSymbol(symbol);
   const fallbackQuote = buildFallbackQuote(normalizedSymbol.providerSymbol, assetType);
-  const { provider, apiKey, baseUrl } = configuration;
+  const { apiKey, baseUrl } = configuration;
 
   if (!apiKey) {
     return {
       quote: fallbackQuote,
       status: 'not_configured',
       message: 'Twelve Data API key is not configured. Displaying a labelled demo quote.',
-    };
-  }
-
-  if (provider !== 'twelvedata' && provider !== 'twelve-data') {
-    return {
-      quote: fallbackQuote,
-      status: 'error',
-      message: 'Unsupported market-data provider configuration.',
     };
   }
 
@@ -335,6 +338,89 @@ export async function fetchQuoteFromProvider(
   }
 }
 
+function isUsableProviderQuote(result: MarketQuoteProviderResult) {
+  return result.status === 'connected' &&
+    result.quote.freshness !== 'demo' &&
+    result.quote.freshness !== 'stale' &&
+    Number.isFinite(result.quote.price);
+}
+
+async function fetchQuoteForNamedProvider(
+  provider: NamedMarketProvider,
+  symbol: string,
+  assetType: string,
+  configuration: MarketProviderConfiguration,
+) {
+  return provider === 'yahoo'
+    ? fetchYahooFinanceQuote(symbol, assetType)
+    : fetchTwelveDataQuote(symbol, assetType, configuration);
+}
+
+async function fetchHybridQuote(
+  symbol: string,
+  assetType: string,
+  configuration: MarketProviderConfiguration,
+): Promise<MarketQuoteProviderResult> {
+  const primary = normalizeProviderName(configuration.primaryProvider) || 'yahoo';
+  const fallback = normalizeProviderName(configuration.fallbackProvider) || 'twelvedata';
+  const primaryResult = await fetchQuoteForNamedProvider(
+    primary,
+    symbol,
+    assetType,
+    configuration,
+  );
+
+  if (isUsableProviderQuote(primaryResult) || primary === fallback) {
+    return {
+      ...primaryResult,
+      message: `Hybrid primary ${providerLabel(primary)}: ${primaryResult.message || primaryResult.status}.`,
+    };
+  }
+
+  const fallbackResult = await fetchQuoteForNamedProvider(
+    fallback,
+    symbol,
+    assetType,
+    configuration,
+  );
+  if (isUsableProviderQuote(fallbackResult)) {
+    return {
+      ...fallbackResult,
+      message: `Hybrid failover used ${providerLabel(fallback)} because ${providerLabel(primary)} returned ${primaryResult.status}. ${fallbackResult.message || ''}`.trim(),
+    };
+  }
+
+  return {
+    ...fallbackResult,
+    message: `Hybrid providers unavailable: ${providerLabel(primary)} returned ${primaryResult.status}; ${providerLabel(fallback)} returned ${fallbackResult.status}.`,
+  };
+}
+
+export async function fetchQuoteFromProvider(
+  symbol: string,
+  assetType = 'equity',
+): Promise<MarketQuoteProviderResult> {
+  const configuration = getConfiguration();
+  if (configuration.provider === 'hybrid') {
+    return fetchHybridQuote(symbol, assetType, configuration);
+  }
+
+  const provider = normalizeProviderName(configuration.provider);
+  if (provider) {
+    return fetchQuoteForNamedProvider(provider, symbol, assetType, configuration);
+  }
+
+  const fallbackQuote = buildFallbackQuote(
+    normalizeTwelveDataSymbol(symbol).providerSymbol,
+    assetType,
+  );
+  return {
+    quote: fallbackQuote,
+    status: 'error',
+    message: 'Unsupported market-data provider configuration.',
+  };
+}
+
 function historyFallback(symbol: string): MarketHistoryPoint[] {
   const normalizedSymbol = symbol.toUpperCase();
   if (DEMO_MARKET_HISTORY[normalizedSymbol]) {
@@ -377,19 +463,15 @@ function rangeConfiguration(range: string, indiaEndOfDay = false) {
   return configurations[range] || configurations['1m'];
 }
 
-export async function fetchHistoryFromProvider(
+async function fetchTwelveDataHistory(
   symbol: string,
-  range = '1m',
+  range: string,
+  configuration: MarketProviderConfiguration,
 ): Promise<MarketHistoryPoint[]> {
-  const configuration = getConfiguration();
-  if (isYahooFinanceProvider(configuration.provider)) {
-    return fetchYahooFinanceHistory(symbol, range);
-  }
-
   const normalizedSymbol = normalizeTwelveDataSymbol(symbol);
   const fallback = historyFallback(normalizedSymbol.providerSymbol);
-  const { provider, apiKey, baseUrl } = configuration;
-  if (!apiKey || (provider !== 'twelvedata' && provider !== 'twelve-data')) return fallback;
+  const { apiKey, baseUrl } = configuration;
+  if (!apiKey) return fallback;
 
   try {
     const url = buildProviderUrl(baseUrl, 'time_series');
@@ -431,16 +513,69 @@ export async function fetchHistoryFromProvider(
   }
 }
 
+async function fetchHistoryForNamedProvider(
+  provider: NamedMarketProvider,
+  symbol: string,
+  range: string,
+  configuration: MarketProviderConfiguration,
+) {
+  return provider === 'yahoo'
+    ? fetchYahooFinanceHistory(symbol, range)
+    : fetchTwelveDataHistory(symbol, range, configuration);
+}
+
+export async function fetchHistoryFromProvider(
+  symbol: string,
+  range = '1m',
+): Promise<MarketHistoryPoint[]> {
+  const configuration = getConfiguration();
+  if (configuration.provider !== 'hybrid') {
+    const provider = normalizeProviderName(configuration.provider);
+    return provider
+      ? fetchHistoryForNamedProvider(provider, symbol, range, configuration)
+      : [];
+  }
+
+  const primary = normalizeProviderName(configuration.primaryProvider) || 'yahoo';
+  const fallback = normalizeProviderName(configuration.fallbackProvider) || 'twelvedata';
+  const primaryQuote = await fetchQuoteForNamedProvider(
+    primary,
+    symbol,
+    'equity',
+    configuration,
+  );
+
+  if (isUsableProviderQuote(primaryQuote)) {
+    const primaryPoints = await fetchHistoryForNamedProvider(
+      primary,
+      symbol,
+      range,
+      configuration,
+    );
+    if (primaryPoints.length > 0 || primary === fallback) return primaryPoints;
+  }
+
+  return fetchHistoryForNamedProvider(fallback, symbol, range, configuration);
+}
+
 export async function checkMarketProviderDiagnostic(): Promise<ProviderDiagnostic> {
   const startedAt = Date.now();
-  const isYahoo = isYahooFinanceProvider(getConfiguration().provider);
+  const configuration = getConfiguration();
+  const isHybrid = configuration.provider === 'hybrid';
+  const isYahoo = isYahooFinanceProvider(configuration.provider);
   const result = await fetchQuoteFromProvider('INFY:NSE');
   return {
     id: 'market-data',
-    name: isYahoo ? 'Yahoo Finance (Experimental)' : 'Twelve Data India',
-    role: isYahoo
-      ? 'Timestamped market quotes with conservative freshness labelling'
-      : 'Global market data with conservatively labelled India EOD coverage',
+    name: isHybrid
+      ? 'Hybrid Market Data'
+      : isYahoo
+        ? 'Yahoo Finance (Experimental)'
+        : 'Twelve Data India',
+    role: isHybrid
+      ? `${providerLabel(normalizeProviderName(configuration.primaryProvider) || 'yahoo')} primary with ${providerLabel(normalizeProviderName(configuration.fallbackProvider) || 'twelvedata')} fallback`
+      : isYahoo
+        ? 'Timestamped market quotes with conservative freshness labelling'
+        : 'Global market data with conservatively labelled India EOD coverage',
     status: result.status,
     lastChecked: new Date().toISOString(),
     latencyMs: Date.now() - startedAt,

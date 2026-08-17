@@ -53,48 +53,48 @@ export const ScenariosView: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 space-y-8">
-      <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 space-y-4">
+      <div className="bg-surface border border-line rounded-3xl p-6 sm:p-8 space-y-4">
         <div className="flex items-center gap-3">
-          <div className="p-3 bg-emerald-950 border border-emerald-800 rounded-2xl text-emerald-400">
+          <div className="p-3 bg-success-soft border border-success-fill rounded-2xl text-success">
             <BookMarked className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-slate-100">Financial Scenario & Calculation Studio</h1>
-            <p className="text-xs text-slate-400">
+            <h1 className="text-2xl font-bold text-ink">Financial Scenario & Calculation Studio</h1>
+            <p className="text-xs text-secondary">
               Run deterministic financial calculations verified by the Decimal.js core engine.
             </p>
           </div>
         </div>
 
         {/* Calculator Tabs */}
-        <div className="flex flex-wrap gap-2 pt-2 border-b border-slate-800 pb-4">
+        <div className="flex flex-wrap gap-2 pt-2 border-b border-line pb-4">
           <button
             onClick={() => { setActiveTab('compound'); setCalcResult(null); setError(null); }}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold ${activeTab === 'compound' ? 'bg-emerald-600 text-slate-950' : 'bg-slate-800 text-slate-300'}`}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold ${activeTab === 'compound' ? 'bg-interactive-soft text-interactive' : 'bg-hover text-secondary'}`}
           >
             Compound Interest
           </button>
           <button
             onClick={() => { setActiveTab('quick-ratio'); setCalcResult(null); setError(null); }}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold ${activeTab === 'quick-ratio' ? 'bg-emerald-600 text-slate-950' : 'bg-slate-800 text-slate-300'}`}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold ${activeTab === 'quick-ratio' ? 'bg-interactive-soft text-interactive' : 'bg-hover text-secondary'}`}
           >
             Quick Ratio
           </button>
           <button
             onClick={() => { setActiveTab('cagr'); setCalcResult(null); setError(null); }}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold ${activeTab === 'cagr' ? 'bg-emerald-600 text-slate-950' : 'bg-slate-800 text-slate-300'}`}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold ${activeTab === 'cagr' ? 'bg-interactive-soft text-interactive' : 'bg-hover text-secondary'}`}
           >
             CAGR
           </button>
           <button
             onClick={() => { setActiveTab('break-even'); setCalcResult(null); setError(null); }}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold ${activeTab === 'break-even' ? 'bg-emerald-600 text-slate-950' : 'bg-slate-800 text-slate-300'}`}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold ${activeTab === 'break-even' ? 'bg-interactive-soft text-interactive' : 'bg-hover text-secondary'}`}
           >
             Break-Even Point
           </button>
           <button
             onClick={() => { setActiveTab('dti'); setCalcResult(null); setError(null); }}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold ${activeTab === 'dti' ? 'bg-emerald-600 text-slate-950' : 'bg-slate-800 text-slate-300'}`}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold ${activeTab === 'dti' ? 'bg-interactive-soft text-interactive' : 'bg-hover text-secondary'}`}
           >
             Debt-to-Income (DTI)
           </button>
@@ -105,20 +105,20 @@ export const ScenariosView: React.FC = () => {
           {activeTab === 'compound' && (
             <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
               <div>
-                <label className="text-[11px] text-slate-400 block mb-1">Principal ($)</label>
-                <input type="number" value={principal} onChange={(e) => setPrincipal(Number(e.target.value))} className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-xs text-slate-200" />
+                <label className="text-[11px] text-secondary block mb-1">Principal ($)</label>
+                <input type="number" value={principal} onChange={(e) => setPrincipal(Number(e.target.value))} className="w-full bg-surface border border-line rounded-lg p-2 text-xs text-ink" />
               </div>
               <div>
-                <label className="text-[11px] text-slate-400 block mb-1">Annual Interest Rate (%)</label>
-                <input type="number" value={rate} onChange={(e) => setRate(Number(e.target.value))} className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-xs text-slate-200" />
+                <label className="text-[11px] text-secondary block mb-1">Annual Interest Rate (%)</label>
+                <input type="number" value={rate} onChange={(e) => setRate(Number(e.target.value))} className="w-full bg-surface border border-line rounded-lg p-2 text-xs text-ink" />
               </div>
               <div>
-                <label className="text-[11px] text-slate-400 block mb-1">Time Horizon (Years)</label>
-                <input type="number" value={years} onChange={(e) => setYears(Number(e.target.value))} className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-xs text-slate-200" />
+                <label className="text-[11px] text-secondary block mb-1">Time Horizon (Years)</label>
+                <input type="number" value={years} onChange={(e) => setYears(Number(e.target.value))} className="w-full bg-surface border border-line rounded-lg p-2 text-xs text-ink" />
               </div>
               <div>
-                <label className="text-[11px] text-slate-400 block mb-1">Monthly Deposit ($)</label>
-                <input type="number" value={monthlyContribution} onChange={(e) => setMonthlyContribution(Number(e.target.value))} className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-xs text-slate-200" />
+                <label className="text-[11px] text-secondary block mb-1">Monthly Deposit ($)</label>
+                <input type="number" value={monthlyContribution} onChange={(e) => setMonthlyContribution(Number(e.target.value))} className="w-full bg-surface border border-line rounded-lg p-2 text-xs text-ink" />
               </div>
             </div>
           )}
@@ -126,20 +126,20 @@ export const ScenariosView: React.FC = () => {
           {activeTab === 'quick-ratio' && (
             <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
               <div>
-                <label className="text-[11px] text-slate-400 block mb-1">Cash ($)</label>
-                <input type="number" value={cash} onChange={(e) => setCash(Number(e.target.value))} className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-xs text-slate-200" />
+                <label className="text-[11px] text-secondary block mb-1">Cash ($)</label>
+                <input type="number" value={cash} onChange={(e) => setCash(Number(e.target.value))} className="w-full bg-surface border border-line rounded-lg p-2 text-xs text-ink" />
               </div>
               <div>
-                <label className="text-[11px] text-slate-400 block mb-1">Marketable Securities ($)</label>
-                <input type="number" value={securities} onChange={(e) => setSecurities(Number(e.target.value))} className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-xs text-slate-200" />
+                <label className="text-[11px] text-secondary block mb-1">Marketable Securities ($)</label>
+                <input type="number" value={securities} onChange={(e) => setSecurities(Number(e.target.value))} className="w-full bg-surface border border-line rounded-lg p-2 text-xs text-ink" />
               </div>
               <div>
-                <label className="text-[11px] text-slate-400 block mb-1">Receivables ($)</label>
-                <input type="number" value={receivables} onChange={(e) => setReceivables(Number(e.target.value))} className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-xs text-slate-200" />
+                <label className="text-[11px] text-secondary block mb-1">Receivables ($)</label>
+                <input type="number" value={receivables} onChange={(e) => setReceivables(Number(e.target.value))} className="w-full bg-surface border border-line rounded-lg p-2 text-xs text-ink" />
               </div>
               <div>
-                <label className="text-[11px] text-slate-400 block mb-1">Current Liabilities ($)</label>
-                <input type="number" value={liabilities} onChange={(e) => setLiabilities(Number(e.target.value))} className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-xs text-slate-200" />
+                <label className="text-[11px] text-secondary block mb-1">Current Liabilities ($)</label>
+                <input type="number" value={liabilities} onChange={(e) => setLiabilities(Number(e.target.value))} className="w-full bg-surface border border-line rounded-lg p-2 text-xs text-ink" />
               </div>
             </div>
           )}
@@ -147,16 +147,16 @@ export const ScenariosView: React.FC = () => {
           {activeTab === 'cagr' && (
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
-                <label className="text-[11px] text-slate-400 block mb-1">Initial Value ($)</label>
-                <input type="number" value={initialValue} onChange={(e) => setInitialValue(Number(e.target.value))} className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-xs text-slate-200" />
+                <label className="text-[11px] text-secondary block mb-1">Initial Value ($)</label>
+                <input type="number" value={initialValue} onChange={(e) => setInitialValue(Number(e.target.value))} className="w-full bg-surface border border-line rounded-lg p-2 text-xs text-ink" />
               </div>
               <div>
-                <label className="text-[11px] text-slate-400 block mb-1">Final Value ($)</label>
-                <input type="number" value={finalValue} onChange={(e) => setFinalValue(Number(e.target.value))} className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-xs text-slate-200" />
+                <label className="text-[11px] text-secondary block mb-1">Final Value ($)</label>
+                <input type="number" value={finalValue} onChange={(e) => setFinalValue(Number(e.target.value))} className="w-full bg-surface border border-line rounded-lg p-2 text-xs text-ink" />
               </div>
               <div>
-                <label className="text-[11px] text-slate-400 block mb-1">Years</label>
-                <input type="number" value={cagrYears} onChange={(e) => setCagrYears(Number(e.target.value))} className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-xs text-slate-200" />
+                <label className="text-[11px] text-secondary block mb-1">Years</label>
+                <input type="number" value={cagrYears} onChange={(e) => setCagrYears(Number(e.target.value))} className="w-full bg-surface border border-line rounded-lg p-2 text-xs text-ink" />
               </div>
             </div>
           )}
@@ -164,16 +164,16 @@ export const ScenariosView: React.FC = () => {
           {activeTab === 'break-even' && (
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
-                <label className="text-[11px] text-slate-400 block mb-1">Total Fixed Costs ($)</label>
-                <input type="number" value={fixedCosts} onChange={(e) => setFixedCosts(Number(e.target.value))} className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-xs text-slate-200" />
+                <label className="text-[11px] text-secondary block mb-1">Total Fixed Costs ($)</label>
+                <input type="number" value={fixedCosts} onChange={(e) => setFixedCosts(Number(e.target.value))} className="w-full bg-surface border border-line rounded-lg p-2 text-xs text-ink" />
               </div>
               <div>
-                <label className="text-[11px] text-slate-400 block mb-1">Price Per Unit ($)</label>
-                <input type="number" value={pricePerUnit} onChange={(e) => setPricePerUnit(Number(e.target.value))} className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-xs text-slate-200" />
+                <label className="text-[11px] text-secondary block mb-1">Price Per Unit ($)</label>
+                <input type="number" value={pricePerUnit} onChange={(e) => setPricePerUnit(Number(e.target.value))} className="w-full bg-surface border border-line rounded-lg p-2 text-xs text-ink" />
               </div>
               <div>
-                <label className="text-[11px] text-slate-400 block mb-1">Variable Cost Per Unit ($)</label>
-                <input type="number" value={varCostPerUnit} onChange={(e) => setVarCostPerUnit(Number(e.target.value))} className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-xs text-slate-200" />
+                <label className="text-[11px] text-secondary block mb-1">Variable Cost Per Unit ($)</label>
+                <input type="number" value={varCostPerUnit} onChange={(e) => setVarCostPerUnit(Number(e.target.value))} className="w-full bg-surface border border-line rounded-lg p-2 text-xs text-ink" />
               </div>
             </div>
           )}
@@ -181,12 +181,12 @@ export const ScenariosView: React.FC = () => {
           {activeTab === 'dti' && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="text-[11px] text-slate-400 block mb-1">Monthly Gross Income ($)</label>
-                <input type="number" value={monthlyIncome} onChange={(e) => setMonthlyIncome(Number(e.target.value))} className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-xs text-slate-200" />
+                <label className="text-[11px] text-secondary block mb-1">Monthly Gross Income ($)</label>
+                <input type="number" value={monthlyIncome} onChange={(e) => setMonthlyIncome(Number(e.target.value))} className="w-full bg-surface border border-line rounded-lg p-2 text-xs text-ink" />
               </div>
               <div>
-                <label className="text-[11px] text-slate-400 block mb-1">Monthly Debt Payments ($)</label>
-                <input type="number" value={monthlyDebt} onChange={(e) => setMonthlyDebt(Number(e.target.value))} className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-xs text-slate-200" />
+                <label className="text-[11px] text-secondary block mb-1">Monthly Debt Payments ($)</label>
+                <input type="number" value={monthlyDebt} onChange={(e) => setMonthlyDebt(Number(e.target.value))} className="w-full bg-surface border border-line rounded-lg p-2 text-xs text-ink" />
               </div>
             </div>
           )}
@@ -200,7 +200,7 @@ export const ScenariosView: React.FC = () => {
               if (activeTab === 'dti') runCalculator('dti', { monthlyGrossIncome: monthlyIncome, monthlyDebtPayments: monthlyDebt });
             }}
             disabled={loading}
-            className="px-6 py-2 bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-bold text-xs rounded-xl flex items-center gap-2"
+            className="px-6 py-2 bg-brand hover:bg-brand-hover text-brand-foreground hover:text-white font-bold text-xs rounded-xl flex items-center gap-2 transition-colors focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 focus:ring-offset-canvas"
           >
             <Calculator className="w-4 h-4" />
             <span>Calculate Deterministic Result</span>
@@ -209,19 +209,19 @@ export const ScenariosView: React.FC = () => {
       </div>
 
       {error && (
-        <div className="p-4 bg-rose-950/80 border border-rose-800 rounded-2xl text-xs text-rose-300 flex items-center gap-2">
-          <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+        <div className="p-4 bg-danger-soft/80 border border-danger rounded-2xl text-xs text-danger flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 text-danger shrink-0" />
           <span>Validation Error: {error}</span>
         </div>
       )}
 
       {calcResult && (
-        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-4">
-          <h3 className="text-sm font-bold text-slate-100 flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+        <div className="bg-surface border border-line rounded-3xl p-6 space-y-4">
+          <h3 className="text-sm font-bold text-ink flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-success" />
             <span>Deterministic Engine Calculation Output</span>
           </h3>
-          <pre className="p-4 bg-slate-950 border border-slate-800 rounded-2xl text-xs font-mono text-emerald-400 overflow-x-auto">
+          <pre className="p-4 bg-surface border border-line rounded-2xl text-xs font-mono text-success overflow-x-auto">
             {JSON.stringify(calcResult, null, 2)}
           </pre>
         </div>

@@ -175,7 +175,7 @@ export const CompanyIntelligencePanel: React.FC<CompanyIntelligencePanelProps> =
 
   if (loading) {
     return (
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl min-h-52 flex items-center justify-center text-xs text-slate-400">
+      <div className="bg-surface border border-line rounded-2xl p-6 shadow-sm min-h-52 flex items-center justify-center text-xs text-secondary">
         <RefreshCw className="w-4 h-4 animate-spin mr-2" /> Loading Finnhub company intelligence…
       </div>
     );
@@ -185,26 +185,26 @@ export const CompanyIntelligencePanel: React.FC<CompanyIntelligencePanelProps> =
 
   if (data.status === 'not_configured') {
     return (
-      <div className="bg-gradient-to-br from-cyan-950/35 via-slate-900 to-slate-900 border border-cyan-800/50 rounded-2xl p-6 shadow-xl space-y-4">
+      <div className="bg-surface border border-line rounded-2xl p-6 shadow-sm space-y-4">
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-start gap-3">
-            <div className="p-2.5 rounded-xl bg-cyan-950 border border-cyan-800 text-cyan-400">
+            <div className="p-2.5 rounded-xl bg-interactive-soft border border-interactive text-interactive">
               <KeyRound className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-sm font-bold text-slate-100">Finnhub Company Intelligence Is Ready</h2>
-              <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+              <h2 className="text-sm font-bold text-ink">Finnhub Company Intelligence Is Ready</h2>
+              <p className="text-xs text-secondary mt-1 leading-relaxed">
                 Add the Finnhub credential in Vercel to activate company profiles, fundamentals, earnings surprises, and analyst trends.
               </p>
             </div>
           </div>
-          <span className="px-2.5 py-1 rounded-full bg-amber-950/60 border border-amber-800/60 text-[10px] font-bold text-amber-300 whitespace-nowrap">
+          <span className="px-2.5 py-1 rounded-full bg-warning-soft/60 border border-warning-fill/60 text-[10px] font-bold text-warning whitespace-nowrap">
             KEY REQUIRED
           </span>
         </div>
-        <div className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-3">
-          <p className="text-[10px] text-slate-500 uppercase tracking-wider">Vercel environment-variable name</p>
-          <code className="text-xs text-cyan-300 font-mono mt-1 block">FINNHUB_API_KEY</code>
+        <div className="bg-surface border border-line rounded-xl px-4 py-3">
+          <p className="text-[10px] text-secondary uppercase tracking-wider">Vercel environment-variable name</p>
+          <code className="text-xs text-interactive font-mono mt-1 block">FINNHUB_API_KEY</code>
         </div>
       </div>
     );
@@ -212,7 +212,7 @@ export const CompanyIntelligencePanel: React.FC<CompanyIntelligencePanelProps> =
 
   if (data.status !== 'connected') {
     return (
-      <div className="bg-rose-950/20 border border-rose-900/60 rounded-2xl p-5 text-xs text-rose-300">
+      <div className="bg-danger-soft/20 border border-danger/60 rounded-2xl p-5 text-xs text-danger">
         <span className="font-bold">Finnhub:</span> {data.message}
       </div>
     );
@@ -236,34 +236,34 @@ export const CompanyIntelligencePanel: React.FC<CompanyIntelligencePanelProps> =
   ];
 
   return (
-    <div className="bg-slate-900 border border-cyan-900/50 rounded-2xl p-6 shadow-xl space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-5">
+    <div className="bg-subtle border border-interactive/50 rounded-2xl p-6 shadow-sm space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-line pb-5">
         <div className="flex items-center gap-3 min-w-0">
           {logoUrl ? (
-            <img src={logoUrl} alt="" className="w-11 h-11 rounded-xl bg-white object-contain p-1" />
+            <img src={logoUrl} alt="" className="w-11 h-11 rounded-xl bg-surface object-contain p-1" />
           ) : (
-            <div className="w-11 h-11 rounded-xl bg-cyan-950 border border-cyan-800 flex items-center justify-center">
-              <Building2 className="w-5 h-5 text-cyan-400" />
+            <div className="w-11 h-11 rounded-xl bg-interactive-soft border border-interactive flex items-center justify-center">
+              <Building2 className="w-5 h-5 text-interactive" />
             </div>
           )}
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <h2 className="text-base font-bold text-slate-100 truncate">
+              <h2 className="text-base font-bold text-ink truncate">
                 {profile?.name || data.symbol}
               </h2>
-              <span className="text-[10px] font-mono text-cyan-300 bg-cyan-950 px-2 py-0.5 rounded">
+              <span className="text-[10px] font-mono text-interactive bg-interactive-soft px-2 py-0.5 rounded">
                 {data.symbol}
               </span>
             </div>
-            <p className="text-[11px] text-slate-400 mt-1">
+            <p className="text-[11px] text-secondary mt-1">
               {[profile?.exchange, profile?.industry, profile?.country].filter(Boolean).join(' · ') || 'Company intelligence'}
             </p>
           </div>
         </div>
         <div className="flex items-center gap-3">
           <div className="text-right">
-            <p className="text-[10px] text-slate-500">Market capitalization</p>
-            <p className="text-sm font-bold text-emerald-400">
+            <p className="text-[10px] text-secondary">Market capitalization</p>
+            <p className="text-sm font-bold text-success">
               {formatMarketCap(profile?.marketCapitalization, profile?.currency)}
             </p>
           </div>
@@ -272,7 +272,7 @@ export const CompanyIntelligencePanel: React.FC<CompanyIntelligencePanelProps> =
               href={companyUrl}
               target="_blank"
               rel="noreferrer"
-              className="p-2 rounded-lg bg-slate-800 text-slate-300 hover:text-cyan-300"
+              className="p-2 rounded-lg bg-hover text-secondary hover:text-interactive"
               aria-label="Open company website"
             >
               <ExternalLink className="w-4 h-4" />
@@ -284,54 +284,54 @@ export const CompanyIntelligencePanel: React.FC<CompanyIntelligencePanelProps> =
       <section className="space-y-4">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <BarChart3 className="w-4 h-4 text-cyan-400" />
-            <h3 className="text-xs font-bold text-slate-200">Fundamental Metrics</h3>
+            <BarChart3 className="w-4 h-4 text-interactive" />
+            <h3 className="text-xs font-bold text-ink">Fundamental Metrics</h3>
           </div>
-          <span className="text-[9px] text-slate-500 font-mono">FINNHUB NORMALIZED DATA</span>
+          <span className="text-[9px] text-secondary font-mono">FINNHUB NORMALIZED DATA</span>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3">
           {metricCards.map(([label, value]) => (
-            <div key={label} className="bg-slate-950 border border-slate-800 rounded-xl p-3.5 min-h-20">
-              <p className="text-[10px] text-slate-500">{label}</p>
-              <p className="text-base font-extrabold text-slate-100 mt-1.5">{value}</p>
+            <div key={label} className="bg-surface border border-line rounded-xl p-3.5 min-h-20">
+              <p className="text-[10px] text-secondary">{label}</p>
+              <p className="text-base font-extrabold text-ink mt-1.5">{value}</p>
             </div>
           ))}
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-[10px]">
-          <div className="bg-slate-950/70 border border-slate-800 rounded-xl p-3">
-            <p className="text-slate-500">52-week low</p>
-            <p className="text-slate-200 font-bold mt-1">{formatNumber(metrics?.week52Low ?? null)}</p>
+          <div className="bg-surface/70 border border-line rounded-xl p-3">
+            <p className="text-secondary">52-week low</p>
+            <p className="text-ink font-bold mt-1">{formatNumber(metrics?.week52Low ?? null)}</p>
           </div>
-          <div className="bg-slate-950/70 border border-slate-800 rounded-xl p-3">
-            <p className="text-slate-500">52-week high</p>
-            <p className="text-slate-200 font-bold mt-1">{formatNumber(metrics?.week52High ?? null)}</p>
+          <div className="bg-surface/70 border border-line rounded-xl p-3">
+            <p className="text-secondary">52-week high</p>
+            <p className="text-ink font-bold mt-1">{formatNumber(metrics?.week52High ?? null)}</p>
           </div>
-          <div className="bg-slate-950/70 border border-slate-800 rounded-xl p-3">
-            <p className="text-slate-500">IPO date</p>
-            <p className="text-slate-200 font-bold mt-1">{profile?.ipoDate || '—'}</p>
+          <div className="bg-surface/70 border border-line rounded-xl p-3">
+            <p className="text-secondary">IPO date</p>
+            <p className="text-ink font-bold mt-1">{profile?.ipoDate || '—'}</p>
           </div>
-          <div className="bg-slate-950/70 border border-slate-800 rounded-xl p-3">
-            <p className="text-slate-500">Shares outstanding</p>
-            <p className="text-slate-200 font-bold mt-1">{formatNumber(profile?.sharesOutstanding ?? null, 'M')}</p>
+          <div className="bg-surface/70 border border-line rounded-xl p-3">
+            <p className="text-secondary">Shares outstanding</p>
+            <p className="text-ink font-bold mt-1">{formatNumber(profile?.sharesOutstanding ?? null, 'M')}</p>
           </div>
         </div>
       </section>
 
-      <section className="bg-slate-950 border border-slate-800 rounded-2xl p-4 sm:p-5">
+      <section className="bg-surface border border-line rounded-2xl p-4 sm:p-5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
           <div>
             <div className="flex items-center gap-2">
-              <LineChartIcon className="w-4 h-4 text-emerald-400" />
-              <h3 className="text-sm font-bold text-slate-100">Historical Price Trend</h3>
+              <LineChartIcon className="w-4 h-4 text-success" />
+              <h3 className="text-sm font-bold text-ink">Historical Price Trend</h3>
             </div>
-            <p className="text-[10px] text-slate-500 mt-1">Configured market-data provider · Prices may be delayed</p>
+            <p className="text-[10px] text-secondary mt-1">Configured market-data provider · Prices may be delayed</p>
           </div>
-          <div className="flex items-center gap-1 bg-slate-900 border border-slate-800 rounded-xl p-1">
+          <div className="flex items-center gap-1 bg-surface border border-line rounded-xl p-1">
             {['1m', '3m', '6m', '1y'].map((range) => (
               <button
                 key={range}
                 onClick={() => setHistoryRange(range)}
-                className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all ${historyRange === range ? 'bg-emerald-500 text-slate-950' : 'text-slate-400 hover:text-slate-100'}`}
+                className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all ${historyRange === range ? 'bg-interactive-soft text-interactive' : 'text-secondary hover:text-ink'}`}
               >
                 {range}
               </button>
@@ -340,7 +340,7 @@ export const CompanyIntelligencePanel: React.FC<CompanyIntelligencePanelProps> =
         </div>
         <div className="h-[300px] sm:h-[360px]">
           {historyLoading ? (
-            <div className="h-full flex items-center justify-center text-xs text-slate-500">
+            <div className="h-full flex items-center justify-center text-xs text-secondary">
               <RefreshCw className="w-4 h-4 animate-spin mr-2" /> Loading price history…
             </div>
           ) : historyPoints.length > 0 ? (
@@ -348,45 +348,45 @@ export const CompanyIntelligencePanel: React.FC<CompanyIntelligencePanelProps> =
               <AreaChart data={historyPoints} margin={{ top: 10, right: 8, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="companyPriceGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10B981" stopOpacity={0.35} />
-                    <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
+                    <stop offset="5%" stopColor="var(--chart-primary)" stopOpacity={0.18} />
+                    <stop offset="95%" stopColor="var(--chart-primary)" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid stroke="#1E293B" strokeDasharray="3 3" vertical={false} />
+                <CartesianGrid stroke="var(--chart-grid)" strokeDasharray="3 3" vertical={false} />
                 <XAxis
                   dataKey="date"
                   tickFormatter={(value) => String(value).slice(0, 10)}
-                  tick={{ fill: '#64748B', fontSize: 9 }}
-                  stroke="#334155"
+                  tick={{ fill: 'var(--text-secondary)', fontSize: 9 }}
+                  stroke="var(--border-subtle)"
                   minTickGap={38}
                 />
                 <YAxis
                   domain={['auto', 'auto']}
-                  tick={{ fill: '#64748B', fontSize: 9 }}
-                  stroke="#334155"
+                  tick={{ fill: 'var(--text-secondary)', fontSize: 9 }}
+                  stroke="var(--border-subtle)"
                   width={52}
                   tickFormatter={(value) => `$${Number(value).toFixed(0)}`}
                 />
                 <Tooltip
                   formatter={(value) => [`$${Number(value).toFixed(2)}`, 'Price']}
-                  contentStyle={{ background: '#020617', border: '1px solid #334155', borderRadius: 12, fontSize: 11 }}
+                  contentStyle={{ background: 'var(--chart-tooltip)', border: '1px solid var(--border-strong)', borderRadius: 12, color: 'var(--chart-tooltip-foreground)', fontSize: 11 }}
                 />
-                <Area type="monotone" dataKey="price" stroke="#10B981" strokeWidth={2.5} fill="url(#companyPriceGradient)" />
+                <Area type="monotone" dataKey="price" stroke="var(--chart-primary)" strokeWidth={2.5} fill="url(#companyPriceGradient)" />
               </AreaChart>
             </ResponsiveContainer>
           ) : (
-            <div className="h-full flex items-center justify-center text-xs text-slate-500">No price history is available.</div>
+            <div className="h-full flex items-center justify-center text-xs text-secondary">No price history is available.</div>
           )}
         </div>
       </section>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
-        <section className="bg-slate-950 border border-slate-800 rounded-2xl p-4 sm:p-5">
+        <section className="bg-surface border border-line rounded-2xl p-4 sm:p-5">
           <div className="flex items-center gap-2 mb-4">
-            <CalendarCheck2 className="w-4 h-4 text-emerald-400" />
+            <CalendarCheck2 className="w-4 h-4 text-success" />
             <div>
-              <h3 className="text-sm font-bold text-slate-100">Earnings: Actual vs Estimate</h3>
-              <p className="text-[10px] text-slate-500 mt-0.5">Reported earnings per share and consensus estimate</p>
+              <h3 className="text-sm font-bold text-ink">Earnings: Actual vs Estimate</h3>
+              <p className="text-[10px] text-secondary mt-0.5">Reported earnings per share and consensus estimate</p>
             </div>
           </div>
           {earningsChartData.length > 0 ? (
@@ -394,21 +394,21 @@ export const CompanyIntelligencePanel: React.FC<CompanyIntelligencePanelProps> =
               <div className="h-[250px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <RechartsBarChart data={earningsChartData} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
-                    <CartesianGrid stroke="#1E293B" strokeDasharray="3 3" vertical={false} />
-                    <XAxis dataKey="period" tick={{ fill: '#64748B', fontSize: 9 }} stroke="#334155" />
-                    <YAxis tick={{ fill: '#64748B', fontSize: 9 }} stroke="#334155" />
-                    <Tooltip contentStyle={{ background: '#020617', border: '1px solid #334155', borderRadius: 12, fontSize: 11 }} />
+                    <CartesianGrid stroke="var(--chart-grid)" strokeDasharray="3 3" vertical={false} />
+                    <XAxis dataKey="period" tick={{ fill: 'var(--text-secondary)', fontSize: 9 }} stroke="var(--border-subtle)" />
+                    <YAxis tick={{ fill: 'var(--text-secondary)', fontSize: 9 }} stroke="var(--border-subtle)" />
+                    <Tooltip contentStyle={{ background: 'var(--chart-tooltip)', border: '1px solid var(--border-strong)', borderRadius: 12, color: 'var(--chart-tooltip-foreground)', fontSize: 11 }} />
                     <Legend wrapperStyle={{ fontSize: 10 }} />
-                    <Bar dataKey="actual" name="Actual EPS" fill="#10B981" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="estimate" name="Estimated EPS" fill="#22D3EE" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="actual" name="Actual EPS" fill="var(--success)" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="estimate" name="Estimated EPS" fill="var(--chart-primary)" radius={[4, 4, 0, 0]} />
                   </RechartsBarChart>
                 </ResponsiveContainer>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-3">
                 {data.earnings.map((earning, index) => (
-                  <div key={`${earning.period}-${index}`} className="bg-slate-900 border border-slate-800 rounded-lg p-2.5 text-[9px]">
-                    <p className="text-slate-500">{earning.period || 'Period'}</p>
-                    <p className={`font-bold mt-1 ${(earning.surprise ?? 0) >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                  <div key={`${earning.period}-${index}`} className="bg-surface border border-line rounded-lg p-2.5 text-[9px]">
+                    <p className="text-secondary">{earning.period || 'Period'}</p>
+                    <p className={`font-bold mt-1 ${(earning.surprise ?? 0) >= 0 ? 'text-success' : 'text-danger'}`}>
                       Surprise {earning.surprise === null ? '—' : `${earning.surprise >= 0 ? '+' : ''}${formatNumber(earning.surprise)}`}
                     </p>
                   </div>
@@ -416,77 +416,77 @@ export const CompanyIntelligencePanel: React.FC<CompanyIntelligencePanelProps> =
               </div>
             </>
           ) : (
-            <div className="h-[250px] flex items-center justify-center text-[10px] text-slate-500">No earnings observations available.</div>
+            <div className="h-[250px] flex items-center justify-center text-[10px] text-secondary">No earnings observations available.</div>
           )}
         </section>
 
-        <section className="bg-slate-950 border border-slate-800 rounded-2xl p-4 sm:p-5">
+        <section className="bg-surface border border-line rounded-2xl p-4 sm:p-5">
           <div className="flex items-center gap-2 mb-4">
-            <Users className="w-4 h-4 text-violet-400" />
+            <Users className="w-4 h-4 text-interactive" />
             <div>
-              <h3 className="text-sm font-bold text-slate-100">Analyst Recommendation History</h3>
-              <p className="text-[10px] text-slate-500 mt-0.5">Third-party opinion counts—not ArthaBench advice</p>
+              <h3 className="text-sm font-bold text-ink">Analyst Recommendation History</h3>
+              <p className="text-[10px] text-secondary mt-0.5">Third-party opinion counts—not ArthaBench advice</p>
             </div>
           </div>
           {recommendationChartData.length > 0 ? (
             <div className="h-[320px]">
               <ResponsiveContainer width="100%" height="100%">
                 <RechartsBarChart data={recommendationChartData} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
-                  <CartesianGrid stroke="#1E293B" strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="period" tick={{ fill: '#64748B', fontSize: 9 }} stroke="#334155" />
-                  <YAxis allowDecimals={false} tick={{ fill: '#64748B', fontSize: 9 }} stroke="#334155" />
-                  <Tooltip contentStyle={{ background: '#020617', border: '1px solid #334155', borderRadius: 12, fontSize: 11 }} />
+                  <CartesianGrid stroke="var(--chart-grid)" strokeDasharray="3 3" vertical={false} />
+                  <XAxis dataKey="period" tick={{ fill: 'var(--text-secondary)', fontSize: 9 }} stroke="var(--border-subtle)" />
+                  <YAxis allowDecimals={false} tick={{ fill: 'var(--text-secondary)', fontSize: 9 }} stroke="var(--border-subtle)" />
+                  <Tooltip contentStyle={{ background: 'var(--chart-tooltip)', border: '1px solid var(--border-strong)', borderRadius: 12, color: 'var(--chart-tooltip-foreground)', fontSize: 11 }} />
                   <Legend wrapperStyle={{ fontSize: 9 }} />
-                  <Bar dataKey="strongBuy" name="Strong buy" stackId="recommendations" fill="#34D399" />
-                  <Bar dataKey="buy" name="Buy" stackId="recommendations" fill="#10B981" />
-                  <Bar dataKey="hold" name="Hold" stackId="recommendations" fill="#FBBF24" />
-                  <Bar dataKey="sell" name="Sell" stackId="recommendations" fill="#FB7185" />
-                  <Bar dataKey="strongSell" name="Strong sell" stackId="recommendations" fill="#E11D48" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="strongBuy" name="Strong buy" stackId="recommendations" fill="var(--brand-primary)" />
+                  <Bar dataKey="buy" name="Buy" stackId="recommendations" fill="var(--success)" />
+                  <Bar dataKey="hold" name="Hold" stackId="recommendations" fill="var(--warning)" />
+                  <Bar dataKey="sell" name="Sell" stackId="recommendations" fill="var(--danger)" fillOpacity={0.68} />
+                  <Bar dataKey="strongSell" name="Strong sell" stackId="recommendations" fill="var(--danger)" radius={[4, 4, 0, 0]} />
                 </RechartsBarChart>
               </ResponsiveContainer>
             </div>
           ) : (
-            <div className="h-[320px] flex items-center justify-center text-[10px] text-slate-500">No analyst recommendation history is available.</div>
+            <div className="h-[320px] flex items-center justify-center text-[10px] text-secondary">No analyst recommendation history is available.</div>
           )}
         </section>
       </div>
 
-      <section className="bg-gradient-to-br from-violet-950/45 via-slate-950 to-cyan-950/25 border border-violet-800/50 rounded-2xl p-4 sm:p-6 shadow-xl">
+      <section className="bg-surface border border-line rounded-2xl p-4 sm:p-6 shadow-sm">
         <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4 mb-5">
           <div className="flex items-start gap-3">
-            <div className="p-2.5 rounded-xl bg-violet-950 border border-violet-700 text-violet-300">
+            <div className="p-2.5 rounded-xl bg-interactive-soft border border-interactive text-interactive">
               <Bot className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-base font-bold text-slate-100">ArthaBench Company AI Assistant</h3>
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-950 border border-emerald-800 text-[9px] font-bold text-emerald-300">
+                <h3 className="text-base font-bold text-ink">ArthaBench Company AI Assistant</h3>
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-success-soft border border-success-fill text-[9px] font-bold text-success">
                   <Sparkles className="w-2.5 h-2.5" /> GROUNDED
                 </span>
               </div>
-              <p className="text-[11px] text-slate-400 mt-1 max-w-3xl leading-relaxed">
+              <p className="text-[11px] text-secondary mt-1 max-w-3xl leading-relaxed">
                 Ask for educational explanations of {data.symbol}’s loaded Finnhub fundamentals, earnings, analyst history, and market quote. Company-specific answers are grounded in the current dashboard data.
               </p>
             </div>
           </div>
-          <span className="text-[9px] text-slate-500 lg:text-right">No buy/sell/hold advice<br />No guaranteed forecasts</span>
+          <span className="text-[9px] text-secondary lg:text-right">No buy/sell/hold advice<br />No guaranteed forecasts</span>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-          <div className="lg:col-span-9 bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 min-h-[430px] flex flex-col shadow-[0_18px_50px_rgba(15,23,42,0.16)]">
+          <div className="lg:col-span-9 bg-surface border border-line rounded-2xl p-4 sm:p-5 min-h-[430px] flex flex-col shadow-sm">
             <div className="flex-1 space-y-4 max-h-[720px] overflow-y-auto pr-1">
               {chatMessages.length === 0 ? (
                 <div className="h-full min-h-44 flex flex-col items-center justify-center text-center px-4">
-                  <MessageSquareText className="w-8 h-8 text-violet-500 mb-3" />
-                  <p className="text-sm font-bold text-slate-900">Ask a grounded company-analysis question</p>
-                  <p className="text-[11px] text-slate-500 mt-1 max-w-md leading-relaxed">Each response is organized into a direct answer, numbered steps, formula or method, worked example, interpretation, risks, and sources.</p>
+                  <MessageSquareText className="w-8 h-8 text-interactive mb-3" />
+                  <p className="text-sm font-bold text-ink">Ask a grounded company-analysis question</p>
+                  <p className="text-[11px] text-secondary mt-1 max-w-md leading-relaxed">Each response is organized into a direct answer, numbered steps, formula or method, worked example, interpretation, risks, and sources.</p>
                 </div>
               ) : (
                 chatMessages.map((message, index) => {
                   if (message.role === 'user') {
                     return (
                       <div key={`${message.role}-${index}`} className="flex justify-end">
-                        <div className="max-w-[88%] rounded-2xl rounded-br-md bg-indigo-600 px-4 py-3 text-[12px] font-medium leading-relaxed text-white shadow-sm">
+                        <div className="max-w-[88%] rounded-2xl rounded-br-md border border-interactive/25 bg-interactive-soft px-4 py-3 text-[12px] font-medium leading-relaxed text-ink shadow-sm">
                           {message.content}
                         </div>
                       </div>
@@ -498,7 +498,7 @@ export const CompanyIntelligencePanel: React.FC<CompanyIntelligencePanelProps> =
                       {message.structuredAnswer ? (
                         <StructuredFinancialAnswerView answer={message.structuredAnswer} compact />
                       ) : (
-                        <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-[12px] leading-relaxed whitespace-pre-wrap text-slate-700">
+                        <div className="rounded-2xl border border-line bg-subtle px-4 py-3 text-[12px] leading-relaxed whitespace-pre-wrap text-secondary">
                           {message.content}
                         </div>
                       )}
@@ -507,28 +507,28 @@ export const CompanyIntelligencePanel: React.FC<CompanyIntelligencePanelProps> =
                 })
               )}
               {assistantLoading && (
-                <div className="flex items-center text-[11px] font-medium text-violet-700">
+                <div className="flex items-center text-[11px] font-medium text-interactive">
                   <RefreshCw className="w-3 h-3 animate-spin mr-2" /> Analyzing the loaded company evidence…
                 </div>
               )}
             </div>
 
             {assistantError && (
-              <div className="mt-3 p-2.5 rounded-lg bg-rose-950/40 border border-rose-900 text-[10px] text-rose-300">{assistantError}</div>
+              <div className="mt-3 p-2.5 rounded-lg bg-danger-soft/40 border border-danger text-[10px] text-danger">{assistantError}</div>
             )}
 
-            <form onSubmit={handleAssistantSubmit} className="flex gap-2 mt-4 pt-4 border-t border-slate-200">
+            <form onSubmit={handleAssistantSubmit} className="flex gap-2 mt-4 pt-4 border-t border-line">
               <input
                 value={assistantQuestion}
                 onChange={(event) => setAssistantQuestion(event.target.value)}
                 placeholder={`Ask about ${data.symbol} metrics, earnings, or risks…`}
                 maxLength={1200}
-                className="min-w-0 flex-1 bg-white border border-slate-300 rounded-xl px-3.5 py-3 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-violet-600 focus:ring-2 focus:ring-violet-100"
+                className="min-w-0 flex-1 bg-surface border border-line-strong rounded-xl px-3.5 py-3 text-xs text-ink placeholder:text-secondary focus:outline-none focus:border-interactive focus:ring-2 focus:ring-interactive"
               />
               <button
                 type="submit"
                 disabled={assistantLoading || !assistantQuestion.trim()}
-                className="px-4 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white transition-all"
+                className="px-4 py-2.5 rounded-xl bg-brand hover:bg-brand-hover disabled:opacity-50 text-brand-foreground hover:text-white transition-all focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 focus:ring-offset-canvas"
                 aria-label="Ask company assistant"
               >
                 <Send className="w-4 h-4" />
@@ -536,28 +536,28 @@ export const CompanyIntelligencePanel: React.FC<CompanyIntelligencePanelProps> =
             </form>
           </div>
 
-          <aside className="lg:col-span-3 bg-white border border-slate-200 rounded-2xl p-4 shadow-[0_12px_36px_rgba(15,23,42,0.12)]">
-            <h4 className="text-[10px] font-bold uppercase tracking-wider text-slate-600">Suggested questions</h4>
+          <aside className="lg:col-span-3 bg-surface border border-line rounded-2xl p-4 shadow-sm">
+            <h4 className="text-[10px] font-bold uppercase tracking-wider text-secondary">Suggested questions</h4>
             <div className="space-y-2 mt-3">
               {suggestedQuestions.map((question) => (
                 <button
                   key={question}
                   onClick={() => submitAssistantQuestion(question)}
                   disabled={assistantLoading}
-                  className="w-full text-left p-3 rounded-xl bg-slate-50 border border-slate-200 hover:border-violet-400 hover:bg-violet-50 text-[10px] text-slate-700 leading-relaxed transition-all disabled:opacity-50"
+                  className="w-full text-left p-3 rounded-xl bg-surface border border-line hover:border-interactive hover:bg-interactive-soft text-[10px] text-secondary leading-relaxed transition-all disabled:opacity-50"
                 >
                   {question}
                 </button>
               ))}
             </div>
-            <div className="mt-4 p-3 rounded-xl bg-amber-950/20 border border-amber-900/50 text-[9px] text-amber-200/80 leading-relaxed">
+            <div className="mt-4 p-3 rounded-xl bg-warning-soft/20 border border-warning-fill/50 text-[9px] text-warning leading-relaxed">
               The assistant provides educational analysis only and rejects personalized trading recommendations, target prices, and prompt-injection attempts.
             </div>
           </aside>
         </div>
       </section>
 
-      <div className="flex items-center justify-between gap-4 text-[10px] text-slate-500">
+      <div className="flex items-center justify-between gap-4 text-[10px] text-secondary">
         <span>{data.message}</span>
         <span>Source: Finnhub · Educational use only</span>
       </div>

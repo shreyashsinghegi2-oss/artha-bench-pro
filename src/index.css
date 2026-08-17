@@ -1,49 +1,118 @@
 @import "tailwindcss";
 
+@theme inline {
+  --color-canvas: var(--bg-canvas);
+  --color-surface: var(--bg-surface);
+  --color-subtle: var(--bg-subtle);
+  --color-hover: var(--bg-hover);
+  --color-ink: var(--text-primary);
+  --color-secondary: var(--text-secondary);
+  --color-muted: var(--text-secondary);
+  --color-line: var(--border-subtle);
+  --color-line-strong: var(--border-strong);
+  --color-brand: var(--brand-primary);
+  --color-brand-hover: var(--brand-hover);
+  --color-brand-soft: var(--brand-soft);
+  --color-brand-foreground: var(--brand-foreground);
+  --color-interactive: var(--interactive);
+  --color-interactive-soft: var(--interactive-soft);
+  --color-success: var(--success-foreground);
+  --color-success-fill: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning-foreground);
+  --color-warning-fill: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-premium: var(--premium-foreground);
+  --color-premium-fill: var(--premium);
+  --color-premium-soft: var(--premium-soft);
+  --color-chart-primary: var(--chart-primary);
+  --color-chart-comparison: var(--chart-comparison);
+  --color-chart-reference: var(--chart-reference);
+  --color-chart-grid: var(--chart-grid);
+  --color-chart-tooltip: var(--chart-tooltip);
+  --color-chart-tooltip-foreground: var(--chart-tooltip-foreground);
+}
+
 @layer base {
   :root {
-    --bg-main: #F5F2EA;
-    --bg-elevated: #07070B;
-    --bg-panel: #08080E;
-    --border-subtle: #1A1A23;
-    --primary-purple: #4F32FF;
-    --secondary-purple: #7137F2;
-    --bright-indigo: #665CFF;
-    --text-primary: #F7F7FB;
-    --text-secondary: #9A9AAA;
-    --success: #00D68F;
-    --warning: #F5B800;
-    --danger: #FF3B65;
-    --cyan-support: #16C7E8;
+    color-scheme: light;
+
+    --bg-canvas: #F8FAFC;
+    --bg-surface: #FFFFFF;
+    --bg-subtle: #F1F5F9;
+    --bg-hover: #EAF0F6;
+    --text-primary: #172033;
+    --text-secondary: #64748B;
+    --border-subtle: #E2E8F0;
+    --border-strong: #CBD5E1;
+
+    --brand-primary: #0F9D76;
+    --brand-hover: #087A5B;
+    --brand-soft: #E8F7F2;
+    --brand-foreground: #172033;
+    --interactive: #2563EB;
+    --interactive-soft: #EFF6FF;
+
+    --success: #16A34A;
+    --success-foreground: #166534;
+    --success-soft: #F0FDF4;
+    --warning: #D97706;
+    --warning-foreground: #92400E;
+    --warning-soft: #FFF7ED;
+    --danger: #DC2626;
+    --danger-soft: #FEF2F2;
+    --premium: #B8872C;
+    --premium-foreground: #765314;
+    --premium-soft: #FFF8E8;
+
+    --chart-primary: #2563EB;
+    --chart-comparison: #0F9D76;
+    --chart-reference: #B8872C;
+    --chart-grid: #E2E8F0;
+    --chart-tooltip: #172033;
+    --chart-tooltip-foreground: #FFFFFF;
+
+    /* Compatibility aliases for the existing visual layer. */
+    --bg-main: var(--bg-canvas);
+    --bg-elevated: var(--bg-surface);
+    --bg-panel: var(--bg-surface);
+    --primary-purple: var(--interactive);
+    --secondary-purple: var(--interactive);
+    --bright-indigo: var(--interactive);
+    --cyan-support: var(--interactive);
   }
 
   body {
-    background-color: var(--bg-main);
+    background-color: var(--bg-canvas);
     color: var(--text-primary);
     font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   }
 }
 
-/* Custom scrollbars & glow utilities */
 .scrollbar-thin::-webkit-scrollbar {
   height: 6px;
   width: 6px;
 }
+
 .scrollbar-thin::-webkit-scrollbar-track {
-  background: #07070B;
+  background: var(--bg-subtle);
 }
+
 .scrollbar-thin::-webkit-scrollbar-thumb {
-  background: #1A1A23;
+  background: var(--border-strong);
   border-radius: 9999px;
 }
+
 .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-  background: #4F32FF;
+  background: var(--interactive);
 }
 
 .purple-glow {
-  box-shadow: 0 0 35px -5px rgba(79, 50, 255, 0.35);
+  box-shadow: 0 8px 24px -18px color-mix(in srgb, var(--interactive) 24%, transparent);
 }
 
 .hero-gradient {
-  background: linear-gradient(135deg, #4F32FF 0%, #3B22D6 40%, #21118A 100%);
+  background: var(--bg-surface);
 }

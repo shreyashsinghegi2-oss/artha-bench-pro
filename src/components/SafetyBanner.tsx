@@ -19,13 +19,13 @@ export const SafetyBanner: React.FC<SafetyBannerProps> = ({
     <div
       className={`rounded-xl border p-3.5 mb-6 text-xs flex items-start gap-3 ${
         isWarning
-          ? 'bg-amber-950/40 border-amber-800/60 text-amber-200'
-          : 'bg-slate-900 border-slate-700/60 text-slate-300'
+          ? 'bg-warning-soft/40 border-warning-fill/60 text-warning'
+          : 'bg-subtle border-line-strong/60 text-secondary'
       }`}
     >
-      <Icon className={`w-4 h-4 shrink-0 mt-0.5 ${isWarning ? 'text-amber-400' : 'text-cyan-400'}`} />
+      <Icon className={`w-4 h-4 shrink-0 mt-0.5 ${isWarning ? 'text-warning' : 'text-interactive'}`} />
       <div>
-        <h4 className="font-semibold text-slate-100">{title}</h4>
+        <h4 className="font-semibold text-ink">{title}</h4>
         <p className="mt-0.5 leading-relaxed opacity-90">{message}</p>
       </div>
     </div>

@@ -25,15 +25,15 @@ export const ConnectionsView: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 space-y-8">
-      <div className="bg-[#08080E] border border-[#1A1A23] rounded-3xl p-6 sm:p-8 space-y-4">
+      <div className="bg-surface border border-line rounded-3xl p-6 sm:p-8 space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-[#4F32FF]/20 border border-[#4F32FF]/40 rounded-2xl text-[#665CFF]">
+            <div className="p-3 bg-interactive/20 border border-interactive/40 rounded-2xl text-interactive">
               <Radio className="w-6 h-6" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-[#F7F7FB]">AI Connections & Health Diagnostics</h1>
-              <p className="text-xs text-[#9A9AAA]">
+              <h1 className="text-2xl font-bold text-ink">AI Connections & Health Diagnostics</h1>
+              <p className="text-xs text-secondary">
                 Live server-side checks for Groq, NewsData.io, Twelve Data, Finnhub, FRED, and World Bank India data. Secrets never reach the browser.
               </p>
             </div>
@@ -42,7 +42,7 @@ export const ConnectionsView: React.FC = () => {
           <button
             onClick={fetchDiagnostics}
             disabled={loading}
-            className="p-2.5 bg-[#1A1A23] hover:bg-[#4F32FF]/20 text-[#F7F7FB] rounded-xl border border-[#1A1A23] transition-all"
+            className="p-2.5 bg-subtle hover:bg-interactive/20 text-ink rounded-xl border border-line transition-all"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           </button>
@@ -53,25 +53,25 @@ export const ConnectionsView: React.FC = () => {
             diagnostics.map((diag) => (
               <div
                 key={diag.id}
-                className="p-4 bg-[#030303] border border-[#1A1A23] rounded-2xl flex items-center justify-between gap-4"
+                className="p-4 bg-canvas border border-line rounded-2xl flex items-center justify-between gap-4"
               >
                 <div className="flex items-center gap-3">
-                  <Cpu className="w-5 h-5 text-[#665CFF]" />
+                  <Cpu className="w-5 h-5 text-interactive" />
                   <div>
-                    <h3 className="text-xs font-bold text-[#F7F7FB]">{diag.name}</h3>
-                    <p className="text-[10px] text-[#9A9AAA]">{diag.message}</p>
+                    <h3 className="text-xs font-bold text-ink">{diag.name}</h3>
+                    <p className="text-[10px] text-secondary">{diag.message}</p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-3 shrink-0">
                   {diag.latencyMs !== undefined && (
-                    <span className="text-[10px] font-mono text-[#9A9AAA]">{diag.latencyMs}ms</span>
+                    <span className="text-[10px] font-mono text-secondary">{diag.latencyMs}ms</span>
                   )}
                   <span
                     className={`px-3 py-1 rounded-full text-[10px] font-bold border ${
                       diag.status === 'connected'
-                        ? 'bg-[#00D68F]/10 text-[#00D68F] border-[#00D68F]/30'
-                        : 'bg-[#F5B800]/10 text-[#F5B800] border-[#F5B800]/30'
+                        ? 'bg-success-fill/10 text-success border-success-fill/30'
+                        : 'bg-warning-fill/10 text-warning border-warning-fill/30'
                     }`}
                   >
                     {diag.status.toUpperCase()}
@@ -80,7 +80,7 @@ export const ConnectionsView: React.FC = () => {
               </div>
             ))
           ) : (
-            <div className="p-6 bg-[#030303] border border-[#1A1A23] rounded-2xl text-center text-xs text-[#9A9AAA]">
+            <div className="p-6 bg-canvas border border-line rounded-2xl text-center text-xs text-secondary">
               Loading AI connection telemetry...
             </div>
           )}

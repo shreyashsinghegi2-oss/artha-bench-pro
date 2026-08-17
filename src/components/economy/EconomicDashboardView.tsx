@@ -351,34 +351,34 @@ export const EconomicDashboardView: React.FC = () => {
 
   return (
     <div className="max-w-[1500px] mx-auto px-4 py-8 space-y-8">
-      <section className="rounded-3xl border border-[#00D68F]/25 bg-gradient-to-br from-[#07130F] via-[#08080E] to-[#09091A] p-6 sm:p-8 shadow-2xl overflow-hidden relative">
-        <div className="absolute -right-20 -top-20 w-64 h-64 rounded-full bg-[#00D68F]/10 blur-3xl pointer-events-none" />
+      <section className="rounded-3xl border border-line bg-surface p-6 sm:p-8 shadow-sm overflow-hidden relative">
+        <div className="absolute -right-20 -top-20 w-64 h-64 rounded-full bg-transparent pointer-events-none" />
         <div className="relative flex flex-col lg:flex-row lg:items-end justify-between gap-6">
           <div className="space-y-4">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#00D68F]/10 border border-[#00D68F]/30 text-[#00D68F] text-[11px] font-bold uppercase tracking-wider">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-success-fill/10 border border-success-fill/30 text-success text-[11px] font-bold uppercase tracking-wider">
               <CheckCircle2 className="w-3.5 h-3.5" />
               Live {providerName}
             </div>
             <div>
-              <h1 className="text-3xl sm:text-4xl font-extrabold text-[#F7F7FB] tracking-tight">
+              <h1 className="text-3xl sm:text-4xl font-extrabold text-ink tracking-tight">
                 Economic Dashboard
               </h1>
-              <p className="text-sm text-[#9A9AAA] leading-relaxed max-w-3xl mt-2">
+              <p className="text-sm text-secondary leading-relaxed max-w-3xl mt-2">
                 Compare official United States and India macroeconomic indicators, historical trends, observation dates, and educational explanations.
               </p>
             </div>
           </div>
           <div className="flex flex-col sm:flex-row gap-3 self-start lg:self-auto">
-            <div className="flex items-center p-1 bg-[#030303] border border-[#1A1A23] rounded-xl">
+            <div className="flex items-center p-1 bg-canvas border border-line rounded-xl">
               <button
                 onClick={() => handleCountryChange('us')}
-                className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${country === 'us' ? 'bg-[#4F32FF] text-white' : 'text-[#9A9AAA] hover:text-white'}`}
+                className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${country === 'us' ? 'bg-interactive-soft text-interactive' : 'text-secondary hover:text-interactive'}`}
               >
                 🇺🇸 United States
               </button>
               <button
                 onClick={() => handleCountryChange('india')}
-                className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${country === 'india' ? 'bg-[#FF8A00] text-[#130900]' : 'text-[#9A9AAA] hover:text-white'}`}
+                className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${country === 'india' ? 'bg-interactive-soft text-interactive' : 'text-secondary hover:text-interactive'}`}
               >
                 🇮🇳 India
               </button>
@@ -386,7 +386,7 @@ export const EconomicDashboardView: React.FC = () => {
             <button
               onClick={loadOverview}
               disabled={loadingOverview}
-              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#00D68F]/10 border border-[#00D68F]/30 text-[#00D68F] hover:bg-[#00D68F]/20 text-xs font-bold transition-all disabled:opacity-60"
+              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-success-fill/10 border border-success-fill/30 text-success hover:bg-success-fill/20 text-xs font-bold transition-all disabled:opacity-60"
             >
               <RefreshCw className={`w-4 h-4 ${loadingOverview ? 'animate-spin' : ''}`} />
               Refresh {providerShortName}
@@ -406,20 +406,20 @@ export const EconomicDashboardView: React.FC = () => {
               onClick={() => setSelectedSeriesId(indicator.seriesId)}
               className={`text-left rounded-2xl p-5 border transition-all min-h-40 ${
                 active
-                  ? 'bg-[#00D68F]/10 border-[#00D68F]/60 shadow-lg shadow-[#00D68F]/5'
-                  : 'bg-[#08080E] border-[#1A1A23] hover:border-[#00D68F]/35'
+                  ? 'bg-interactive-soft border-interactive/40 shadow-sm'
+                  : 'bg-surface border-line hover:border-interactive/35'
               }`}
             >
               <div className="flex items-center justify-between gap-2">
-                <Activity className={`w-4 h-4 ${active ? 'text-[#00D68F]' : 'text-[#665CFF]'}`} />
-                <span className="text-[9px] font-mono text-[#777789]">{indicator.seriesId}</span>
+                <Activity className={`w-4 h-4 ${active ? 'text-success' : 'text-interactive'}`} />
+                <span className="text-[9px] font-mono text-secondary">{indicator.seriesId}</span>
               </div>
-              <p className="text-[11px] text-[#9A9AAA] mt-4">{indicator.label}</p>
-              <div className="text-2xl font-extrabold text-[#F7F7FB] mt-1">
+              <p className="text-[11px] text-secondary mt-4">{indicator.label}</p>
+              <div className="text-2xl font-extrabold text-ink mt-1">
                 {indicator.value === null ? '—' : indicator.value.toLocaleString()}
-                <span className="text-xs font-semibold text-[#9A9AAA] ml-1">{indicator.unit}</span>
+                <span className="text-xs font-semibold text-secondary ml-1">{indicator.unit}</span>
               </div>
-              <div className="flex items-center gap-1.5 text-[10px] text-[#777789] mt-3">
+              <div className="flex items-center gap-1.5 text-[10px] text-secondary mt-3">
                 <CalendarDays className="w-3 h-3" />
                 {indicator.date || 'Date unavailable'}
               </div>
@@ -429,22 +429,22 @@ export const EconomicDashboardView: React.FC = () => {
       </section>
 
       <section className="grid grid-cols-1 xl:grid-cols-12 gap-6">
-        <div className="xl:col-span-8 bg-[#08080E] border border-[#1A1A23] rounded-3xl p-5 sm:p-7 shadow-xl min-w-0">
+        <div className="xl:col-span-8 bg-surface border border-line rounded-3xl p-5 sm:p-7 shadow-sm min-w-0">
           <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-6">
             <div>
-              <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-[#00D68F]">
+              <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-success">
                 <TrendingUp className="w-3.5 h-3.5" />
                 Historical Trend
               </div>
-              <h2 className="text-xl font-bold text-[#F7F7FB] mt-1">{selectedMetadata.label}</h2>
-              <p className="text-xs text-[#9A9AAA] mt-1">
+              <h2 className="text-xl font-bold text-ink mt-1">{selectedMetadata.label}</h2>
+              <p className="text-xs text-secondary mt-1">
                 {selectedMetadata.frequency} · {selectedMetadata.seriesId}
               </p>
             </div>
             <select
               value={observationLimit}
               onChange={(event) => setObservationLimit(Number(event.target.value))}
-              className="bg-[#030303] border border-[#1A1A23] rounded-xl px-3 py-2 text-xs text-[#F7F7FB] focus:outline-none focus:border-[#00D68F]/50"
+              className="bg-canvas border border-line rounded-xl px-3 py-2 text-xs text-ink focus:outline-none focus:border-interactive focus:ring-2 focus:ring-interactive"
             >
               {(country === 'india' ? INDIA_OBSERVATION_OPTIONS : OBSERVATION_OPTIONS).map((option) => (
                 <option key={option.value} value={option.value}>
@@ -456,23 +456,23 @@ export const EconomicDashboardView: React.FC = () => {
 
           <div className="h-[360px] sm:h-[420px] w-full">
             {loadingSeries ? (
-              <div className="h-full flex items-center justify-center text-xs text-[#9A9AAA]">
+              <div className="h-full flex items-center justify-center text-xs text-secondary">
                 <RefreshCw className="w-4 h-4 animate-spin mr-2" /> Loading historical observations…
               </div>
             ) : chartData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={chartData} margin={{ top: 12, right: 12, left: 0, bottom: 8 }}>
-                  <CartesianGrid stroke="#1A1A23" strokeDasharray="3 3" vertical={false} />
+                  <CartesianGrid stroke="var(--chart-grid)" strokeDasharray="3 3" vertical={false} />
                   <XAxis
                     dataKey="date"
                     tickFormatter={formatChartDate}
-                    stroke="#777789"
-                    tick={{ fill: '#777789', fontSize: 10 }}
+                    stroke="var(--border-subtle)"
+                    tick={{ fill: 'var(--text-secondary)', fontSize: 10 }}
                     minTickGap={34}
                   />
                   <YAxis
-                    stroke="#777789"
-                    tick={{ fill: '#777789', fontSize: 10 }}
+                    stroke="var(--border-subtle)"
+                    tick={{ fill: 'var(--text-secondary)', fontSize: 10 }}
                     width={54}
                     domain={['auto', 'auto']}
                   />
@@ -480,78 +480,78 @@ export const EconomicDashboardView: React.FC = () => {
                     labelFormatter={(date) => formatFullDate(String(date))}
                     formatter={(value) => [`${Number(value).toLocaleString()} ${selectedMetadata.unit}`, selectedMetadata.shortLabel]}
                     contentStyle={{
-                      background: '#08080E',
-                      border: '1px solid #2A2A3A',
+                      background: 'var(--chart-tooltip)',
+                      border: '1px solid var(--border-strong)',
                       borderRadius: 12,
-                      color: '#F7F7FB',
+                      color: 'var(--chart-tooltip-foreground)',
                       fontSize: 12,
                     }}
                   />
                   <Line
                     type="monotone"
                     dataKey="value"
-                    stroke="#00D68F"
+                    stroke="var(--chart-primary)"
                     strokeWidth={2.5}
                     dot={false}
-                    activeDot={{ r: 5, fill: '#00D68F', stroke: '#07130F', strokeWidth: 2 }}
+                    activeDot={{ r: 5, fill: 'var(--chart-primary)', stroke: 'var(--bg-surface)', strokeWidth: 2 }}
                   />
                 </LineChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-full flex items-center justify-center text-xs text-[#9A9AAA]">
+              <div className="h-full flex items-center justify-center text-xs text-secondary">
                 No usable observations were returned for this series.
               </div>
             )}
           </div>
 
           {error && (
-            <div className="mt-4 p-3 rounded-xl bg-[#FF3B65]/10 border border-[#FF3B65]/25 text-xs text-[#FF7892]">
+            <div className="mt-4 p-3 rounded-xl bg-danger/10 border border-danger/25 text-xs text-danger">
               {error}
             </div>
           )}
         </div>
 
         <aside className="xl:col-span-4 space-y-6">
-          <div className="bg-[#08080E] border border-[#1A1A23] rounded-3xl p-6 space-y-5 shadow-xl">
+          <div className="bg-surface border border-line rounded-3xl p-6 space-y-5 shadow-sm">
             <div className="flex items-center gap-2">
-              <Info className="w-4 h-4 text-[#665CFF]" />
-              <h2 className="text-sm font-bold text-[#F7F7FB]">Indicator Guide</h2>
+              <Info className="w-4 h-4 text-interactive" />
+              <h2 className="text-sm font-bold text-ink">Indicator Guide</h2>
             </div>
-            <p className="text-xs text-[#B0B0C0] leading-relaxed">{selectedMetadata.description}</p>
+            <p className="text-xs text-secondary leading-relaxed">{selectedMetadata.description}</p>
             <div className="space-y-2">
-              <div className="flex items-center justify-between p-3 bg-[#030303] rounded-xl border border-[#1A1A23]">
-                <span className="text-[10px] text-[#777789]">Latest value</span>
-                <span className="text-sm font-bold text-[#00D68F]">
+              <div className="flex items-center justify-between p-3 bg-canvas rounded-xl border border-line">
+                <span className="text-[10px] text-secondary">Latest value</span>
+                <span className="text-sm font-bold text-success">
                   {latestChartPoint ? latestChartPoint.value.toLocaleString() : '—'} {selectedMetadata.unit}
                 </span>
               </div>
-              <div className="flex items-center justify-between p-3 bg-[#030303] rounded-xl border border-[#1A1A23]">
-                <span className="text-[10px] text-[#777789]">Previous change</span>
-                <span className={`text-xs font-bold ${change !== null && change >= 0 ? 'text-[#00D68F]' : 'text-[#FF3B65]'}`}>
+              <div className="flex items-center justify-between p-3 bg-canvas rounded-xl border border-line">
+                <span className="text-[10px] text-secondary">Previous change</span>
+                <span className={`text-xs font-bold ${change !== null && change >= 0 ? 'text-success' : 'text-danger'}`}>
                   {change === null ? '—' : `${change >= 0 ? '+' : ''}${change.toFixed(2)} ${selectedMetadata.unit}`}
                 </span>
               </div>
             </div>
             <div>
-              <h3 className="text-[10px] font-bold uppercase tracking-wider text-[#777789]">Why it matters</h3>
-              <p className="text-xs text-[#9A9AAA] leading-relaxed mt-2">{selectedMetadata.whyItMatters}</p>
+              <h3 className="text-[10px] font-bold uppercase tracking-wider text-ink">Why it matters</h3>
+              <p className="text-xs text-secondary leading-relaxed mt-2">{selectedMetadata.whyItMatters}</p>
             </div>
             <a
               href={officialSeriesUrl}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-2 text-xs font-semibold text-[#665CFF] hover:text-[#8B7CFF]"
+              className="inline-flex items-center gap-2 text-xs font-semibold text-interactive hover:text-interactive"
             >
               Open official {providerShortName} series <ExternalLink className="w-3.5 h-3.5" />
             </a>
           </div>
 
-          <div className="bg-[#08080E] border border-[#1A1A23] rounded-3xl p-6 space-y-4 shadow-xl">
+          <div className="bg-surface border border-line rounded-3xl p-6 space-y-4 shadow-sm">
             <div className="flex items-center gap-2">
-              <Search className="w-4 h-4 text-[#16C7E8]" />
-              <h2 className="text-sm font-bold text-[#F7F7FB]">{providerShortName} Series Explorer</h2>
+              <Search className="w-4 h-4 text-interactive" />
+              <h2 className="text-sm font-bold text-ink">{providerShortName} Series Explorer</h2>
             </div>
-            <p className="text-xs text-[#9A9AAA] leading-relaxed">
+            <p className="text-xs text-secondary leading-relaxed">
               Enter any public {providerShortName} {country === 'us' ? 'series' : 'indicator'} ID to load its historical values.
             </p>
             <form onSubmit={handleCustomSeries} className="flex gap-2">
@@ -559,11 +559,11 @@ export const EconomicDashboardView: React.FC = () => {
                 value={customSeriesId}
                 onChange={(event) => setCustomSeriesId(event.target.value)}
                 placeholder={country === 'us' ? 'Example: PCE or M2SL' : 'Example: SP.POP.TOTL'}
-                className="min-w-0 flex-1 bg-[#030303] border border-[#1A1A23] rounded-xl px-3 py-2 text-xs text-[#F7F7FB] placeholder:text-[#666678] focus:outline-none focus:border-[#16C7E8]/50 uppercase"
+                className="min-w-0 flex-1 bg-canvas border border-line rounded-xl px-3 py-2 text-xs text-ink placeholder:text-secondary focus:outline-none focus:border-interactive focus:ring-2 focus:ring-interactive uppercase"
               />
               <button
                 type="submit"
-                className="px-4 py-2 rounded-xl bg-[#16C7E8]/15 border border-[#16C7E8]/30 text-[#16C7E8] text-xs font-bold hover:bg-[#16C7E8]/25"
+                className="px-4 py-2 rounded-xl bg-interactive/15 border border-interactive/30 text-interactive text-xs font-bold hover:bg-interactive/25"
               >
                 Load
               </button>
@@ -573,15 +573,15 @@ export const EconomicDashboardView: React.FC = () => {
       </section>
 
       <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-[#08080E] border border-[#1A1A23] rounded-3xl p-6 shadow-xl">
+        <div className="bg-surface border border-line rounded-3xl p-6 shadow-sm">
           <div className="flex items-center gap-2 mb-5">
-            <Database className="w-4 h-4 text-[#665CFF]" />
-            <h2 className="text-sm font-bold text-[#F7F7FB]">Recent Observations</h2>
+            <Database className="w-4 h-4 text-interactive" />
+            <h2 className="text-sm font-bold text-ink">Recent Observations</h2>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead>
-                <tr className="border-b border-[#1A1A23] text-[#777789] text-left">
+                <tr className="border-b border-line text-secondary text-left">
                   <th className="py-2 font-semibold">Observation date</th>
                   <th className="py-2 font-semibold text-right">Value</th>
                   <th className="py-2 font-semibold text-right">Unit</th>
@@ -589,12 +589,12 @@ export const EconomicDashboardView: React.FC = () => {
               </thead>
               <tbody>
                 {chartData.slice(-10).reverse().map((observation) => (
-                  <tr key={observation.date} className="border-b border-[#11111A]">
-                    <td className="py-3 text-[#B0B0C0]">{observation.date}</td>
-                    <td className="py-3 text-right font-mono font-semibold text-[#F7F7FB]">
+                  <tr key={observation.date} className="border-b border-line">
+                    <td className="py-3 text-secondary">{observation.date}</td>
+                    <td className="py-3 text-right font-mono font-semibold text-ink">
                       {observation.value.toLocaleString()}
                     </td>
-                    <td className="py-3 text-right text-[#777789]">{selectedMetadata.unit}</td>
+                    <td className="py-3 text-right text-secondary">{selectedMetadata.unit}</td>
                   </tr>
                 ))}
               </tbody>
@@ -602,10 +602,10 @@ export const EconomicDashboardView: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-[#08080E] border border-[#1A1A23] rounded-3xl p-6 shadow-xl space-y-5">
+        <div className="bg-surface border border-line rounded-3xl p-6 shadow-sm space-y-5">
           <div className="flex items-center gap-2">
-            <BarChart3 className="w-4 h-4 text-[#00D68F]" />
-            <h2 className="text-sm font-bold text-[#F7F7FB]">How to Read This Dashboard</h2>
+            <BarChart3 className="w-4 h-4 text-success" />
+            <h2 className="text-sm font-bold text-ink">How to Read This Dashboard</h2>
           </div>
           <div className="space-y-4">
             {[
@@ -615,12 +615,12 @@ export const EconomicDashboardView: React.FC = () => {
               ['Use', 'Compare trends and economic context for education and AI verification—not personalized investment decisions.'],
             ].map(([title, text], index) => (
               <div key={title} className="flex gap-3">
-                <div className="w-6 h-6 rounded-lg bg-[#4F32FF]/15 border border-[#4F32FF]/25 flex items-center justify-center text-[10px] font-bold text-[#665CFF] shrink-0">
+                <div className="w-6 h-6 rounded-lg bg-interactive/15 border border-interactive/25 flex items-center justify-center text-[10px] font-bold text-interactive shrink-0">
                   {index + 1}
                 </div>
                 <div>
-                  <h3 className="text-xs font-bold text-[#F7F7FB]">{title}</h3>
-                  <p className="text-xs text-[#9A9AAA] leading-relaxed mt-1">{text}</p>
+                  <h3 className="text-xs font-bold text-ink">{title}</h3>
+                  <p className="text-xs text-secondary leading-relaxed mt-1">{text}</p>
                 </div>
               </div>
             ))}
@@ -629,7 +629,7 @@ export const EconomicDashboardView: React.FC = () => {
             href={country === 'us' ? 'https://fred.stlouisfed.org/' : 'https://data.worldbank.org/country/india'}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#4F32FF]/10 border border-[#4F32FF]/25 text-[#665CFF] text-xs font-semibold hover:bg-[#4F32FF]/20"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-interactive/10 border border-interactive/25 text-interactive text-xs font-semibold hover:bg-interactive/20"
           >
             {providerName} <ExternalLink className="w-3.5 h-3.5" />
           </a>

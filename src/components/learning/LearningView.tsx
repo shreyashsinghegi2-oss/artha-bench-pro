@@ -66,16 +66,16 @@ export const LearningView: React.FC = () => {
     <div className="space-y-8 max-w-7xl mx-auto px-4 py-8">
       {/* Header Banner & KPI Summary Section */}
       <div className="space-y-6">
-        <div className="bg-[#0A0A12] border border-[#1E1E2D] p-6 sm:p-8 rounded-3xl shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="bg-surface border border-line p-6 sm:p-8 rounded-3xl shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#4F32FF]/15 border border-[#4F32FF]/30 text-[#665CFF] text-[11px] font-bold tracking-wide uppercase">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-interactive/15 border border-interactive/30 text-interactive text-[11px] font-bold tracking-wide uppercase">
               <BookOpen className="w-3.5 h-3.5" />
               <span>Structured Finance Curriculum</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-[#F7F7FB] tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-ink tracking-tight">
               Financial AI Learning Workspace
             </h1>
-            <p className="text-xs sm:text-sm text-[#9A9AAA] max-w-2xl leading-relaxed">
+            <p className="text-xs sm:text-sm text-secondary max-w-2xl leading-relaxed">
               Interactive educational modules covering financial reasoning, valuation, reporting, corporate finance and risk.
             </p>
           </div>
@@ -89,14 +89,14 @@ export const LearningView: React.FC = () => {
 
       {/* Navigation Breadcrumb Controls */}
       {(selectedTrack || selectedModule) && (
-        <div className="flex items-center gap-2 text-xs text-slate-400">
+        <div className="flex items-center gap-2 text-xs text-secondary">
           <button
             onClick={() => {
               setSelectedTrack(null);
               setSelectedModule(null);
               setSelectedLesson(null);
             }}
-            className="flex items-center gap-1 hover:text-slate-200 transition-colors"
+            className="flex items-center gap-1 hover:text-ink transition-colors"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             <span>All Learning Tracks</span>
@@ -110,7 +110,7 @@ export const LearningView: React.FC = () => {
                   setSelectedModule(null);
                   setSelectedLesson(null);
                 }}
-                className="cursor-pointer hover:text-slate-200 font-medium text-slate-300"
+                className="cursor-pointer hover:text-ink font-medium text-secondary"
               >
                 {selectedTrack.title}
               </span>
@@ -120,7 +120,7 @@ export const LearningView: React.FC = () => {
           {selectedModule && (
             <>
               <span>/</span>
-              <span className="font-semibold text-emerald-400">{selectedModule.title}</span>
+              <span className="font-semibold text-success">{selectedModule.title}</span>
             </>
           )}
         </div>
@@ -151,9 +151,9 @@ export const LearningView: React.FC = () => {
       {/* Level 2: Modules List for Selected Track */}
       {selectedTrack && !selectedModule && (
         <div className="space-y-6">
-          <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl">
-            <h2 className="text-xl font-bold text-slate-100">{selectedTrack.title}</h2>
-            <p className="text-xs text-slate-400 mt-1">{selectedTrack.description}</p>
+          <div className="bg-surface border border-line p-6 rounded-2xl">
+            <h2 className="text-xl font-bold text-ink">{selectedTrack.title}</h2>
+            <p className="text-xs text-secondary mt-1">{selectedTrack.description}</p>
           </div>
 
           <LearningModuleList modules={selectedTrack.modules} onSelectModule={handleSelectModule} />
@@ -164,8 +164,8 @@ export const LearningView: React.FC = () => {
       {selectedTrack && selectedModule && selectedLesson && (
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Sidebar: Module Lessons */}
-          <div className="lg:col-span-1 bg-slate-900 border border-slate-800 rounded-2xl p-4 h-fit space-y-3">
-            <h3 className="text-xs font-bold text-slate-300 uppercase tracking-wider">
+          <div className="lg:col-span-1 bg-surface border border-line rounded-2xl p-4 h-fit space-y-3">
+            <h3 className="text-xs font-bold text-secondary uppercase tracking-wider">
               {selectedModule.title} Lessons
             </h3>
             <div className="space-y-1">
@@ -177,8 +177,8 @@ export const LearningView: React.FC = () => {
                     onClick={() => setSelectedLesson(lesson)}
                     className={`w-full text-left px-3 py-2.5 rounded-xl text-xs transition-all flex items-center justify-between ${
                       isActive
-                        ? 'bg-emerald-950/80 border border-emerald-800 text-emerald-300 font-semibold'
-                        : 'bg-slate-950/50 hover:bg-slate-950 border border-slate-800/60 text-slate-400'
+                        ? 'bg-success-soft/80 border border-success-fill text-success font-semibold'
+                        : 'bg-surface/50 hover:bg-surface border border-line/60 text-secondary'
                     }`}
                   >
                     <span className="line-clamp-1">

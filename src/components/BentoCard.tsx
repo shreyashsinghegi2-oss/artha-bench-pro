@@ -22,12 +22,12 @@ export const BentoCard: React.FC<BentoCardProps> = ({
   onClick,
 }) => {
   const badgeStyles = {
-    purple: 'bg-[#4F32FF]/20 text-[#665CFF] border-[#4F32FF]/40',
-    cyan: 'bg-[#16C7E8]/20 text-[#16C7E8] border-[#16C7E8]/40',
-    emerald: 'bg-[#00D68F]/20 text-[#00D68F] border-[#00D68F]/40',
-    amber: 'bg-[#F5B800]/20 text-[#F5B800] border-[#F5B800]/40',
-    rose: 'bg-[#FF3B65]/20 text-[#FF3B65] border-[#FF3B65]/40',
-    slate: 'bg-[#1A1A23] text-[#9A9AAA] border-[#1A1A23]',
+    purple: 'bg-interactive/20 text-interactive border-interactive/40',
+    cyan: 'bg-interactive/20 text-interactive border-interactive/40',
+    emerald: 'bg-success-fill/20 text-success border-success-fill/40',
+    amber: 'bg-warning-fill/20 text-warning border-warning-fill/40',
+    rose: 'bg-danger/20 text-danger border-danger/40',
+    slate: 'bg-subtle text-secondary border-line',
   };
 
   const renderIcon = () => {
@@ -42,21 +42,21 @@ export const BentoCard: React.FC<BentoCardProps> = ({
   return (
     <div
       onClick={onClick}
-      className={`bg-[#08080E] border border-[#1A1A23] rounded-2xl p-5 shadow-xl transition-all ${
-        onClick ? 'cursor-pointer hover:border-[#4F32FF]/50 hover:bg-[#07070B]' : ''
+      className={`bg-surface border border-line rounded-2xl p-5 shadow-sm transition-all ${
+        onClick ? 'cursor-pointer hover:border-interactive/50 hover:bg-surface' : ''
       } ${className}`}
     >
       {(title || icon || badge) && (
-        <div className="flex items-center justify-between gap-3 mb-4 border-b border-[#1A1A23] pb-3">
+        <div className="flex items-center justify-between gap-3 mb-4 border-b border-line pb-3">
           <div className="flex items-center gap-2.5">
             {icon && (
-              <div className="w-8 h-8 rounded-xl bg-[#030303] border border-[#1A1A23] flex items-center justify-center text-[#665CFF] shrink-0">
+              <div className="w-8 h-8 rounded-xl bg-canvas border border-line flex items-center justify-center text-interactive shrink-0">
                 {renderIcon()}
               </div>
             )}
             <div>
-              {title && <h3 className="font-semibold text-[#F7F7FB] text-sm">{title}</h3>}
-              {subtitle && <p className="text-xs text-[#9A9AAA] mt-0.5">{subtitle}</p>}
+              {title && <h3 className="font-semibold text-ink text-sm">{title}</h3>}
+              {subtitle && <p className="text-xs text-secondary mt-0.5">{subtitle}</p>}
             </div>
           </div>
           {badge && (

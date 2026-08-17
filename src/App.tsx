@@ -44,7 +44,7 @@ export default function App() {
         return (
           <Suspense
             fallback={
-              <div className="max-w-[1500px] mx-auto px-4 py-20 text-center text-sm text-[#9A9AAA]">
+              <div className="max-w-[1500px] mx-auto px-4 py-20 text-center text-sm text-secondary">
                 Loading Company Intelligence Dashboard…
               </div>
             }
@@ -56,7 +56,7 @@ export default function App() {
         return (
           <Suspense
             fallback={
-              <div className="max-w-[1500px] mx-auto px-4 py-20 text-center text-sm text-[#9A9AAA]">
+              <div className="max-w-[1500px] mx-auto px-4 py-20 text-center text-sm text-secondary">
                 Loading Economic Dashboard…
               </div>
             }
@@ -94,7 +94,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--bg-main)] text-[#F7F7FB] flex flex-col font-sans selection:bg-[#4F32FF] selection:text-[#F7F7FB]">
+    <div className="min-h-screen bg-canvas text-ink flex flex-col font-sans selection:bg-interactive selection:text-white">
       {/* Global Header */}
       <Header
         currentDestination={currentDestination}

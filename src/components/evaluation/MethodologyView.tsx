@@ -14,14 +14,14 @@ export const MethodologyView: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 space-y-8">
-      <div className="bg-[#08080E] border border-[#1A1A23] rounded-3xl p-6 sm:p-8 space-y-4">
+      <div className="bg-surface border border-line rounded-3xl p-6 sm:p-8 space-y-4">
         <div className="flex items-center gap-3">
-          <div className="p-3 bg-[#4F32FF]/20 border border-[#4F32FF]/40 rounded-2xl text-[#665CFF]">
+          <div className="p-3 bg-interactive/20 border border-interactive/40 rounded-2xl text-interactive">
             <BookOpenCheck className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-[#F7F7FB]">Artha Bench Methodology Framework</h1>
-            <p className="text-xs text-[#9A9AAA]">
+            <h1 className="text-2xl font-bold text-ink">Artha Bench Methodology Framework</h1>
+            <p className="text-xs text-secondary">
               Technical documentation explaining the 7 dimensions of AI financial reliability, evaluation formulas, and safety scoring math.
             </p>
           </div>
@@ -29,12 +29,12 @@ export const MethodologyView: React.FC = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
           {dimensions.map((dim, idx) => (
-            <div key={idx} className="p-5 bg-[#030303] border border-[#1A1A23] rounded-2xl space-y-2">
+            <div key={idx} className="p-5 bg-canvas border border-line rounded-2xl space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-bold text-[#F7F7FB]">{dim.name}</span>
-                <span className="text-xs font-mono font-extrabold text-[#665CFF]">{dim.weight}</span>
+                <span className="text-sm font-bold text-ink">{dim.name}</span>
+                <span className="text-xs font-mono font-extrabold text-interactive">{dim.weight}</span>
               </div>
-              <p className="text-xs text-[#9A9AAA] leading-relaxed">{dim.desc}</p>
+              <p className="text-xs text-secondary leading-relaxed">{dim.desc}</p>
             </div>
           ))}
         </div>

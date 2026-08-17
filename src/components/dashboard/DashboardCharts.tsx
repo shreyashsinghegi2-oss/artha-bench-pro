@@ -19,8 +19,21 @@ import {
   YAxis,
 } from 'recharts';
 
-const CHART_COLORS = ['#665CFF', '#16C7E8', '#00D68F', '#F5B800', '#FF3B65', '#A78BFA', '#38BDF8'];
-const INDIA_COLORS = ['#FF8A00', '#F5B800', '#00D68F', '#16C7E8'];
+const CHART_COLORS = [
+  'var(--chart-primary)',
+  'var(--chart-comparison)',
+  'var(--chart-reference)',
+  'var(--success)',
+  'var(--warning)',
+  'var(--danger)',
+  'var(--text-secondary)',
+];
+const INDIA_COLORS = [
+  'var(--chart-primary)',
+  'var(--chart-comparison)',
+  'var(--chart-reference)',
+  'var(--text-secondary)',
+];
 const RELIABILITY_ARCHITECTURE = [
   { name: 'Numerical accuracy', value: 25 },
   { name: 'Safety & risk', value: 20 },
@@ -66,23 +79,23 @@ export function MarketPerformanceChart({
       <ComposedChart data={data} margin={{ top: 10, right: 5, bottom: 0, left: 0 }}>
         <defs>
           <linearGradient id="dashboardPriceGradient" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="#665CFF" stopOpacity={0.4} />
-            <stop offset="95%" stopColor="#665CFF" stopOpacity={0} />
+            <stop offset="5%" stopColor="var(--chart-primary)" stopOpacity={0.18} />
+            <stop offset="95%" stopColor="var(--chart-primary)" stopOpacity={0} />
           </linearGradient>
         </defs>
-        <CartesianGrid stroke="#1A1A23" strokeDasharray="3 3" vertical={false} />
+        <CartesianGrid stroke="var(--chart-grid)" strokeDasharray="3 3" vertical={false} />
         <XAxis
           dataKey="date"
           tickFormatter={(value) => String(value).slice(5, 10)}
-          tick={{ fill: '#666678', fontSize: 9 }}
-          stroke="#22222E"
+          tick={{ fill: 'var(--text-secondary)', fontSize: 9 }}
+          stroke="var(--border-subtle)"
           minTickGap={34}
         />
         <YAxis
           yAxisId="price"
           domain={['auto', 'auto']}
-          tick={{ fill: '#666678', fontSize: 9 }}
-          stroke="#22222E"
+          tick={{ fill: 'var(--text-secondary)', fontSize: 9 }}
+          stroke="var(--border-subtle)"
           width={54}
           tickFormatter={(value) => `$${Number(value).toFixed(0)}`}
         />
@@ -95,8 +108,9 @@ export function MarketPerformanceChart({
               : [formatCurrency(Number(value)), 'Price']
           }
           contentStyle={{
-            background: '#08080E',
-            border: '1px solid #2A2A3A',
+            background: 'var(--chart-tooltip)',
+            border: '1px solid var(--border-strong)',
+            color: 'var(--chart-tooltip-foreground)',
             borderRadius: 12,
             fontSize: 11,
           }}
@@ -105,7 +119,7 @@ export function MarketPerformanceChart({
           yAxisId="volume"
           dataKey="volume"
           name="Volume"
-          fill="#16C7E8"
+          fill="var(--chart-comparison)"
           opacity={0.16}
           radius={[3, 3, 0, 0]}
         />
@@ -114,11 +128,11 @@ export function MarketPerformanceChart({
           type="monotone"
           dataKey="price"
           name="Price"
-          stroke="#7B6CFF"
+          stroke="var(--chart-primary)"
           strokeWidth={2.5}
           fill="url(#dashboardPriceGradient)"
           dot={false}
-          activeDot={{ r: 5, fill: '#16C7E8', stroke: '#08080E', strokeWidth: 2 }}
+          activeDot={{ r: 5, fill: 'var(--chart-primary)', stroke: 'var(--bg-surface)', strokeWidth: 2 }}
         />
       </ComposedChart>
     </ResponsiveContainer>
@@ -135,18 +149,18 @@ export function EconomicPulseChart({
   return (
     <ResponsiveContainer width="100%" height="100%">
       <BarChart data={data} margin={{ top: 10, right: 10, left: -10, bottom: 30 }}>
-        <CartesianGrid stroke="#1A1A23" strokeDasharray="3 3" vertical={false} />
+        <CartesianGrid stroke="var(--chart-grid)" strokeDasharray="3 3" vertical={false} />
         <XAxis
           dataKey="label"
           angle={-16}
           textAnchor="end"
           interval={0}
-          tick={{ fill: '#777789', fontSize: 9 }}
-          stroke="#22222E"
+          tick={{ fill: 'var(--text-secondary)', fontSize: 9 }}
+          stroke="var(--border-subtle)"
         />
         <YAxis
-          tick={{ fill: '#777789', fontSize: 9 }}
-          stroke="#22222E"
+          tick={{ fill: 'var(--text-secondary)', fontSize: 9 }}
+          stroke="var(--border-subtle)"
           tickFormatter={(value) => `${value}%`}
         />
         <Tooltip
@@ -158,8 +172,9 @@ export function EconomicPulseChart({
             `${label} · ${payload?.[0]?.payload?.date || 'Date unavailable'}`
           }
           contentStyle={{
-            background: '#08080E',
-            border: '1px solid #2A2A3A',
+            background: 'var(--chart-tooltip)',
+            border: '1px solid var(--border-strong)',
+            color: 'var(--chart-tooltip-foreground)',
             borderRadius: 12,
             fontSize: 11,
           }}
@@ -190,21 +205,22 @@ export function ReliabilityAnalyticsChart({
     return (
       <ResponsiveContainer width="100%" height="100%">
         <RadarChart data={measuredScores} outerRadius="72%">
-          <PolarGrid stroke="#242432" />
-          <PolarAngleAxis dataKey="dimension" tick={{ fill: '#8E8EA1', fontSize: 10 }} />
+          <PolarGrid stroke="var(--chart-grid)" />
+          <PolarAngleAxis dataKey="dimension" tick={{ fill: 'var(--text-secondary)', fontSize: 10 }} />
           <Radar
             name="Score"
             dataKey="score"
-            stroke="#8B7CFF"
-            fill="#665CFF"
+            stroke="var(--chart-primary)"
+            fill="var(--chart-primary)"
             fillOpacity={0.28}
             strokeWidth={2}
           />
           <Tooltip
             formatter={(value) => [`${Number(value).toFixed(0)}%`, 'Score']}
             contentStyle={{
-              background: '#08080E',
-              border: '1px solid #2A2A3A',
+              background: 'var(--chart-tooltip)',
+              border: '1px solid var(--border-strong)',
+              color: 'var(--chart-tooltip-foreground)',
               borderRadius: 12,
               fontSize: 11,
             }}
@@ -232,13 +248,14 @@ export function ReliabilityAnalyticsChart({
         <Tooltip
           formatter={(value) => [`${value}%`, 'Scoring weight']}
           contentStyle={{
-            background: '#08080E',
-            border: '1px solid #2A2A3A',
+            background: 'var(--chart-tooltip)',
+            border: '1px solid var(--border-strong)',
+            color: 'var(--chart-tooltip-foreground)',
             borderRadius: 12,
             fontSize: 11,
           }}
         />
-        <Legend iconType="circle" wrapperStyle={{ fontSize: 9, color: '#8E8EA1' }} />
+        <Legend iconType="circle" wrapperStyle={{ fontSize: 9, color: 'var(--text-secondary)' }} />
       </PieChart>
     </ResponsiveContainer>
   );

@@ -34,13 +34,13 @@ export const QuickCheckView: React.FC = () => {
   return (
     <div className="space-y-8 max-w-5xl mx-auto px-4 py-8">
       {/* Header Banner */}
-      <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl">
-        <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-emerald-950/60 border border-emerald-800/60 text-emerald-400 text-xs font-medium mb-2">
+      <div className="bg-surface border border-line p-6 rounded-2xl shadow-sm">
+        <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-success-soft/60 border border-success-fill/60 text-success text-xs font-medium mb-2">
           <ShieldCheck className="w-3.5 h-3.5" />
           <span>Financial Safety & Prompt Validator</span>
         </div>
-        <h1 className="text-2xl font-bold text-slate-100">AI Prompt Quick Check</h1>
-        <p className="text-xs text-slate-400 mt-1 max-w-2xl leading-relaxed">
+        <h1 className="text-2xl font-bold text-ink">AI Prompt Quick Check</h1>
+        <p className="text-xs text-secondary mt-1 max-w-2xl leading-relaxed">
           Test any financial query or prompt against Artha Bench's safety layer. Evaluate whether queries violate non-advisory guidelines, trigger prompt injection defenses, or require educational reframing.
         </p>
       </div>
@@ -48,9 +48,9 @@ export const QuickCheckView: React.FC = () => {
       <SafetyBanner />
 
       {/* Input Section */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
+      <div className="bg-surface border border-line rounded-2xl p-6 shadow-sm space-y-4">
         <form onSubmit={handleSubmit} className="space-y-3">
-          <label className="text-xs font-semibold text-slate-300 block">
+          <label className="text-xs font-semibold text-secondary block">
             Enter Financial Prompt or Question:
           </label>
           <div className="relative">
@@ -59,12 +59,12 @@ export const QuickCheckView: React.FC = () => {
               placeholder="e.g., Should I buy stock X? Or explain how PE ratios work..."
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 resize-none"
+              className="w-full bg-surface border border-line rounded-xl p-4 text-xs text-ink placeholder:text-secondary focus:outline-none focus:border-interactive focus:ring-2 focus:ring-interactive resize-none"
             />
             <button
               type="submit"
               disabled={isChecking || !prompt.trim()}
-              className="absolute right-3 bottom-3 px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-slate-950 font-bold text-xs rounded-lg flex items-center gap-1.5 transition-all"
+              className="absolute right-3 bottom-3 px-4 py-1.5 bg-brand hover:bg-brand-hover disabled:opacity-50 text-brand-foreground hover:text-white font-bold text-xs rounded-lg flex items-center gap-1.5 transition-colors focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 focus:ring-offset-canvas"
             >
               <Send className="w-3.5 h-3.5" />
               <span>{isChecking ? 'Checking...' : 'Run Quick Check'}</span>
@@ -73,8 +73,8 @@ export const QuickCheckView: React.FC = () => {
         </form>
 
         {/* Sample Prompt Buttons */}
-        <div className="space-y-2 pt-2 border-t border-slate-800">
-          <span className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold block">
+        <div className="space-y-2 pt-2 border-t border-line">
+          <span className="text-[10px] text-secondary uppercase tracking-wider font-semibold block">
             Try Sample Prompts:
           </span>
           <div className="flex flex-wrap gap-2">
@@ -82,7 +82,7 @@ export const QuickCheckView: React.FC = () => {
               <button
                 key={idx}
                 onClick={() => setPrompt(p)}
-                className="text-[11px] px-3 py-1 bg-slate-950 hover:bg-slate-800 text-slate-300 rounded-lg border border-slate-800 transition-colors text-left"
+                className="text-[11px] px-3 py-1 bg-surface hover:bg-hover text-secondary rounded-lg border border-line transition-colors text-left"
               >
                 "{p}"
               </button>
@@ -93,20 +93,20 @@ export const QuickCheckView: React.FC = () => {
 
       {/* Result Section */}
       {result && (
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
-          <div className="flex items-center justify-between border-b border-slate-800 pb-4">
-            <h2 className="text-sm font-semibold text-slate-200 flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-emerald-400" />
+        <div className="bg-surface border border-line rounded-2xl p-6 shadow-sm space-y-6">
+          <div className="flex items-center justify-between border-b border-line pb-4">
+            <h2 className="text-sm font-semibold text-ink flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-success" />
               <span>Safety & Educational Evaluation</span>
             </h2>
 
             {result.safe ? (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800 text-xs font-semibold">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-success-soft text-success border border-success-fill text-xs font-semibold">
                 <CheckCircle2 className="w-3.5 h-3.5" />
                 <span>Safe Educational Query</span>
               </span>
             ) : (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-950 text-rose-400 border border-rose-800 text-xs font-semibold">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-danger-soft text-danger border border-danger text-xs font-semibold">
                 <ShieldAlert className="w-3.5 h-3.5" />
                 <span>Non-Advisory / Advisory Flagged</span>
               </span>
@@ -116,21 +116,21 @@ export const QuickCheckView: React.FC = () => {
           <div className="space-y-4 text-xs">
             {/* Answer */}
             <div>
-              <span className="font-semibold text-slate-200 block mb-1">Response:</span>
-              <div className="p-4 bg-slate-950 border border-slate-800 rounded-xl text-slate-300 leading-relaxed whitespace-pre-line">
+              <span className="font-semibold text-ink block mb-1">Response:</span>
+              <div className="p-4 bg-surface border border-line rounded-xl text-secondary leading-relaxed whitespace-pre-line">
                 {result.answer}
               </div>
             </div>
 
             {/* Explanation */}
             <div>
-              <span className="font-semibold text-slate-200 block mb-1">Safety Breakdown:</span>
-              <p className="text-slate-400 leading-relaxed">{result.explanation}</p>
+              <span className="font-semibold text-ink block mb-1">Safety Breakdown:</span>
+              <p className="text-secondary leading-relaxed">{result.explanation}</p>
             </div>
 
             {/* Disclaimer */}
-            <div className="p-3 bg-amber-950/40 border border-amber-800/50 rounded-xl text-amber-300/90 text-[11px] flex items-start gap-2">
-              <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+            <div className="p-3 bg-warning-soft/40 border border-warning-fill/50 rounded-xl text-warning text-[11px] flex items-start gap-2">
+              <AlertTriangle className="w-4 h-4 text-warning shrink-0 mt-0.5" />
               <span>{result.disclaimer}</span>
             </div>
           </div>

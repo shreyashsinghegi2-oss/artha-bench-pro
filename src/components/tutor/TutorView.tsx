@@ -230,10 +230,10 @@ export const TutorView: React.FC = () => {
   return (
     <div className="max-w-[1700px] mx-auto px-4 py-6 space-y-6">
       {/* Top Bar Header */}
-      <div className="bg-[#0A0A12] border border-[#1E1E2D] p-5 sm:p-6 rounded-3xl shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-surface border border-line p-5 sm:p-6 rounded-3xl shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-            <span className="px-2.5 py-0.5 rounded-full bg-[#F5B800]/15 text-[#F5B800] border border-[#F5B800]/30 text-[10px] font-bold tracking-wide uppercase">
+            <span className="px-2.5 py-0.5 rounded-full bg-warning-fill/15 text-warning border border-warning-fill/30 text-[10px] font-bold tracking-wide uppercase">
               Educational only
             </span>
 
@@ -241,7 +241,7 @@ export const TutorView: React.FC = () => {
               <button
                 onMouseEnter={() => setShowVerifiedTooltip(true)}
                 onMouseLeave={() => setShowVerifiedTooltip(false)}
-                className="px-2.5 py-0.5 rounded-full bg-[#00D68F]/15 text-[#00D68F] border border-[#00D68F]/30 text-[10px] font-bold tracking-wide uppercase flex items-center gap-1 cursor-pointer"
+                className="px-2.5 py-0.5 rounded-full bg-success-fill/15 text-success border border-success-fill/30 text-[10px] font-bold tracking-wide uppercase flex items-center gap-1 cursor-pointer"
               >
                 <CheckCircle2 className="w-3 h-3" />
                 <span>ArthaBench Verified</span>
@@ -249,17 +249,17 @@ export const TutorView: React.FC = () => {
               </button>
 
               {showVerifiedTooltip && (
-                <div className="absolute top-full left-0 mt-2 z-50 w-72 p-3 bg-[#030303] border border-[#1E1E2D] rounded-xl shadow-2xl text-[11px] text-[#9A9AAA] leading-relaxed animate-fade-in">
+                <div className="absolute top-full left-0 mt-2 z-50 w-72 p-3 bg-canvas border border-line rounded-xl shadow-sm text-[11px] text-secondary leading-relaxed animate-fade-in">
                   Numerical answers may be independently checked by the ArthaBench deterministic financial engine.
                 </div>
               )}
             </div>
           </div>
 
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#F7F7FB] tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-ink tracking-tight">
             ArthaBench AI Tutor
           </h1>
-          <p className="text-xs sm:text-sm text-[#9A9AAA] mt-1 leading-relaxed">
+          <p className="text-xs sm:text-sm text-secondary mt-1 leading-relaxed">
             AI-powered financial learning with deterministic verification
           </p>
         </div>
@@ -268,7 +268,7 @@ export const TutorView: React.FC = () => {
         <div className="flex items-center gap-2 flex-wrap self-start md:self-auto">
           <button
             onClick={handleNewChat}
-            className="px-3.5 py-2 rounded-xl bg-[#4F32FF] hover:bg-[#665CFF] text-[#F7F7FB] font-bold text-xs flex items-center gap-1.5 transition-all shadow-md shadow-[#4F32FF]/30"
+            className="px-3.5 py-2 rounded-xl bg-brand hover:bg-brand-hover text-brand-foreground hover:text-white font-bold text-xs flex items-center gap-1.5 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 focus:ring-offset-canvas"
           >
             <Plus className="w-4 h-4" />
             <span>New Chat</span>
@@ -276,7 +276,7 @@ export const TutorView: React.FC = () => {
 
           <button
             onClick={handleNewChat}
-            className="px-3.5 py-2 rounded-xl bg-[#08080E] border border-[#1E1E2D] hover:border-[#FF3B65]/40 text-[#9A9AAA] hover:text-[#FF3B65] font-semibold text-xs flex items-center gap-1.5 transition-all"
+            className="px-3.5 py-2 rounded-xl bg-surface border border-line hover:border-danger/40 text-secondary hover:text-danger font-semibold text-xs flex items-center gap-1.5 transition-all"
             title="Clear current messages"
           >
             <Trash2 className="w-4 h-4" />
@@ -286,7 +286,7 @@ export const TutorView: React.FC = () => {
           <button
             onClick={handleExportNotes}
             disabled={messages.length === 0}
-            className="px-3.5 py-2 rounded-xl bg-[#08080E] border border-[#1E1E2D] hover:border-[#665CFF]/40 text-[#9A9AAA] hover:text-[#F7F7FB] disabled:opacity-40 font-semibold text-xs flex items-center gap-1.5 transition-all"
+            className="px-3.5 py-2 rounded-xl bg-surface border border-line hover:border-interactive/40 text-secondary hover:text-ink disabled:opacity-40 font-semibold text-xs flex items-center gap-1.5 transition-all"
           >
             <Download className="w-4 h-4" />
             <span>Export Notes</span>
@@ -297,10 +297,10 @@ export const TutorView: React.FC = () => {
       {/* Main 3-Column Workspace Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Left Sidebar: Learning Library (Col 3) */}
-        <div className="lg:col-span-3 xl:col-span-2 bg-[#0A0A12] border border-[#1E1E2D] rounded-3xl p-5 space-y-6 h-[800px] flex flex-col justify-between overflow-hidden">
+        <div className="lg:col-span-3 xl:col-span-2 bg-surface border border-line rounded-3xl p-5 space-y-6 h-[800px] flex flex-col justify-between overflow-hidden">
           <div className="space-y-4 overflow-y-auto pr-1 scrollbar-thin flex-1">
-            <div className="flex items-center justify-between border-b border-[#1E1E2D] pb-3">
-              <span className="text-[11px] font-bold text-[#8A8A9E] uppercase tracking-wider">
+            <div className="flex items-center justify-between border-b border-line pb-3">
+              <span className="text-[11px] font-bold text-secondary uppercase tracking-wider">
                 LEARNING LIBRARY
               </span>
             </div>
@@ -308,7 +308,7 @@ export const TutorView: React.FC = () => {
             <div className="space-y-4">
               {LIBRARY_CATEGORIES.map((cat, idx) => (
                 <div key={idx} className="space-y-1.5">
-                  <h4 className="text-xs font-bold text-[#F7F7FB] px-1">{cat.name}</h4>
+                  <h4 className="text-xs font-bold text-ink px-1">{cat.name}</h4>
                   <div className="space-y-1">
                     {cat.topics.map((t, tIdx) => {
                       const isSelected = selectedTopic === t.title;
@@ -321,12 +321,12 @@ export const TutorView: React.FC = () => {
                           }}
                           className={`w-full text-left px-3 py-2 rounded-xl text-xs transition-all leading-snug flex items-center justify-between group ${
                             isSelected
-                              ? 'bg-[#4F32FF]/20 border border-[#4F32FF]/40 text-[#F7F7FB] font-semibold'
-                              : 'text-[#9A9AAA] hover:text-[#F7F7FB] hover:bg-[#1A1A23]/60'
+                              ? 'bg-interactive-soft border border-interactive/25 text-interactive font-semibold'
+                              : 'text-secondary hover:text-ink hover:bg-subtle/60'
                           }`}
                         >
                           <span className="line-clamp-2">{t.title}</span>
-                          <ChevronRight className="w-3.5 h-3.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity text-[#665CFF]" />
+                          <ChevronRight className="w-3.5 h-3.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity text-interactive" />
                         </button>
                       );
                     })}
@@ -337,41 +337,41 @@ export const TutorView: React.FC = () => {
           </div>
 
           {/* Saved Section at Bottom */}
-          <div className="pt-3 border-t border-[#1E1E2D] bg-[#08080E] rounded-2xl p-3 space-y-1">
-            <div className="flex items-center gap-1.5 text-xs font-bold text-[#F7F7FB]">
-              <Bookmark className="w-3.5 h-3.5 text-[#665CFF]" />
+          <div className="pt-3 border-t border-line bg-surface rounded-2xl p-3 space-y-1">
+            <div className="flex items-center gap-1.5 text-xs font-bold text-ink">
+              <Bookmark className="w-3.5 h-3.5 text-interactive" />
               <span>SAVED</span>
             </div>
-            <p className="text-[10px] text-[#8A8A9E] leading-tight">
+            <p className="text-[10px] text-secondary leading-tight">
               Save is optional. Nothing is stored until you choose Save.
             </p>
           </div>
         </div>
 
         {/* Center Column: Tutor Conversation Area (Col 6) */}
-        <div className="lg:col-span-6 xl:col-span-7 bg-[#F4F6FB] border border-slate-300 rounded-3xl flex flex-col h-[800px] overflow-hidden shadow-2xl">
+        <div className="lg:col-span-6 xl:col-span-7 bg-surface border border-line rounded-3xl flex flex-col h-[800px] overflow-hidden shadow-sm">
           {/* Chat Messages / Empty State Area */}
-          <div className="scrollbar-thin flex-1 space-y-5 overflow-y-auto bg-[#F4F6FB] p-4 sm:p-6" aria-live="polite">
+          <div className="scrollbar-thin flex-1 space-y-5 overflow-y-auto bg-canvas p-4 sm:p-6" aria-live="polite">
             {messages.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-center max-w-md mx-auto space-y-5 my-auto py-12">
-                <div className="w-16 h-16 rounded-3xl bg-gradient-to-tr from-[#4F32FF] to-[#7137F2] p-0.5 shadow-xl shadow-[#4F32FF]/30 flex items-center justify-center">
-                  <div className="w-full h-full bg-white rounded-[22px] flex items-center justify-center">
-                    <Sparkles className="w-8 h-8 text-[#665CFF]" />
+                <div className="w-16 h-16 rounded-3xl bg-interactive p-0.5 shadow-sm flex items-center justify-center">
+                  <div className="w-full h-full bg-surface rounded-[22px] flex items-center justify-center">
+                    <Sparkles className="w-8 h-8 text-interactive" />
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <h2 className="text-xl font-extrabold text-slate-950 tracking-tight">
+                  <h2 className="text-xl font-extrabold text-ink tracking-tight">
                     Ask ArthaBench anything about finance
                   </h2>
-                  <p className="text-xs text-slate-600 leading-relaxed">
+                  <p className="text-xs text-secondary leading-relaxed">
                     Choose a lesson from the library or type your own question. Numerical lessons use the deterministic engine; high-risk or current topics receive independent review.
                   </p>
                 </div>
 
                 {/* Suggested Starter Questions */}
                 <div className="w-full space-y-2 pt-2">
-                  <span className="text-[10px] font-bold text-[#8A8A9E] uppercase tracking-wider block">
+                  <span className="text-[10px] font-bold text-secondary uppercase tracking-wider block">
                     Suggested Questions:
                   </span>
                   <div className="flex flex-col gap-2">
@@ -383,7 +383,7 @@ export const TutorView: React.FC = () => {
                       <button
                         key={idx}
                         onClick={() => handleSend(q)}
-                        className="text-xs text-left px-4 py-2.5 bg-white hover:bg-indigo-50 text-slate-800 border border-slate-200 hover:border-[#665CFF]/40 rounded-xl transition-all shadow-sm"
+                        className="text-xs text-left px-4 py-2.5 bg-surface hover:bg-interactive-soft text-ink border border-line hover:border-interactive/40 rounded-xl transition-all shadow-sm"
                       >
                         {q}
                       </button>
@@ -402,8 +402,8 @@ export const TutorView: React.FC = () => {
                   <div
                     className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 text-xs font-bold ${
                       msg.role === 'user'
-                        ? 'bg-[#4F32FF] text-[#F7F7FB]'
-                        : 'bg-[#08080E] text-[#665CFF] border border-[#1E1E2D]'
+                        ? 'bg-interactive-soft text-interactive border border-interactive/25'
+                        : 'bg-surface text-interactive border border-line'
                     }`}
                   >
                     {msg.role === 'user' ? <User className="w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
@@ -411,8 +411,8 @@ export const TutorView: React.FC = () => {
 
                   {msg.role === 'assistant' && msg.structuredAnswer ? (
                     <div className="min-w-0 max-w-[96%] flex-1 space-y-2">
-                      <div className="flex items-center justify-between px-1 text-[10px] font-semibold text-slate-500">
-                        <span className="text-indigo-700">ArthaBench AI Tutor</span>
+                      <div className="flex items-center justify-between px-1 text-[10px] font-semibold text-secondary">
+                        <span className="text-interactive">ArthaBench AI Tutor</span>
                         <span>{msg.timestamp}</span>
                       </div>
                       <StructuredFinancialAnswerView
@@ -424,11 +424,11 @@ export const TutorView: React.FC = () => {
                     <div
                       className={`max-w-[85%] space-y-2 rounded-2xl border p-4 text-xs leading-relaxed shadow-sm ${
                         msg.role === 'user'
-                          ? 'border-[#4F32FF]/40 bg-[#4F32FF] text-white'
-                          : 'border-slate-200 bg-white text-slate-800'
+                          ? 'border-interactive/25 bg-interactive-soft text-ink'
+                          : 'border-line bg-surface text-ink'
                       }`}
                     >
-                      <div className={`flex items-center justify-between gap-4 border-b pb-1.5 text-[10px] ${msg.role === 'user' ? 'border-white/20 text-indigo-100' : 'border-slate-200 text-slate-500'}`}>
+                      <div className="flex items-center justify-between gap-4 border-b border-line pb-1.5 text-[10px] text-secondary">
                         <span className="font-bold">{msg.role === 'user' ? 'You' : 'ArthaBench'}</span>
                         <span>{msg.timestamp}</span>
                       </div>
@@ -440,8 +440,8 @@ export const TutorView: React.FC = () => {
             )}
 
             {isTyping && (
-              <div className="flex items-center gap-3 text-xs text-slate-500 italic">
-                <div className="w-8 h-8 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-[#665CFF] shadow-sm">
+              <div className="flex items-center gap-3 text-xs text-secondary italic">
+                <div className="w-8 h-8 rounded-xl bg-surface border border-line flex items-center justify-center text-interactive shadow-sm">
                   <RefreshCw className="w-4 h-4 animate-spin" />
                 </div>
                 <span>ArthaBench is preparing a structured explanation…</span>
@@ -451,7 +451,7 @@ export const TutorView: React.FC = () => {
           </div>
 
           {/* Bottom Chat Input Form */}
-          <div className="p-4 bg-white border-t border-slate-200">
+          <div className="p-4 bg-surface border-t border-line">
             <form
               onSubmit={(e) => {
                 e.preventDefault();
@@ -465,12 +465,12 @@ export const TutorView: React.FC = () => {
                 placeholder="Ask any finance-learning question..."
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                className="flex-1 bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#665CFF] focus:ring-2 focus:ring-[#665CFF]/10"
+                className="flex-1 bg-surface border border-line-strong rounded-xl px-4 py-3 text-xs text-ink placeholder:text-secondary focus:outline-none focus:border-interactive focus:ring-2 focus:ring-interactive"
               />
               <button
                 type="submit"
                 disabled={isTyping || !input.trim()}
-                className="px-5 py-3 bg-gradient-to-r from-[#4F32FF] to-[#7137F2] hover:opacity-95 disabled:opacity-40 text-[#F7F7FB] font-bold text-xs rounded-xl flex items-center gap-1.5 transition-all shadow-md shadow-[#4F32FF]/20 shrink-0"
+                className="px-5 py-3 bg-brand hover:bg-brand-hover disabled:opacity-40 text-brand-foreground hover:text-white font-bold text-xs rounded-xl flex items-center gap-1.5 transition-all shadow-sm shrink-0 focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 focus:ring-offset-canvas"
               >
                 <Send className="w-4 h-4" />
                 <span>Ask</span>
@@ -480,24 +480,24 @@ export const TutorView: React.FC = () => {
         </div>
 
         {/* Right Sidebar: Learning Context Controls (Col 3) */}
-        <div className="lg:col-span-3 bg-[#0A0A12] border border-[#1E1E2D] rounded-3xl p-5 space-y-5 h-[800px] flex flex-col justify-between overflow-y-auto scrollbar-thin">
+        <div className="lg:col-span-3 bg-surface border border-line rounded-3xl p-5 space-y-5 h-[800px] flex flex-col justify-between overflow-y-auto scrollbar-thin">
           <div className="space-y-4">
-            <div className="flex items-center gap-2 border-b border-[#1E1E2D] pb-3">
-              <Sliders className="w-4 h-4 text-[#665CFF]" />
-              <span className="text-[11px] font-bold text-[#8A8A9E] uppercase tracking-wider">
+            <div className="flex items-center gap-2 border-b border-line pb-3">
+              <Sliders className="w-4 h-4 text-interactive" />
+              <span className="text-[11px] font-bold text-secondary uppercase tracking-wider">
                 LEARNING CONTEXT
               </span>
             </div>
 
             {/* Country */}
             <div className="space-y-1">
-              <label className="text-[10px] font-bold text-[#8A8A9E] uppercase block">
+              <label className="text-[10px] font-bold text-secondary uppercase block">
                 COUNTRY
               </label>
               <select
                 value={country}
                 onChange={(e) => handleCountryChange(e.target.value as TutorPreferences['country'])}
-                className="w-full bg-[#08080E] border border-[#1A1A23] rounded-xl px-3 py-2 text-xs text-[#F7F7FB] focus:outline-none focus:border-[#665CFF]"
+                className="w-full bg-surface border border-line rounded-xl px-3 py-2 text-xs text-ink focus:outline-none focus:border-interactive focus:ring-2 focus:ring-interactive"
               >
                 <option value="US">US</option>
                 <option value="India">India</option>
@@ -507,13 +507,13 @@ export const TutorView: React.FC = () => {
 
             {/* Currency */}
             <div className="space-y-1">
-              <label className="text-[10px] font-bold text-[#8A8A9E] uppercase block">
+              <label className="text-[10px] font-bold text-secondary uppercase block">
                 CURRENCY
               </label>
               <select
                 value={currency}
                 onChange={(e) => setCurrency(e.target.value as TutorPreferences['currency'])}
-                className="w-full bg-[#08080E] border border-[#1A1A23] rounded-xl px-3 py-2 text-xs text-[#F7F7FB] focus:outline-none focus:border-[#665CFF]"
+                className="w-full bg-surface border border-line rounded-xl px-3 py-2 text-xs text-ink focus:outline-none focus:border-interactive focus:ring-2 focus:ring-interactive"
               >
                 <option value="USD">USD ($)</option>
                 <option value="INR">INR (₹)</option>
@@ -524,13 +524,13 @@ export const TutorView: React.FC = () => {
 
             {/* Language */}
             <div className="space-y-1">
-              <label className="text-[10px] font-bold text-[#8A8A9E] uppercase block">
+              <label className="text-[10px] font-bold text-secondary uppercase block">
                 LANGUAGE
               </label>
               <select
                 value={language}
                 onChange={(e) => setLanguage(e.target.value as TutorPreferences['language'])}
-                className="w-full bg-[#08080E] border border-[#1A1A23] rounded-xl px-3 py-2 text-xs text-[#F7F7FB] focus:outline-none focus:border-[#665CFF]"
+                className="w-full bg-surface border border-line rounded-xl px-3 py-2 text-xs text-ink focus:outline-none focus:border-interactive focus:ring-2 focus:ring-interactive"
               >
                 <option value="english">English</option>
                 <option value="hindi">Hindi</option>
@@ -540,13 +540,13 @@ export const TutorView: React.FC = () => {
 
             {/* Level */}
             <div className="space-y-1">
-              <label className="text-[10px] font-bold text-[#8A8A9E] uppercase block">
+              <label className="text-[10px] font-bold text-secondary uppercase block">
                 LEVEL
               </label>
               <select
                 value={level}
                 onChange={(e) => setLevel(e.target.value as TutorPreferences['level'])}
-                className="w-full bg-[#08080E] border border-[#1A1A23] rounded-xl px-3 py-2 text-xs text-[#F7F7FB] focus:outline-none focus:border-[#665CFF]"
+                className="w-full bg-surface border border-line rounded-xl px-3 py-2 text-xs text-ink focus:outline-none focus:border-interactive focus:ring-2 focus:ring-interactive"
               >
                 <option value="beginner">Beginner</option>
                 <option value="intermediate">Intermediate</option>
@@ -556,13 +556,13 @@ export const TutorView: React.FC = () => {
 
             {/* Learning Mode */}
             <div className="space-y-1">
-              <label className="text-[10px] font-bold text-[#8A8A9E] uppercase block">
+              <label className="text-[10px] font-bold text-secondary uppercase block">
                 LEARNING MODE
               </label>
               <select
                 value={mode}
                 onChange={(e) => setMode(e.target.value as TutorPreferences['mode'])}
-                className="w-full bg-[#08080E] border border-[#1A1A23] rounded-xl px-3 py-2 text-xs text-[#F7F7FB] focus:outline-none focus:border-[#665CFF]"
+                className="w-full bg-surface border border-line rounded-xl px-3 py-2 text-xs text-ink focus:outline-none focus:border-interactive focus:ring-2 focus:ring-interactive"
               >
                 <option value="explain">Explain concept</option>
                 <option value="quiz">Quiz me</option>
@@ -572,17 +572,17 @@ export const TutorView: React.FC = () => {
 
             {/* Response Detail */}
             <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-[#8A8A9E] uppercase block">
+              <label className="text-[10px] font-bold text-secondary uppercase block">
                 RESPONSE DETAIL
               </label>
-              <div className="grid grid-cols-2 gap-1.5 bg-[#08080E] border border-[#1A1A23] p-1 rounded-xl">
+              <div className="grid grid-cols-2 gap-1.5 bg-surface border border-line p-1 rounded-xl">
                 <button
                   type="button"
                   onClick={() => setDetail('short')}
                   className={`py-1.5 text-xs font-semibold rounded-lg transition-all ${
                     detail === 'short'
-                      ? 'bg-[#4F32FF] text-[#F7F7FB]'
-                      : 'text-[#8A8A9E] hover:text-[#F7F7FB]'
+                      ? 'bg-interactive-soft text-interactive'
+                      : 'text-secondary hover:text-ink'
                   }`}
                 >
                   Short
@@ -592,8 +592,8 @@ export const TutorView: React.FC = () => {
                   onClick={() => setDetail('detailed')}
                   className={`py-1.5 text-xs font-semibold rounded-lg transition-all ${
                     detail === 'detailed'
-                      ? 'bg-[#4F32FF] text-[#F7F7FB]'
-                      : 'text-[#8A8A9E] hover:text-[#F7F7FB]'
+                      ? 'bg-interactive-soft text-interactive'
+                      : 'text-secondary hover:text-ink'
                   }`}
                 >
                   Detailed
@@ -602,33 +602,33 @@ export const TutorView: React.FC = () => {
             </div>
 
             {/* Checkboxes */}
-            <div className="space-y-2 pt-2 border-t border-[#1E1E2D]">
-              <label className="flex items-center gap-2 cursor-pointer text-xs text-[#9A9AAA] hover:text-[#F7F7FB]">
+            <div className="space-y-2 pt-2 border-t border-line">
+              <label className="flex items-center gap-2 cursor-pointer text-xs text-secondary hover:text-ink">
                 <input
                   type="checkbox"
                   checked={useOfficialSources}
                   onChange={(e) => setUseOfficialSources(e.target.checked)}
-                  className="rounded bg-[#08080E] border-[#1A1A23] text-[#4F32FF] focus:ring-0"
+                  className="rounded bg-surface border-line text-interactive focus:ring-0"
                 />
                 <span>Use official sources when current</span>
               </label>
 
-              <label className="flex items-center gap-2 cursor-pointer text-xs text-[#9A9AAA] hover:text-[#F7F7FB]">
+              <label className="flex items-center gap-2 cursor-pointer text-xs text-secondary hover:text-ink">
                 <input
                   type="checkbox"
                   checked={highContrast}
                   onChange={(e) => setHighContrast(e.target.checked)}
-                  className="rounded bg-[#08080E] border-[#1A1A23] text-[#4F32FF] focus:ring-0"
+                  className="rounded bg-surface border-line text-interactive focus:ring-0"
                 />
                 <span>High contrast</span>
               </label>
 
-              <label className="flex items-center gap-2 cursor-pointer text-xs text-[#9A9AAA] hover:text-[#F7F7FB]">
+              <label className="flex items-center gap-2 cursor-pointer text-xs text-secondary hover:text-ink">
                 <input
                   type="checkbox"
                   checked={reducedMotion}
                   onChange={(e) => setReducedMotion(e.target.checked)}
-                  className="rounded bg-[#08080E] border-[#1A1A23] text-[#4F32FF] focus:ring-0"
+                  className="rounded bg-surface border-line text-interactive focus:ring-0"
                 />
                 <span>Reduced motion</span>
               </label>
@@ -636,9 +636,9 @@ export const TutorView: React.FC = () => {
           </div>
 
           {/* Bottom Security Disclaimer Card */}
-          <div className="p-3 bg-[#08080E] border border-[#1E1E2D] rounded-2xl flex items-start gap-2">
-            <AlertTriangle className="w-4 h-4 text-[#F5B800] shrink-0 mt-0.5" />
-            <p className="text-[10px] text-[#8A8A9E] leading-relaxed">
+          <div className="p-3 bg-surface border border-line rounded-2xl flex items-start gap-2">
+            <AlertTriangle className="w-4 h-4 text-warning shrink-0 mt-0.5" />
+            <p className="text-[10px] text-secondary leading-relaxed">
               Never share card numbers, OTPs, passwords, tax IDs, private keys or API keys.
             </p>
           </div>

@@ -26,7 +26,7 @@ export const NAVIGATION_ITEMS: { id: NavigationDestination; label: string }[] = 
 
 export const Navigation: React.FC<NavigationProps> = ({ currentDestination, onNavigate }) => {
   return (
-    <div className="bg-[#030303] border-b border-[#1A1A23] px-4 py-2 overflow-x-auto scrollbar-thin lg:hidden">
+    <div className="bg-canvas border-b border-line px-4 py-2 overflow-x-auto scrollbar-thin lg:hidden">
       <div className="max-w-[1700px] mx-auto flex items-center gap-1 min-w-max">
         {NAVIGATION_ITEMS.map((item) => {
           const isActive = currentDestination === item.id || (item.id === 'overview' && currentDestination === 'dashboard');
@@ -36,8 +36,8 @@ export const Navigation: React.FC<NavigationProps> = ({ currentDestination, onNa
               onClick={() => onNavigate(item.id)}
               className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
                 isActive
-                  ? 'bg-[#4F32FF] text-[#F7F7FB] shadow-md shadow-[#4F32FF]/30'
-                  : 'text-[#9A9AAA] hover:text-[#F7F7FB] hover:bg-[#08080E]'
+                  ? 'bg-interactive-soft text-interactive shadow-sm'
+                  : 'text-secondary hover:text-ink hover:bg-surface'
               }`}
             >
               {item.label}

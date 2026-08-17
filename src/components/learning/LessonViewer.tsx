@@ -83,24 +83,24 @@ export const LessonViewer: React.FC<LessonViewerProps> = ({
   };
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl space-y-6">
+    <div className="bg-surface border border-line rounded-2xl p-6 shadow-sm space-y-6">
       {/* Lesson Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-line pb-4">
         <div>
-          <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider">
+          <span className="text-xs font-bold text-success uppercase tracking-wider">
             Lesson Objective
           </span>
-          <h2 className="text-xl font-bold text-slate-100 mt-0.5">{lesson.title}</h2>
-          <p className="text-xs text-slate-400 mt-1">{lesson.objective}</p>
+          <h2 className="text-xl font-bold text-ink mt-0.5">{lesson.title}</h2>
+          <p className="text-xs text-secondary mt-1">{lesson.objective}</p>
         </div>
 
         <div className="flex items-center gap-2">
           <button
             onClick={() => onToggleBookmark(lesson.id)}
-            className={`p-2 rounded-xl border transition-all ${
+            className={`p-2 rounded-xl border transition-all focus:outline-none focus:ring-2 focus:ring-interactive ${
               isBookmarked
-                ? 'bg-amber-950/80 border-amber-700/80 text-amber-300'
-                : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-slate-200'
+                ? 'bg-warning-soft/80 border-warning-fill/80 text-warning'
+                : 'bg-hover border-line-strong text-secondary hover:text-ink'
             }`}
             title="Bookmark Lesson"
           >
@@ -109,10 +109,10 @@ export const LessonViewer: React.FC<LessonViewerProps> = ({
 
           <button
             onClick={() => onMarkCompleted(lesson.id)}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold border transition-all ${
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold border transition-all focus:outline-none focus:ring-2 ${
               isCompleted
-                ? 'bg-emerald-950/80 border-emerald-600/80 text-emerald-300'
-                : 'bg-emerald-600 hover:bg-emerald-500 text-slate-950 border-emerald-500'
+                ? 'bg-success-soft/80 border-success-fill/80 text-success'
+                : 'bg-brand hover:bg-brand-hover text-brand-foreground hover:text-white border-brand focus:ring-brand focus:ring-offset-2 focus:ring-offset-canvas'
             }`}
           >
             <CheckCircle2 className="w-4 h-4" />
@@ -122,16 +122,16 @@ export const LessonViewer: React.FC<LessonViewerProps> = ({
       </div>
 
       {/* Control Filters: Level, Language, Mode */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-slate-950/60 p-3 rounded-xl border border-slate-800">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-surface/60 p-3 rounded-xl border border-line">
         <div>
-          <label className="text-[10px] uppercase font-bold text-slate-400 flex items-center gap-1 mb-1">
-            <SlidersHorizontal className="w-3 h-3 text-emerald-400" />
+          <label className="text-[10px] uppercase font-bold text-secondary flex items-center gap-1 mb-1">
+            <SlidersHorizontal className="w-3 h-3 text-success" />
             Learner Level
           </label>
           <select
             value={level}
             onChange={(e) => setLevel(e.target.value as LearnerLevel)}
-            className="w-full bg-slate-900 border border-slate-700 rounded-lg text-xs text-slate-200 p-1.5 focus:outline-none focus:border-emerald-500"
+            className="w-full bg-surface border border-line-strong rounded-lg text-xs text-ink p-1.5 focus:outline-none focus:border-interactive focus:ring-2 focus:ring-interactive"
           >
             <option value="beginner">Beginner (Foundations)</option>
             <option value="intermediate">Intermediate (Frameworks)</option>
@@ -140,14 +140,14 @@ export const LessonViewer: React.FC<LessonViewerProps> = ({
         </div>
 
         <div>
-          <label className="text-[10px] uppercase font-bold text-slate-400 flex items-center gap-1 mb-1">
-            <Globe2 className="w-3 h-3 text-cyan-400" />
+          <label className="text-[10px] uppercase font-bold text-secondary flex items-center gap-1 mb-1">
+            <Globe2 className="w-3 h-3 text-interactive" />
             Language Mode
           </label>
           <select
             value={language}
             onChange={(e) => setLanguage(e.target.value as LearningLanguage)}
-            className="w-full bg-slate-900 border border-slate-700 rounded-lg text-xs text-slate-200 p-1.5 focus:outline-none focus:border-cyan-500"
+            className="w-full bg-surface border border-line-strong rounded-lg text-xs text-ink p-1.5 focus:outline-none focus:border-interactive focus:ring-2 focus:ring-interactive"
           >
             <option value="english">English</option>
             <option value="hindi">Hindi</option>
@@ -156,14 +156,14 @@ export const LessonViewer: React.FC<LessonViewerProps> = ({
         </div>
 
         <div>
-          <label className="text-[10px] uppercase font-bold text-slate-400 flex items-center gap-1 mb-1">
-            <Sparkles className="w-3 h-3 text-amber-400" />
+          <label className="text-[10px] uppercase font-bold text-secondary flex items-center gap-1 mb-1">
+            <Sparkles className="w-3 h-3 text-warning" />
             Pedagogy Mode
           </label>
           <select
             value={mode}
             onChange={(e) => setMode(e.target.value as LearningMode)}
-            className="w-full bg-slate-900 border border-slate-700 rounded-lg text-xs text-slate-200 p-1.5 focus:outline-none focus:border-amber-500"
+            className="w-full bg-surface border border-line-strong rounded-lg text-xs text-ink p-1.5 focus:outline-none focus:border-interactive focus:ring-2 focus:ring-interactive"
           >
             <option value="explain">Core Explanation</option>
             <option value="step-by-step">Step-by-Step Breakdown</option>
@@ -177,8 +177,8 @@ export const LessonViewer: React.FC<LessonViewerProps> = ({
 
       {/* Main Lesson Content */}
       {isLoading ? (
-        <div className="py-12 text-center text-slate-400 space-y-3">
-          <RefreshCw className="w-6 h-6 animate-spin text-emerald-400 mx-auto" />
+        <div className="py-12 text-center text-secondary space-y-3">
+          <RefreshCw className="w-6 h-6 animate-spin text-success mx-auto" />
           <p className="text-xs">Generating Socratic lesson content...</p>
         </div>
       ) : lessonContent ? (
@@ -188,7 +188,7 @@ export const LessonViewer: React.FC<LessonViewerProps> = ({
             {lessonContent.keyConcepts?.map((concept: string, idx: number) => (
               <span
                 key={idx}
-                className="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-emerald-950/60 text-emerald-300 border border-emerald-800/60"
+                className="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-success-soft/60 text-success border border-success-fill/60"
               >
                 #{concept}
               </span>
@@ -202,29 +202,29 @@ export const LessonViewer: React.FC<LessonViewerProps> = ({
               disclaimer={lessonContent.educationalDisclaimer}
             />
           ) : (
-            <div className="bg-white border border-slate-200 rounded-2xl p-5 text-sm text-slate-700 leading-relaxed whitespace-pre-line shadow-lg">
+            <div className="bg-surface border border-line rounded-2xl p-5 text-sm text-secondary leading-relaxed whitespace-pre-line shadow-sm">
               {lessonContent.directExplanation}
             </div>
           )}
 
           {/* Worked Example */}
           {!lessonContent.structuredAnswer && lessonContent.workedExample && (
-            <div className="bg-slate-800/40 border border-slate-700/60 rounded-xl p-4 text-xs">
-              <h4 className="font-bold text-slate-100 text-xs mb-1.5 flex items-center gap-1.5">
-                <BookOpen className="w-4 h-4 text-emerald-400" />
+            <div className="bg-hover/40 border border-line-strong/60 rounded-xl p-4 text-xs">
+              <h4 className="font-bold text-ink text-xs mb-1.5 flex items-center gap-1.5">
+                <BookOpen className="w-4 h-4 text-success" />
                 <span>Worked Example & Math Proof</span>
               </h4>
-              <p className="text-slate-300 leading-relaxed">{lessonContent.workedExample}</p>
+              <p className="text-secondary leading-relaxed">{lessonContent.workedExample}</p>
             </div>
           )}
 
           {/* Knowledge Check Quiz */}
-          <div className="bg-slate-950 border border-slate-800 rounded-xl p-4 space-y-3">
-            <h4 className="font-bold text-slate-100 text-xs flex items-center gap-1.5">
-              <HelpCircle className="w-4 h-4 text-cyan-400" />
+          <div className="bg-surface border border-line rounded-xl p-4 space-y-3">
+            <h4 className="font-bold text-ink text-xs flex items-center gap-1.5">
+              <HelpCircle className="w-4 h-4 text-interactive" />
               <span>Knowledge Check</span>
             </h4>
-            <p className="text-xs font-medium text-slate-200">
+            <p className="text-xs font-medium text-ink">
               {lessonContent.knowledgeCheck?.question || lesson.knowledgeCheck.question}
             </p>
 
@@ -236,12 +236,12 @@ export const LessonViewer: React.FC<LessonViewerProps> = ({
                     lessonContent.knowledgeCheck?.correctIndex ?? lesson.knowledgeCheck.correctIndex;
                   const isCorrect = optIdx === correctIdx;
 
-                  let optionStyle = 'bg-slate-900 border-slate-800 text-slate-300';
+                  let optionStyle = 'bg-subtle border-line text-secondary';
                   if (hasSubmittedQuiz) {
-                    if (isCorrect) optionStyle = 'bg-emerald-950/80 border-emerald-600 text-emerald-300';
-                    else if (isSelected) optionStyle = 'bg-rose-950/80 border-rose-600 text-rose-300';
+                    if (isCorrect) optionStyle = 'bg-success-soft/80 border-success-fill text-success';
+                    else if (isSelected) optionStyle = 'bg-danger-soft/80 border-danger text-danger';
                   } else if (isSelected) {
-                    optionStyle = 'bg-slate-800 border-slate-600 text-slate-100';
+                    optionStyle = 'bg-hover border-line-strong text-ink';
                   }
 
                   return (
@@ -261,22 +261,22 @@ export const LessonViewer: React.FC<LessonViewerProps> = ({
               <button
                 disabled={selectedOption === null}
                 onClick={handleQuizSubmit}
-                className="mt-2 px-4 py-2 bg-emerald-600 disabled:opacity-50 hover:bg-emerald-500 text-slate-950 font-semibold rounded-lg text-xs"
+                className="mt-2 px-4 py-2 bg-brand disabled:opacity-50 hover:bg-brand-hover text-brand-foreground hover:text-white font-semibold rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 focus:ring-offset-canvas"
               >
                 Submit Answer
               </button>
             ) : (
-              <div className="mt-3 p-3 bg-slate-900 border border-slate-800 rounded-lg text-xs text-slate-300">
-                <span className="font-bold text-emerald-400">Explanation: </span>
+              <div className="mt-3 p-3 bg-surface border border-line rounded-lg text-xs text-secondary">
+                <span className="font-bold text-success">Explanation: </span>
                 {lessonContent.knowledgeCheck?.explanation || lesson.knowledgeCheck.explanation}
               </div>
             )}
           </div>
 
           {/* Personal Lesson Notes */}
-          <div className="bg-slate-950/60 border border-slate-800/80 rounded-xl p-4">
-            <h4 className="font-bold text-slate-200 text-xs flex items-center gap-1.5 mb-2">
-              <FileText className="w-4 h-4 text-amber-400" />
+          <div className="bg-surface/60 border border-line/80 rounded-xl p-4">
+            <h4 className="font-bold text-ink text-xs flex items-center gap-1.5 mb-2">
+              <FileText className="w-4 h-4 text-warning" />
               <span>Personal Lesson Notes (Saved in Browser)</span>
             </h4>
             <textarea
@@ -284,7 +284,7 @@ export const LessonViewer: React.FC<LessonViewerProps> = ({
               onChange={(e) => setNoteText(e.target.value)}
               onBlur={handleNoteBlur}
               placeholder="Write your study notes or formula calculations here..."
-              className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2.5 text-xs text-slate-200 focus:outline-none focus:border-amber-500 h-20 resize-none"
+              className="w-full bg-surface border border-line rounded-lg p-2.5 text-xs text-ink focus:outline-none focus:border-interactive focus:ring-2 focus:ring-interactive h-20 resize-none"
             />
           </div>
         </div>

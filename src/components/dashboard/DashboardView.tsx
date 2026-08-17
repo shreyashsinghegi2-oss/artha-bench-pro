@@ -17,6 +17,7 @@ import {
 import { getOverallProgressPercentage, getPaperPortfolio } from '../../services/learningStorage';
 import { SafetyBanner } from '../SafetyBanner';
 import { DashboardAssistant } from './DashboardAssistant';
+import { IndiaMarketTicker } from './IndiaMarketTicker';
 
 interface DashboardViewProps {
   onNavigate: (destination: NavigationDestination) => void;
@@ -236,6 +237,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
           </div>
         </div>
       </section>
+
+      <IndiaMarketTicker />
 
       {loadError && <div className="rounded-2xl border border-danger/25 bg-danger/10 px-4 py-3 text-xs text-danger">{loadError}</div>}
 

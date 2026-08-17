@@ -7,6 +7,7 @@ import {
   DashboardAssistantSnapshot,
   EconomicIndicator,
   EconomicSeriesResponse,
+  IndiaMarketTickerResponse,
   MarketHistoryPoint,
   ProviderDiagnostic,
   NewsExplanationResponse,
@@ -285,6 +286,10 @@ export async function fetchMarketQuote(symbol: string, assetType = 'equity') {
   return fetchJSON<{ quote: NormalizedMarketQuote; status: string }>(
     `/api/markets/quote?symbol=${encodeURIComponent(symbol)}&assetType=${assetType}`
   );
+}
+
+export async function fetchIndiaMarketTicker(): Promise<IndiaMarketTickerResponse> {
+  return fetchJSON<IndiaMarketTickerResponse>('/api/markets/india-ticker');
 }
 
 export async function fetchTickerQuote(symbol: string): Promise<NormalizedMarketQuote> {

@@ -116,3 +116,55 @@
 .hero-gradient {
   background: var(--bg-surface);
 }
+
+@keyframes india-market-ticker-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.india-market-ticker-track {
+  animation: india-market-ticker-scroll 58s linear infinite;
+  will-change: transform;
+}
+
+.india-market-ticker-shell:hover .india-market-ticker-track,
+.india-market-ticker-shell:focus-within .india-market-ticker-track {
+  animation-play-state: paused;
+}
+
+@media (max-width: 767px) {
+  .india-market-ticker-viewport {
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scrollbar-width: thin;
+  }
+
+  .india-market-ticker-track {
+    animation: none;
+    transform: none;
+  }
+
+  .india-market-ticker-duplicate {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .india-market-ticker-viewport {
+    overflow-x: auto;
+  }
+
+  .india-market-ticker-track {
+    animation: none;
+    transform: none;
+    will-change: auto;
+  }
+
+  .india-market-ticker-duplicate {
+    display: none;
+  }
+}

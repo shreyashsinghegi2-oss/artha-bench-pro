@@ -235,6 +235,28 @@ export interface NormalizedMarketQuote {
   providerName: string;
 }
 
+export type IndiaMarketTickerItemStatus = 'available' | 'unavailable';
+
+export interface IndiaMarketTickerItem {
+  id: string;
+  label: string;
+  yahooSymbol: string;
+  status: IndiaMarketTickerItemStatus;
+  price: number | null;
+  change: number | null;
+  changePercent: number | null;
+  currency: string | null;
+  freshness: NormalizedMarketQuote['freshness'] | null;
+  providerTimestamp: string | null;
+}
+
+export interface IndiaMarketTickerResponse {
+  status: 'available' | 'partial' | 'unavailable';
+  sourceLabel: string;
+  retrievedAt: string;
+  items: IndiaMarketTickerItem[];
+}
+
 export interface MarketHistoryPoint {
   date: string;
   price: number;

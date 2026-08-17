@@ -25,6 +25,7 @@ import { generateVerificationCode } from './financeEngine';
 import { generateLessonContent, reviewQuizAnswer } from './learningService';
 import { getBusinessNews, explainNewsArticle } from './businessNewsService';
 import { getMarketQuote, searchMarketQuotes, getMarketHistory } from './marketDataService';
+import { getIndiaMarketTicker } from './indiaMarketTickerService';
 import { checkNewsProviderDiagnostic } from './providers/newsProvider';
 import { checkMarketProviderDiagnostic } from './providers/marketDataProvider';
 import {
@@ -604,6 +605,16 @@ const handleMarketQuote = async (req: Request, res: Response, next: NextFunction
 };
 apiRouter.get('/markets/quote', handleMarketQuote);
 apiRouter.get('/markets/quotes', handleMarketQuote);
+
+apiRouter.get('/markets/india-ticker', async (_req: Request, res: Response, next: NextFunction) => {
+  try {
+    const ticker = await getIndiaMarketTicker();
+    res.setHeader('Cache-Control', 'public, s-maxage=45, stale-while-revalidate=30');
+    res.json(ticker);
+  } catch (err) {
+    next(err);
+  }
+});
 
 apiRouter.get('/markets/search', async (req: Request, res: Response, next: NextFunction) => {
   try {

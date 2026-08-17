@@ -2,13 +2,36 @@ import React, { useState, useEffect } from 'react';
 import { Search, TrendingUp, TrendingDown, DollarSign, Calculator, RefreshCw, BarChart2, Briefcase, Plus, Trash2 } from 'lucide-react';
 import { fetchMarketOverview, fetchTickerQuote, calculateFinancialMetrics, fetchCompanyIntelligence } from '../../services/learningApi';
 import { getPaperPortfolio, executePaperTrade, getWatchlist, saveWatchlist } from '../../services/learningStorage';
-import { CompanyIntelligence } from '../../types';
+import { CompanyIntelligence, NormalizedMarketQuote } from '../../types';
 import { SafetyBanner } from '../SafetyBanner';
 import { CompanyIntelligencePanel } from './CompanyIntelligencePanel';
+import { MarketStrip, MarketStripInstrument } from './MarketStrip';
+
+const MARKET_STRIP_INSTRUMENTS: MarketStripInstrument[] = [
+  { symbol: 'NIFTY:NSE', label: 'NIFTY 50' },
+  { symbol: 'SENSEX:BSE', label: 'SENSEX' },
+  { symbol: 'BANKNIFTY:NSE', label: 'BANKNIFTY' },
+  { symbol: 'USD/INR', label: 'USD/INR', valuePrefix: '₹' },
+  { symbol: 'XAU/INR', label: 'Gold / INR', valuePrefix: '₹' },
+];
+
+function formatQuoteValue(quote: NormalizedMarketQuote) {
+  try {
+    return new Intl.NumberFormat(quote.currency === 'INR' ? 'en-IN' : 'en-US', {
+      style: 'currency',
+      currency: quote.currency,
+      maximumFractionDigits: 2,
+    }).format(quote.price);
+  } catch {
+    return `${quote.currency} ${quote.price.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+  }
+}
 
 export const MarketView: React.FC = () => {
   const [marketQuotes, setMarketQuotes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [marketStripQuotes, setMarketStripQuotes] = useState<NormalizedMarketQuote[]>([]);
+  const [marketStripLoading, setMarketStripLoading] = useState(true);
   const [searchTicker, setSearchTicker] = useState('');
   const [searchedQuote, setSearchedQuote] = useState<any | null>(null);
   const [searchError, setSearchError] = useState<string | null>(null);
@@ -38,8 +61,23 @@ export const MarketView: React.FC = () => {
 
   useEffect(() => {
     loadOverview();
+    loadMarketStrip();
     loadCompanyIntelligence('AAPL');
   }, []);
+
+  const loadMarketStrip = async () => {
+    setMarketStripLoading(true);
+    try {
+      const quotes = await fetchMarketOverview(
+        MARKET_STRIP_INSTRUMENTS.map((instrument) => instrument.symbol),
+      );
+      setMarketStripQuotes(quotes);
+    } catch (err) {
+      console.error('Failed to load market strip:', err);
+    } finally {
+      setMarketStripLoading(false);
+    }
+  };
 
   const loadCompanyIntelligence = async (symbol: string) => {
     setCompanyLoading(true);
@@ -131,14 +169,20 @@ export const MarketView: React.FC = () => {
         </div>
 
         <button
-          onClick={loadOverview}
-          disabled={loading}
+          onClick={() => void Promise.all([loadOverview(), loadMarketStrip()])}
+          disabled={loading || marketStripLoading}
           className="flex items-center gap-2 px-4 py-2 bg-hover hover:bg-hover text-ink text-xs font-semibold rounded-xl border border-line-strong transition-all self-start md:self-auto"
         >
-          <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+          <RefreshCw className={`w-3.5 h-3.5 ${loading || marketStripLoading ? 'animate-spin' : ''}`} />
           <span>Refresh Quotes</span>
         </button>
       </div>
+
+      <MarketStrip
+        instruments={MARKET_STRIP_INSTRUMENTS}
+        quotes={marketStripQuotes}
+        loading={marketStripLoading}
+      />
 
       <SafetyBanner />
 
@@ -179,7 +223,7 @@ export const MarketView: React.FC = () => {
                   <span className="text-[10px] text-secondary truncate max-w-28">{searchedQuote.name}</span>
                 </div>
                 <div className="text-lg font-extrabold text-ink mt-1">
-                  ${searchedQuote.price.toFixed(2)}
+                  {formatQuoteValue(searchedQuote)}
                 </div>
               </div>
               <div className="text-right space-y-2">
@@ -212,7 +256,7 @@ export const MarketView: React.FC = () => {
           <div className="bg-surface border border-line rounded-2xl p-6 shadow-sm space-y-4">
             <h2 className="text-sm font-semibold text-ink flex items-center justify-between">
               <span>Tracked Market Overview</span>
-              <span className="text-xs text-secondary">Live Simulation Data</span>
+              <span className="text-xs text-secondary">Provider-labelled data</span>
             </h2>
 
             {loading ? (

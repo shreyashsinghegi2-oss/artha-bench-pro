@@ -8,6 +8,7 @@ interface NavigationProps {
 
 export const NAVIGATION_ITEMS: { id: NavigationDestination; label: string }[] = [
   { id: 'overview', label: 'Overview' },
+  { id: 'markets', label: 'Market Data' },
   { id: 'quick-check', label: 'Quick Check' },
   { id: 'tutor', label: 'Financial Tutor' },
   { id: 'evaluation-lab', label: 'Evaluation Lab' },
@@ -18,7 +19,6 @@ export const NAVIGATION_ITEMS: { id: NavigationDestination; label: string }[] = 
   { id: 'reports', label: 'Reports & History' },
   { id: 'learning', label: 'Learning' },
   { id: 'news', label: 'Business News' },
-  { id: 'markets', label: 'Market Data' },
   { id: 'economy', label: 'Economic Data' },
   { id: 'methodology', label: 'Methodology' },
   { id: 'settings', label: 'Settings' },

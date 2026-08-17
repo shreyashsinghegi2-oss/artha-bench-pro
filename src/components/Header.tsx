@@ -14,6 +14,7 @@ interface NavItem {
 
 const PRIMARY_NAV_ITEMS: NavItem[] = [
   { id: 'overview', label: 'Overview' },
+  { id: 'markets', label: 'Market Data' },
   { id: 'quick-check', label: 'Quick Check' },
   { id: 'tutor', label: 'Financial Tutor' },
   { id: 'evaluation-lab', label: 'Evaluation Lab' },
@@ -27,7 +28,6 @@ const PRIMARY_NAV_ITEMS: NavItem[] = [
 const SECONDARY_NAV_ITEMS: NavItem[] = [
   { id: 'learning', label: 'Learning Workspace' },
   { id: 'news', label: 'Business News' },
-  { id: 'markets', label: 'Market Data' },
   { id: 'economy', label: 'Economic Data' },
   { id: 'methodology', label: 'Methodology' },
   { id: 'settings', label: 'Settings' },

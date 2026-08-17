@@ -4,7 +4,7 @@
  */
 
 import { BENCHMARK_DATASET_V1, BenchmarkScenario } from './data/benchmarks/v1/scenarios';
-import { runMultiModelEvaluation } from './groqService';
+import { getGroqModels, runMultiModelEvaluation } from './groqService';
 import { saveReportRecord, StoredReportRecord } from './reportStorage';
 
 export interface BatchRunProgress {
@@ -66,6 +66,7 @@ export async function executeBatchBenchmark(
   activeRuns.set(runId, runProgress);
 
   const startTime = Date.now();
+  const models = getGroqModels();
   let totalAccuracySum = 0;
   let totalConsensusSum = 0;
   let totalSafetySum = 0;
@@ -111,8 +112,8 @@ export async function executeBatchBenchmark(
       appVersion: '2.0.0',
       benchmarkVersion: scenario.version,
       modelNames: {
-        primaryModel: 'llama-3.3-70b-versatile',
-        secondaryModel: 'llama-3.1-8b-instant',
+        primaryModel: models.primaryModel,
+        secondaryModel: models.secondaryModel,
       },
       query: scenario.prompt,
       scenarioId: scenario.scenarioId,
@@ -142,7 +143,7 @@ export async function executeBatchBenchmark(
     safetyComplianceRate: Math.round(totalSafetySum / count),
     overallAverageScore: Math.round(totalOverallSum / count),
     totalDurationMs,
-    modelVersion: 'llama-3.3-70b / llama-3.1-8b',
+    modelVersion: `${models.primaryModel} / ${models.secondaryModel}`,
     datasetVersion: 'v1.0.0',
   };
 

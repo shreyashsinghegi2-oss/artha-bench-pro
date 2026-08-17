@@ -33,11 +33,11 @@ export const SettingsView: React.FC = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs pt-1">
               <div className="p-3 bg-[#08080E] border border-[#1A1A23] rounded-xl">
                 <span className="text-[#9A9AAA] block">Primary Model</span>
-                <span className="font-mono text-[#F7F7FB] font-bold">llama-3.3-70b-versatile</span>
+                <span className="font-mono text-[#F7F7FB] font-bold">openai/gpt-oss-120b</span>
               </div>
               <div className="p-3 bg-[#08080E] border border-[#1A1A23] rounded-xl">
                 <span className="text-[#9A9AAA] block">Secondary Model</span>
-                <span className="font-mono text-[#F7F7FB] font-bold">llama-3.1-8b-instant</span>
+                <span className="font-mono text-[#F7F7FB] font-bold">openai/gpt-oss-20b</span>
               </div>
             </div>
           </div>

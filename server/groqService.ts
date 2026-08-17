@@ -15,13 +15,64 @@ export interface GroqModelsConfig {
   secondaryModel: string;
 }
 
+const GROQ_DEFAULT_MODELS: GroqModelsConfig = {
+  tutorModel: 'openai/gpt-oss-120b',
+  evaluatorModel: 'openai/gpt-oss-20b',
+  primaryModel: 'openai/gpt-oss-120b',
+  secondaryModel: 'openai/gpt-oss-20b',
+};
+
+/**
+ * Groq retired both legacy Llama model IDs on 2026-08-16. Keep existing
+ * deployments working even when their optional Vercel overrides still contain
+ * those IDs; unrelated custom model overrides remain untouched.
+ */
+const GROQ_RETIRED_MODEL_REPLACEMENTS: Readonly<Record<string, string>> = {
+  'llama-3.3-70b-versatile': 'openai/gpt-oss-120b',
+  'llama-3.1-8b-instant': 'openai/gpt-oss-20b',
+};
+
+function resolveGroqModel(environmentKey: string, fallback: string): string {
+  const configuredModel = process.env[environmentKey]?.trim();
+  if (!configuredModel) return fallback;
+  return GROQ_RETIRED_MODEL_REPLACEMENTS[configuredModel] || configuredModel;
+}
+
 export function getGroqModels(): GroqModelsConfig {
   return {
-    tutorModel: process.env.GROQ_TUTOR_MODEL || 'llama-3.3-70b-versatile',
-    evaluatorModel: process.env.GROQ_EVALUATOR_MODEL || 'llama-3.1-8b-instant',
-    primaryModel: process.env.GROQ_PRIMARY_MODEL || 'llama-3.3-70b-versatile',
-    secondaryModel: process.env.GROQ_SECONDARY_MODEL || 'llama-3.1-8b-instant',
+    tutorModel: resolveGroqModel('GROQ_TUTOR_MODEL', GROQ_DEFAULT_MODELS.tutorModel),
+    evaluatorModel: resolveGroqModel(
+      'GROQ_EVALUATOR_MODEL',
+      GROQ_DEFAULT_MODELS.evaluatorModel,
+    ),
+    primaryModel: resolveGroqModel('GROQ_PRIMARY_MODEL', GROQ_DEFAULT_MODELS.primaryModel),
+    secondaryModel: resolveGroqModel(
+      'GROQ_SECONDARY_MODEL',
+      GROQ_DEFAULT_MODELS.secondaryModel,
+    ),
   };
+}
+
+const GROQ_MODELS_URL = 'https://api.groq.com/openai/v1/models';
+
+function getGroqDiagnosticRoles(models: GroqModelsConfig) {
+  return [
+    {
+      id: 'groq-tutor',
+      name: models.tutorModel,
+      role: 'Financial Tutor & Lesson Generation',
+    },
+    {
+      id: 'groq-primary',
+      name: models.primaryModel,
+      role: 'Primary Financial Evaluator',
+    },
+    {
+      id: 'groq-secondary',
+      name: models.secondaryModel,
+      role: 'Independent Reliability Cross-checker',
+    },
+  ];
 }
 
 function groqStatusFromHttp(status: number): ProviderDiagnostic['status'] {
@@ -31,123 +82,85 @@ function groqStatusFromHttp(status: number): ProviderDiagnostic['status'] {
   return 'error';
 }
 
-async function probeGroqModel(
-  id: string,
-  role: string,
-  model: string,
-  apiKey: string,
-): Promise<ProviderDiagnostic> {
+/** Authenticates once and verifies that every configured Groq model is active. */
+export async function checkGroqDiagnostics(): Promise<ProviderDiagnostic[]> {
+  const apiKey = process.env.GROQ_API_KEY?.trim() || '';
+  const models = getGroqModels();
+  const roles = getGroqDiagnosticRoles(models);
+  if (!apiKey) {
+    const lastChecked = new Date().toISOString();
+    return roles.map((role) => ({
+      ...role,
+      status: 'not_configured',
+      lastChecked,
+      message: 'GROQ_API_KEY is not configured.',
+    }));
+  }
+
   const startedAt = Date.now();
   const lastChecked = new Date().toISOString();
   try {
-    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
+    const response = await fetch(GROQ_MODELS_URL, {
+      method: 'GET',
       headers: {
         Authorization: `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        model,
-        messages: [{ role: 'user', content: 'Reply with OK.' }],
-        temperature: 0,
-        max_tokens: 4,
-      }),
       signal: AbortSignal.timeout(8_000),
     });
-
     const latencyMs = Date.now() - startedAt;
+
     if (!response.ok) {
-      return {
-        id,
-        name: model,
-        role,
-        status: groqStatusFromHttp(response.status),
+      const status = groqStatusFromHttp(response.status);
+      return roles.map((role) => ({
+        ...role,
+        status,
         lastChecked,
         latencyMs,
-        message: `Groq model probe failed with HTTP ${response.status}.`,
-      };
+        message: `Groq model-directory check failed with HTTP ${response.status}.`,
+      }));
     }
 
     const data = await response.json().catch(() => null);
-    const content = data?.choices?.[0]?.message?.content;
-    if (typeof content !== 'string' || !content.trim()) {
-      return {
-        id,
-        name: model,
-        role,
+    if (!Array.isArray(data?.data)) {
+      return roles.map((role) => ({
+        ...role,
         status: 'invalid_response',
         lastChecked,
         latencyMs,
-        message: 'Groq returned an invalid model-probe response.',
-      };
+        message: 'Groq returned an invalid model-directory response.',
+      }));
     }
 
-    return {
-      id,
-      name: model,
-      role,
-      status: 'connected',
-      lastChecked,
-      latencyMs,
-      message: 'Authenticated completion succeeded.',
-    };
+    const activeModels = new Set(
+      data.data
+        .map((model: unknown) =>
+          model && typeof model === 'object' && 'id' in model ? (model as { id?: unknown }).id : null,
+        )
+        .filter((id: unknown): id is string => typeof id === 'string' && id.length > 0),
+    );
+
+    return roles.map((role) => {
+      const connected = activeModels.has(role.name);
+      return {
+        ...role,
+        status: connected ? 'connected' : 'error',
+        lastChecked,
+        latencyMs,
+        message: connected
+          ? 'Authenticated Groq model directory confirms this model is active.'
+          : 'The configured Groq model is no longer active for this API key.',
+      };
+    });
   } catch {
-    return {
-      id,
-      name: model,
-      role,
+    return roles.map((role) => ({
+      ...role,
       status: 'provider_unavailable',
       lastChecked,
       latencyMs: Date.now() - startedAt,
-      message: 'Groq model probe timed out or the provider was unreachable.',
-    };
+      message: 'Groq model-directory check timed out or the provider was unreachable.',
+    }));
   }
-}
-
-/** Tests each configured Groq role with a real, minimal completion. */
-export async function checkGroqDiagnostics(): Promise<ProviderDiagnostic[]> {
-  const apiKey = process.env.GROQ_API_KEY?.trim() || '';
-  const models = getGroqModels();
-  if (!apiKey) {
-    const lastChecked = new Date().toISOString();
-    return [
-      {
-        id: 'groq-tutor',
-        name: models.tutorModel,
-        role: 'Financial Tutor & Lesson Generation',
-        status: 'not_configured',
-        lastChecked,
-        message: 'GROQ_API_KEY is not configured.',
-      },
-      {
-        id: 'groq-primary',
-        name: models.primaryModel,
-        role: 'Primary Financial Evaluator',
-        status: 'not_configured',
-        lastChecked,
-        message: 'GROQ_API_KEY is not configured.',
-      },
-      {
-        id: 'groq-secondary',
-        name: models.secondaryModel,
-        role: 'Independent Reliability Cross-checker',
-        status: 'not_configured',
-        lastChecked,
-        message: 'GROQ_API_KEY is not configured.',
-      },
-    ];
-  }
-
-  return Promise.all([
-    probeGroqModel('groq-tutor', 'Financial Tutor & Lesson Generation', models.tutorModel, apiKey),
-    probeGroqModel('groq-primary', 'Primary Financial Evaluator', models.primaryModel, apiKey),
-    probeGroqModel(
-      'groq-secondary',
-      'Independent Reliability Cross-checker',
-      models.secondaryModel,
-      apiKey,
-    ),
-  ]);
 }
 
 function generateFallbackChatResponse(userPrompt: string): string {

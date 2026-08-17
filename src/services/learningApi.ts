@@ -2,6 +2,8 @@ import {
   NormalizedMarketQuote,
   NormalizedNewsItem,
   CompanyIntelligence,
+  DashboardAssistantResponse,
+  DashboardAssistantSnapshot,
   EconomicIndicator,
   EconomicSeriesResponse,
   ProviderDiagnostic,
@@ -338,9 +340,20 @@ export async function searchMarketSymbols(query: string, assetType = 'all') {
 }
 
 export async function fetchMarketHistory(symbol: string, range = '1m') {
-  return fetchJSON<{ points: { date: string; price: number }[] }>(
+  return fetchJSON<{ points: { date: string; price: number; volume?: number }[] }>(
     `/api/markets/history?symbol=${encodeURIComponent(symbol)}&range=${range}`
   );
+}
+
+export async function askDashboardAssistant(params: {
+  question: string;
+  snapshot: DashboardAssistantSnapshot;
+  history?: Array<{ role: 'user' | 'assistant'; content: string }>;
+}): Promise<DashboardAssistantResponse> {
+  return fetchJSON<DashboardAssistantResponse>('/api/dashboard/assistant', {
+    method: 'POST',
+    body: JSON.stringify(params),
+  });
 }
 
 export async function fetchCompanyIntelligence(
@@ -349,6 +362,26 @@ export async function fetchCompanyIntelligence(
   return fetchJSON<CompanyIntelligence>(
     `/api/company/intelligence?symbol=${encodeURIComponent(symbol)}`,
   );
+}
+
+export async function askCompanyIntelligenceAI(params: {
+  symbol: string;
+  question: string;
+  history?: Array<{ role: 'user' | 'assistant'; content: string }>;
+}) {
+  return fetchJSON<{
+    symbol: string;
+    answer: string;
+    provider: 'groq' | 'demo';
+    model: string | null;
+    groundedAt: string;
+    disclaimer: string;
+    suggestedQuestions: string[];
+    requestId: string;
+  }>('/api/company/assistant', {
+    method: 'POST',
+    body: JSON.stringify(params),
+  });
 }
 
 // Quick Check & Evaluation Lab APIs

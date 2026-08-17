@@ -142,81 +142,72 @@ export const MarketView: React.FC = () => {
 
       <SafetyBanner />
 
-      {/* Main Grid Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left 2 Cols: Ticker Search, Market Overview & Paper Trading */}
-        <div className="lg:col-span-2 space-y-8">
-          {/* Search Box */}
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
-            <h2 className="text-sm font-semibold text-slate-200 mb-3 flex items-center gap-2">
-              <Search className="w-4 h-4 text-emerald-400" />
-              <span>Lookup Financial Ticker</span>
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 sm:p-6 shadow-xl">
+        <div className="flex flex-col lg:flex-row lg:items-end gap-4">
+          <div className="flex-1">
+            <h2 className="text-sm font-semibold text-slate-200 mb-2 flex items-center gap-2">
+              <Search className="w-4 h-4 text-cyan-400" />
+              <span>Company Intelligence Search</span>
             </h2>
+            <p className="text-[11px] text-slate-500 mb-3">
+              Load a company’s live quote, Finnhub fundamentals, earnings, analyst trends, charts, and grounded AI explanation.
+            </p>
             <form onSubmit={handleSearch} className="flex gap-2">
               <input
                 type="text"
-                placeholder="Enter symbol (e.g. AAPL, NVDA, SPY)..."
+                placeholder="Enter a US ticker, such as AAPL, NVDA, MSFT, or TSLA"
                 value={searchTicker}
                 onChange={(e) => setSearchTicker(e.target.value)}
-                className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-500/50"
+                className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-cyan-500/60 uppercase"
               />
               <button
                 type="submit"
-                className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-semibold text-xs rounded-xl transition-all"
+                disabled={companyLoading}
+                className="px-5 py-2.5 bg-cyan-500 hover:bg-cyan-400 disabled:opacity-60 text-slate-950 font-bold text-xs rounded-xl transition-all"
               >
-                Search
+                Analyze Company
               </button>
             </form>
-
             {searchError && <p className="text-xs text-rose-400 mt-2">{searchError}</p>}
-
-            {searchedQuote && (
-              <div className="mt-4 p-4 bg-slate-950 border border-slate-800 rounded-xl flex items-center justify-between gap-4">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-slate-100 text-sm">{searchedQuote.symbol}</span>
-                    <span className="text-xs text-slate-400">{searchedQuote.name}</span>
-                  </div>
-                  <div className="text-xs text-slate-400 mt-1">
-                    Currency: {searchedQuote.currency}
-                  </div>
-                </div>
-
-                <div className="text-right">
-                  <div className="text-sm font-bold text-slate-100">${searchedQuote.price.toFixed(2)}</div>
-                  <div
-                    className={`text-xs font-medium flex items-center justify-end gap-1 ${
-                      searchedQuote.change >= 0 ? 'text-emerald-400' : 'text-rose-400'
-                    }`}
-                  >
-                    {searchedQuote.change >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                    <span>{searchedQuote.changePercent.toFixed(2)}%</span>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => toggleWatchlist(searchedQuote.symbol)}
-                    className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs rounded-lg border border-slate-700"
-                  >
-                    {watchlist.includes(searchedQuote.symbol) ? 'Remove Watch' : '+ Watchlist'}
-                  </button>
-                  <button
-                    onClick={() => handlePaperBuy(searchedQuote.symbol, searchedQuote.name, searchedQuote.price)}
-                    className="px-3 py-1.5 bg-emerald-950 hover:bg-emerald-900 text-emerald-300 text-xs font-semibold rounded-lg border border-emerald-800"
-                  >
-                    Paper Buy 10
-                  </button>
-                </div>
-              </div>
-            )}
           </div>
 
-          <CompanyIntelligencePanel
-            data={companyIntelligence}
-            loading={companyLoading}
-          />
+          {searchedQuote && (
+            <div className="min-w-[280px] p-3.5 bg-slate-950 border border-slate-800 rounded-xl flex items-center justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-slate-100 text-sm">{searchedQuote.symbol}</span>
+                  <span className="text-[10px] text-slate-500 truncate max-w-28">{searchedQuote.name}</span>
+                </div>
+                <div className="text-lg font-extrabold text-slate-100 mt-1">
+                  ${searchedQuote.price.toFixed(2)}
+                </div>
+              </div>
+              <div className="text-right space-y-2">
+                <div className={`text-xs font-bold flex items-center justify-end gap-1 ${searchedQuote.change >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                  {searchedQuote.change >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                  {searchedQuote.changePercent.toFixed(2)}%
+                </div>
+                <button
+                  onClick={() => toggleWatchlist(searchedQuote.symbol)}
+                  className="px-2.5 py-1 bg-slate-800 text-slate-300 text-[10px] rounded-lg border border-slate-700"
+                >
+                  {watchlist.includes(searchedQuote.symbol) ? 'Remove watch' : '+ Watchlist'}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
 
+      <CompanyIntelligencePanel
+        data={companyIntelligence}
+        loading={companyLoading}
+      />
+
+      {/* Main Grid Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Left 2 Cols: Market Overview & Financial Tools */}
+        <div className="lg:col-span-2 space-y-8">
           {/* Market Overview Grid */}
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
             <h2 className="text-sm font-semibold text-slate-200 flex items-center justify-between">

@@ -126,7 +126,7 @@ export const MarketView: React.FC = () => {
           </div>
           <h1 className="text-2xl font-bold text-ink">Financial Market Data & Simulation</h1>
           <p className="text-xs text-secondary mt-1 max-w-2xl leading-relaxed">
-            Practice market analysis using real-time quotes, virtual paper trading balances, and fundamental financial calculation models.
+            Practice market analysis using provider-labelled quotes, virtual paper trading balances, and fundamental financial calculation models.
           </p>
         </div>
 
@@ -150,12 +150,12 @@ export const MarketView: React.FC = () => {
               <span>Company Intelligence Search</span>
             </h2>
             <p className="text-[11px] text-secondary mb-3">
-              Load a company’s live quote, Finnhub fundamentals, earnings, analyst trends, charts, and grounded AI explanation.
+              Load a provider-labelled quote, Finnhub fundamentals, earnings, analyst trends, charts, and grounded AI explanation.
             </p>
             <form onSubmit={handleSearch} className="flex gap-2">
               <input
                 type="text"
-                placeholder="Enter a US ticker, such as AAPL, NVDA, MSFT, or TSLA"
+                placeholder="Enter AAPL or an Indian ticker such as RELIANCE:NSE or SBIN:NSE"
                 value={searchTicker}
                 onChange={(e) => setSearchTicker(e.target.value)}
                 className="flex-1 bg-surface border border-line rounded-xl px-4 py-2.5 text-xs text-ink placeholder:text-secondary focus:outline-none focus:border-interactive focus:ring-2 focus:ring-interactive uppercase"

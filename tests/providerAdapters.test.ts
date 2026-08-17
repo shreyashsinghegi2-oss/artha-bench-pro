@@ -6,6 +6,7 @@ import {
 import {
   fetchHistoryFromProvider,
   fetchQuoteFromProvider,
+  normalizeTwelveDataSymbol,
 } from '../server/providers/marketDataProvider';
 import {
   checkFredDiagnostic,
@@ -120,6 +121,16 @@ describe('NewsData.io provider adapter', () => {
 });
 
 describe('Twelve Data provider adapter', () => {
+  it('normalizes NSE and BSE symbol formats at the provider boundary', () => {
+    expect(normalizeTwelveDataSymbol('NSE:SBIN')).toEqual({
+      providerSymbol: 'SBIN:NSE',
+      baseSymbol: 'SBIN',
+      exchange: 'NSE',
+    });
+    expect(normalizeTwelveDataSymbol('RELIANCE.NS').providerSymbol).toBe('RELIANCE:NSE');
+    expect(normalizeTwelveDataSymbol('500325.BO').providerSymbol).toBe('500325:BSE');
+  });
+
   it('authenticates with apikey and normalizes a quote response', async () => {
     process.env.MARKET_DATA_PROVIDER = 'twelvedata';
     process.env.MARKET_DATA_API_KEY = 'market-test-secret';
@@ -183,8 +194,8 @@ describe('Twelve Data provider adapter', () => {
 
     const points = await fetchHistoryFromProvider('AAPL', '1m');
     expect(points).toEqual([
-      { date: '2026-08-15', price: 220, volume: 100 },
-      { date: '2026-08-16', price: 224.5, volume: 200 },
+      { date: '2026-08-15', price: 220, close: 220, volume: 100 },
+      { date: '2026-08-16', price: 224.5, close: 224.5, volume: 200 },
     ]);
     const requestUrl = new URL(String(fetchMock.mock.calls[0][0]));
     expect(requestUrl.pathname).toBe('/time_series');
@@ -197,6 +208,97 @@ describe('Twelve Data provider adapter', () => {
     expect(result.status).toBe('not_configured');
     expect(result.quote.freshness).toBe('demo');
     expect(result.quote.providerName).toContain('Demo');
+  });
+
+  it('requests an exchange-qualified NSE quote and labels it end of day', async () => {
+    process.env.MARKET_DATA_PROVIDER = 'twelvedata';
+    process.env.MARKET_DATA_API_KEY = 'market-test-secret';
+    process.env.MARKET_DATA_BASE_URL = 'https://api.twelvedata.com/quote';
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          symbol: 'SBIN',
+          name: 'State Bank of India',
+          exchange: 'NSE',
+          currency: 'INR',
+          datetime: '2026-08-14',
+          open: '806.40',
+          high: '817.20',
+          low: '803.90',
+          close: '812.65',
+          previous_close: '806.25',
+          change: '6.40',
+          percent_change: '0.79',
+          volume: '12600000',
+          is_market_open: true,
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } },
+      ),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await fetchQuoteFromProvider('NSE:SBIN');
+
+    expect(result.status).toBe('connected');
+    expect(result.message).toContain('end-of-day');
+    expect(result.quote).toMatchObject({
+      symbol: 'SBIN:NSE',
+      exchange: 'NSE',
+      currency: 'INR',
+      freshness: 'end_of_day',
+      price: 812.65,
+    });
+    const requestUrl = new URL(String(fetchMock.mock.calls[0][0]));
+    expect(requestUrl.searchParams.get('symbol')).toBe('SBIN:NSE');
+  });
+
+  it('preserves Indian OHLCV history and uses EOD intervals', async () => {
+    process.env.MARKET_DATA_PROVIDER = 'twelvedata';
+    process.env.MARKET_DATA_API_KEY = 'market-test-secret';
+    process.env.MARKET_DATA_BASE_URL = 'https://api.twelvedata.com/quote';
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          values: [{
+            datetime: '2026-08-14',
+            open: '1372.50',
+            high: '1391.80',
+            low: '1368.20',
+            close: '1384.40',
+            volume: '7420000',
+          }],
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } },
+      ),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    const points = await fetchHistoryFromProvider('RELIANCE.NS', '1d');
+
+    expect(points).toEqual([{
+      date: '2026-08-14',
+      price: 1384.4,
+      open: 1372.5,
+      high: 1391.8,
+      low: 1368.2,
+      close: 1384.4,
+      volume: 7420000,
+    }]);
+    const requestUrl = new URL(String(fetchMock.mock.calls[0][0]));
+    expect(requestUrl.searchParams.get('symbol')).toBe('RELIANCE:NSE');
+    expect(requestUrl.searchParams.get('interval')).toBe('1day');
+  });
+
+  it('uses an INR-labelled NSE demo when the key is absent', async () => {
+    delete process.env.MARKET_DATA_API_KEY;
+    const result = await fetchQuoteFromProvider('SBIN.NS');
+    expect(result.status).toBe('not_configured');
+    expect(result.quote).toMatchObject({
+      symbol: 'SBIN:NSE',
+      exchange: 'NSE',
+      currency: 'INR',
+      freshness: 'demo',
+    });
   });
 });
 

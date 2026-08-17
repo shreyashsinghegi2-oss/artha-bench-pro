@@ -7,6 +7,7 @@ import {
   DashboardAssistantSnapshot,
   EconomicIndicator,
   EconomicSeriesResponse,
+  MarketHistoryPoint,
   ProviderDiagnostic,
   NewsExplanationResponse,
   StructuredFinancialAnswer,
@@ -291,12 +292,21 @@ export async function fetchTickerQuote(symbol: string): Promise<NormalizedMarket
     const res = await fetchMarketQuote(symbol);
     return res.quote;
   } catch {
+    const normalizedSymbol = symbol.trim().toUpperCase();
+    const yahooIndiaSuffix = normalizedSymbol.match(/^(.+)\.(NS|BO)$/);
+    const prefixedIndiaSymbol = normalizedSymbol.match(/^(NSE|BSE):(.+)$/);
+    const suffixedIndiaSymbol = normalizedSymbol.match(/^(.+):(NSE|BSE)$/);
+    const indiaExchange = yahooIndiaSuffix
+      ? yahooIndiaSuffix[2] === 'NS' ? 'NSE' : 'BSE'
+      : prefixedIndiaSymbol?.[1] || suffixedIndiaSymbol?.[2] || null;
+    const baseSymbol = yahooIndiaSuffix?.[1] || prefixedIndiaSymbol?.[2] || suffixedIndiaSymbol?.[1] || normalizedSymbol;
+    const displaySymbol = indiaExchange ? `${baseSymbol}:${indiaExchange}` : normalizedSymbol;
     return {
-      symbol: symbol.toUpperCase(),
-      name: `${symbol.toUpperCase()} Inc.`,
+      symbol: displaySymbol,
+      name: `${baseSymbol} (Demo)`,
       assetType: 'equity',
-      exchange: 'NASDAQ',
-      currency: 'USD',
+      exchange: indiaExchange || 'NASDAQ',
+      currency: indiaExchange ? 'INR' : 'USD',
       price: 185.5,
       open: 182.1,
       high: 187.0,
@@ -371,7 +381,7 @@ export async function searchMarketSymbols(query: string, assetType = 'all') {
 }
 
 export async function fetchMarketHistory(symbol: string, range = '1m') {
-  return fetchJSON<{ points: { date: string; price: number; volume?: number }[] }>(
+  return fetchJSON<{ points: MarketHistoryPoint[] }>(
     `/api/markets/history?symbol=${encodeURIComponent(symbol)}&range=${range}`
   );
 }

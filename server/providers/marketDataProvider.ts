@@ -35,6 +35,9 @@ const timeSeriesResponseSchema = z.object({
   values: z.array(
     z.object({
       datetime: z.string(),
+      open: z.union([z.string(), z.number()]).nullable().optional(),
+      high: z.union([z.string(), z.number()]).nullable().optional(),
+      low: z.union([z.string(), z.number()]).nullable().optional(),
       close: z.union([z.string(), z.number()]),
       volume: z.union([z.string(), z.number()]).nullable().optional(),
     }).passthrough(),
@@ -67,17 +70,90 @@ function toNumber(value: unknown): number | null {
   return Number.isFinite(numberValue) ? numberValue : null;
 }
 
+const INDIA_EXCHANGE_ALIASES: Record<string, 'NSE' | 'BSE'> = {
+  NSE: 'NSE',
+  XNSE: 'NSE',
+  NS: 'NSE',
+  BSE: 'BSE',
+  XBOM: 'BSE',
+  BO: 'BSE',
+};
+
+export interface NormalizedTwelveDataSymbol {
+  providerSymbol: string;
+  baseSymbol: string;
+  exchange: 'NSE' | 'BSE' | null;
+}
+
+/**
+ * Twelve Data accepts exchange-qualified symbols as SYMBOL:EXCHANGE.
+ * Also accept common Yahoo- and TradingView-style inputs at our boundary so
+ * callers never need provider-specific conversion logic.
+ */
+export function normalizeTwelveDataSymbol(symbol: string): NormalizedTwelveDataSymbol {
+  let normalized = symbol.trim().toUpperCase();
+  let exchange: 'NSE' | 'BSE' | null = null;
+
+  const yahooSuffix = normalized.match(/^(.+)\.(NS|BO)$/);
+  if (yahooSuffix) {
+    normalized = yahooSuffix[1];
+    exchange = INDIA_EXCHANGE_ALIASES[yahooSuffix[2]];
+  } else {
+    const qualified = normalized.match(/^([^:]+):([^:]+)$/);
+    if (qualified) {
+      const prefixExchange = INDIA_EXCHANGE_ALIASES[qualified[1]];
+      const suffixExchange = INDIA_EXCHANGE_ALIASES[qualified[2]];
+      if (prefixExchange) {
+        normalized = qualified[2];
+        exchange = prefixExchange;
+      } else if (suffixExchange) {
+        normalized = qualified[1];
+        exchange = suffixExchange;
+      }
+    }
+  }
+
+  const baseSymbol = safeSymbol(normalized);
+  return {
+    providerSymbol: exchange ? `${baseSymbol}:${exchange}` : baseSymbol,
+    baseSymbol,
+    exchange,
+  };
+}
+
+function isIndianExchange(exchange: string | null | undefined) {
+  if (!exchange) return false;
+  return Boolean(INDIA_EXCHANGE_ALIASES[exchange.trim().toUpperCase()]);
+}
+
+function resolveQuoteFreshness(
+  exchange: string | null | undefined,
+  isMarketOpen: boolean | undefined,
+): NormalizedMarketQuote['freshness'] {
+  // Twelve Data currently classifies its India stock coverage as EOD. Keep
+  // this conservative even if an exchange session happens to be open.
+  if (isIndianExchange(exchange)) return 'end_of_day';
+  return isMarketOpen ? 'delayed' : 'end_of_day';
+}
+
 function buildFallbackQuote(symbol: string, assetType: string): NormalizedMarketQuote {
   const uppercaseSymbol = symbol.toUpperCase();
   const fixture = DEMO_MARKET_QUOTES.find((quote) => quote.symbol === uppercaseSymbol);
   if (fixture) return { ...fixture, retrievedAt: new Date().toISOString() };
 
+  const exchange = uppercaseSymbol.endsWith(':NSE')
+    ? 'NSE'
+    : uppercaseSymbol.endsWith(':BSE')
+      ? 'BSE'
+      : null;
+  const baseSymbol = exchange ? uppercaseSymbol.slice(0, -(exchange.length + 1)) : uppercaseSymbol;
+
   return {
     symbol: uppercaseSymbol,
-    name: `${uppercaseSymbol} (Demo)`,
+    name: `${baseSymbol} (Demo)`,
     assetType,
-    exchange: null,
-    currency: 'USD',
+    exchange,
+    currency: exchange ? 'INR' : 'USD',
     price: 100,
     open: 100,
     high: 100,
@@ -132,8 +208,8 @@ export async function fetchQuoteFromProvider(
   symbol: string,
   assetType = 'equity',
 ): Promise<MarketQuoteProviderResult> {
-  const normalizedSymbol = safeSymbol(symbol);
-  const fallbackQuote = buildFallbackQuote(normalizedSymbol, assetType);
+  const normalizedSymbol = normalizeTwelveDataSymbol(symbol);
+  const fallbackQuote = buildFallbackQuote(normalizedSymbol.providerSymbol, assetType);
   const { provider, apiKey, baseUrl } = getConfiguration();
 
   if (!apiKey) {
@@ -154,7 +230,7 @@ export async function fetchQuoteFromProvider(
 
   try {
     const url = buildProviderUrl(baseUrl, 'quote');
-    url.searchParams.set('symbol', normalizedSymbol);
+    url.searchParams.set('symbol', normalizedSymbol.providerSymbol);
     url.searchParams.set('apikey', apiKey);
 
     const response = await fetch(url, { signal: AbortSignal.timeout(8_000) });
@@ -198,12 +274,22 @@ export async function fetchQuoteFromProvider(
       toNumber(data.percent_change) ??
       (previousClose && change !== null ? (change / previousClose) * 100 : null);
 
+    const responseIndiaExchange = data.exchange
+      ? INDIA_EXCHANGE_ALIASES[data.exchange.trim().toUpperCase()] || null
+      : null;
+    const indiaExchange = normalizedSymbol.exchange || responseIndiaExchange;
+    const responseBaseSymbol = data.symbol
+      ? normalizeTwelveDataSymbol(data.symbol).baseSymbol
+      : normalizedSymbol.baseSymbol;
+
     const quote: NormalizedMarketQuote = {
-      symbol: data.symbol || normalizedSymbol,
-      name: data.name || data.symbol || normalizedSymbol,
+      symbol: indiaExchange
+        ? `${responseBaseSymbol}:${indiaExchange}`
+        : data.symbol || normalizedSymbol.baseSymbol,
+      name: data.name || data.symbol || normalizedSymbol.baseSymbol,
       assetType,
-      exchange: data.exchange || null,
-      currency: data.currency || 'USD',
+      exchange: indiaExchange || data.exchange || null,
+      currency: data.currency || (indiaExchange ? 'INR' : 'USD'),
       price,
       open: toNumber(data.open),
       high: toNumber(data.high),
@@ -216,15 +302,19 @@ export async function fetchQuoteFromProvider(
         data.datetime ||
         (data.timestamp !== null && data.timestamp !== undefined ? String(data.timestamp) : null),
       retrievedAt: new Date().toISOString(),
-      // The free plan can include delayed exchange data, so do not overstate freshness.
-      freshness: data.is_market_open ? 'delayed' : 'end_of_day',
+      freshness: resolveQuoteFreshness(
+        indiaExchange || data.exchange,
+        data.is_market_open,
+      ),
       providerName: 'Twelve Data',
     };
 
     return {
       quote,
       status: 'connected',
-      message: 'Live Twelve Data quote loaded.',
+      message: indiaExchange
+        ? 'Twelve Data India end-of-day quote loaded.'
+        : 'Twelve Data quote loaded with conservative freshness labelling.',
     };
   } catch {
     return {
@@ -253,7 +343,19 @@ function historyFallback(symbol: string): MarketHistoryPoint[] {
   return points;
 }
 
-function rangeConfiguration(range: string) {
+function rangeConfiguration(range: string, indiaEndOfDay = false) {
+  if (indiaEndOfDay) {
+    const indiaConfigurations: Record<string, { interval: string; outputsize: string }> = {
+      '1d': { interval: '1day', outputsize: '2' },
+      '1w': { interval: '1day', outputsize: '5' },
+      '1m': { interval: '1day', outputsize: '30' },
+      '3m': { interval: '1day', outputsize: '90' },
+      '6m': { interval: '1day', outputsize: '180' },
+      '1y': { interval: '1day', outputsize: '365' },
+    };
+    return indiaConfigurations[range] || indiaConfigurations['1m'];
+  }
+
   const configurations: Record<string, { interval: string; outputsize: string }> = {
     '1d': { interval: '5min', outputsize: '78' },
     '1w': { interval: '1h', outputsize: '40' },
@@ -269,15 +371,15 @@ export async function fetchHistoryFromProvider(
   symbol: string,
   range = '1m',
 ): Promise<MarketHistoryPoint[]> {
-  const normalizedSymbol = safeSymbol(symbol);
-  const fallback = historyFallback(normalizedSymbol);
+  const normalizedSymbol = normalizeTwelveDataSymbol(symbol);
+  const fallback = historyFallback(normalizedSymbol.providerSymbol);
   const { provider, apiKey, baseUrl } = getConfiguration();
   if (!apiKey || (provider !== 'twelvedata' && provider !== 'twelve-data')) return fallback;
 
   try {
     const url = buildProviderUrl(baseUrl, 'time_series');
-    const configuration = rangeConfiguration(range);
-    url.searchParams.set('symbol', normalizedSymbol);
+    const configuration = rangeConfiguration(range, normalizedSymbol.exchange !== null);
+    url.searchParams.set('symbol', normalizedSymbol.providerSymbol);
     url.searchParams.set('interval', configuration.interval);
     url.searchParams.set('outputsize', configuration.outputsize);
     url.searchParams.set('order', 'ASC');
@@ -290,20 +392,23 @@ export async function fetchHistoryFromProvider(
     const parsed = timeSeriesResponseSchema.safeParse(rawData);
     if (!parsed.success || parsed.data.values.length === 0) return fallback;
 
-    const points = parsed.data.values
-      .map((value) => ({
+    const points = parsed.data.values.flatMap((value): MarketHistoryPoint[] => {
+      const close = toNumber(value.close);
+      if (close === null) return [];
+      const open = toNumber(value.open);
+      const high = toNumber(value.high);
+      const low = toNumber(value.low);
+      const volume = toNumber(value.volume);
+      return [{
         date: value.datetime,
-        price: toNumber(value.close),
-        volume: toNumber(value.volume),
-      }))
-      .filter((value): value is { date: string; price: number; volume: number | null } =>
-        value.price !== null,
-      )
-      .map((value) => ({
-        date: value.date,
-        price: value.price,
-        ...(value.volume === null ? {} : { volume: value.volume }),
-      }));
+        price: close,
+        ...(open === null ? {} : { open }),
+        ...(high === null ? {} : { high }),
+        ...(low === null ? {} : { low }),
+        close,
+        ...(volume === null ? {} : { volume }),
+      }];
+    });
 
     return points.length > 0 ? points : fallback;
   } catch {
@@ -313,11 +418,11 @@ export async function fetchHistoryFromProvider(
 
 export async function checkMarketProviderDiagnostic(): Promise<ProviderDiagnostic> {
   const startedAt = Date.now();
-  const result = await fetchQuoteFromProvider('AAPL');
+  const result = await fetchQuoteFromProvider('INFY:NSE');
   return {
     id: 'market-data',
-    name: 'Twelve Data',
-    role: 'Stock, ETF, forex, and crypto market data',
+    name: 'Twelve Data India',
+    role: 'Global market data with conservatively labelled India EOD coverage',
     status: result.status,
     lastChecked: new Date().toISOString(),
     latencyMs: Date.now() - startedAt,

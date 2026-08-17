@@ -334,19 +334,31 @@ export async function callGroqStructuredFinancialAnswer(
     userPrompt,
     options.history,
   );
+  const requestStructuredCompletion = (
+    requestMessages: Array<{ role: string; content: string }>,
+    responseFormat: Record<string, unknown>,
+  ) =>
+    fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: selectedModel,
+        messages: requestMessages,
+        temperature: 0.15,
+        max_tokens: 3_500,
+        response_format: responseFormat,
+      }),
+      signal: AbortSignal.timeout(25_000),
+    });
 
-  const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: selectedModel,
+  let response: Response;
+  try {
+    response = await requestStructuredCompletion(
       messages,
-      temperature: 0.15,
-      max_tokens: 2_500,
-      response_format: strictSchemaSupported
+      strictSchemaSupported
         ? {
             type: 'json_schema',
             json_schema: {
@@ -356,27 +368,40 @@ export async function callGroqStructuredFinancialAnswer(
             },
           }
         : { type: 'json_object' },
-    }),
-    signal: AbortSignal.timeout(20_000),
-  });
+    );
 
-  if (!response.ok) {
-    if (response.status === 400) {
-      const plainText = await callGroqChat(
-        systemPrompt,
+    if (response.status === 400 && strictSchemaSupported) {
+      const compatibilityMessages = buildGroqMessages(
+        `${systemPrompt}\n\nReturn one valid JSON object only with exactly this contract: ${JSON.stringify(STRUCTURED_FINANCIAL_ANSWER_JSON_SCHEMA)}`,
         userPrompt,
-        selectedModel,
         options.history,
       );
-      return createFallbackStructuredFinancialAnswer(fallbackQuestion, plainText);
+      response = await requestStructuredCompletion(
+        compatibilityMessages,
+        { type: 'json_object' },
+      );
     }
-    throw new Error(`Groq structured request failed with HTTP ${response.status}.`);
+  } catch {
+    return createFallbackStructuredFinancialAnswer(
+      fallbackQuestion,
+      generateFallbackChatResponse(fallbackQuestion),
+    );
   }
 
-  const data = await response.json();
+  if (!response.ok) {
+    return createFallbackStructuredFinancialAnswer(
+      fallbackQuestion,
+      generateFallbackChatResponse(fallbackQuestion),
+    );
+  }
+
+  const data = await response.json().catch(() => null);
   const content = data?.choices?.[0]?.message?.content;
   if (typeof content !== 'string' || !content.trim()) {
-    throw new Error('Groq returned an empty structured completion.');
+    return createFallbackStructuredFinancialAnswer(
+      fallbackQuestion,
+      generateFallbackChatResponse(fallbackQuestion),
+    );
   }
 
   const decoded = (() => {

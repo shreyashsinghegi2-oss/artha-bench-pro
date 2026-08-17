@@ -248,6 +248,25 @@ export const DEMO_MARKET_QUOTES: NormalizedMarketQuote[] = [
     freshness: 'demo',
     providerName: 'Demo Fixture Provider',
   },
+  {
+    symbol: 'GC=F',
+    name: 'Gold Futures (Demo)',
+    assetType: 'commodity',
+    exchange: 'COMEX',
+    currency: 'USD',
+    price: 3394.8,
+    open: 3378.3,
+    high: 3402.6,
+    low: 3371.9,
+    previousClose: 3380.1,
+    change: 14.7,
+    changePercent: 0.43,
+    volume: 186420,
+    providerTimestamp: null,
+    retrievedAt: new Date().toISOString(),
+    freshness: 'demo',
+    providerName: 'Demo Fixture Provider',
+  },
 ];
 
 export const DEMO_MARKET_HISTORY: Record<string, MarketHistoryPoint[]> = {

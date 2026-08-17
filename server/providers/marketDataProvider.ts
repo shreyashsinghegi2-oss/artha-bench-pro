@@ -8,6 +8,11 @@
 import { z } from 'zod';
 import { MarketHistoryPoint, NormalizedMarketQuote, ProviderDiagnostic } from '../../src/types';
 import { DEMO_MARKET_HISTORY, DEMO_MARKET_QUOTES } from '../../src/data/marketFixtures';
+import {
+  fetchYahooFinanceHistory,
+  fetchYahooFinanceQuote,
+  isYahooFinanceProvider,
+} from './yahooFinanceProvider';
 
 const DEFAULT_TWELVE_DATA_QUOTE_URL = 'https://api.twelvedata.com/quote';
 
@@ -208,9 +213,14 @@ export async function fetchQuoteFromProvider(
   symbol: string,
   assetType = 'equity',
 ): Promise<MarketQuoteProviderResult> {
+  const configuration = getConfiguration();
+  if (isYahooFinanceProvider(configuration.provider)) {
+    return fetchYahooFinanceQuote(symbol, assetType);
+  }
+
   const normalizedSymbol = normalizeTwelveDataSymbol(symbol);
   const fallbackQuote = buildFallbackQuote(normalizedSymbol.providerSymbol, assetType);
-  const { provider, apiKey, baseUrl } = getConfiguration();
+  const { provider, apiKey, baseUrl } = configuration;
 
   if (!apiKey) {
     return {
@@ -371,9 +381,14 @@ export async function fetchHistoryFromProvider(
   symbol: string,
   range = '1m',
 ): Promise<MarketHistoryPoint[]> {
+  const configuration = getConfiguration();
+  if (isYahooFinanceProvider(configuration.provider)) {
+    return fetchYahooFinanceHistory(symbol, range);
+  }
+
   const normalizedSymbol = normalizeTwelveDataSymbol(symbol);
   const fallback = historyFallback(normalizedSymbol.providerSymbol);
-  const { provider, apiKey, baseUrl } = getConfiguration();
+  const { provider, apiKey, baseUrl } = configuration;
   if (!apiKey || (provider !== 'twelvedata' && provider !== 'twelve-data')) return fallback;
 
   try {
@@ -418,11 +433,14 @@ export async function fetchHistoryFromProvider(
 
 export async function checkMarketProviderDiagnostic(): Promise<ProviderDiagnostic> {
   const startedAt = Date.now();
+  const isYahoo = isYahooFinanceProvider(getConfiguration().provider);
   const result = await fetchQuoteFromProvider('INFY:NSE');
   return {
     id: 'market-data',
-    name: 'Twelve Data India',
-    role: 'Global market data with conservatively labelled India EOD coverage',
+    name: isYahoo ? 'Yahoo Finance (Experimental)' : 'Twelve Data India',
+    role: isYahoo
+      ? 'Timestamped market quotes with conservative freshness labelling'
+      : 'Global market data with conservatively labelled India EOD coverage',
     status: result.status,
     lastChecked: new Date().toISOString(),
     latencyMs: Date.now() - startedAt,

@@ -8,6 +8,7 @@ import {
   fetchQuoteFromProvider,
   normalizeTwelveDataSymbol,
 } from '../server/providers/marketDataProvider';
+import { normalizeYahooFinanceSymbol } from '../server/providers/yahooFinanceProvider';
 import {
   checkFredDiagnostic,
   fetchFredOverview,
@@ -29,6 +30,7 @@ const trackedEnvironmentKeys = [
   'MARKET_DATA_PROVIDER',
   'MARKET_DATA_API_KEY',
   'MARKET_DATA_BASE_URL',
+  'YAHOO_FINANCE_BASE_URL',
   'FRED_API_KEY',
   'FRED_API_BASE_URL',
   'FINNHUB_API_KEY',
@@ -298,6 +300,162 @@ describe('Twelve Data provider adapter', () => {
       exchange: 'NSE',
       currency: 'INR',
       freshness: 'demo',
+    });
+  });
+});
+
+describe('Yahoo Finance provider adapter', () => {
+  it('normalizes Indian equities, indices, currency, and gold symbols', () => {
+    expect(normalizeYahooFinanceSymbol('RELIANCE:NSE')).toEqual({
+      providerSymbol: 'RELIANCE.NS',
+      displaySymbol: 'RELIANCE:NSE',
+      exchange: 'NSE',
+    });
+    expect(normalizeYahooFinanceSymbol('500325.BO').displaySymbol).toBe('500325:BSE');
+    expect(normalizeYahooFinanceSymbol('NIFTY:NSE').providerSymbol).toBe('^NSEI');
+    expect(normalizeYahooFinanceSymbol('SENSEX:BSE').providerSymbol).toBe('^BSESN');
+    expect(normalizeYahooFinanceSymbol('USD/INR').providerSymbol).toBe('INR=X');
+    expect(normalizeYahooFinanceSymbol('GOLD').providerSymbol).toBe('GC=F');
+  });
+
+  it('routes to Yahoo without an API key and conservatively labels a fresh quote', async () => {
+    process.env.MARKET_DATA_PROVIDER = 'yahoo';
+    delete process.env.MARKET_DATA_API_KEY;
+    process.env.YAHOO_FINANCE_BASE_URL =
+      'https://query1.finance.yahoo.com/v8/finance/chart';
+    const now = Math.floor(Date.now() / 1000);
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          chart: {
+            result: [{
+              meta: {
+                currency: 'INR',
+                symbol: '^NSEI',
+                exchangeName: 'NSI',
+                fullExchangeName: 'NSE',
+                instrumentType: 'INDEX',
+                regularMarketTime: now - 30,
+                regularMarketPrice: 25420.4,
+                regularMarketDayHigh: 25468.2,
+                regularMarketDayLow: 25331.6,
+                regularMarketVolume: 0,
+                previousClose: 25366.25,
+                exchangeDataDelayedBy: 0,
+                longName: 'NIFTY 50',
+                currentTradingPeriod: {
+                  regular: { start: now - 3600, end: now + 3600 },
+                },
+              },
+              timestamp: [now - 60, now - 30],
+              indicators: {
+                quote: [{
+                  open: [25376.1, 25401.2],
+                  high: [25412.3, 25425.7],
+                  low: [25365.4, 25398.6],
+                  close: [25401.2, 25420.4],
+                  volume: [0, 0],
+                }],
+              },
+            }],
+            error: null,
+          },
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } },
+      ),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await fetchQuoteFromProvider('NIFTY:NSE', 'index');
+
+    expect(result.status).toBe('connected');
+    expect(result.quote).toMatchObject({
+      symbol: 'NIFTY:NSE',
+      exchange: 'NSE',
+      currency: 'INR',
+      price: 25420.4,
+      freshness: 'real_time',
+      providerName: 'Yahoo Finance (Experimental)',
+    });
+    const requestUrl = new URL(String(fetchMock.mock.calls[0][0]));
+    expect(requestUrl.pathname).toBe('/v8/finance/chart/%5ENSEI');
+    expect(requestUrl.searchParams.get('range')).toBe('1d');
+    expect(requestUrl.searchParams.get('interval')).toBe('1m');
+  });
+
+  it('normalizes Yahoo OHLCV history for candlestick consumers', async () => {
+    process.env.MARKET_DATA_PROVIDER = 'yahoo-finance';
+    delete process.env.MARKET_DATA_API_KEY;
+    process.env.YAHOO_FINANCE_BASE_URL =
+      'https://query1.finance.yahoo.com/v8/finance/chart';
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          chart: {
+            result: [{
+              meta: { currency: 'INR', symbol: 'RELIANCE.NS' },
+              timestamp: [1786665600, 1786752000],
+              indicators: {
+                quote: [{
+                  open: [1372.5, 1384.4],
+                  high: [1391.8, 1398.2],
+                  low: [1368.2, 1379.1],
+                  close: [1384.4, 1392.7],
+                  volume: [7420000, 6810000],
+                }],
+              },
+            }],
+            error: null,
+          },
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } },
+      ),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    const points = await fetchHistoryFromProvider('RELIANCE:NSE', '1y');
+
+    expect(points).toEqual([
+      {
+        date: '2026-08-14T00:00:00.000Z',
+        price: 1384.4,
+        open: 1372.5,
+        high: 1391.8,
+        low: 1368.2,
+        close: 1384.4,
+        volume: 7420000,
+      },
+      {
+        date: '2026-08-15T00:00:00.000Z',
+        price: 1392.7,
+        open: 1384.4,
+        high: 1398.2,
+        low: 1379.1,
+        close: 1392.7,
+        volume: 6810000,
+      },
+    ]);
+    const requestUrl = new URL(String(fetchMock.mock.calls[0][0]));
+    expect(requestUrl.pathname).toBe('/v8/finance/chart/RELIANCE.NS');
+    expect(requestUrl.searchParams.get('range')).toBe('1y');
+    expect(requestUrl.searchParams.get('interval')).toBe('1d');
+  });
+
+  it('returns an explicitly labelled demo when Yahoo rate-limits the request', async () => {
+    process.env.MARKET_DATA_PROVIDER = 'yahoo';
+    delete process.env.MARKET_DATA_API_KEY;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(new Response('Too Many Requests', { status: 429 })),
+    );
+
+    const result = await fetchQuoteFromProvider('SBIN:NSE');
+
+    expect(result.status).toBe('rate_limited');
+    expect(result.quote).toMatchObject({
+      symbol: 'SBIN:NSE',
+      freshness: 'demo',
+      providerName: 'Demo Fixture Provider',
     });
   });
 });

@@ -11,8 +11,8 @@ const MARKET_STRIP_INSTRUMENTS: MarketStripInstrument[] = [
   { symbol: 'NIFTY:NSE', label: 'NIFTY 50' },
   { symbol: 'SENSEX:BSE', label: 'SENSEX' },
   { symbol: 'BANKNIFTY:NSE', label: 'BANKNIFTY' },
-  { symbol: 'USD/INR', label: 'USD/INR', valuePrefix: '₹' },
-  { symbol: 'XAU/INR', label: 'Gold / INR', valuePrefix: '₹' },
+  { symbol: 'USD/INR', label: 'USD/INR', showCurrency: true },
+  { symbol: 'GC=F', label: 'Gold', showCurrency: true },
 ];
 
 function formatQuoteValue(quote: NormalizedMarketQuote) {

@@ -4,7 +4,7 @@ import { NormalizedMarketQuote } from '../../types';
 export interface MarketStripInstrument {
   symbol: string;
   label: string;
-  valuePrefix?: string;
+  showCurrency?: boolean;
 }
 
 interface MarketStripProps {
@@ -31,8 +31,15 @@ const stateStyles: Record<FeedState, string> = {
   'MARKET CLOSED': 'border-line bg-subtle text-secondary',
 };
 
-function formatValue(quote: NormalizedMarketQuote, prefix = '') {
-  return `${prefix}${quote.price.toLocaleString('en-IN', {
+function formatValue(quote: NormalizedMarketQuote, showCurrency = false) {
+  const currencyPrefix = showCurrency
+    ? quote.currency === 'INR'
+      ? '₹'
+      : quote.currency === 'USD'
+        ? '$'
+        : `${quote.currency} `
+    : '';
+  return `${currencyPrefix}${quote.price.toLocaleString('en-IN', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })}`;
@@ -103,7 +110,7 @@ export const MarketStrip: React.FC<MarketStripProps> = ({
 
                 <div className="mt-3 flex items-baseline justify-between gap-2">
                   <p className="text-base font-bold tabular-nums text-ink">
-                    {formatValue(quote, instrument.valuePrefix)}
+                    {formatValue(quote, instrument.showCurrency)}
                   </p>
                   <p className={`text-[11px] font-semibold tabular-nums ${isPositive ? 'text-success' : 'text-danger'}`}>
                     {isPositive ? '+' : ''}{changePercent.toFixed(2)}%

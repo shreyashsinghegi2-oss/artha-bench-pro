@@ -1,6 +1,6 @@
 # ArthaBench Pro
 
-ArthaBench Pro is a financial AI reliability, learning, business-news, and market-intelligence platform. It combines dual Groq evaluation, deterministic financial calculations, educational safety controls, NewsData.io headlines, and Twelve Data market quotes.
+ArthaBench Pro is a financial AI reliability, learning, business-news, and market-intelligence platform. It combines dual Groq evaluation, deterministic financial calculations, educational safety controls, NewsData.io headlines, and server-side market-provider adapters.
 
 ## Server-side providers
 
@@ -14,9 +14,14 @@ BUSINESS_NEWS_BASE_URL=https://newsdata.io/api/1/latest
 MARKET_DATA_PROVIDER=twelvedata
 MARKET_DATA_API_KEY=
 MARKET_DATA_BASE_URL=https://api.twelvedata.com/quote
+# Optional experimental, no-key alternative:
+# MARKET_DATA_PROVIDER=yahoo
+# YAHOO_FINANCE_BASE_URL=https://query1.finance.yahoo.com/v8/finance/chart
 ```
 
 Never prefix provider secrets with `VITE_`, commit `.env` files, or expose values in browser responses. When a provider is unavailable, the relevant feature returns explicitly labelled demo data instead of claiming a live connection.
+
+For the experimental Yahoo adapter, see [Yahoo Finance setup](docs/yahoo-finance-setup.md). Yahoo quote freshness is derived conservatively from the returned market timestamp, trading session, and delay metadata.
 
 ## Local verification
 
@@ -35,6 +40,6 @@ Production health endpoints:
 
 ## Deployment
 
-The project is configured for Vercel. Add all seven environment variables for Production and Preview, deploy the `main` branch, and verify provider health from **AI Connections**.
+The project is configured for Vercel. Add the required environment variables for Production and Preview, deploy the `main` branch, and verify provider health from **AI Connections**.
 
 ArthaBench Pro is an educational and research system. It does not provide personalized investment, tax, legal, or accounting advice.

@@ -5,7 +5,6 @@ import { Navigation } from './components/Navigation';
 import { Footer } from './components/Footer';
 import { DashboardView } from './components/dashboard/DashboardView';
 import { LearningView } from './components/learning/LearningView';
-import { MarketView } from './components/market/MarketView';
 import { NewsView } from './components/news/NewsView';
 import { QuickCheckView } from './components/quickcheck/QuickCheckView';
 import { TutorView } from './components/tutor/TutorView';
@@ -25,6 +24,12 @@ const EconomicDashboardView = lazy(() =>
   })),
 );
 
+const MarketView = lazy(() =>
+  import('./components/market/MarketView').then((module) => ({
+    default: module.MarketView,
+  })),
+);
+
 export default function App() {
   const [currentDestination, setCurrentDestination] = useState<NavigationDestination>('overview');
 
@@ -36,7 +41,17 @@ export default function App() {
       case 'learning':
         return <LearningView />;
       case 'markets':
-        return <MarketView />;
+        return (
+          <Suspense
+            fallback={
+              <div className="max-w-[1500px] mx-auto px-4 py-20 text-center text-sm text-[#9A9AAA]">
+                Loading Company Intelligence Dashboard…
+              </div>
+            }
+          >
+            <MarketView />
+          </Suspense>
+        );
       case 'economy':
         return (
           <Suspense

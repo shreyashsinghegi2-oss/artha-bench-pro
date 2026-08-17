@@ -3251,6 +3251,95 @@ var batchRunSchema = z6.object({
   scenarioIds: z6.array(z6.string()).optional(),
   profile: z6.enum(["India", "US", "Global"]).optional()
 });
+var dashboardAssistantSchema = z6.object({
+  question: z6.string().min(3).max(1200),
+  history: z6.array(
+    z6.object({
+      role: z6.enum(["user", "assistant"]),
+      content: z6.string().min(1).max(4e3)
+    })
+  ).max(10).optional(),
+  snapshot: z6.object({
+    capturedAt: z6.string().max(64),
+    selectedSymbol: z6.string().min(1).max(20).regex(/^[A-Za-z0-9][A-Za-z0-9.:_-]*$/),
+    selectedRange: z6.enum(["1d", "1w", "1m", "3m", "6m", "1y"]),
+    selectedCountry: z6.enum(["us", "india"]),
+    quotes: z6.array(
+      z6.object({
+        symbol: z6.string().min(1).max(20),
+        price: z6.number().finite(),
+        changePercent: z6.number().finite().nullable(),
+        freshness: z6.enum(["real_time", "delayed", "end_of_day", "stale", "demo"]),
+        providerName: z6.string().min(1).max(80)
+      })
+    ).max(8),
+    marketHistory: z6.object({
+      symbol: z6.string().min(1).max(20),
+      range: z6.string().min(1).max(8),
+      pointCount: z6.number().int().min(0).max(500),
+      startDate: z6.string().max(32).nullable(),
+      endDate: z6.string().max(32).nullable(),
+      startPrice: z6.number().finite().nullable(),
+      latestPrice: z6.number().finite().nullable(),
+      high: z6.number().finite().nullable(),
+      low: z6.number().finite().nullable(),
+      returnPercent: z6.number().finite().nullable()
+    }).nullable(),
+    economicIndicators: z6.array(
+      z6.object({
+        label: z6.string().min(1).max(120),
+        value: z6.number().finite().nullable(),
+        unit: z6.string().max(32),
+        date: z6.string().max(32).nullable(),
+        sourceName: z6.enum(["FRED", "World Bank"]),
+        status: z6.string().max(40)
+      })
+    ).max(14),
+    providerHealth: z6.object({
+      connected: z6.number().int().min(0).max(50),
+      total: z6.number().int().min(0).max(50),
+      connectedProviders: z6.array(z6.string().max(120)).max(20),
+      unavailableProviders: z6.array(z6.string().max(120)).max(20)
+    }),
+    latestEvaluation: z6.object({
+      verificationCode: z6.string().max(80),
+      timestamp: z6.string().max(64),
+      verdict: z6.string().max(80),
+      overallReliabilityScore: z6.number().finite().min(0).max(100),
+      formulaAccuracyScore: z6.number().finite().min(0).max(100),
+      dualModelConsensusScore: z6.number().finite().min(0).max(100),
+      evidenceVerificationScore: z6.number().finite().min(0).max(100),
+      safetyComplianceScore: z6.number().finite().min(0).max(100)
+    }).nullable()
+  })
+});
+function buildDashboardDemoAnswer(snapshot) {
+  const selectedQuote = snapshot.quotes.find(
+    (quote) => quote.symbol.toUpperCase() === snapshot.selectedSymbol.toUpperCase()
+  );
+  const history = snapshot.marketHistory;
+  const regionalIndicators = snapshot.economicIndicators.filter(
+    (indicator) => snapshot.selectedCountry === "india" ? indicator.sourceName === "World Bank" : indicator.sourceName === "FRED"
+  ).filter((indicator) => indicator.value !== null).slice(0, 5);
+  const marketSummary = history ? `${history.symbol} moved from ${history.startPrice ?? "an unavailable starting value"} to ${history.latestPrice ?? "an unavailable latest value"} across ${history.pointCount} observations (${history.startDate || "unknown start date"} to ${history.endDate || "unknown end date"}). The measured range return is ${history.returnPercent === null ? "unavailable" : `${history.returnPercent.toFixed(2)}%`}, with a period high of ${history.high ?? "\u2014"} and low of ${history.low ?? "\u2014"}.` : `Historical observations are not available for ${snapshot.selectedSymbol} in the selected ${snapshot.selectedRange} range.`;
+  const quoteSummary = selectedQuote ? `The displayed quote is ${selectedQuote.price} with a ${selectedQuote.changePercent === null ? "missing" : `${selectedQuote.changePercent.toFixed(2)}%`} reported change. Its freshness label is ${selectedQuote.freshness} from ${selectedQuote.providerName}.` : "The selected symbol does not have a usable quote in this snapshot.";
+  const economicSummary = regionalIndicators.length ? regionalIndicators.map(
+    (indicator) => `${indicator.label}: ${indicator.value} ${indicator.unit} (${indicator.date || "date unavailable"})`
+  ).join("; ") : "No usable regional economic indicators are present in this snapshot.";
+  return `### Dashboard snapshot
+
+**Selected market:** ${quoteSummary}
+
+**Chart reading:** ${marketSummary}
+
+**Economic context:** ${economicSummary}.
+
+**Data quality:** ${snapshot.providerHealth.connected} of ${snapshot.providerHealth.total} provider checks are connected. A demo, delayed, stale, or end-of-day label must not be interpreted as a real-time signal.
+
+This is a description of observed dashboard data, not a forecast.
+
+Educational analysis only \u2014 not investment advice.`;
+}
 apiRouter.get("/health", (req, res) => {
   res.json({
     status: "ok",
@@ -3360,6 +3449,78 @@ var handleTutor = async (req, res, next) => {
 };
 apiRouter.post("/tutor", handleTutor);
 apiRouter.post("/groq/tutor", handleTutor);
+apiRouter.post("/dashboard/assistant", async (req, res, next) => {
+  try {
+    const parsed = dashboardAssistantSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: "A valid dashboard question and data snapshot are required." });
+    }
+    const safety = checkPromptSafety(parsed.data.question);
+    if (!safety.safe) {
+      return res.status(400).json({ error: safety.reason, safety });
+    }
+    const directAdvicePattern = /\b(should i|would you|do you recommend|tell me (?:whether|if) to)\b.{0,80}\b(buy|sell|hold|invest)\b|\b(target price|trade signal|guaranteed return)\b/i;
+    if (directAdvicePattern.test(parsed.data.question)) {
+      return res.status(400).json({
+        error: "Ask Artha AI can explain dashboard evidence, trends, and risks, but it cannot provide personalized buy, sell, hold, target-price, or guaranteed-return recommendations."
+      });
+    }
+    const { snapshot } = parsed.data;
+    const groundedContext = {
+      snapshotCapturedAt: snapshot.capturedAt,
+      currentSelection: {
+        marketSymbol: snapshot.selectedSymbol,
+        marketRange: snapshot.selectedRange,
+        economicRegion: snapshot.selectedCountry === "us" ? "United States" : "India"
+      },
+      marketQuotes: snapshot.quotes,
+      selectedMarketHistorySummary: snapshot.marketHistory,
+      economicIndicators: snapshot.economicIndicators,
+      providerHealth: snapshot.providerHealth,
+      latestReliabilityEvaluation: snapshot.latestEvaluation
+    };
+    const systemPrompt = `You are Ask Artha AI, the evidence-grounded dashboard analyst inside ArthaBench Pro.
+
+Rules:
+1. Use only the supplied structured dashboard snapshot for specific numbers, dates, provider status, and trends. If data is absent, say it is unavailable.
+2. Clearly distinguish observed data from interpretation. Never claim that a trend guarantees a future result.
+3. Explain charts, comparisons, anomalies, reliability scores, and data limitations in plain language. Mention the relevant observation date or range when available.
+4. Never provide personalized investment advice, buy/sell/hold instructions, target prices, or guaranteed-return language.
+5. Treat analyst opinions and market movements as context, not recommendations.
+6. Keep the response concise and structured, normally under 350 words.
+7. End with: "Educational analysis only \u2014 not investment advice."`;
+    const userPrompt = `Dashboard question: ${parsed.data.question}
+
+Verified dashboard snapshot:
+${JSON.stringify(groundedContext)}`;
+    const demoMode = !process.env.GROQ_API_KEY?.trim();
+    const answer = demoMode ? buildDashboardDemoAnswer(snapshot) : await callGroqChat(systemPrompt, userPrompt, void 0, parsed.data.history);
+    const sourceLabels = Array.from(
+      /* @__PURE__ */ new Set([
+        ...snapshot.quotes.map((quote) => quote.providerName),
+        ...snapshot.economicIndicators.map((indicator) => indicator.sourceName),
+        ...snapshot.latestEvaluation ? ["ArthaBench Reliability Engine"] : []
+      ])
+    );
+    res.json({
+      answer,
+      provider: demoMode ? "demo" : "groq",
+      model: demoMode ? null : getGroqModels().tutorModel,
+      groundedAt: snapshot.capturedAt,
+      sourceLabels,
+      suggestedQuestions: [
+        `Explain the ${snapshot.selectedSymbol} chart in simple language.`,
+        `Compare the latest ${snapshot.selectedCountry === "us" ? "US" : "India"} economic signals.`,
+        "Which dashboard data limitations should I notice?",
+        snapshot.latestEvaluation ? "Explain the latest reliability score and its weakest dimension." : "How does ArthaBench measure AI reliability?"
+      ],
+      disclaimer: "Educational analysis only \u2014 not investment advice.",
+      requestId: res.getHeader("x-request-id")
+    });
+  } catch (err) {
+    next(err);
+  }
+});
 apiRouter.post("/learning/lesson", async (req, res, next) => {
   try {
     const lessonData = await generateLessonContent(req.body);
@@ -3451,9 +3612,98 @@ apiRouter.get("/company/intelligence", async (req, res, next) => {
     next(err);
   }
 });
+apiRouter.post("/company/assistant", async (req, res, next) => {
+  try {
+    const parsed = z6.object({
+      symbol: z6.string().min(1).max(20).regex(/^[A-Za-z0-9][A-Za-z0-9.:_-]*$/),
+      question: z6.string().min(3).max(1200),
+      history: z6.array(
+        z6.object({
+          role: z6.enum(["user", "assistant"]),
+          content: z6.string().min(1).max(4e3)
+        })
+      ).max(10).optional()
+    }).safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: "A valid symbol and company-analysis question are required." });
+    }
+    const safety = checkPromptSafety(parsed.data.question);
+    if (!safety.safe) {
+      return res.status(400).json({ error: safety.reason, safety });
+    }
+    const directAdvicePattern = /\b(should i|would you|do you recommend|tell me (?:whether|if) to)\b.{0,60}\b(buy|sell|hold)\b|\b(target price|trade signal)\b/i;
+    if (directAdvicePattern.test(parsed.data.question)) {
+      return res.status(400).json({
+        error: "The Company AI Assistant cannot provide buy, sell, hold, target-price, or personalized investment recommendations. Ask about the company\u2019s reported metrics, earnings, risks, or trends instead."
+      });
+    }
+    const symbol = parsed.data.symbol.toUpperCase();
+    const [company, quoteResult] = await Promise.all([
+      fetchFinnhubCompanyIntelligence(symbol),
+      getMarketQuote(symbol)
+    ]);
+    if (company.status !== "connected") {
+      return res.status(503).json({
+        error: company.message || "Finnhub company data is unavailable for this question."
+      });
+    }
+    const groundedContext = {
+      companyProfile: company.profile,
+      fundamentalMetrics: company.metrics,
+      recentEarnings: company.earnings,
+      analystRecommendationCounts: company.recommendations,
+      marketQuote: quoteResult.quote,
+      dataRetrievedAt: company.retrievedAt,
+      dataProviders: ["Finnhub", quoteResult.quote.providerName]
+    };
+    const systemPrompt = `You are the ArthaBench Company AI Assistant, a careful financial educator and evidence-grounded company-analysis explainer.
+
+Rules:
+1. Use only the supplied structured company context for company-specific factual claims. Never invent missing values.
+2. Explain metrics, changes, trade-offs, uncertainty, and data limitations in plain language.
+3. Never give personalized investment advice, a buy/sell/hold recommendation, a target price, a forecast presented as certain, or guaranteed-return language.
+4. Analyst recommendation counts are third-party historical opinions, not ArthaBench recommendations.
+5. Mention relevant units and observation periods when available. Distinguish live, delayed, end-of-day, or demo quote freshness.
+6. End with: "Educational analysis only \u2014 not investment advice."
+7. Keep the answer focused and structured, normally under 450 words.`;
+    const userPrompt = `Question about ${symbol}: ${parsed.data.question}
+
+Verified structured context:
+${JSON.stringify(groundedContext)}`;
+    const answer = await callGroqChat(
+      systemPrompt,
+      userPrompt,
+      void 0,
+      parsed.data.history
+    );
+    const demoMode = !process.env.GROQ_API_KEY?.trim();
+    res.json({
+      symbol,
+      answer,
+      provider: demoMode ? "demo" : "groq",
+      model: demoMode ? null : getGroqModels().tutorModel,
+      groundedAt: company.retrievedAt,
+      disclaimer: "Educational analysis only \u2014 not investment advice.",
+      suggestedQuestions: [
+        "Explain the valuation ratios in simple language.",
+        "What do the latest earnings surprises show?",
+        "Summarize the main financial strengths and risks visible in this data.",
+        "How does the 52-week range compare with the current quote?"
+      ],
+      requestId: res.getHeader("x-request-id")
+    });
+  } catch (err) {
+    next(err);
+  }
+});
 apiRouter.get("/economy/overview", async (_req, res, next) => {
   try {
-    res.json(await fetchFredOverview());
+    const result = await fetchFredOverview();
+    res.setHeader(
+      "Cache-Control",
+      result.status === "connected" ? "public, s-maxage=900, stale-while-revalidate=3600" : "no-store"
+    );
+    res.json(result);
   } catch (err) {
     next(err);
   }

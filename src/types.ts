@@ -315,6 +315,67 @@ export interface EconomicSeriesResponse {
   message: string;
 }
 
+export interface DashboardAssistantSnapshot {
+  capturedAt: string;
+  selectedSymbol: string;
+  selectedRange: string;
+  selectedCountry: 'us' | 'india';
+  quotes: Array<{
+    symbol: string;
+    price: number;
+    changePercent: number | null;
+    freshness: NormalizedMarketQuote['freshness'];
+    providerName: string;
+  }>;
+  marketHistory: {
+    symbol: string;
+    range: string;
+    pointCount: number;
+    startDate: string | null;
+    endDate: string | null;
+    startPrice: number | null;
+    latestPrice: number | null;
+    high: number | null;
+    low: number | null;
+    returnPercent: number | null;
+  } | null;
+  economicIndicators: Array<{
+    label: string;
+    value: number | null;
+    unit: string;
+    date: string | null;
+    sourceName: EconomicIndicator['sourceName'];
+    status: ConnectionStatus;
+  }>;
+  providerHealth: {
+    connected: number;
+    total: number;
+    connectedProviders: string[];
+    unavailableProviders: string[];
+  };
+  latestEvaluation: {
+    verificationCode: string;
+    timestamp: string;
+    verdict: string;
+    overallReliabilityScore: number;
+    formulaAccuracyScore: number;
+    dualModelConsensusScore: number;
+    evidenceVerificationScore: number;
+    safetyComplianceScore: number;
+  } | null;
+}
+
+export interface DashboardAssistantResponse {
+  answer: string;
+  provider: 'groq' | 'demo';
+  model: string | null;
+  groundedAt: string;
+  sourceLabels: string[];
+  suggestedQuestions: string[];
+  disclaimer: string;
+  requestId: string;
+}
+
 // Batch Benchmark & Persistence Types
 export interface BenchmarkScenario {
   scenarioId: string;

@@ -3,8 +3,14 @@
  */
 
 import { LEARNING_TRACKS } from '../src/data/learningTracks';
-import { callGroqChat } from './groqService';
-import { inspectInputSafety, sanitizeAIOutput } from './learningSafety';
+import { StructuredFinancialAnswer } from '../src/types';
+import { callGroqStructuredFinancialAnswer } from './groqService';
+import { inspectInputSafety } from './learningSafety';
+import {
+  buildStructuredFinancialAnswerInstructions,
+  createFallbackStructuredFinancialAnswer,
+  serializeStructuredFinancialAnswer,
+} from './aiResponseStandard';
 
 export async function generateLessonContent(params: {
   trackId: string;
@@ -44,7 +50,15 @@ Mode: ${params.learningMode}
 CRITICAL SAFETY DIRECTIVE:
 1. Never give explicit buy, sell, or hold recommendations for any asset or ticker.
 2. Never promise financial returns or job placements.
-3. Always include risks, limitations, and an educational disclaimer.`;
+3. Always include risks, limitations, and an educational disclaimer.
+4. Follow the requested lesson mode while retaining the same answer sections.
+${buildStructuredFinancialAnswerInstructions({
+  audience: 'tutor',
+  language: params.language,
+  level: params.learnerLevel,
+  detail: 'detailed',
+  hasVerifiedCurrentData: false,
+})}`;
 
   const userPrompt = `Create an interactive lesson for:
 Track: ${track?.title || params.trackId}
@@ -58,39 +72,41 @@ Please provide:
 3. Worked Example with Math/Numbers
 4. Assumptions & Risks`;
 
-  let aiExplanation = '';
+  const fallbackQuestion = `${canonicalTitle}: ${canonicalObjective}. ${lessonObj?.examplePrompt || ''}`;
+  let structuredAnswer: StructuredFinancialAnswer;
   try {
-    const rawAiResponse = await callGroqChat(systemPrompt, userPrompt);
-    aiExplanation = sanitizeAIOutput(rawAiResponse);
+    structuredAnswer = await callGroqStructuredFinancialAnswer(
+      systemPrompt,
+      userPrompt,
+      { fallbackQuestion },
+    );
   } catch (err: any) {
-    // Structured educational fallback if Groq API key is not present or offline
-    aiExplanation = `### ${canonicalTitle}\n\n**Objective:** ${canonicalObjective}\n\n` +
-      `**Key Explanation (${params.learnerLevel.toUpperCase()} LEVEL):**\n` +
-      `${lessonObj?.explanationSeed || 'Financial concepts require understanding inflows, risk factors, and opportunity costs.'}\n\n` +
-      `**Step-by-Step Guidance:**\n` +
-      `1. Identify your baseline financial numbers and assumptions.\n` +
-      `2. Apply the relevant framework or calculation formula.\n` +
-      `3. Evaluate risk factors, liquidity, and long-term implications.\n\n` +
-      `**Worked Example:**\n` +
-      `Consider an initial capital allocation of $1,000 evaluated across a 12-month timeline with standard risk constraints.\n\n` +
-      `*Note: Artha Bench provides educational frameworks. Always perform personal due diligence.*`;
+    structuredAnswer = createFallbackStructuredFinancialAnswer(
+      fallbackQuestion,
+      lessonObj?.explanationSeed ||
+        'Financial concepts require understanding inputs, assumptions, opportunity costs, and risk factors.',
+    );
   }
+  const aiExplanation = serializeStructuredFinancialAnswer(structuredAnswer);
 
   const structuredLesson = {
     title: canonicalTitle,
     objective: canonicalObjective,
     directExplanation: aiExplanation,
+    structuredAnswer,
     keyConcepts: canonicalKeyConcepts,
-    stepByStepLesson: [
-      'Understand the fundamental definition and financial context.',
-      'Apply mathematical formulas or decision frameworks.',
-      'Review limitations, tax implications, and risk management rules.',
-    ],
-    workedExample: lessonObj?.examplePrompt || 'Example: Calculating net returns after accounting for fees and inflation.',
-    assumptions: ['Standard 12-month calendar year', 'No market execution slippage'],
-    risksAndLimitations: lessonObj?.riskAndLimitationNotes || [
-      'Educational material only; past performance is not indicative of future returns.',
-    ],
+    stepByStepLesson: structuredAnswer.steps.map(
+      (step) => `${step.title}: ${step.explanation}`,
+    ),
+    formula: structuredAnswer.formula.expression,
+    workedExample: `${structuredAnswer.example.title}: ${structuredAnswer.example.result}`,
+    assumptions: structuredAnswer.example.inputs,
+    risksAndLimitations:
+      structuredAnswer.risks.length > 0
+        ? structuredAnswer.risks
+        : lessonObj?.riskAndLimitationNotes || [
+            'Educational material only; past performance is not indicative of future returns.',
+          ],
     commonMistakes: [
       'Confusing revenue with net profit',
       'Ignoring inflation and taxes when projecting long-term growth',

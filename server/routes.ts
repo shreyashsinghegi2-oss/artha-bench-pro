@@ -5,7 +5,18 @@
 
 import { Router, Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
-import { checkGroqDiagnostics, callGroqChat, getGroqModels, runMultiModelEvaluation } from './groqService';
+import {
+  checkGroqDiagnostics,
+  callGroqChat,
+  callGroqStructuredFinancialAnswer,
+  getGroqModels,
+  runMultiModelEvaluation,
+} from './groqService';
+import {
+  buildStructuredFinancialAnswerInstructions,
+  createFallbackStructuredFinancialAnswer,
+  serializeStructuredFinancialAnswer,
+} from './aiResponseStandard';
 import { checkPromptSafety } from './safetyChecker';
 import { executeBatchBenchmark, getBatchRunProgress } from './batchBenchmark';
 import { getAllReportRecords, exportReportsToCSV, saveReportRecord } from './reportStorage';
@@ -85,7 +96,26 @@ const tutorSchema = z.object({
   userPrompt: z.string().min(1, 'Prompt is required.').max(2000, 'Prompt exceeds maximum length.'),
   systemPrompt: z.string().optional(),
   modelName: z.string().optional(),
-  history: z.array(z.object({ role: z.string(), content: z.string() })).optional(),
+  history: z
+    .array(
+      z.object({
+        role: z.enum(['user', 'assistant']),
+        content: z.string().min(1).max(4000),
+      }),
+    )
+    .max(10)
+    .optional(),
+  context: z
+    .object({
+      country: z.enum(['US', 'India', 'Global']),
+      currency: z.enum(['USD', 'INR', 'EUR', 'GBP']),
+      language: z.enum(['english', 'hindi', 'hinglish']),
+      level: z.enum(['beginner', 'intermediate', 'advanced']),
+      mode: z.enum(['explain', 'quiz', 'calc']),
+      detail: z.enum(['short', 'detailed']),
+      useOfficialSources: z.boolean(),
+    })
+    .optional(),
 });
 
 const batchRunSchema = z.object({
@@ -198,6 +228,55 @@ function buildDashboardDemoAnswer(snapshot: z.infer<typeof dashboardAssistantSch
   return `### Dashboard snapshot\n\n**Selected market:** ${quoteSummary}\n\n**Chart reading:** ${marketSummary}\n\n**Economic context:** ${economicSummary}.\n\n**Data quality:** ${snapshot.providerHealth.connected} of ${snapshot.providerHealth.total} provider checks are connected. A demo, delayed, stale, or end-of-day label must not be interpreted as a real-time signal.\n\nThis is a description of observed dashboard data, not a forecast.\n\nEducational analysis only — not investment advice.`;
 }
 
+const DEFAULT_TUTOR_CONTEXT = {
+  country: 'US',
+  currency: 'USD',
+  language: 'english',
+  level: 'beginner',
+  mode: 'explain',
+  detail: 'detailed',
+  useOfficialSources: true,
+} as const;
+
+function questionNeedsCurrentData(question: string) {
+  return /\b(current|currently|latest|today|now|real[ -]?time|inflation|gdp|unemployment|interest rate|federal funds|treasury|economic indicator)\b/i.test(
+    question,
+  );
+}
+
+async function loadTutorCurrentData(
+  question: string,
+  context: typeof DEFAULT_TUTOR_CONTEXT | NonNullable<z.infer<typeof tutorSchema>['context']>,
+) {
+  if (!context.useOfficialSources || !questionNeedsCurrentData(question)) return null;
+
+  const overviews =
+    context.country === 'India'
+      ? [await fetchWorldBankIndiaOverview()]
+      : context.country === 'US'
+        ? [await fetchFredOverview()]
+        : await Promise.all([fetchFredOverview(), fetchWorldBankIndiaOverview()]);
+  const indicators = overviews
+    .flatMap((overview) => overview.indicators)
+    .filter((indicator) => indicator.status === 'connected' && indicator.value !== null)
+    .map((indicator) => ({
+      label: indicator.label,
+      value: indicator.value,
+      unit: indicator.unit,
+      observationDate: indicator.date,
+      provider: indicator.sourceName,
+    }));
+
+  if (indicators.length === 0) return null;
+  return {
+    retrievedAt: new Date().toISOString(),
+    providers: Array.from(new Set(indicators.map((indicator) => indicator.provider))),
+    indicators,
+    freshnessNote:
+      'These are the latest available official observations. Release dates differ, so they must not be described as tick-by-tick real-time values.',
+  };
+}
+
 // 1. Health Endpoint
 apiRouter.get('/health', (req: Request, res: Response) => {
   res.json({
@@ -302,20 +381,55 @@ const handleTutor = async (req: Request, res: Response, next: NextFunction) => {
       return res.status(400).json({ error: 'Prompt is required.' });
     }
 
-    const { systemPrompt, modelName, history } = req.body;
+    const parsed = tutorSchema.safeParse({ ...req.body, userPrompt: promptText });
+    if (!parsed.success) {
+      return res.status(400).json({ error: parsed.error.issues[0]?.message || 'Invalid tutor request.' });
+    }
+
+    const { modelName, history } = parsed.data;
+    const context = parsed.data.context || DEFAULT_TUTOR_CONTEXT;
 
     const safety = checkPromptSafety(promptText);
     if (!safety.safe) {
       return res.status(400).json({ error: safety.reason, safety });
     }
 
-    const sys = systemPrompt || 'You are ArthaBench AI Tutor, an elite financial educator. Provide clear, non-advisory educational guidance and step-by-step reasoning.';
-    const text = await callGroqChat(sys, promptText, modelName, history);
+    const currentData = await loadTutorCurrentData(promptText, context);
+    const sys = `You are ArthaBench AI Tutor, a precise and patient financial educator.
+Teach at the learner's stated level, define unfamiliar terms, show arithmetic clearly, and never confuse illustrative values with current data.
+Country profile: ${context.country}
+Currency preference: ${context.currency}
+Learning mode: ${context.mode}
+${buildStructuredFinancialAnswerInstructions({
+  audience: 'tutor',
+  language: context.language,
+  level: context.level,
+  detail: context.detail,
+  hasVerifiedCurrentData: Boolean(currentData),
+})}`;
+    const userPrompt = `Learner question: ${promptText}
+
+Learner preferences:
+${JSON.stringify(context)}
+
+Verified current/latest official context:
+${currentData ? JSON.stringify(currentData) : 'No verified current-data context was required or available. Use an explicitly labelled illustrative worked example.'}`;
+    const structuredAnswer = await callGroqStructuredFinancialAnswer(sys, userPrompt, {
+      modelName,
+      history,
+      fallbackQuestion: promptText,
+    });
+    const text = serializeStructuredFinancialAnswer(structuredAnswer);
     const demoMode = !process.env.GROQ_API_KEY?.trim();
     res.json({
       answer: text,
       response: text,
-      suggestedFollowUps: ['Explain formula steps', 'Give a practice problem'],
+      structuredAnswer,
+      suggestedFollowUps: [
+        'Explain the formula symbols one by one.',
+        'Give me another worked example to solve.',
+        'Quiz me on this concept.',
+      ],
       demoMode,
       provider: demoMode ? 'demo' : 'groq',
       model: demoMode ? null : getGroqModels().tutorModel,
@@ -364,6 +478,11 @@ apiRouter.post('/dashboard/assistant', async (req: Request, res: Response, next:
       latestReliabilityEvaluation: snapshot.latestEvaluation,
     };
 
+    const hasVerifiedCurrentData =
+      snapshot.quotes.length > 0 ||
+      snapshot.economicIndicators.some(
+        (indicator) => indicator.status === 'connected' && indicator.value !== null,
+      );
     const systemPrompt = `You are Ask Artha AI, the evidence-grounded dashboard analyst inside ArthaBench Pro.
 
 Rules:
@@ -372,14 +491,27 @@ Rules:
 3. Explain charts, comparisons, anomalies, reliability scores, and data limitations in plain language. Mention the relevant observation date or range when available.
 4. Never provide personalized investment advice, buy/sell/hold instructions, target prices, or guaranteed-return language.
 5. Treat analyst opinions and market movements as context, not recommendations.
-6. Keep the response concise and structured, normally under 350 words.
-7. End with: "Educational analysis only — not investment advice."`;
+6. End with educational, non-advisory takeaways.
+${buildStructuredFinancialAnswerInstructions({
+  audience: 'dashboard',
+  language: 'English',
+  level: 'beginner',
+  detail: 'detailed',
+  hasVerifiedCurrentData,
+})}`;
 
     const userPrompt = `Dashboard question: ${parsed.data.question}\n\nVerified dashboard snapshot:\n${JSON.stringify(groundedContext)}`;
     const demoMode = !process.env.GROQ_API_KEY?.trim();
-    const answer = demoMode
-      ? buildDashboardDemoAnswer(snapshot)
-      : await callGroqChat(systemPrompt, userPrompt, undefined, parsed.data.history);
+    const structuredAnswer = demoMode
+      ? createFallbackStructuredFinancialAnswer(
+          parsed.data.question,
+          buildDashboardDemoAnswer(snapshot),
+        )
+      : await callGroqStructuredFinancialAnswer(systemPrompt, userPrompt, {
+          history: parsed.data.history,
+          fallbackQuestion: parsed.data.question,
+        });
+    const answer = serializeStructuredFinancialAnswer(structuredAnswer);
     const sourceLabels = Array.from(
       new Set([
         ...snapshot.quotes.map((quote) => quote.providerName),
@@ -390,6 +522,7 @@ Rules:
 
     res.json({
       answer,
+      structuredAnswer,
       provider: demoMode ? 'demo' : 'groq',
       model: demoMode ? null : getGroqModels().tutorModel,
       groundedAt: snapshot.capturedAt,
@@ -584,21 +717,31 @@ Rules:
 3. Never give personalized investment advice, a buy/sell/hold recommendation, a target price, a forecast presented as certain, or guaranteed-return language.
 4. Analyst recommendation counts are third-party historical opinions, not ArthaBench recommendations.
 5. Mention relevant units and observation periods when available. Distinguish live, delayed, end-of-day, or demo quote freshness.
-6. End with: "Educational analysis only — not investment advice."
-7. Keep the answer focused and structured, normally under 450 words.`;
+6. Keep the answer focused and structured, normally under 600 words.
+${buildStructuredFinancialAnswerInstructions({
+  audience: 'dashboard',
+  language: 'English',
+  level: 'intermediate',
+  detail: 'detailed',
+  hasVerifiedCurrentData: true,
+})}`;
 
     const userPrompt = `Question about ${symbol}: ${parsed.data.question}\n\nVerified structured context:\n${JSON.stringify(groundedContext)}`;
-    const answer = await callGroqChat(
+    const structuredAnswer = await callGroqStructuredFinancialAnswer(
       systemPrompt,
       userPrompt,
-      undefined,
-      parsed.data.history,
+      {
+        history: parsed.data.history,
+        fallbackQuestion: `${parsed.data.question}\nVerified context: ${JSON.stringify(groundedContext)}`,
+      },
     );
+    const answer = serializeStructuredFinancialAnswer(structuredAnswer);
     const demoMode = !process.env.GROQ_API_KEY?.trim();
 
     res.json({
       symbol,
       answer,
+      structuredAnswer,
       provider: demoMode ? 'demo' : 'groq',
       model: demoMode ? null : getGroqModels().tutorModel,
       groundedAt: company.retrievedAt,

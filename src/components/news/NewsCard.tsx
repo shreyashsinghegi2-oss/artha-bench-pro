@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { ExternalLink, Sparkles, Clock, Newspaper } from 'lucide-react';
-import { NormalizedNewsItem } from '../../types';
+import { NewsExplanationResponse, NormalizedNewsItem } from '../../types';
 import { explainNewsArticleAI } from '../../services/learningApi';
+import { StructuredFinancialAnswerView } from '../ai/StructuredFinancialAnswer';
 
 interface NewsCardProps {
   article: NormalizedNewsItem;
@@ -10,11 +11,7 @@ interface NewsCardProps {
 export const NewsCard: React.FC<NewsCardProps> = ({ article }) => {
   const [isExplaining, setIsExplaining] = useState(false);
   const [imageFailed, setImageFailed] = useState(false);
-  const [explanation, setExplanation] = useState<{
-    explanation: string;
-    keyTakeaways: string[];
-    disclaimer: string;
-  } | null>(null);
+  const [explanation, setExplanation] = useState<NewsExplanationResponse | null>(null);
 
   const getCategoryGradient = () => {
     const cat = (article.category || '').toLowerCase();
@@ -114,23 +111,12 @@ export const NewsCard: React.FC<NewsCardProps> = ({ article }) => {
       </div>
 
       {explanation && (
-        <div className="mt-3 bg-[#030303] border border-[#1E1E2D] rounded-2xl p-4 text-xs space-y-3">
-          <h4 className="font-bold text-[#00D68F] flex items-center gap-1.5">
-            <Sparkles className="w-4 h-4" />
-            <span>Educational Analysis</span>
-          </h4>
-          <div className="text-[#F7F7FB] leading-relaxed whitespace-pre-line">
-            {explanation.explanation}
-          </div>
-
-          <div className="space-y-1">
-            <span className="font-semibold text-[#8A8A9E]">Key Student Takeaways:</span>
-            <ul className="list-disc list-inside text-[#9A9AAA] space-y-0.5">
-              {explanation.keyTakeaways.map((t, idx) => (
-                <li key={idx}>{t}</li>
-              ))}
-            </ul>
-          </div>
+        <div className="mt-3">
+          <StructuredFinancialAnswerView
+            answer={explanation.structuredAnswer}
+            disclaimer={explanation.disclaimer}
+            compact
+          />
         </div>
       )}
     </div>

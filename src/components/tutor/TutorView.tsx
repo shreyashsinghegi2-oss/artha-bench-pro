@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Sparkles,
   Send,
@@ -19,6 +19,8 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import { askTutorAI } from '../../services/learningApi';
+import { StructuredFinancialAnswer, TutorPreferences } from '../../types';
+import { StructuredFinancialAnswerView } from '../ai/StructuredFinancialAnswer';
 
 interface Message {
   id: string;
@@ -26,6 +28,7 @@ interface Message {
   content: string;
   timestamp: string;
   isVerified?: boolean;
+  structuredAnswer?: StructuredFinancialAnswer;
 }
 
 interface LibraryCategory {
@@ -132,12 +135,12 @@ export const TutorView: React.FC = () => {
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
 
   // Context Select Controls State
-  const [country, setCountry] = useState('US');
-  const [currency, setCurrency] = useState('USD');
-  const [language, setLanguage] = useState('english');
-  const [level, setLevel] = useState('beginner');
-  const [mode, setMode] = useState('explain');
-  const [detail, setDetail] = useState('detailed');
+  const [country, setCountry] = useState<TutorPreferences['country']>('US');
+  const [currency, setCurrency] = useState<TutorPreferences['currency']>('USD');
+  const [language, setLanguage] = useState<TutorPreferences['language']>('english');
+  const [level, setLevel] = useState<TutorPreferences['level']>('beginner');
+  const [mode, setMode] = useState<TutorPreferences['mode']>('explain');
+  const [detail, setDetail] = useState<TutorPreferences['detail']>('detailed');
 
   // Checkboxes
   const [useOfficialSources, setUseOfficialSources] = useState(true);
@@ -146,8 +149,13 @@ export const TutorView: React.FC = () => {
 
   // Tooltip
   const [showVerifiedTooltip, setShowVerifiedTooltip] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const handleCountryChange = (c: string) => {
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, [messages, isTyping]);
+
+  const handleCountryChange = (c: TutorPreferences['country']) => {
     setCountry(c);
     if (c === 'India') setCurrency('INR');
     else if (c === 'US') setCurrency('USD');
@@ -170,7 +178,19 @@ export const TutorView: React.FC = () => {
     setIsTyping(true);
 
     try {
-      const res = await askTutorAI(textToSend, messages);
+      const history = messages.slice(-8).map((message) => ({
+        role: message.role,
+        content: message.content,
+      }));
+      const res = await askTutorAI(textToSend, history, {
+        country,
+        currency,
+        language,
+        level,
+        mode,
+        detail,
+        useOfficialSources,
+      });
       const isMathOrNumerical = /\$|\%|compound|ratio|EMI|balance|interest|formula|\d+/i.test(textToSend);
 
       const assistantMsg: Message = {
@@ -179,6 +199,7 @@ export const TutorView: React.FC = () => {
         content: res.answer,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         isVerified: isMathOrNumerical,
+        structuredAnswer: res.structuredAnswer,
       };
       setMessages((prev) => [...prev, assistantMsg]);
     } catch (err) {
@@ -276,7 +297,7 @@ export const TutorView: React.FC = () => {
       {/* Main 3-Column Workspace Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Left Sidebar: Learning Library (Col 3) */}
-        <div className="lg:col-span-3 bg-[#0A0A12] border border-[#1E1E2D] rounded-3xl p-5 space-y-6 h-[720px] flex flex-col justify-between overflow-hidden">
+        <div className="lg:col-span-3 xl:col-span-2 bg-[#0A0A12] border border-[#1E1E2D] rounded-3xl p-5 space-y-6 h-[800px] flex flex-col justify-between overflow-hidden">
           <div className="space-y-4 overflow-y-auto pr-1 scrollbar-thin flex-1">
             <div className="flex items-center justify-between border-b border-[#1E1E2D] pb-3">
               <span className="text-[11px] font-bold text-[#8A8A9E] uppercase tracking-wider">
@@ -328,22 +349,22 @@ export const TutorView: React.FC = () => {
         </div>
 
         {/* Center Column: Tutor Conversation Area (Col 6) */}
-        <div className="lg:col-span-6 bg-[#0A0A12] border border-[#1E1E2D] rounded-3xl flex flex-col h-[720px] overflow-hidden shadow-2xl">
+        <div className="lg:col-span-6 xl:col-span-7 bg-[#F4F6FB] border border-slate-300 rounded-3xl flex flex-col h-[800px] overflow-hidden shadow-2xl">
           {/* Chat Messages / Empty State Area */}
-          <div className="flex-1 p-6 overflow-y-auto space-y-5">
+          <div className="scrollbar-thin flex-1 space-y-5 overflow-y-auto bg-[#F4F6FB] p-4 sm:p-6" aria-live="polite">
             {messages.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-center max-w-md mx-auto space-y-5 my-auto py-12">
                 <div className="w-16 h-16 rounded-3xl bg-gradient-to-tr from-[#4F32FF] to-[#7137F2] p-0.5 shadow-xl shadow-[#4F32FF]/30 flex items-center justify-center">
-                  <div className="w-full h-full bg-[#08080E] rounded-[22px] flex items-center justify-center">
+                  <div className="w-full h-full bg-white rounded-[22px] flex items-center justify-center">
                     <Sparkles className="w-8 h-8 text-[#665CFF]" />
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <h2 className="text-xl font-extrabold text-[#F7F7FB] tracking-tight">
+                  <h2 className="text-xl font-extrabold text-slate-950 tracking-tight">
                     Ask ArthaBench anything about finance
                   </h2>
-                  <p className="text-xs text-[#9A9AAA] leading-relaxed">
+                  <p className="text-xs text-slate-600 leading-relaxed">
                     Choose a lesson from the library or type your own question. Numerical lessons use the deterministic engine; high-risk or current topics receive independent review.
                   </p>
                 </div>
@@ -362,7 +383,7 @@ export const TutorView: React.FC = () => {
                       <button
                         key={idx}
                         onClick={() => handleSend(q)}
-                        className="text-xs text-left px-4 py-2.5 bg-[#030303] hover:bg-[#1A1A23] text-[#F7F7FB] border border-[#1E1E2D] hover:border-[#665CFF]/40 rounded-xl transition-all"
+                        className="text-xs text-left px-4 py-2.5 bg-white hover:bg-indigo-50 text-slate-800 border border-slate-200 hover:border-[#665CFF]/40 rounded-xl transition-all shadow-sm"
                       >
                         {q}
                       </button>
@@ -388,52 +409,49 @@ export const TutorView: React.FC = () => {
                     {msg.role === 'user' ? <User className="w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
                   </div>
 
-                  <div
-                    className={`max-w-[85%] rounded-2xl p-4 text-xs space-y-2 leading-relaxed ${
-                      msg.role === 'user'
-                        ? 'bg-[#4F32FF]/20 border border-[#4F32FF]/40 text-[#F7F7FB]'
-                        : 'bg-[#030303] border border-[#1E1E2D] text-[#F7F7FB]'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between gap-4 text-[10px] text-[#8A8A9E] border-b border-[#1E1E2D] pb-1.5 mb-1.5">
-                      <span className="font-bold text-[#665CFF]">
-                        {msg.role === 'user' ? 'You' : 'ArthaBench'}
-                      </span>
-                      <span>{msg.timestamp}</span>
-                    </div>
-
-                    <div className="whitespace-pre-line text-xs font-sans">{msg.content}</div>
-
-                    {msg.role === 'assistant' && (
-                      <div className="pt-2 border-t border-[#1E1E2D]/60 flex items-center justify-between text-[10px] text-[#8A8A9E]">
-                        <span className="flex items-center gap-1 text-[#00D68F] font-semibold">
-                          <CheckCircle2 className="w-3 h-3" />
-                          <span>
-                            {msg.isVerified
-                              ? '✓ Deterministically checked'
-                              : 'Educational explanation'}
-                          </span>
-                        </span>
-                        <span>ArthaBench Pro V2.0</span>
+                  {msg.role === 'assistant' && msg.structuredAnswer ? (
+                    <div className="min-w-0 max-w-[96%] flex-1 space-y-2">
+                      <div className="flex items-center justify-between px-1 text-[10px] font-semibold text-slate-500">
+                        <span className="text-indigo-700">ArthaBench AI Tutor</span>
+                        <span>{msg.timestamp}</span>
                       </div>
-                    )}
-                  </div>
+                      <StructuredFinancialAnswerView
+                        answer={msg.structuredAnswer}
+                        disclaimer="Educational explanation only — not personalized financial or investment advice."
+                      />
+                    </div>
+                  ) : (
+                    <div
+                      className={`max-w-[85%] space-y-2 rounded-2xl border p-4 text-xs leading-relaxed shadow-sm ${
+                        msg.role === 'user'
+                          ? 'border-[#4F32FF]/40 bg-[#4F32FF] text-white'
+                          : 'border-slate-200 bg-white text-slate-800'
+                      }`}
+                    >
+                      <div className={`flex items-center justify-between gap-4 border-b pb-1.5 text-[10px] ${msg.role === 'user' ? 'border-white/20 text-indigo-100' : 'border-slate-200 text-slate-500'}`}>
+                        <span className="font-bold">{msg.role === 'user' ? 'You' : 'ArthaBench'}</span>
+                        <span>{msg.timestamp}</span>
+                      </div>
+                      <div className="whitespace-pre-line font-sans text-xs">{msg.content}</div>
+                    </div>
+                  )}
                 </div>
               ))
             )}
 
             {isTyping && (
-              <div className="flex items-center gap-3 text-xs text-[#9A9AAA] italic">
-                <div className="w-8 h-8 rounded-xl bg-[#08080E] border border-[#1E1E2D] flex items-center justify-center text-[#665CFF]">
+              <div className="flex items-center gap-3 text-xs text-slate-500 italic">
+                <div className="w-8 h-8 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-[#665CFF] shadow-sm">
                   <RefreshCw className="w-4 h-4 animate-spin" />
                 </div>
-                <span>ArthaBench is formulating educational explanation...</span>
+                <span>ArthaBench is preparing a structured explanation…</span>
               </div>
             )}
+            <div ref={messagesEndRef} />
           </div>
 
           {/* Bottom Chat Input Form */}
-          <div className="p-4 bg-[#08080E] border-t border-[#1E1E2D]">
+          <div className="p-4 bg-white border-t border-slate-200">
             <form
               onSubmit={(e) => {
                 e.preventDefault();
@@ -443,10 +461,11 @@ export const TutorView: React.FC = () => {
             >
               <input
                 type="text"
+                aria-label="Ask the ArthaBench financial tutor"
                 placeholder="Ask any finance-learning question..."
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                className="flex-1 bg-[#030303] border border-[#1E1E2D] rounded-xl px-4 py-3 text-xs text-[#F7F7FB] placeholder-[#8A8A9E] focus:outline-none focus:border-[#665CFF]"
+                className="flex-1 bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#665CFF] focus:ring-2 focus:ring-[#665CFF]/10"
               />
               <button
                 type="submit"
@@ -461,7 +480,7 @@ export const TutorView: React.FC = () => {
         </div>
 
         {/* Right Sidebar: Learning Context Controls (Col 3) */}
-        <div className="lg:col-span-3 bg-[#0A0A12] border border-[#1E1E2D] rounded-3xl p-5 space-y-5 h-[720px] flex flex-col justify-between overflow-y-auto scrollbar-thin">
+        <div className="lg:col-span-3 bg-[#0A0A12] border border-[#1E1E2D] rounded-3xl p-5 space-y-5 h-[800px] flex flex-col justify-between overflow-y-auto scrollbar-thin">
           <div className="space-y-4">
             <div className="flex items-center gap-2 border-b border-[#1E1E2D] pb-3">
               <Sliders className="w-4 h-4 text-[#665CFF]" />
@@ -477,7 +496,7 @@ export const TutorView: React.FC = () => {
               </label>
               <select
                 value={country}
-                onChange={(e) => handleCountryChange(e.target.value)}
+                onChange={(e) => handleCountryChange(e.target.value as TutorPreferences['country'])}
                 className="w-full bg-[#08080E] border border-[#1A1A23] rounded-xl px-3 py-2 text-xs text-[#F7F7FB] focus:outline-none focus:border-[#665CFF]"
               >
                 <option value="US">US</option>
@@ -493,7 +512,7 @@ export const TutorView: React.FC = () => {
               </label>
               <select
                 value={currency}
-                onChange={(e) => setCurrency(e.target.value)}
+                onChange={(e) => setCurrency(e.target.value as TutorPreferences['currency'])}
                 className="w-full bg-[#08080E] border border-[#1A1A23] rounded-xl px-3 py-2 text-xs text-[#F7F7FB] focus:outline-none focus:border-[#665CFF]"
               >
                 <option value="USD">USD ($)</option>
@@ -510,7 +529,7 @@ export const TutorView: React.FC = () => {
               </label>
               <select
                 value={language}
-                onChange={(e) => setLanguage(e.target.value)}
+                onChange={(e) => setLanguage(e.target.value as TutorPreferences['language'])}
                 className="w-full bg-[#08080E] border border-[#1A1A23] rounded-xl px-3 py-2 text-xs text-[#F7F7FB] focus:outline-none focus:border-[#665CFF]"
               >
                 <option value="english">English</option>
@@ -526,7 +545,7 @@ export const TutorView: React.FC = () => {
               </label>
               <select
                 value={level}
-                onChange={(e) => setLevel(e.target.value)}
+                onChange={(e) => setLevel(e.target.value as TutorPreferences['level'])}
                 className="w-full bg-[#08080E] border border-[#1A1A23] rounded-xl px-3 py-2 text-xs text-[#F7F7FB] focus:outline-none focus:border-[#665CFF]"
               >
                 <option value="beginner">Beginner</option>
@@ -542,7 +561,7 @@ export const TutorView: React.FC = () => {
               </label>
               <select
                 value={mode}
-                onChange={(e) => setMode(e.target.value)}
+                onChange={(e) => setMode(e.target.value as TutorPreferences['mode'])}
                 className="w-full bg-[#08080E] border border-[#1A1A23] rounded-xl px-3 py-2 text-xs text-[#F7F7FB] focus:outline-none focus:border-[#665CFF]"
               >
                 <option value="explain">Explain concept</option>

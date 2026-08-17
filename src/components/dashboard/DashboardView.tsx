@@ -257,7 +257,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
       </section>
 
       <section className="grid grid-cols-1 gap-6 xl:grid-cols-12">
-        <div className="min-w-0 rounded-3xl border border-[#1A1A23] bg-[#08080E] p-5 shadow-2xl sm:p-7 xl:col-span-8">
+        <div className="min-w-0 rounded-3xl border border-[#1A1A23] bg-[#08080E] p-5 shadow-2xl sm:p-7 xl:col-span-7">
           <div className="flex flex-col gap-5 border-b border-[#171720] pb-5 lg:flex-row lg:items-start lg:justify-between">
             <div>
               <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.16em] text-[#16C7E8]"><LineChartIcon className="h-3.5 w-3.5" /> Market performance</div>
@@ -295,7 +295,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
             ].map(([label, value]) => <div key={label} className="rounded-xl bg-[#05050A] px-3 py-2.5"><p className="text-[9px] uppercase tracking-wider text-[#666678]">{label}</p><p className="mt-1 text-xs font-bold text-[#D9D9E4]">{value}</p></div>)}
           </div>
         </div>
-        <div className="xl:col-span-4"><DashboardAssistant snapshot={assistantSnapshot} ready={!loading && lastUpdated !== null} onNavigate={onNavigate} /></div>
+        <div className="min-w-0 xl:col-span-5"><DashboardAssistant snapshot={assistantSnapshot} ready={!loading && lastUpdated !== null} onNavigate={onNavigate} /></div>
       </section>
 
       <section className="grid grid-cols-1 gap-6 xl:grid-cols-12">

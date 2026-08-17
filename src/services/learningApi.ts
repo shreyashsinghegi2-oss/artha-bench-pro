@@ -1,12 +1,16 @@
 import {
   NormalizedMarketQuote,
   NormalizedNewsItem,
+  CompanyAssistantResponse,
   CompanyIntelligence,
   DashboardAssistantResponse,
   DashboardAssistantSnapshot,
   EconomicIndicator,
   EconomicSeriesResponse,
   ProviderDiagnostic,
+  NewsExplanationResponse,
+  StructuredFinancialAnswer,
+  TutorPreferences,
   VerificationReport,
 } from '../types';
 
@@ -221,7 +225,7 @@ export async function fetchBusinessNews(category?: string): Promise<NormalizedNe
 
 export async function explainNewsArticleAI(article: NormalizedNewsItem) {
   try {
-    return await fetchJSON<{ explanation: string; keyTakeaways: string[]; disclaimer: string }>(
+    return await fetchJSON<NewsExplanationResponse>(
       '/api/news/explain',
       {
         method: 'POST',
@@ -236,13 +240,40 @@ export async function explainNewsArticleAI(article: NormalizedNewsItem) {
       }
     );
   } catch {
-    return {
-      explanation: `Educational Analysis for "${article.title}":\nThis article illustrates how monetary policy and corporate cash flows influence broader market asset valuations. In academic financial theory, interest rates impact the discount rate (WACC) used in valuation models.`,
-      keyTakeaways: [
-        'Interest rate shifts change corporate borrowing costs and equity discount factors.',
-        'Operating cash flow margins reflect corporate liquidity strength.',
-        'Market pricing incorporates macro inflation expectations.',
+    const structuredAnswer: StructuredFinancialAnswer = {
+      title: 'How to analyze this business headline',
+      directAnswer: `This headline should be treated as an initial signal about ${article.title}, not as complete evidence. Read the original source and verify the underlying company filing or official economic release before drawing a conclusion.`,
+      steps: [
+        { title: 'Identify the claim', explanation: 'Separate the event being reported from the interpretation attached to it.' },
+        { title: 'Open the primary source', explanation: 'Check the original article and any linked filing, earnings release, or official dataset.' },
+        { title: 'Compare the metric', explanation: 'Evaluate the reported figure against its prior period and an appropriate benchmark.' },
+        { title: 'Review limitations', explanation: 'Check dates, units, revisions, one-time effects, and information missing from the summary.' },
       ],
+      formula: {
+        expression: 'Percentage change = (current value − prior value) / prior value × 100',
+        variables: [
+          { symbol: 'Current value', meaning: 'the newly reported value' },
+          { symbol: 'Prior value', meaning: 'the comparable earlier-period value' },
+        ],
+        whenToUse: 'Use this method only when the source provides two directly comparable numeric values.',
+      },
+      example: {
+        title: 'Illustrative comparison',
+        dataStatus: 'illustrative',
+        dataAsOf: '',
+        inputs: ['Illustrative prior value = 100', 'Illustrative current value = 108'],
+        calculation: ['(108 − 100) / 100 × 100 = 8%'],
+        result: 'The illustrative value increased by 8%; this is not a fact from the article.',
+      },
+      interpretation: ['A headline can identify a topic, but it rarely contains enough context for a complete financial conclusion.'],
+      risks: ['The summary may omit revisions, definitions, base effects, or one-time items.'],
+      keyTakeaways: ['Verify the full source, compare like-for-like figures, and keep observations separate from conclusions.'],
+      sources: [{ name: article.sourceName, dataDate: article.publishedAt || '', freshness: 'Supplied headline and summary only' }],
+    };
+    return {
+      explanation: structuredAnswer.directAnswer,
+      structuredAnswer,
+      keyTakeaways: structuredAnswer.keyTakeaways,
       disclaimer: 'Educational material only. Does not constitute investment advice.',
     };
   }
@@ -369,16 +400,7 @@ export async function askCompanyIntelligenceAI(params: {
   question: string;
   history?: Array<{ role: 'user' | 'assistant'; content: string }>;
 }) {
-  return fetchJSON<{
-    symbol: string;
-    answer: string;
-    provider: 'groq' | 'demo';
-    model: string | null;
-    groundedAt: string;
-    disclaimer: string;
-    suggestedQuestions: string[];
-    requestId: string;
-  }>('/api/company/assistant', {
+  return fetchJSON<CompanyAssistantResponse>('/api/company/assistant', {
     method: 'POST',
     body: JSON.stringify(params),
   });
@@ -419,20 +441,36 @@ export async function performQuickCheck(query: string) {
   }
 }
 
-export async function askTutorAI(question: string, history: any[] = []) {
+const DEFAULT_TUTOR_PREFERENCES: TutorPreferences = {
+  country: 'US',
+  currency: 'USD',
+  language: 'english',
+  level: 'beginner',
+  mode: 'explain',
+  detail: 'detailed',
+  useOfficialSources: true,
+};
+
+export async function askTutorAI(
+  question: string,
+  history: Array<{ role: 'user' | 'assistant'; content: string }> = [],
+  context: TutorPreferences = DEFAULT_TUTOR_PREFERENCES,
+) {
   try {
     const res = await fetchJSON<{
       answer?: string;
       response?: string;
+      structuredAnswer?: StructuredFinancialAnswer;
       suggestedFollowUps: string[];
       mathProof?: string;
     }>('/api/tutor', {
       method: 'POST',
-      body: JSON.stringify({ userPrompt: question, message: question, history }),
+      body: JSON.stringify({ userPrompt: question, message: question, history, context }),
     });
 
     return {
       answer: res.answer || res.response || 'In corporate finance, understanding fundamental principles allows analysts to evaluate value creation objectively.',
+      structuredAnswer: res.structuredAnswer,
       suggestedFollowUps: res.suggestedFollowUps || [],
       mathProof: res.mathProof,
     };

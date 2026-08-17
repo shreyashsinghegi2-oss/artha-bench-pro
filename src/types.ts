@@ -365,8 +365,59 @@ export interface DashboardAssistantSnapshot {
   } | null;
 }
 
+export type FinancialExampleDataStatus =
+  | 'live'
+  | 'latest_available'
+  | 'delayed'
+  | 'illustrative'
+  | 'not_applicable';
+
+export interface StructuredFinancialAnswer {
+  title: string;
+  directAnswer: string;
+  steps: Array<{
+    title: string;
+    explanation: string;
+  }>;
+  formula: {
+    expression: string;
+    variables: Array<{
+      symbol: string;
+      meaning: string;
+    }>;
+    whenToUse: string;
+  };
+  example: {
+    title: string;
+    dataStatus: FinancialExampleDataStatus;
+    dataAsOf: string;
+    inputs: string[];
+    calculation: string[];
+    result: string;
+  };
+  interpretation: string[];
+  risks: string[];
+  keyTakeaways: string[];
+  sources: Array<{
+    name: string;
+    dataDate: string;
+    freshness: string;
+  }>;
+}
+
+export interface TutorPreferences {
+  country: 'US' | 'India' | 'Global';
+  currency: 'USD' | 'INR' | 'EUR' | 'GBP';
+  language: 'english' | 'hindi' | 'hinglish';
+  level: 'beginner' | 'intermediate' | 'advanced';
+  mode: 'explain' | 'quiz' | 'calc';
+  detail: 'short' | 'detailed';
+  useOfficialSources: boolean;
+}
+
 export interface DashboardAssistantResponse {
   answer: string;
+  structuredAnswer: StructuredFinancialAnswer;
   provider: 'groq' | 'demo';
   model: string | null;
   groundedAt: string;
@@ -374,6 +425,25 @@ export interface DashboardAssistantResponse {
   suggestedQuestions: string[];
   disclaimer: string;
   requestId: string;
+}
+
+export interface CompanyAssistantResponse {
+  symbol: string;
+  answer: string;
+  structuredAnswer: StructuredFinancialAnswer;
+  provider: 'groq' | 'demo';
+  model: string | null;
+  groundedAt: string;
+  disclaimer: string;
+  suggestedQuestions: string[];
+  requestId: string;
+}
+
+export interface NewsExplanationResponse {
+  explanation: string;
+  structuredAnswer: StructuredFinancialAnswer;
+  keyTakeaways: string[];
+  disclaimer: string;
 }
 
 // Batch Benchmark & Persistence Types

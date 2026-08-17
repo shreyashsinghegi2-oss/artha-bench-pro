@@ -82,6 +82,20 @@ describe('Artha structured financial-answer standard', () => {
     expect(fallback.directAnswer).not.toContain('<br>');
   });
 
+  it('extracts a safe direct answer from malformed JSON without showing raw JSON', () => {
+    const fallback = createFallbackStructuredFinancialAnswer(
+      'Explain valuation ratios. Verified context: {"peRatio":34.36,"price":304.95,"dataRetrievedAt":"2026-08-17T14:18:29.210Z","freshness":"delayed","dataProviders":["Finnhub"]}',
+      '{"directAnswer":"P/E compares the share price with earnings per share.","steps":[{"title":"Identify"',
+    );
+
+    expect(fallback.directAnswer).toBe('P/E compares the share price with earnings per share.');
+    expect(fallback.directAnswer).not.toContain('{');
+    expect(fallback.formula.expression).toContain('Valuation multiple');
+    expect(fallback.formula.expression).not.toContain('Range return');
+    expect(fallback.example.dataStatus).toBe('delayed');
+    expect(fallback.sources[0].name).toContain('Finnhub');
+  });
+
   it('requests strict Groq JSON Schema output for the active GPT-OSS tutor', async () => {
     process.env.GROQ_API_KEY = 'structured-test-key';
     const fetchMock = vi.fn().mockResolvedValue(
@@ -105,6 +119,32 @@ describe('Artha structured financial-answer standard', () => {
     });
     expect(result.title).toBe('Compound Interest');
     expect(JSON.stringify(result)).not.toContain('structured-test-key');
+  });
+
+  it('retries with JSON Object mode when the provider rejects strict schema mode', async () => {
+    process.env.GROQ_API_KEY = 'structured-test-key';
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response('unsupported schema', { status: 400 }))
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({ choices: [{ message: { content: JSON.stringify(validAnswer) } }] }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } },
+        ),
+      );
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await callGroqStructuredFinancialAnswer(
+      'Teach finance clearly.',
+      'Explain compound interest.',
+      { fallbackQuestion: 'Explain compound interest.' },
+    );
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    const retryRequest = JSON.parse(String(fetchMock.mock.calls[1][1]?.body));
+    expect(retryRequest.response_format).toEqual({ type: 'json_object' });
+    expect(retryRequest.messages[0].content).toContain('exactly this contract');
+    expect(result.title).toBe('Compound Interest');
   });
 
   it('returns the same structured contract for AI news analysis', async () => {

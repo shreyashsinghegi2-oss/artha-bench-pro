@@ -190,7 +190,20 @@ function sanitizeStructuredFinancialAnswer(answer) {
   };
 }
 function firstUsefulParagraph(rawText) {
+  const jsonDirectAnswer = rawText.match(
+    /"directAnswer"\s*:\s*"((?:\\.|[^"\\])*)"/s
+  );
+  if (jsonDirectAnswer) {
+    try {
+      return cleanPlainText(JSON.parse(`"${jsonDirectAnswer[1]}"`)).slice(0, 2200);
+    } catch {
+      return cleanPlainText(jsonDirectAnswer[1]).slice(0, 2200);
+    }
+  }
   const cleaned = cleanPlainText(rawText).replace(/^\|.*\|$/gm, "").replace(/^[-|: ]{3,}$/gm, "").trim();
+  if (/^(?:json\s*)?[{[]/i.test(cleaned)) {
+    return "The model response could not be validated, so ArthaBench replaced it with a safe structured explanation.";
+  }
   const paragraph = cleaned.split(/\n\s*\n/).find((item) => item.trim());
   return (paragraph || cleaned || "A structured financial explanation is available.").slice(0, 2200);
 }
@@ -199,7 +212,10 @@ function createFallbackStructuredFinancialAnswer(question, rawText) {
   const isCompoundInterest = /compound|future value/.test(normalizedQuestion);
   const isLoan = /\bemi\b|loan|mortgage/.test(normalizedQuestion);
   const isBudget = /budget|50\/30\/20/.test(normalizedQuestion);
-  const isMarketReturn = /return|performance|market chart|dashboard|signal/.test(
+  const isRatio = /valuation|p\/?e\b|price[- ]to[- ](earnings|book|sales)|current ratio|quick ratio|return on equity|\broe\b|fundamental ratio/.test(
+    normalizedQuestion
+  );
+  const isMarketReturn = /\b(range return|market return|price return|performance|market chart|dashboard signal|price change)\b/.test(
     normalizedQuestion
   );
   let expression = "No calculation is required for this concept";
@@ -210,6 +226,14 @@ function createFallbackStructuredFinancialAnswer(question, rawText) {
   let result = "The result depends on the verified inputs supplied by the learner.";
   let exampleDataStatus = "illustrative";
   let dataAsOf = "";
+  let exampleTitle = "Illustrative worked example";
+  let sources = [
+    {
+      name: "ArthaBench educational framework",
+      dataDate: "",
+      freshness: "Illustrative \u2014 not live market data"
+    }
+  ];
   if (isCompoundInterest) {
     expression = "A = P \xD7 (1 + r/n)^(n \xD7 t)";
     variables = [
@@ -244,6 +268,43 @@ function createFallbackStructuredFinancialAnswer(question, rawText) {
     inputs = ["Illustrative monthly net income = 4,000", "Needs = 50%", "Wants = 30%", "Savings/debt = 20%"];
     calculation = ["Needs: 4,000 \xD7 0.50 = 2,000", "Wants: 4,000 \xD7 0.30 = 1,200", "Savings/debt: 4,000 \xD7 0.20 = 800"];
     result = "The three allocations total the full 4,000 monthly net income.";
+  } else if (isRatio) {
+    expression = "Valuation multiple = Market value per share \xF7 Financial metric per share";
+    variables = [
+      { symbol: "Market value per share", meaning: "the verified market price for one share" },
+      { symbol: "Financial metric per share", meaning: "earnings, book value, or sales per share for the matching period" }
+    ];
+    whenToUse = "Use this relationship to understand P/E, P/B, or P/S after confirming that the price, metric, and period are comparable.";
+    const verifiedPrice = normalizedQuestion.match(/"price":\s*(-?[\d.]+)/);
+    const verifiedPe = normalizedQuestion.match(/"peratio":\s*(-?[\d.]+)/);
+    const retrievedAt = question.match(/"dataRetrievedAt":\s*"([^"]+)"/i)?.[1] || "";
+    const quoteFreshness = question.match(/"freshness":\s*"([^"]+)"/i)?.[1] || "";
+    const hasFinnhubContext = /finnhub/i.test(question);
+    if (verifiedPrice && verifiedPe && Number(verifiedPe[1]) !== 0) {
+      const price = Number(verifiedPrice[1]);
+      const pe = Number(verifiedPe[1]);
+      const impliedEps = price / pe;
+      exampleTitle = "Verified P/E relationship";
+      inputs = [
+        `Market price = ${price.toLocaleString(void 0, { maximumFractionDigits: 2 })}`,
+        `Reported P/E = ${pe.toLocaleString(void 0, { maximumFractionDigits: 2 })}\xD7`
+      ];
+      calculation = [
+        `Implied earnings per share = ${price.toFixed(2)} \xF7 ${pe.toFixed(2)} = ${impliedEps.toFixed(2)}`
+      ];
+      result = `The reported P/E implies earnings per share of approximately ${impliedEps.toFixed(2)} for the ratio's measurement basis.`;
+      exampleDataStatus = /delayed|end_of_day|stale|demo/i.test(quoteFreshness) ? "delayed" : "latest_available";
+      dataAsOf = retrievedAt;
+    }
+    if (hasFinnhubContext) {
+      sources = [
+        {
+          name: "Finnhub company fundamentals",
+          dataDate: retrievedAt,
+          freshness: quoteFreshness ? `Company context with ${quoteFreshness.replaceAll("_", " ")} quote` : "Latest company context supplied to the assistant"
+        }
+      ];
+    }
   } else if (isMarketReturn) {
     expression = "Range return (%) = (latest price \u2212 starting price) / starting price \xD7 100";
     variables = [
@@ -265,6 +326,7 @@ function createFallbackStructuredFinancialAnswer(question, rawText) {
       result = observedReturn ? `Measured range return = ${observedReturn[1]}%.` : "Calculate the measured percentage change from the two displayed observations.";
       exampleDataStatus = /\b(delayed|demo|stale|end-of-day)\b/i.test(rawText) ? "delayed" : "latest_available";
       dataAsOf = observedDates?.[2]?.trim() || "";
+      exampleTitle = "Verified dashboard range calculation";
     }
   }
   return {
@@ -278,7 +340,7 @@ function createFallbackStructuredFinancialAnswer(question, rawText) {
     ],
     formula: { expression, variables, whenToUse },
     example: {
-      title: "Illustrative worked example",
+      title: exampleTitle,
       dataStatus: exampleDataStatus,
       dataAsOf,
       inputs,
@@ -288,7 +350,7 @@ function createFallbackStructuredFinancialAnswer(question, rawText) {
     interpretation: ["Use the result as an educational estimate, not as a guaranteed outcome."],
     risks: ["Actual outcomes can change when rates, fees, taxes, timing, or market conditions differ from the assumptions."],
     keyTakeaways: ["Verify the inputs, show the formula, and interpret the result together."],
-    sources: [{ name: "ArthaBench educational framework", dataDate: "", freshness: "Illustrative \u2014 not live market data" }]
+    sources
   };
 }
 function serializeStructuredFinancialAnswer(answer) {
@@ -1189,7 +1251,7 @@ Return one valid JSON object only. It must match the supplied Artha financial-an
     userPrompt,
     options.history
   );
-  const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+  const requestStructuredCompletion = (requestMessages, responseFormat) => fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${apiKey}`,
@@ -1197,10 +1259,18 @@ Return one valid JSON object only. It must match the supplied Artha financial-an
     },
     body: JSON.stringify({
       model: selectedModel,
-      messages,
+      messages: requestMessages,
       temperature: 0.15,
-      max_tokens: 2500,
-      response_format: strictSchemaSupported ? {
+      max_tokens: 3500,
+      response_format: responseFormat
+    }),
+    signal: AbortSignal.timeout(25e3)
+  });
+  let response;
+  try {
+    response = await requestStructuredCompletion(
+      messages,
+      strictSchemaSupported ? {
         type: "json_schema",
         json_schema: {
           name: "artha_structured_financial_answer",
@@ -1208,25 +1278,39 @@ Return one valid JSON object only. It must match the supplied Artha financial-an
           schema: STRUCTURED_FINANCIAL_ANSWER_JSON_SCHEMA
         }
       } : { type: "json_object" }
-    }),
-    signal: AbortSignal.timeout(2e4)
-  });
-  if (!response.ok) {
-    if (response.status === 400) {
-      const plainText = await callGroqChat(
-        systemPrompt,
+    );
+    if (response.status === 400 && strictSchemaSupported) {
+      const compatibilityMessages = buildGroqMessages(
+        `${systemPrompt}
+
+Return one valid JSON object only with exactly this contract: ${JSON.stringify(STRUCTURED_FINANCIAL_ANSWER_JSON_SCHEMA)}`,
         userPrompt,
-        selectedModel,
         options.history
       );
-      return createFallbackStructuredFinancialAnswer(fallbackQuestion, plainText);
+      response = await requestStructuredCompletion(
+        compatibilityMessages,
+        { type: "json_object" }
+      );
     }
-    throw new Error(`Groq structured request failed with HTTP ${response.status}.`);
+  } catch {
+    return createFallbackStructuredFinancialAnswer(
+      fallbackQuestion,
+      generateFallbackChatResponse(fallbackQuestion)
+    );
   }
-  const data = await response.json();
+  if (!response.ok) {
+    return createFallbackStructuredFinancialAnswer(
+      fallbackQuestion,
+      generateFallbackChatResponse(fallbackQuestion)
+    );
+  }
+  const data = await response.json().catch(() => null);
   const content = data?.choices?.[0]?.message?.content;
   if (typeof content !== "string" || !content.trim()) {
-    throw new Error("Groq returned an empty structured completion.");
+    return createFallbackStructuredFinancialAnswer(
+      fallbackQuestion,
+      generateFallbackChatResponse(fallbackQuestion)
+    );
   }
   const decoded = (() => {
     try {

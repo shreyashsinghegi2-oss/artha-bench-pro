@@ -225,10 +225,24 @@ export function sanitizeStructuredFinancialAnswer(
 }
 
 function firstUsefulParagraph(rawText: string) {
+  const jsonDirectAnswer = rawText.match(
+    /"directAnswer"\s*:\s*"((?:\\.|[^"\\])*)"/s,
+  );
+  if (jsonDirectAnswer) {
+    try {
+      return cleanPlainText(JSON.parse(`"${jsonDirectAnswer[1]}"`)).slice(0, 2200);
+    } catch {
+      return cleanPlainText(jsonDirectAnswer[1]).slice(0, 2200);
+    }
+  }
+
   const cleaned = cleanPlainText(rawText)
     .replace(/^\|.*\|$/gm, '')
     .replace(/^[-|: ]{3,}$/gm, '')
     .trim();
+  if (/^(?:json\s*)?[{[]/i.test(cleaned)) {
+    return 'The model response could not be validated, so ArthaBench replaced it with a safe structured explanation.';
+  }
   const paragraph = cleaned.split(/\n\s*\n/).find((item) => item.trim());
   return (paragraph || cleaned || 'A structured financial explanation is available.').slice(0, 2200);
 }
@@ -241,7 +255,10 @@ export function createFallbackStructuredFinancialAnswer(
   const isCompoundInterest = /compound|future value/.test(normalizedQuestion);
   const isLoan = /\bemi\b|loan|mortgage/.test(normalizedQuestion);
   const isBudget = /budget|50\/30\/20/.test(normalizedQuestion);
-  const isMarketReturn = /return|performance|market chart|dashboard|signal/.test(
+  const isRatio = /valuation|p\/?e\b|price[- ]to[- ](earnings|book|sales)|current ratio|quick ratio|return on equity|\broe\b|fundamental ratio/.test(
+    normalizedQuestion,
+  );
+  const isMarketReturn = /\b(range return|market return|price return|performance|market chart|dashboard signal|price change)\b/.test(
     normalizedQuestion,
   );
 
@@ -253,6 +270,14 @@ export function createFallbackStructuredFinancialAnswer(
   let result = 'The result depends on the verified inputs supplied by the learner.';
   let exampleDataStatus: StructuredFinancialAnswer['example']['dataStatus'] = 'illustrative';
   let dataAsOf = '';
+  let exampleTitle = 'Illustrative worked example';
+  let sources: StructuredFinancialAnswer['sources'] = [
+    {
+      name: 'ArthaBench educational framework',
+      dataDate: '',
+      freshness: 'Illustrative — not live market data',
+    },
+  ];
 
   if (isCompoundInterest) {
     expression = 'A = P × (1 + r/n)^(n × t)';
@@ -288,6 +313,50 @@ export function createFallbackStructuredFinancialAnswer(
     inputs = ['Illustrative monthly net income = 4,000', 'Needs = 50%', 'Wants = 30%', 'Savings/debt = 20%'];
     calculation = ['Needs: 4,000 × 0.50 = 2,000', 'Wants: 4,000 × 0.30 = 1,200', 'Savings/debt: 4,000 × 0.20 = 800'];
     result = 'The three allocations total the full 4,000 monthly net income.';
+  } else if (isRatio) {
+    expression = 'Valuation multiple = Market value per share ÷ Financial metric per share';
+    variables = [
+      { symbol: 'Market value per share', meaning: 'the verified market price for one share' },
+      { symbol: 'Financial metric per share', meaning: 'earnings, book value, or sales per share for the matching period' },
+    ];
+    whenToUse = 'Use this relationship to understand P/E, P/B, or P/S after confirming that the price, metric, and period are comparable.';
+
+    const verifiedPrice = normalizedQuestion.match(/"price":\s*(-?[\d.]+)/);
+    const verifiedPe = normalizedQuestion.match(/"peratio":\s*(-?[\d.]+)/);
+    const retrievedAt = question.match(/"dataRetrievedAt":\s*"([^"]+)"/i)?.[1] || '';
+    const quoteFreshness = question.match(/"freshness":\s*"([^"]+)"/i)?.[1] || '';
+    const hasFinnhubContext = /finnhub/i.test(question);
+
+    if (verifiedPrice && verifiedPe && Number(verifiedPe[1]) !== 0) {
+      const price = Number(verifiedPrice[1]);
+      const pe = Number(verifiedPe[1]);
+      const impliedEps = price / pe;
+      exampleTitle = 'Verified P/E relationship';
+      inputs = [
+        `Market price = ${price.toLocaleString(undefined, { maximumFractionDigits: 2 })}`,
+        `Reported P/E = ${pe.toLocaleString(undefined, { maximumFractionDigits: 2 })}×`,
+      ];
+      calculation = [
+        `Implied earnings per share = ${price.toFixed(2)} ÷ ${pe.toFixed(2)} = ${impliedEps.toFixed(2)}`,
+      ];
+      result = `The reported P/E implies earnings per share of approximately ${impliedEps.toFixed(2)} for the ratio's measurement basis.`;
+      exampleDataStatus = /delayed|end_of_day|stale|demo/i.test(quoteFreshness)
+        ? 'delayed'
+        : 'latest_available';
+      dataAsOf = retrievedAt;
+    }
+
+    if (hasFinnhubContext) {
+      sources = [
+        {
+          name: 'Finnhub company fundamentals',
+          dataDate: retrievedAt,
+          freshness: quoteFreshness
+            ? `Company context with ${quoteFreshness.replaceAll('_', ' ')} quote`
+            : 'Latest company context supplied to the assistant',
+        },
+      ];
+    }
   } else if (isMarketReturn) {
     expression = 'Range return (%) = (latest price − starting price) / starting price × 100';
     variables = [
@@ -313,6 +382,7 @@ export function createFallbackStructuredFinancialAnswer(
         ? 'delayed'
         : 'latest_available';
       dataAsOf = observedDates?.[2]?.trim() || '';
+      exampleTitle = 'Verified dashboard range calculation';
     }
   }
 
@@ -327,7 +397,7 @@ export function createFallbackStructuredFinancialAnswer(
     ],
     formula: { expression, variables, whenToUse },
     example: {
-      title: 'Illustrative worked example',
+      title: exampleTitle,
       dataStatus: exampleDataStatus,
       dataAsOf,
       inputs,
@@ -337,7 +407,7 @@ export function createFallbackStructuredFinancialAnswer(
     interpretation: ['Use the result as an educational estimate, not as a guaranteed outcome.'],
     risks: ['Actual outcomes can change when rates, fees, taxes, timing, or market conditions differ from the assumptions.'],
     keyTakeaways: ['Verify the inputs, show the formula, and interpret the result together.'],
-    sources: [{ name: 'ArthaBench educational framework', dataDate: '', freshness: 'Illustrative — not live market data' }],
+    sources,
   };
 }
 

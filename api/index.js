@@ -3,7 +3,7 @@ import express from "express";
 
 // server/routes.ts
 import { Router } from "express";
-import { z as z5 } from "zod";
+import { z as z6 } from "zod";
 
 // server/scoringConfig.ts
 var RELIABILITY_DIMENSIONS_CONFIG = {
@@ -2977,6 +2977,236 @@ async function checkWorldBankIndiaDiagnostic() {
   };
 }
 
+// server/providers/finnhubProvider.ts
+import { z as z5 } from "zod";
+var DEFAULT_FINNHUB_BASE_URL = "https://finnhub.io/api/v1";
+var profileSchema = z5.object({
+  country: z5.string().optional(),
+  currency: z5.string().optional(),
+  exchange: z5.string().optional(),
+  finnhubIndustry: z5.string().optional(),
+  ipo: z5.string().optional(),
+  logo: z5.string().optional(),
+  marketCapitalization: z5.number().nullable().optional(),
+  name: z5.string().optional(),
+  phone: z5.string().optional(),
+  shareOutstanding: z5.number().nullable().optional(),
+  ticker: z5.string().optional(),
+  weburl: z5.string().optional()
+}).passthrough();
+var metricsSchema = z5.object({
+  metric: z5.record(z5.string(), z5.unknown()).optional().default({})
+}).passthrough();
+var earningsSchema = z5.array(
+  z5.object({
+    actual: z5.number().nullable().optional(),
+    estimate: z5.number().nullable().optional(),
+    period: z5.string().optional(),
+    quarter: z5.number().nullable().optional(),
+    surprise: z5.number().nullable().optional(),
+    surprisePercent: z5.number().nullable().optional(),
+    symbol: z5.string().optional(),
+    year: z5.number().nullable().optional()
+  }).passthrough()
+);
+var recommendationSchema = z5.array(
+  z5.object({
+    buy: z5.number().optional(),
+    hold: z5.number().optional(),
+    period: z5.string().optional(),
+    sell: z5.number().optional(),
+    strongBuy: z5.number().optional(),
+    strongSell: z5.number().optional(),
+    symbol: z5.string().optional()
+  }).passthrough()
+);
+function safeSymbol2(symbol) {
+  const normalized = symbol.trim().toUpperCase();
+  if (!/^[A-Z0-9][A-Z0-9.:_-]{0,19}$/.test(normalized)) {
+    throw new Error("Invalid Finnhub stock symbol.");
+  }
+  return normalized;
+}
+function getConfiguration4() {
+  const baseUrl = process.env.FINNHUB_API_BASE_URL?.trim() || DEFAULT_FINNHUB_BASE_URL;
+  const parsed = new URL(baseUrl);
+  if (parsed.protocol !== "https:") {
+    throw new Error("Finnhub provider URL must use HTTPS.");
+  }
+  return {
+    apiKey: process.env.FINNHUB_API_KEY?.trim() || "",
+    baseUrl: parsed.toString().replace(/\/$/, "")
+  };
+}
+function classifyError2(response, body) {
+  const message = body && typeof body === "object" && "error" in body ? String(body.error || "") : "";
+  const normalized = message.toLowerCase();
+  if (response.status === 401 || response.status === 403 || /token|api key|access denied/.test(normalized)) {
+    return "invalid_credentials";
+  }
+  if (response.status === 429 || /limit|too many/.test(normalized)) {
+    return "rate_limited";
+  }
+  if (!response.ok || message) return "error";
+  return null;
+}
+async function requestFinnhub(endpoint, schema, params) {
+  const { apiKey, baseUrl } = getConfiguration4();
+  if (!apiKey) {
+    return {
+      status: "not_configured",
+      data: null,
+      message: "Add FINNHUB_API_KEY in Vercel to activate company intelligence."
+    };
+  }
+  try {
+    const url = new URL(`${baseUrl}/${endpoint.replace(/^\//, "")}`);
+    Object.entries(params).forEach(([key, value]) => url.searchParams.set(key, value));
+    url.searchParams.set("token", apiKey);
+    const response = await fetch(url, { signal: AbortSignal.timeout(1e4) });
+    const body = await response.json().catch(() => null);
+    const providerError = classifyError2(response, body);
+    if (providerError) {
+      return {
+        status: providerError,
+        data: null,
+        message: providerError === "invalid_credentials" ? "Finnhub rejected the configured credential." : providerError === "rate_limited" ? "Finnhub request limit reached. Please retry shortly." : `Finnhub request failed with HTTP ${response.status}.`
+      };
+    }
+    const parsed = schema.safeParse(body);
+    if (!parsed.success) {
+      return {
+        status: "invalid_response",
+        data: null,
+        message: "Finnhub returned an unexpected response."
+      };
+    }
+    return { status: "connected", data: parsed.data, message: "Finnhub data loaded." };
+  } catch {
+    return {
+      status: "error",
+      data: null,
+      message: "Finnhub is temporarily unreachable."
+    };
+  }
+}
+function metricNumber(metrics, ...keys) {
+  for (const key of keys) {
+    const value = metrics[key];
+    if (typeof value === "number" && Number.isFinite(value)) return value;
+    if (typeof value === "string" && value.trim() && Number.isFinite(Number(value))) {
+      return Number(value);
+    }
+  }
+  return null;
+}
+async function fetchFinnhubCompanyIntelligence(symbol) {
+  const normalizedSymbol = safeSymbol2(symbol);
+  const { apiKey } = getConfiguration4();
+  if (!apiKey) {
+    return {
+      symbol: normalizedSymbol,
+      status: "not_configured",
+      providerName: "Finnhub",
+      retrievedAt: (/* @__PURE__ */ new Date()).toISOString(),
+      message: "Add FINNHUB_API_KEY in Vercel to activate company intelligence.",
+      profile: null,
+      metrics: null,
+      earnings: [],
+      recommendations: []
+    };
+  }
+  const [profileResult, metricsResult, earningsResult, recommendationResult] = await Promise.all([
+    requestFinnhub("stock/profile2", profileSchema, { symbol: normalizedSymbol }),
+    requestFinnhub("stock/metric", metricsSchema, {
+      symbol: normalizedSymbol,
+      metric: "all"
+    }),
+    requestFinnhub("stock/earnings", earningsSchema, {
+      symbol: normalizedSymbol,
+      limit: "4"
+    }),
+    requestFinnhub("stock/recommendation", recommendationSchema, {
+      symbol: normalizedSymbol
+    })
+  ]);
+  const results = [profileResult, metricsResult, earningsResult, recommendationResult];
+  const connectedCount = results.filter((result) => result.status === "connected").length;
+  const blockingStatus = results.find(
+    (result) => result.status === "invalid_credentials" || result.status === "rate_limited"
+  );
+  const profile = profileResult.data;
+  const rawMetrics = metricsResult.data?.metric || {};
+  const normalizedProfile = profile && (profile.name || profile.ticker) ? {
+    name: profile.name || normalizedSymbol,
+    ticker: profile.ticker || normalizedSymbol,
+    exchange: profile.exchange || null,
+    currency: profile.currency || null,
+    country: profile.country || null,
+    industry: profile.finnhubIndustry || null,
+    ipoDate: profile.ipo || null,
+    logoUrl: profile.logo || null,
+    webUrl: profile.weburl || null,
+    marketCapitalization: profile.marketCapitalization ?? null,
+    sharesOutstanding: profile.shareOutstanding ?? null
+  } : null;
+  const hasMetrics = Object.keys(rawMetrics).length > 0;
+  const normalizedMetrics = hasMetrics ? {
+    peRatio: metricNumber(rawMetrics, "peBasicExclExtraTTM", "peTTM", "peAnnual"),
+    priceToBook: metricNumber(rawMetrics, "pbAnnual", "pbQuarterly"),
+    priceToSales: metricNumber(rawMetrics, "psTTM", "psAnnual"),
+    returnOnEquity: metricNumber(rawMetrics, "roeTTM", "roeAnnual"),
+    currentRatio: metricNumber(rawMetrics, "currentRatioAnnual", "currentRatioQuarterly"),
+    beta: metricNumber(rawMetrics, "beta"),
+    week52High: metricNumber(rawMetrics, "52WeekHigh"),
+    week52Low: metricNumber(rawMetrics, "52WeekLow"),
+    dividendYield: metricNumber(
+      rawMetrics,
+      "dividendYieldIndicatedAnnual",
+      "dividendYield5Y"
+    ),
+    epsGrowth3Y: metricNumber(rawMetrics, "epsGrowth3Y"),
+    revenueGrowth3Y: metricNumber(rawMetrics, "revenueGrowth3Y")
+  } : null;
+  return {
+    symbol: normalizedSymbol,
+    status: blockingStatus?.status || (connectedCount > 0 ? "connected" : results[0]?.status || "error"),
+    providerName: "Finnhub",
+    retrievedAt: (/* @__PURE__ */ new Date()).toISOString(),
+    message: connectedCount > 0 ? `${connectedCount} of 4 Finnhub company datasets loaded.` : blockingStatus?.message || results[0]?.message || "Finnhub data is unavailable.",
+    profile: normalizedProfile,
+    metrics: normalizedMetrics,
+    earnings: (earningsResult.data || []).slice(0, 4).map((item) => ({
+      period: item.period || null,
+      actual: item.actual ?? null,
+      estimate: item.estimate ?? null,
+      surprise: item.surprise ?? null,
+      surprisePercent: item.surprisePercent ?? null
+    })),
+    recommendations: (recommendationResult.data || []).slice(0, 6).map((item) => ({
+      period: item.period || null,
+      strongBuy: item.strongBuy || 0,
+      buy: item.buy || 0,
+      hold: item.hold || 0,
+      sell: item.sell || 0,
+      strongSell: item.strongSell || 0
+    }))
+  };
+}
+async function checkFinnhubDiagnostic() {
+  const startedAt = Date.now();
+  const result = await requestFinnhub("stock/profile2", profileSchema, { symbol: "AAPL" });
+  return {
+    id: "company-intelligence",
+    name: "Finnhub Company Intelligence",
+    role: "Company profiles, fundamentals, earnings, and analyst trends",
+    status: result.status,
+    lastChecked: (/* @__PURE__ */ new Date()).toISOString(),
+    latencyMs: Date.now() - startedAt,
+    message: result.message
+  };
+}
+
 // server/routes.ts
 var apiRouter = Router();
 var rateLimitMap = /* @__PURE__ */ new Map();
@@ -3007,19 +3237,19 @@ apiRouter.use((req, res, next) => {
   }
   next();
 });
-var querySchema = z5.object({
-  query: z5.string().min(1, "Query parameter is required.").max(2e3, "Query exceeds maximum length of 2000 characters."),
-  profile: z5.enum(["India", "US", "Global"]).optional()
+var querySchema = z6.object({
+  query: z6.string().min(1, "Query parameter is required.").max(2e3, "Query exceeds maximum length of 2000 characters."),
+  profile: z6.enum(["India", "US", "Global"]).optional()
 });
-var tutorSchema = z5.object({
-  userPrompt: z5.string().min(1, "Prompt is required.").max(2e3, "Prompt exceeds maximum length."),
-  systemPrompt: z5.string().optional(),
-  modelName: z5.string().optional(),
-  history: z5.array(z5.object({ role: z5.string(), content: z5.string() })).optional()
+var tutorSchema = z6.object({
+  userPrompt: z6.string().min(1, "Prompt is required.").max(2e3, "Prompt exceeds maximum length."),
+  systemPrompt: z6.string().optional(),
+  modelName: z6.string().optional(),
+  history: z6.array(z6.object({ role: z6.string(), content: z6.string() })).optional()
 });
-var batchRunSchema = z5.object({
-  scenarioIds: z5.array(z5.string()).optional(),
-  profile: z5.enum(["India", "US", "Global"]).optional()
+var batchRunSchema = z6.object({
+  scenarioIds: z6.array(z6.string()).optional(),
+  profile: z6.enum(["India", "US", "Global"]).optional()
 });
 apiRouter.get("/health", (req, res) => {
   res.json({
@@ -3036,15 +3266,16 @@ apiRouter.get("/diagnostics", async (req, res, next) => {
       res.json(diagnosticCache.payload);
       return;
     }
-    const [groqDiagnostics, newsDiagnostic, marketDiagnostic, fredDiagnostic, indiaDiagnostic] = await Promise.all([
+    const [groqDiagnostics, newsDiagnostic, marketDiagnostic, fredDiagnostic, indiaDiagnostic, finnhubDiagnostic] = await Promise.all([
       checkGroqDiagnostics(),
       checkNewsProviderDiagnostic(),
       checkMarketProviderDiagnostic(),
       checkFredDiagnostic(),
-      checkWorldBankIndiaDiagnostic()
+      checkWorldBankIndiaDiagnostic(),
+      checkFinnhubDiagnostic()
     ]);
     const payload = {
-      diagnostics: [...groqDiagnostics, newsDiagnostic, marketDiagnostic, fredDiagnostic, indiaDiagnostic],
+      diagnostics: [...groqDiagnostics, newsDiagnostic, marketDiagnostic, fredDiagnostic, indiaDiagnostic, finnhubDiagnostic],
       modelsConfig: getGroqModels()
     };
     diagnosticCache = { expiresAt: Date.now() + DIAGNOSTIC_CACHE_MS, payload };
@@ -3202,6 +3433,24 @@ apiRouter.get("/markets/history", async (req, res, next) => {
     next(err);
   }
 });
+apiRouter.get("/company/intelligence", async (req, res, next) => {
+  try {
+    const parsed = z6.object({
+      symbol: z6.string().min(1).max(20).regex(/^[A-Za-z0-9][A-Za-z0-9.:_-]*$/)
+    }).safeParse(req.query);
+    if (!parsed.success) {
+      return res.status(400).json({ error: "A valid company stock symbol is required." });
+    }
+    const result = await fetchFinnhubCompanyIntelligence(parsed.data.symbol);
+    res.setHeader(
+      "Cache-Control",
+      result.status === "connected" ? "public, s-maxage=900, stale-while-revalidate=3600" : "no-store"
+    );
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+});
 apiRouter.get("/economy/overview", async (_req, res, next) => {
   try {
     res.json(await fetchFredOverview());
@@ -3211,9 +3460,9 @@ apiRouter.get("/economy/overview", async (_req, res, next) => {
 });
 apiRouter.get("/economy/series", async (req, res, next) => {
   try {
-    const parsed = z5.object({
-      seriesId: z5.string().min(1).max(64).regex(/^[A-Za-z0-9._-]+$/),
-      limit: z5.coerce.number().int().min(1).max(240).optional()
+    const parsed = z6.object({
+      seriesId: z6.string().min(1).max(64).regex(/^[A-Za-z0-9._-]+$/),
+      limit: z6.coerce.number().int().min(1).max(240).optional()
     }).safeParse(req.query);
     if (!parsed.success) {
       return res.status(400).json({ error: "A valid FRED seriesId is required." });
@@ -3237,9 +3486,9 @@ apiRouter.get("/economy/india/overview", async (_req, res, next) => {
 });
 apiRouter.get("/economy/india/series", async (req, res, next) => {
   try {
-    const parsed = z5.object({
-      indicatorId: z5.string().min(2).max(64).regex(/^[A-Za-z0-9._-]+$/),
-      limit: z5.coerce.number().int().min(1).max(240).optional()
+    const parsed = z6.object({
+      indicatorId: z6.string().min(2).max(64).regex(/^[A-Za-z0-9._-]+$/),
+      limit: z6.coerce.number().int().min(1).max(240).optional()
     }).safeParse(req.query);
     if (!parsed.success) {
       return res.status(400).json({ error: "A valid World Bank indicatorId is required." });

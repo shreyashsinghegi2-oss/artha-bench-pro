@@ -241,6 +241,55 @@ export interface MarketHistoryPoint {
   volume?: number;
 }
 
+export interface CompanyIntelligence {
+  symbol: string;
+  status: ConnectionStatus;
+  providerName: 'Finnhub';
+  retrievedAt: string;
+  message: string;
+  profile: {
+    name: string;
+    ticker: string;
+    exchange: string | null;
+    currency: string | null;
+    country: string | null;
+    industry: string | null;
+    ipoDate: string | null;
+    logoUrl: string | null;
+    webUrl: string | null;
+    marketCapitalization: number | null;
+    sharesOutstanding: number | null;
+  } | null;
+  metrics: {
+    peRatio: number | null;
+    priceToBook: number | null;
+    priceToSales: number | null;
+    returnOnEquity: number | null;
+    currentRatio: number | null;
+    beta: number | null;
+    week52High: number | null;
+    week52Low: number | null;
+    dividendYield: number | null;
+    epsGrowth3Y: number | null;
+    revenueGrowth3Y: number | null;
+  } | null;
+  earnings: Array<{
+    period: string | null;
+    actual: number | null;
+    estimate: number | null;
+    surprise: number | null;
+    surprisePercent: number | null;
+  }>;
+  recommendations: Array<{
+    period: string | null;
+    strongBuy: number;
+    buy: number;
+    hold: number;
+    sell: number;
+    strongSell: number;
+  }>;
+}
+
 // Macroeconomic Data Types
 export interface EconomicIndicator {
   id: string;

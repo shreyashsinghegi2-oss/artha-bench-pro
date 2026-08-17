@@ -26,6 +26,10 @@ import {
   fetchWorldBankIndiaOverview,
   fetchWorldBankIndiaSeries,
 } from './providers/worldBankProvider';
+import {
+  checkFinnhubDiagnostic,
+  fetchFinnhubCompanyIntelligence,
+} from './providers/finnhubProvider';
 
 export const apiRouter = Router();
 
@@ -107,15 +111,16 @@ apiRouter.get('/diagnostics', async (req: Request, res: Response, next: NextFunc
       res.json(diagnosticCache.payload);
       return;
     }
-    const [groqDiagnostics, newsDiagnostic, marketDiagnostic, fredDiagnostic, indiaDiagnostic] = await Promise.all([
+    const [groqDiagnostics, newsDiagnostic, marketDiagnostic, fredDiagnostic, indiaDiagnostic, finnhubDiagnostic] = await Promise.all([
       checkGroqDiagnostics(),
       checkNewsProviderDiagnostic(),
       checkMarketProviderDiagnostic(),
       checkFredDiagnostic(),
       checkWorldBankIndiaDiagnostic(),
+      checkFinnhubDiagnostic(),
     ]);
     const payload = {
-      diagnostics: [...groqDiagnostics, newsDiagnostic, marketDiagnostic, fredDiagnostic, indiaDiagnostic],
+      diagnostics: [...groqDiagnostics, newsDiagnostic, marketDiagnostic, fredDiagnostic, indiaDiagnostic, finnhubDiagnostic],
       modelsConfig: getGroqModels(),
     };
     diagnosticCache = { expiresAt: Date.now() + DIAGNOSTIC_CACHE_MS, payload };
@@ -296,6 +301,31 @@ apiRouter.get('/markets/history', async (req: Request, res: Response, next: Next
     const range = (req.query.range as string) || '1m';
     const historyData = await getMarketHistory(symbol, range);
     res.json(historyData);
+  } catch (err) {
+    next(err);
+  }
+});
+
+apiRouter.get('/company/intelligence', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const parsed = z
+      .object({
+        symbol: z.string().min(1).max(20).regex(/^[A-Za-z0-9][A-Za-z0-9.:_-]*$/),
+      })
+      .safeParse(req.query);
+
+    if (!parsed.success) {
+      return res.status(400).json({ error: 'A valid company stock symbol is required.' });
+    }
+
+    const result = await fetchFinnhubCompanyIntelligence(parsed.data.symbol);
+    res.setHeader(
+      'Cache-Control',
+      result.status === 'connected'
+        ? 'public, s-maxage=900, stale-while-revalidate=3600'
+        : 'no-store',
+    );
+    res.json(result);
   } catch (err) {
     next(err);
   }

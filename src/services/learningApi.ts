@@ -1,6 +1,7 @@
 import {
   NormalizedMarketQuote,
   NormalizedNewsItem,
+  CompanyIntelligence,
   EconomicIndicator,
   EconomicSeriesResponse,
   ProviderDiagnostic,
@@ -70,6 +71,14 @@ export async function getProviderDiagnostics(): Promise<ProviderDiagnostic[]> {
         status: 'error',
         lastChecked: new Date().toISOString(),
         message: 'World Bank India data is temporarily unreachable',
+      },
+      {
+        id: 'company-intelligence',
+        name: 'Finnhub Company Intelligence',
+        role: 'Company profiles, fundamentals, earnings, and analyst trends',
+        status: 'not_configured',
+        lastChecked: new Date().toISOString(),
+        message: 'Requires FINNHUB_API_KEY environment variable',
       },
     ];
   }
@@ -331,6 +340,14 @@ export async function searchMarketSymbols(query: string, assetType = 'all') {
 export async function fetchMarketHistory(symbol: string, range = '1m') {
   return fetchJSON<{ points: { date: string; price: number }[] }>(
     `/api/markets/history?symbol=${encodeURIComponent(symbol)}&range=${range}`
+  );
+}
+
+export async function fetchCompanyIntelligence(
+  symbol: string,
+): Promise<CompanyIntelligence> {
+  return fetchJSON<CompanyIntelligence>(
+    `/api/company/intelligence?symbol=${encodeURIComponent(symbol)}`,
   );
 }
 

@@ -16,6 +16,10 @@ import {
   fetchWorldBankIndiaOverview,
   fetchWorldBankIndiaSeries,
 } from '../server/providers/worldBankProvider';
+import {
+  checkFinnhubDiagnostic,
+  fetchFinnhubCompanyIntelligence,
+} from '../server/providers/finnhubProvider';
 
 const trackedEnvironmentKeys = [
   'BUSINESS_NEWS_PROVIDER',
@@ -26,6 +30,8 @@ const trackedEnvironmentKeys = [
   'MARKET_DATA_BASE_URL',
   'FRED_API_KEY',
   'FRED_API_BASE_URL',
+  'FINNHUB_API_KEY',
+  'FINNHUB_API_BASE_URL',
 ] as const;
 
 const originalEnvironment = Object.fromEntries(
@@ -353,5 +359,105 @@ describe('World Bank India provider adapter', () => {
       unit: 'US$T',
       sourceName: 'World Bank',
     });
+  });
+});
+
+describe('Finnhub company-intelligence adapter', () => {
+  it('returns a clear configuration state when the Finnhub key is absent', async () => {
+    delete process.env.FINNHUB_API_KEY;
+    const result = await fetchFinnhubCompanyIntelligence('AAPL');
+    expect(result.status).toBe('not_configured');
+    expect(result.profile).toBeNull();
+  });
+
+  it('keeps the token server-side and normalizes company datasets', async () => {
+    process.env.FINNHUB_API_KEY = 'finnhub-test-secret';
+    process.env.FINNHUB_API_BASE_URL = 'https://finnhub.io/api/v1';
+    const fetchMock = vi.fn().mockImplementation((input: string | URL | Request) => {
+      const url = new URL(String(input));
+      let body: unknown = {};
+
+      if (url.pathname.endsWith('/stock/profile2')) {
+        body = {
+          country: 'US',
+          currency: 'USD',
+          exchange: 'NASDAQ NMS - GLOBAL MARKET',
+          finnhubIndustry: 'Technology',
+          ipo: '1980-12-12',
+          marketCapitalization: 3_500_000,
+          name: 'Apple Inc',
+          ticker: 'AAPL',
+          weburl: 'https://www.apple.com/',
+        };
+      } else if (url.pathname.endsWith('/stock/metric')) {
+        body = {
+          metric: {
+            peBasicExclExtraTTM: 31.5,
+            pbAnnual: 45.2,
+            roeTTM: 150.1,
+            beta: 1.2,
+            '52WeekHigh': 250,
+            '52WeekLow': 170,
+          },
+        };
+      } else if (url.pathname.endsWith('/stock/earnings')) {
+        body = [
+          {
+            actual: 1.6,
+            estimate: 1.5,
+            period: '2026-06-30',
+            surprise: 0.1,
+            surprisePercent: 6.67,
+          },
+        ];
+      } else if (url.pathname.endsWith('/stock/recommendation')) {
+        body = [
+          {
+            period: '2026-08-01',
+            strongBuy: 12,
+            buy: 20,
+            hold: 8,
+            sell: 1,
+            strongSell: 0,
+          },
+        ];
+      }
+
+      return Promise.resolve(
+        new Response(JSON.stringify(body), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await fetchFinnhubCompanyIntelligence('aapl');
+    expect(result.status).toBe('connected');
+    expect(result.profile).toMatchObject({ name: 'Apple Inc', ticker: 'AAPL' });
+    expect(result.metrics).toMatchObject({ peRatio: 31.5, week52High: 250 });
+    expect(result.earnings).toHaveLength(1);
+    expect(result.recommendations[0].strongBuy).toBe(12);
+
+    for (const call of fetchMock.mock.calls) {
+      const requestUrl = new URL(String(call[0]));
+      expect(requestUrl.searchParams.get('token')).toBe('finnhub-test-secret');
+      expect(requestUrl.searchParams.get('symbol')).toBe('AAPL');
+    }
+    expect(JSON.stringify(result)).not.toContain('finnhub-test-secret');
+  });
+
+  it('does not expose a rejected Finnhub credential in diagnostics', async () => {
+    process.env.FINNHUB_API_KEY = 'never-return-this-finnhub-key';
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ error: 'Invalid API key' }), { status: 401 }),
+      ),
+    );
+
+    const diagnostic = await checkFinnhubDiagnostic();
+    expect(diagnostic.status).toBe('invalid_credentials');
+    expect(diagnostic.message).not.toContain('never-return-this-finnhub-key');
   });
 });

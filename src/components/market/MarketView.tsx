@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Search, TrendingUp, TrendingDown, DollarSign, Calculator, RefreshCw, BarChart2, Briefcase, Plus, Trash2 } from 'lucide-react';
-import { fetchMarketOverview, fetchTickerQuote, calculateFinancialMetrics } from '../../services/learningApi';
+import { fetchMarketOverview, fetchTickerQuote, calculateFinancialMetrics, fetchCompanyIntelligence } from '../../services/learningApi';
 import { getPaperPortfolio, executePaperTrade, getWatchlist, saveWatchlist } from '../../services/learningStorage';
+import { CompanyIntelligence } from '../../types';
 import { SafetyBanner } from '../SafetyBanner';
+import { CompanyIntelligencePanel } from './CompanyIntelligencePanel';
 
 export const MarketView: React.FC = () => {
   const [marketQuotes, setMarketQuotes] = useState<any[]>([]);
@@ -10,6 +12,8 @@ export const MarketView: React.FC = () => {
   const [searchTicker, setSearchTicker] = useState('');
   const [searchedQuote, setSearchedQuote] = useState<any | null>(null);
   const [searchError, setSearchError] = useState<string | null>(null);
+  const [companyIntelligence, setCompanyIntelligence] = useState<CompanyIntelligence | null>(null);
+  const [companyLoading, setCompanyLoading] = useState(true);
 
   // Paper Trading State
   const [portfolio, setPortfolio] = useState(getPaperPortfolio());
@@ -34,7 +38,19 @@ export const MarketView: React.FC = () => {
 
   useEffect(() => {
     loadOverview();
+    loadCompanyIntelligence('AAPL');
   }, []);
+
+  const loadCompanyIntelligence = async (symbol: string) => {
+    setCompanyLoading(true);
+    try {
+      setCompanyIntelligence(await fetchCompanyIntelligence(symbol));
+    } catch {
+      setCompanyIntelligence(null);
+    } finally {
+      setCompanyLoading(false);
+    }
+  };
 
   const loadOverview = async () => {
     setLoading(true);
@@ -53,13 +69,21 @@ export const MarketView: React.FC = () => {
     if (!searchTicker.trim()) return;
     setSearchError(null);
     setSearchedQuote(null);
+    const normalizedSymbol = searchTicker.trim().toUpperCase();
+    setCompanyLoading(true);
 
-    try {
-      const quote = await fetchTickerQuote(searchTicker.trim().toUpperCase());
-      setSearchedQuote(quote);
-    } catch (err) {
-      setSearchError(`Ticker ${searchTicker.toUpperCase()} not found or unavailable.`);
-    }
+    const [quoteResult, companyResult] = await Promise.allSettled([
+      fetchTickerQuote(normalizedSymbol),
+      fetchCompanyIntelligence(normalizedSymbol),
+    ]);
+
+    if (quoteResult.status === 'fulfilled') setSearchedQuote(quoteResult.value);
+    else setSearchError(`Ticker ${normalizedSymbol} not found or unavailable.`);
+
+    setCompanyIntelligence(
+      companyResult.status === 'fulfilled' ? companyResult.value : null,
+    );
+    setCompanyLoading(false);
   };
 
   const toggleWatchlist = (symbol: string) => {
@@ -187,6 +211,11 @@ export const MarketView: React.FC = () => {
               </div>
             )}
           </div>
+
+          <CompanyIntelligencePanel
+            data={companyIntelligence}
+            loading={companyLoading}
+          />
 
           {/* Market Overview Grid */}
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">

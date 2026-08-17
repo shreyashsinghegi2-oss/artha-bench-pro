@@ -25,11 +25,12 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { CompanyIntelligence } from '../../types';
+import { CompanyIntelligence, StructuredFinancialAnswer } from '../../types';
 import {
   askCompanyIntelligenceAI,
   fetchMarketHistory,
 } from '../../services/learningApi';
+import { StructuredFinancialAnswerView } from '../ai/StructuredFinancialAnswer';
 
 interface CompanyIntelligencePanelProps {
   data: CompanyIntelligence | null;
@@ -39,6 +40,7 @@ interface CompanyIntelligencePanelProps {
 type CompanyChatMessage = {
   role: 'user' | 'assistant';
   content: string;
+  structuredAnswer?: StructuredFinancialAnswer;
 };
 
 const DEFAULT_AI_QUESTIONS = [
@@ -129,7 +131,7 @@ export const CompanyIntelligencePanel: React.FC<CompanyIntelligencePanelProps> =
     const normalizedQuestion = question.trim();
     if (!data || data.status !== 'connected' || !normalizedQuestion || assistantLoading) return;
 
-    const priorHistory = chatMessages.slice(-8);
+    const priorHistory = chatMessages.slice(-8).map(({ role, content }) => ({ role, content }));
     setChatMessages((current) => [
       ...current,
       { role: 'user', content: normalizedQuestion },
@@ -146,7 +148,11 @@ export const CompanyIntelligencePanel: React.FC<CompanyIntelligencePanelProps> =
       });
       setChatMessages((current) => [
         ...current,
-        { role: 'assistant', content: response.answer },
+        {
+          role: 'assistant',
+          content: response.answer,
+          structuredAnswer: response.structuredAnswer,
+        },
       ]);
       if (response.suggestedQuestions?.length) {
         setSuggestedQuestions(response.suggestedQuestions);
@@ -467,25 +473,41 @@ export const CompanyIntelligencePanel: React.FC<CompanyIntelligencePanelProps> =
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-          <div className="lg:col-span-8 bg-slate-950/80 border border-slate-800 rounded-xl p-4 min-h-[330px] flex flex-col">
-            <div className="flex-1 space-y-3 max-h-[390px] overflow-y-auto pr-1">
+          <div className="lg:col-span-9 bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 min-h-[430px] flex flex-col shadow-[0_18px_50px_rgba(15,23,42,0.16)]">
+            <div className="flex-1 space-y-4 max-h-[720px] overflow-y-auto pr-1">
               {chatMessages.length === 0 ? (
                 <div className="h-full min-h-44 flex flex-col items-center justify-center text-center px-4">
                   <MessageSquareText className="w-8 h-8 text-violet-500 mb-3" />
-                  <p className="text-xs font-semibold text-slate-300">Ask a grounded company-analysis question</p>
-                  <p className="text-[10px] text-slate-500 mt-1 max-w-md">The assistant explains the evidence shown above and identifies missing information instead of inventing it.</p>
+                  <p className="text-sm font-bold text-slate-900">Ask a grounded company-analysis question</p>
+                  <p className="text-[11px] text-slate-500 mt-1 max-w-md leading-relaxed">Each response is organized into a direct answer, numbered steps, formula or method, worked example, interpretation, risks, and sources.</p>
                 </div>
               ) : (
-                chatMessages.map((message, index) => (
-                  <div key={`${message.role}-${index}`} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`max-w-[90%] rounded-xl px-3.5 py-3 text-[11px] leading-relaxed whitespace-pre-wrap ${message.role === 'user' ? 'bg-cyan-500 text-slate-950' : 'bg-slate-900 border border-slate-800 text-slate-300'}`}>
-                      {message.content}
+                chatMessages.map((message, index) => {
+                  if (message.role === 'user') {
+                    return (
+                      <div key={`${message.role}-${index}`} className="flex justify-end">
+                        <div className="max-w-[88%] rounded-2xl rounded-br-md bg-indigo-600 px-4 py-3 text-[12px] font-medium leading-relaxed text-white shadow-sm">
+                          {message.content}
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div key={`${message.role}-${index}`} className="w-full">
+                      {message.structuredAnswer ? (
+                        <StructuredFinancialAnswerView answer={message.structuredAnswer} compact />
+                      ) : (
+                        <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-[12px] leading-relaxed whitespace-pre-wrap text-slate-700">
+                          {message.content}
+                        </div>
+                      )}
                     </div>
-                  </div>
-                ))
+                  );
+                })
               )}
               {assistantLoading && (
-                <div className="flex items-center text-[10px] text-violet-300">
+                <div className="flex items-center text-[11px] font-medium text-violet-700">
                   <RefreshCw className="w-3 h-3 animate-spin mr-2" /> Analyzing the loaded company evidence…
                 </div>
               )}
@@ -495,13 +517,13 @@ export const CompanyIntelligencePanel: React.FC<CompanyIntelligencePanelProps> =
               <div className="mt-3 p-2.5 rounded-lg bg-rose-950/40 border border-rose-900 text-[10px] text-rose-300">{assistantError}</div>
             )}
 
-            <form onSubmit={handleAssistantSubmit} className="flex gap-2 mt-4 pt-4 border-t border-slate-800">
+            <form onSubmit={handleAssistantSubmit} className="flex gap-2 mt-4 pt-4 border-t border-slate-200">
               <input
                 value={assistantQuestion}
                 onChange={(event) => setAssistantQuestion(event.target.value)}
                 placeholder={`Ask about ${data.symbol} metrics, earnings, or risks…`}
                 maxLength={1200}
-                className="min-w-0 flex-1 bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-violet-600"
+                className="min-w-0 flex-1 bg-white border border-slate-300 rounded-xl px-3.5 py-3 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-violet-600 focus:ring-2 focus:ring-violet-100"
               />
               <button
                 type="submit"
@@ -514,15 +536,15 @@ export const CompanyIntelligencePanel: React.FC<CompanyIntelligencePanelProps> =
             </form>
           </div>
 
-          <aside className="lg:col-span-4 bg-slate-950/60 border border-slate-800 rounded-xl p-4">
-            <h4 className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Suggested questions</h4>
+          <aside className="lg:col-span-3 bg-white border border-slate-200 rounded-2xl p-4 shadow-[0_12px_36px_rgba(15,23,42,0.12)]">
+            <h4 className="text-[10px] font-bold uppercase tracking-wider text-slate-600">Suggested questions</h4>
             <div className="space-y-2 mt-3">
               {suggestedQuestions.map((question) => (
                 <button
                   key={question}
                   onClick={() => submitAssistantQuestion(question)}
                   disabled={assistantLoading}
-                  className="w-full text-left p-3 rounded-xl bg-slate-900 border border-slate-800 hover:border-violet-700 text-[10px] text-slate-300 leading-relaxed transition-all disabled:opacity-50"
+                  className="w-full text-left p-3 rounded-xl bg-slate-50 border border-slate-200 hover:border-violet-400 hover:bg-violet-50 text-[10px] text-slate-700 leading-relaxed transition-all disabled:opacity-50"
                 >
                   {question}
                 </button>

@@ -4,7 +4,13 @@
  * Never exposes keys or credentials to the browser.
  */
 
-import { ProviderDiagnostic } from '../src/types';
+import { ProviderDiagnostic, StructuredFinancialAnswer } from '../src/types';
+import {
+  createFallbackStructuredFinancialAnswer,
+  sanitizeStructuredFinancialAnswer,
+  STRUCTURED_FINANCIAL_ANSWER_JSON_SCHEMA,
+  structuredFinancialAnswerSchema,
+} from './aiResponseStandard';
 import { generateVerificationCode } from './financeEngine';
 import { computeFullReliabilityEvaluation, FullReliabilityEvaluation } from './scoringEngine';
 
@@ -219,6 +225,31 @@ function generateFallbackChatResponse(userPrompt: string): string {
     `*Educational Disclaimer: ArthaBench provides non-advisory educational frameworks only.*`;
 }
 
+function buildGroqMessages(
+  systemPrompt: string,
+  userPrompt: string,
+  history?: Array<{ role: string; content: string }>,
+) {
+  const messages: Array<{ role: string; content: string }> = [
+    { role: 'system', content: systemPrompt },
+  ];
+
+  if (Array.isArray(history)) {
+    for (const item of history.slice(-10)) {
+      if (
+        (item.role === 'user' || item.role === 'assistant') &&
+        typeof item.content === 'string' &&
+        item.content.trim()
+      ) {
+        messages.push({ role: item.role, content: item.content.slice(0, 4_000) });
+      }
+    }
+  }
+
+  messages.push({ role: 'user', content: userPrompt });
+  return messages;
+}
+
 /**
  * Executes a Chat Completion request to Groq API.
  */
@@ -237,23 +268,7 @@ export async function callGroqChat(
   const allowedModels = new Set(Object.values(models));
   const selectedModel = modelName && allowedModels.has(modelName) ? modelName : models.tutorModel;
 
-  const messages: Array<{ role: string; content: string }> = [
-    { role: 'system', content: systemPrompt },
-  ];
-
-  if (Array.isArray(history)) {
-    for (const item of history.slice(-10)) {
-      if (
-        (item.role === 'user' || item.role === 'assistant') &&
-        typeof item.content === 'string' &&
-        item.content.trim()
-      ) {
-        messages.push({ role: item.role, content: item.content.slice(0, 4_000) });
-      }
-    }
-  }
-
-  messages.push({ role: 'user', content: userPrompt });
+  const messages = buildGroqMessages(systemPrompt, userPrompt, history);
 
   const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
@@ -281,6 +296,102 @@ export async function callGroqChat(
   }
 
   return text;
+}
+
+/**
+ * Uses Groq Structured Outputs for a predictable, type-safe financial answer.
+ * GPT-OSS models use strict JSON Schema mode; custom configured models retain
+ * compatibility through JSON Object mode and server-side Zod validation.
+ */
+export async function callGroqStructuredFinancialAnswer(
+  systemPrompt: string,
+  userPrompt: string,
+  options: {
+    modelName?: string;
+    history?: Array<{ role: string; content: string }>;
+    fallbackQuestion?: string;
+  } = {},
+): Promise<StructuredFinancialAnswer> {
+  const fallbackQuestion = options.fallbackQuestion || userPrompt;
+  const apiKey = process.env.GROQ_API_KEY?.trim() || '';
+  if (!apiKey) {
+    return createFallbackStructuredFinancialAnswer(
+      fallbackQuestion,
+      generateFallbackChatResponse(fallbackQuestion),
+    );
+  }
+
+  const models = getGroqModels();
+  const allowedModels = new Set(Object.values(models));
+  const selectedModel =
+    options.modelName && allowedModels.has(options.modelName)
+      ? options.modelName
+      : models.tutorModel;
+  const strictSchemaSupported =
+    selectedModel === 'openai/gpt-oss-120b' || selectedModel === 'openai/gpt-oss-20b';
+  const messages = buildGroqMessages(
+    `${systemPrompt}\n\nReturn one valid JSON object only. It must match the supplied Artha financial-answer schema exactly.`,
+    userPrompt,
+    options.history,
+  );
+
+  const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: selectedModel,
+      messages,
+      temperature: 0.15,
+      max_tokens: 2_500,
+      response_format: strictSchemaSupported
+        ? {
+            type: 'json_schema',
+            json_schema: {
+              name: 'artha_structured_financial_answer',
+              strict: true,
+              schema: STRUCTURED_FINANCIAL_ANSWER_JSON_SCHEMA,
+            },
+          }
+        : { type: 'json_object' },
+    }),
+    signal: AbortSignal.timeout(20_000),
+  });
+
+  if (!response.ok) {
+    if (response.status === 400) {
+      const plainText = await callGroqChat(
+        systemPrompt,
+        userPrompt,
+        selectedModel,
+        options.history,
+      );
+      return createFallbackStructuredFinancialAnswer(fallbackQuestion, plainText);
+    }
+    throw new Error(`Groq structured request failed with HTTP ${response.status}.`);
+  }
+
+  const data = await response.json();
+  const content = data?.choices?.[0]?.message?.content;
+  if (typeof content !== 'string' || !content.trim()) {
+    throw new Error('Groq returned an empty structured completion.');
+  }
+
+  const decoded = (() => {
+    try {
+      return JSON.parse(content);
+    } catch {
+      return null;
+    }
+  })();
+  const parsed = structuredFinancialAnswerSchema.safeParse(decoded);
+  if (!parsed.success) {
+    return createFallbackStructuredFinancialAnswer(fallbackQuestion, content);
+  }
+
+  return sanitizeStructuredFinancialAnswer(parsed.data);
 }
 
 /**

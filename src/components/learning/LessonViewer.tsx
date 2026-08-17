@@ -13,6 +13,7 @@ import {
 import { Lesson, LearnerLevel, LearningLanguage, LearningMode } from '../../types';
 import { generateLessonAI } from '../../services/learningApi';
 import { SafetyBanner } from '../SafetyBanner';
+import { StructuredFinancialAnswerView } from '../ai/StructuredFinancialAnswer';
 
 interface LessonViewerProps {
   lesson: Lesson;
@@ -194,13 +195,20 @@ export const LessonViewer: React.FC<LessonViewerProps> = ({
             ))}
           </div>
 
-          {/* Explanation Text */}
-          <div className="bg-slate-950/80 border border-slate-800 rounded-xl p-4 text-xs text-slate-200 leading-relaxed whitespace-pre-line">
-            {lessonContent.directExplanation}
-          </div>
+          {/* Structured AI Explanation */}
+          {lessonContent.structuredAnswer ? (
+            <StructuredFinancialAnswerView
+              answer={lessonContent.structuredAnswer}
+              disclaimer={lessonContent.educationalDisclaimer}
+            />
+          ) : (
+            <div className="bg-white border border-slate-200 rounded-2xl p-5 text-sm text-slate-700 leading-relaxed whitespace-pre-line shadow-lg">
+              {lessonContent.directExplanation}
+            </div>
+          )}
 
           {/* Worked Example */}
-          {lessonContent.workedExample && (
+          {!lessonContent.structuredAnswer && lessonContent.workedExample && (
             <div className="bg-slate-800/40 border border-slate-700/60 rounded-xl p-4 text-xs">
               <h4 className="font-bold text-slate-100 text-xs mb-1.5 flex items-center gap-1.5">
                 <BookOpen className="w-4 h-4 text-emerald-400" />

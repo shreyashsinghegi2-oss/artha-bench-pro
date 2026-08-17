@@ -10,11 +10,17 @@ import {
   User,
 } from 'lucide-react';
 import { askDashboardAssistant } from '../../services/learningApi';
-import { DashboardAssistantSnapshot, NavigationDestination } from '../../types';
+import {
+  DashboardAssistantSnapshot,
+  NavigationDestination,
+  StructuredFinancialAnswer,
+} from '../../types';
+import { StructuredFinancialAnswerView } from '../ai/StructuredFinancialAnswer';
 
 type AssistantMessage = {
   role: 'user' | 'assistant';
   content: string;
+  structuredAnswer?: StructuredFinancialAnswer;
 };
 
 interface DashboardAssistantProps {
@@ -73,7 +79,11 @@ export const DashboardAssistant: React.FC<DashboardAssistantProps> = ({
       });
       setMessages((current) => [
         ...current,
-        { role: 'assistant', content: response.answer },
+        {
+          role: 'assistant',
+          content: response.answer,
+          structuredAnswer: response.structuredAnswer,
+        },
       ]);
       if (response.suggestedQuestions.length > 0) {
         setSuggestions(response.suggestedQuestions);
@@ -96,8 +106,8 @@ export const DashboardAssistant: React.FC<DashboardAssistantProps> = ({
   };
 
   return (
-    <section className="flex h-full min-h-[620px] flex-col overflow-hidden rounded-3xl border border-[#5B47FF]/30 bg-[linear-gradient(180deg,rgba(18,15,42,0.98),rgba(7,7,13,0.98))] shadow-2xl shadow-[#4F32FF]/10">
-      <div className="border-b border-white/10 p-5 sm:p-6">
+    <section className="flex h-full min-h-[740px] flex-col overflow-hidden rounded-3xl border border-slate-300 bg-[#F4F6FB] shadow-2xl shadow-[#4F32FF]/10">
+      <div className="border-b border-white/10 bg-[linear-gradient(135deg,#111827,#17123A)] p-5 sm:p-6">
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-start gap-3">
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-[#7D6BFF]/40 bg-[#5B47FF]/20 text-[#9A8DFF]">
@@ -122,7 +132,7 @@ export const DashboardAssistant: React.FC<DashboardAssistantProps> = ({
         </div>
       </div>
 
-      <div className="scrollbar-thin flex-1 space-y-4 overflow-y-auto p-4 sm:p-5" aria-live="polite">
+      <div className="scrollbar-thin flex-1 space-y-5 overflow-y-auto bg-[#F4F6FB] p-4 sm:p-5" aria-live="polite">
         {messages.map((message, index) => (
           <div
             key={`${message.role}-${index}`}
@@ -137,20 +147,26 @@ export const DashboardAssistant: React.FC<DashboardAssistantProps> = ({
             >
               {message.role === 'user' ? <User className="h-3.5 w-3.5" /> : <Bot className="h-3.5 w-3.5" />}
             </div>
-            <div
-              className={`max-w-[88%] whitespace-pre-wrap rounded-2xl px-3.5 py-3 text-[12px] leading-6 ${
-                message.role === 'user'
-                  ? 'rounded-tr-md bg-[#4F32FF] text-white'
-                  : 'rounded-tl-md border border-white/10 bg-white/[0.045] text-[#D7D7E4]'
-              }`}
-            >
-              {message.content}
-            </div>
+            {message.role === 'assistant' && message.structuredAnswer ? (
+              <div className="min-w-0 max-w-[95%] flex-1">
+                <StructuredFinancialAnswerView answer={message.structuredAnswer} compact />
+              </div>
+            ) : (
+              <div
+                className={`max-w-[88%] whitespace-pre-wrap rounded-2xl px-3.5 py-3 text-[12px] leading-6 shadow-sm ${
+                  message.role === 'user'
+                    ? 'rounded-tr-md bg-[#4F32FF] text-white'
+                    : 'rounded-tl-md border border-slate-200 bg-white text-slate-700'
+                }`}
+              >
+                {message.content}
+              </div>
+            )}
           </div>
         ))}
 
         {loading && (
-          <div className="flex items-center gap-2.5 text-xs text-[#9A9AAA]">
+          <div className="flex items-center gap-2.5 text-xs text-slate-500">
             <div className="flex h-7 w-7 items-center justify-center rounded-lg border border-[#665CFF]/30 bg-[#665CFF]/10 text-[#8B7CFF]">
               <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
             </div>
@@ -160,7 +176,7 @@ export const DashboardAssistant: React.FC<DashboardAssistantProps> = ({
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="border-t border-white/10 bg-black/15 p-4 sm:p-5">
+      <div className="border-t border-slate-200 bg-white p-4 sm:p-5">
         {error && (
           <div className="mb-3 rounded-xl border border-[#FF3B65]/25 bg-[#FF3B65]/10 px-3 py-2 text-[11px] leading-relaxed text-[#FF8BA1]">
             {error}
@@ -174,7 +190,7 @@ export const DashboardAssistant: React.FC<DashboardAssistantProps> = ({
               type="button"
               disabled={!ready || loading}
               onClick={() => void submitQuestion(suggestion)}
-              className="shrink-0 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[10px] font-medium text-[#B8B8C8] transition hover:border-[#665CFF]/40 hover:text-white disabled:cursor-not-allowed disabled:opacity-45"
+              className="shrink-0 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-[10px] font-semibold text-slate-600 transition hover:border-[#665CFF]/40 hover:bg-indigo-50 hover:text-indigo-700 disabled:cursor-not-allowed disabled:opacity-45"
             >
               {suggestion}
             </button>
@@ -199,7 +215,7 @@ export const DashboardAssistant: React.FC<DashboardAssistantProps> = ({
             maxLength={1200}
             disabled={!ready || loading}
             placeholder="Ask what changed, compare indicators, or explain a chart…"
-            className="w-full resize-none rounded-2xl border border-white/10 bg-[#05050A] px-4 py-3 pr-12 text-xs leading-5 text-white outline-none placeholder:text-[#666678] focus:border-[#665CFF]/60 disabled:cursor-not-allowed disabled:opacity-60"
+            className="w-full resize-none rounded-2xl border border-slate-300 bg-white px-4 py-3 pr-12 text-xs leading-5 text-slate-900 outline-none placeholder:text-slate-400 focus:border-[#665CFF] focus:ring-2 focus:ring-[#665CFF]/10 disabled:cursor-not-allowed disabled:opacity-60"
           />
           <button
             type="submit"
@@ -211,7 +227,7 @@ export const DashboardAssistant: React.FC<DashboardAssistantProps> = ({
           </button>
         </form>
 
-        <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-[9px] text-[#6F6F82]">
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-[9px] text-slate-500">
           <div className="flex items-center gap-1.5">
             <ShieldCheck className="h-3 w-3 text-[#00D68F]" />
             Educational analysis only — not investment advice.
@@ -226,7 +242,7 @@ export const DashboardAssistant: React.FC<DashboardAssistantProps> = ({
         </div>
 
         {sourceLabels.length > 0 && (
-          <div className="mt-3 flex items-center gap-2 border-t border-white/5 pt-3 text-[9px] text-[#777789]">
+          <div className="mt-3 flex items-center gap-2 border-t border-slate-100 pt-3 text-[9px] text-slate-500">
             <Database className="h-3 w-3 shrink-0" />
             <span className="truncate">Grounded in {sourceLabels.join(' · ')}</span>
           </div>

@@ -3,7 +3,321 @@ import express from "express";
 
 // server/routes.ts
 import { Router } from "express";
-import { z as z6 } from "zod";
+import { z as z7 } from "zod";
+
+// server/aiResponseStandard.ts
+import { z } from "zod";
+var answerStepSchema = z.object({
+  title: z.string().min(1).max(120),
+  explanation: z.string().min(1).max(1200)
+}).strict();
+var formulaVariableSchema = z.object({
+  symbol: z.string().min(1).max(40),
+  meaning: z.string().min(1).max(240)
+}).strict();
+var sourceSchema = z.object({
+  name: z.string().min(1).max(160),
+  dataDate: z.string().max(80),
+  freshness: z.string().min(1).max(120)
+}).strict();
+var structuredFinancialAnswerSchema = z.object({
+  title: z.string().min(1).max(160),
+  directAnswer: z.string().min(1).max(2400),
+  steps: z.array(answerStepSchema).min(1).max(7),
+  formula: z.object({
+    expression: z.string().min(1).max(500),
+    variables: z.array(formulaVariableSchema).max(10),
+    whenToUse: z.string().min(1).max(600)
+  }).strict(),
+  example: z.object({
+    title: z.string().min(1).max(160),
+    dataStatus: z.enum([
+      "live",
+      "latest_available",
+      "delayed",
+      "illustrative",
+      "not_applicable"
+    ]),
+    dataAsOf: z.string().max(100),
+    inputs: z.array(z.string().min(1).max(300)).max(10),
+    calculation: z.array(z.string().min(1).max(500)).max(10),
+    result: z.string().min(1).max(800)
+  }).strict(),
+  interpretation: z.array(z.string().min(1).max(600)).max(8),
+  risks: z.array(z.string().min(1).max(600)).max(8),
+  keyTakeaways: z.array(z.string().min(1).max(500)).min(1).max(8),
+  sources: z.array(sourceSchema).max(12)
+}).strict();
+var STRUCTURED_FINANCIAL_ANSWER_JSON_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  properties: {
+    title: { type: "string" },
+    directAnswer: { type: "string" },
+    steps: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          title: { type: "string" },
+          explanation: { type: "string" }
+        },
+        required: ["title", "explanation"]
+      }
+    },
+    formula: {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        expression: { type: "string" },
+        variables: {
+          type: "array",
+          items: {
+            type: "object",
+            additionalProperties: false,
+            properties: {
+              symbol: { type: "string" },
+              meaning: { type: "string" }
+            },
+            required: ["symbol", "meaning"]
+          }
+        },
+        whenToUse: { type: "string" }
+      },
+      required: ["expression", "variables", "whenToUse"]
+    },
+    example: {
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        title: { type: "string" },
+        dataStatus: {
+          type: "string",
+          enum: ["live", "latest_available", "delayed", "illustrative", "not_applicable"]
+        },
+        dataAsOf: { type: "string" },
+        inputs: { type: "array", items: { type: "string" } },
+        calculation: { type: "array", items: { type: "string" } },
+        result: { type: "string" }
+      },
+      required: ["title", "dataStatus", "dataAsOf", "inputs", "calculation", "result"]
+    },
+    interpretation: { type: "array", items: { type: "string" } },
+    risks: { type: "array", items: { type: "string" } },
+    keyTakeaways: { type: "array", items: { type: "string" } },
+    sources: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          name: { type: "string" },
+          dataDate: { type: "string" },
+          freshness: { type: "string" }
+        },
+        required: ["name", "dataDate", "freshness"]
+      }
+    }
+  },
+  required: [
+    "title",
+    "directAnswer",
+    "steps",
+    "formula",
+    "example",
+    "interpretation",
+    "risks",
+    "keyTakeaways",
+    "sources"
+  ]
+};
+function buildStructuredFinancialAnswerInstructions(options) {
+  const responseLength = options.detail === "short" ? "250 to 400" : "450 to 750";
+  const audienceGuidance = options.audience === "dashboard" ? "Explain the selected dashboard evidence and show the calculation behind the most important measured change." : "Teach the concept from first principles, then demonstrate it with a complete worked calculation.";
+  return `
+ARTHA ANSWER STANDARD \u2014 REQUIRED OUTPUT BEHAVIOR
+${audienceGuidance}
+
+Content requirements:
+1. Give a direct answer first, without filler.
+2. Provide 3 to 6 ordered steps. Each step must have a short title and a clear explanation.
+3. Always complete the formula object. Use a real formula when the topic is quantitative. If no equation is relevant, write "No calculation is required for this concept" and explain the decision method in whenToUse.
+4. Always complete the worked example. Show inputs, substitution/calculation steps, and a final result.
+5. Verified current or latest-available data may be used only when it appears in the supplied context. If it is not supplied, set dataStatus to "illustrative", leave dataAsOf empty, and explicitly call it an illustrative example. Never invent a current price, rate, date, provider, or source.
+6. Separate observation from interpretation. State important assumptions, limitations, and risks.
+7. Finish with concise key takeaways and source/freshness records. Do not invent source links or citations.
+8. Use plain text inside every JSON field. Do not include Markdown markers, HTML, pipe tables, LaTeX delimiters, or <br> tags.
+9. Use ${options.language || "English"} at a ${options.level || "beginner"} learning level. Target ${responseLength} words, while prioritizing correctness.
+10. Current-data context is ${options.hasVerifiedCurrentData ? "available; use it only with its exact provider/date/freshness label" : "not available; examples must be labelled illustrative"}.
+11. Remain educational and non-advisory. Never provide personalized buy/sell/hold instructions, target prices, or guaranteed returns.`;
+}
+function cleanPlainText(value) {
+  return value.replace(/<br\s*\/?\s*>/gi, "\n").replace(/<[^>]*>/g, "").replace(/\*\*(.*?)\*\*/g, "$1").replace(/__(.*?)__/g, "$1").replace(/`{1,3}/g, "").replace(/^#{1,6}\s*/gm, "").replace(/[ \t]+\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
+}
+function sanitizeStructuredFinancialAnswer(answer) {
+  return {
+    title: cleanPlainText(answer.title),
+    directAnswer: cleanPlainText(answer.directAnswer),
+    steps: answer.steps.map((step) => ({
+      title: cleanPlainText(step.title),
+      explanation: cleanPlainText(step.explanation)
+    })),
+    formula: {
+      expression: cleanPlainText(answer.formula.expression),
+      variables: answer.formula.variables.map((variable) => ({
+        symbol: cleanPlainText(variable.symbol),
+        meaning: cleanPlainText(variable.meaning)
+      })),
+      whenToUse: cleanPlainText(answer.formula.whenToUse)
+    },
+    example: {
+      ...answer.example,
+      title: cleanPlainText(answer.example.title),
+      dataAsOf: cleanPlainText(answer.example.dataAsOf),
+      inputs: answer.example.inputs.map(cleanPlainText),
+      calculation: answer.example.calculation.map(cleanPlainText),
+      result: cleanPlainText(answer.example.result)
+    },
+    interpretation: answer.interpretation.map(cleanPlainText),
+    risks: answer.risks.map(cleanPlainText),
+    keyTakeaways: answer.keyTakeaways.map(cleanPlainText),
+    sources: answer.sources.map((source) => ({
+      name: cleanPlainText(source.name),
+      dataDate: cleanPlainText(source.dataDate),
+      freshness: cleanPlainText(source.freshness)
+    }))
+  };
+}
+function firstUsefulParagraph(rawText) {
+  const cleaned = cleanPlainText(rawText).replace(/^\|.*\|$/gm, "").replace(/^[-|: ]{3,}$/gm, "").trim();
+  const paragraph = cleaned.split(/\n\s*\n/).find((item) => item.trim());
+  return (paragraph || cleaned || "A structured financial explanation is available.").slice(0, 2200);
+}
+function createFallbackStructuredFinancialAnswer(question, rawText) {
+  const normalizedQuestion = question.toLowerCase();
+  const isCompoundInterest = /compound|future value/.test(normalizedQuestion);
+  const isLoan = /\bemi\b|loan|mortgage/.test(normalizedQuestion);
+  const isBudget = /budget|50\/30\/20/.test(normalizedQuestion);
+  const isMarketReturn = /return|performance|market chart|dashboard|signal/.test(
+    normalizedQuestion
+  );
+  let expression = "No calculation is required for this concept";
+  let variables = [];
+  let whenToUse = "Use the step-by-step decision method when comparing the financial choices described above.";
+  let inputs = ["Use the facts and assumptions stated in the question."];
+  let calculation = ["Apply each step in order and check that units and dates are consistent."];
+  let result = "The result depends on the verified inputs supplied by the learner.";
+  let exampleDataStatus = "illustrative";
+  let dataAsOf = "";
+  if (isCompoundInterest) {
+    expression = "A = P \xD7 (1 + r/n)^(n \xD7 t)";
+    variables = [
+      { symbol: "A", meaning: "final accumulated amount" },
+      { symbol: "P", meaning: "starting principal" },
+      { symbol: "r", meaning: "annual interest rate as a decimal" },
+      { symbol: "n", meaning: "compounding periods per year" },
+      { symbol: "t", meaning: "number of years" }
+    ];
+    whenToUse = "Use this formula when interest is added to the balance and future interest earns interest on that enlarged balance.";
+    inputs = ["P = 10,000", "r = 8% or 0.08", "n = 1", "t = 5 years"];
+    calculation = ["A = 10,000 \xD7 (1 + 0.08)^5", "A = 10,000 \xD7 1.469328"];
+    result = "Final balance = 14,693.28; total interest = 4,693.28.";
+  } else if (isLoan) {
+    expression = "EMI = P \xD7 r \xD7 (1 + r)^n / ((1 + r)^n \u2212 1)";
+    variables = [
+      { symbol: "P", meaning: "loan principal" },
+      { symbol: "r", meaning: "monthly interest rate" },
+      { symbol: "n", meaning: "number of monthly payments" }
+    ];
+    whenToUse = "Use this formula for a fixed-rate amortizing loan with equal monthly payments.";
+    inputs = ["P = 50,000", "annual rate = 6%", "r = 0.06 / 12", "n = 60 months"];
+    calculation = ["Substitute P, r, and n into the EMI formula.", "Calculate the compound factor before the final division."];
+    result = "The illustrative monthly payment is approximately 966.64.";
+  } else if (isBudget) {
+    expression = "Category amount = monthly net income \xD7 allocation percentage";
+    variables = [
+      { symbol: "Net income", meaning: "income available after deductions" },
+      { symbol: "Allocation percentage", meaning: "chosen share for needs, wants, or savings" }
+    ];
+    whenToUse = "Use this method to convert a percentage-based budgeting rule into actual monthly amounts.";
+    inputs = ["Illustrative monthly net income = 4,000", "Needs = 50%", "Wants = 30%", "Savings/debt = 20%"];
+    calculation = ["Needs: 4,000 \xD7 0.50 = 2,000", "Wants: 4,000 \xD7 0.30 = 1,200", "Savings/debt: 4,000 \xD7 0.20 = 800"];
+    result = "The three allocations total the full 4,000 monthly net income.";
+  } else if (isMarketReturn) {
+    expression = "Range return (%) = (latest price \u2212 starting price) / starting price \xD7 100";
+    variables = [
+      { symbol: "Latest price", meaning: "the last verified observation in the selected range" },
+      { symbol: "Starting price", meaning: "the first verified observation in the selected range" }
+    ];
+    whenToUse = "Use this formula to describe the measured price change across a historical chart range. It is not a forecast.";
+    const observedPrices = rawText.match(/moved from\s+([\d,.]+)\s+to\s+([\d,.]+)/i);
+    const observedReturn = rawText.match(/range return is\s+(-?[\d.]+)%/i);
+    const observedDates = rawText.match(/\(([^()]+)\s+to\s+([^()]+)\)/i);
+    if (observedPrices) {
+      inputs = [
+        `Starting price = ${observedPrices[1]}`,
+        `Latest price = ${observedPrices[2]}`
+      ];
+      calculation = [
+        `(${observedPrices[2]} \u2212 ${observedPrices[1]}) / ${observedPrices[1]} \xD7 100`
+      ];
+      result = observedReturn ? `Measured range return = ${observedReturn[1]}%.` : "Calculate the measured percentage change from the two displayed observations.";
+      exampleDataStatus = /\b(delayed|demo|stale|end-of-day)\b/i.test(rawText) ? "delayed" : "latest_available";
+      dataAsOf = observedDates?.[2]?.trim() || "";
+    }
+  }
+  return {
+    title: "Structured Financial Explanation",
+    directAnswer: firstUsefulParagraph(rawText),
+    steps: [
+      { title: "Identify the objective", explanation: "Define exactly what must be explained, calculated, or compared." },
+      { title: "List verified inputs", explanation: "Record the amounts, rates, dates, units, and assumptions before calculating." },
+      { title: "Apply the method", explanation: "Use the relevant formula or decision framework and show each substitution." },
+      { title: "Interpret the result", explanation: "Explain what the output means and which assumptions could change it." }
+    ],
+    formula: { expression, variables, whenToUse },
+    example: {
+      title: "Illustrative worked example",
+      dataStatus: exampleDataStatus,
+      dataAsOf,
+      inputs,
+      calculation,
+      result
+    },
+    interpretation: ["Use the result as an educational estimate, not as a guaranteed outcome."],
+    risks: ["Actual outcomes can change when rates, fees, taxes, timing, or market conditions differ from the assumptions."],
+    keyTakeaways: ["Verify the inputs, show the formula, and interpret the result together."],
+    sources: [{ name: "ArthaBench educational framework", dataDate: "", freshness: "Illustrative \u2014 not live market data" }]
+  };
+}
+function serializeStructuredFinancialAnswer(answer) {
+  const lines = [
+    `# ${answer.title}`,
+    "",
+    "## Direct Answer",
+    answer.directAnswer,
+    "",
+    "## Step-by-Step",
+    ...answer.steps.flatMap((step, index) => [
+      `${index + 1}. ${step.title}: ${step.explanation}`
+    ]),
+    "",
+    "## Formula or Method",
+    answer.formula.expression,
+    ...answer.formula.variables.map((variable) => `- ${variable.symbol}: ${variable.meaning}`),
+    answer.formula.whenToUse,
+    "",
+    `## ${answer.example.title}`,
+    ...answer.example.inputs.map((input) => `- Input: ${input}`),
+    ...answer.example.calculation.map((item, index) => `${index + 1}. ${item}`),
+    `Result: ${answer.example.result}`,
+    "",
+    "## Key Takeaways",
+    ...answer.keyTakeaways.map((item) => `- ${item}`)
+  ];
+  return lines.join("\n").trim();
+}
 
 // server/scoringConfig.ts
 var RELIABILITY_DIMENSIONS_CONFIG = {
@@ -808,14 +1122,7 @@ Regarding your inquiry ("*${userPrompt.trim()}*"):
 
 *Educational Disclaimer: ArthaBench provides non-advisory educational frameworks only.*`;
 }
-async function callGroqChat(systemPrompt, userPrompt, modelName, history) {
-  const apiKey = process.env.GROQ_API_KEY?.trim() || "";
-  if (!apiKey) {
-    return generateFallbackChatResponse(userPrompt);
-  }
-  const models = getGroqModels();
-  const allowedModels = new Set(Object.values(models));
-  const selectedModel = modelName && allowedModels.has(modelName) ? modelName : models.tutorModel;
+function buildGroqMessages(systemPrompt, userPrompt, history) {
   const messages = [
     { role: "system", content: systemPrompt }
   ];
@@ -827,6 +1134,17 @@ async function callGroqChat(systemPrompt, userPrompt, modelName, history) {
     }
   }
   messages.push({ role: "user", content: userPrompt });
+  return messages;
+}
+async function callGroqChat(systemPrompt, userPrompt, modelName, history) {
+  const apiKey = process.env.GROQ_API_KEY?.trim() || "";
+  if (!apiKey) {
+    return generateFallbackChatResponse(userPrompt);
+  }
+  const models = getGroqModels();
+  const allowedModels = new Set(Object.values(models));
+  const selectedModel = modelName && allowedModels.has(modelName) ? modelName : models.tutorModel;
+  const messages = buildGroqMessages(systemPrompt, userPrompt, history);
   const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
     headers: {
@@ -850,6 +1168,78 @@ async function callGroqChat(systemPrompt, userPrompt, modelName, history) {
     throw new Error("Groq returned an invalid completion response.");
   }
   return text;
+}
+async function callGroqStructuredFinancialAnswer(systemPrompt, userPrompt, options = {}) {
+  const fallbackQuestion = options.fallbackQuestion || userPrompt;
+  const apiKey = process.env.GROQ_API_KEY?.trim() || "";
+  if (!apiKey) {
+    return createFallbackStructuredFinancialAnswer(
+      fallbackQuestion,
+      generateFallbackChatResponse(fallbackQuestion)
+    );
+  }
+  const models = getGroqModels();
+  const allowedModels = new Set(Object.values(models));
+  const selectedModel = options.modelName && allowedModels.has(options.modelName) ? options.modelName : models.tutorModel;
+  const strictSchemaSupported = selectedModel === "openai/gpt-oss-120b" || selectedModel === "openai/gpt-oss-20b";
+  const messages = buildGroqMessages(
+    `${systemPrompt}
+
+Return one valid JSON object only. It must match the supplied Artha financial-answer schema exactly.`,
+    userPrompt,
+    options.history
+  );
+  const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      model: selectedModel,
+      messages,
+      temperature: 0.15,
+      max_tokens: 2500,
+      response_format: strictSchemaSupported ? {
+        type: "json_schema",
+        json_schema: {
+          name: "artha_structured_financial_answer",
+          strict: true,
+          schema: STRUCTURED_FINANCIAL_ANSWER_JSON_SCHEMA
+        }
+      } : { type: "json_object" }
+    }),
+    signal: AbortSignal.timeout(2e4)
+  });
+  if (!response.ok) {
+    if (response.status === 400) {
+      const plainText = await callGroqChat(
+        systemPrompt,
+        userPrompt,
+        selectedModel,
+        options.history
+      );
+      return createFallbackStructuredFinancialAnswer(fallbackQuestion, plainText);
+    }
+    throw new Error(`Groq structured request failed with HTTP ${response.status}.`);
+  }
+  const data = await response.json();
+  const content = data?.choices?.[0]?.message?.content;
+  if (typeof content !== "string" || !content.trim()) {
+    throw new Error("Groq returned an empty structured completion.");
+  }
+  const decoded = (() => {
+    try {
+      return JSON.parse(content);
+    } catch {
+      return null;
+    }
+  })();
+  const parsed = structuredFinancialAnswerSchema.safeParse(decoded);
+  if (!parsed.success) {
+    return createFallbackStructuredFinancialAnswer(fallbackQuestion, content);
+  }
+  return sanitizeStructuredFinancialAnswer(parsed.data);
 }
 async function runMultiModelEvaluation(query, scenarioContext) {
   const startTime = Date.now();
@@ -1842,15 +2232,6 @@ function inspectInputSafety(input) {
     detectedCategories
   };
 }
-function sanitizeAIOutput(output) {
-  let sanitized = output;
-  if (/buy|sell|target price|call option|put option/i.test(sanitized)) {
-    if (!sanitized.includes("EDUCATIONAL DISCLAIMER")) {
-      sanitized += "\n\n[EDUCATIONAL DISCLAIMER: This content is for educational purposes only. Artha Bench does not provide personalized investment advice or trading signals. Past performance does not guarantee future results.]";
-    }
-  }
-  return sanitized;
-}
 
 // server/learningService.ts
 async function generateLessonContent(params) {
@@ -1878,7 +2259,15 @@ Mode: ${params.learningMode}
 CRITICAL SAFETY DIRECTIVE:
 1. Never give explicit buy, sell, or hold recommendations for any asset or ticker.
 2. Never promise financial returns or job placements.
-3. Always include risks, limitations, and an educational disclaimer.`;
+3. Always include risks, limitations, and an educational disclaimer.
+4. Follow the requested lesson mode while retaining the same answer sections.
+${buildStructuredFinancialAnswerInstructions({
+    audience: "tutor",
+    language: params.language,
+    level: params.learnerLevel,
+    detail: "detailed",
+    hasVerifiedCurrentData: false
+  })}`;
   const userPrompt = `Create an interactive lesson for:
 Track: ${track?.title || params.trackId}
 Module: ${moduleObj?.title || params.moduleId}
@@ -1890,41 +2279,34 @@ Please provide:
 2. Step-by-Step Breakdown (3 points)
 3. Worked Example with Math/Numbers
 4. Assumptions & Risks`;
-  let aiExplanation = "";
+  const fallbackQuestion = `${canonicalTitle}: ${canonicalObjective}. ${lessonObj?.examplePrompt || ""}`;
+  let structuredAnswer;
   try {
-    const rawAiResponse = await callGroqChat(systemPrompt, userPrompt);
-    aiExplanation = sanitizeAIOutput(rawAiResponse);
+    structuredAnswer = await callGroqStructuredFinancialAnswer(
+      systemPrompt,
+      userPrompt,
+      { fallbackQuestion }
+    );
   } catch (err) {
-    aiExplanation = `### ${canonicalTitle}
-
-**Objective:** ${canonicalObjective}
-
-**Key Explanation (${params.learnerLevel.toUpperCase()} LEVEL):**
-${lessonObj?.explanationSeed || "Financial concepts require understanding inflows, risk factors, and opportunity costs."}
-
-**Step-by-Step Guidance:**
-1. Identify your baseline financial numbers and assumptions.
-2. Apply the relevant framework or calculation formula.
-3. Evaluate risk factors, liquidity, and long-term implications.
-
-**Worked Example:**
-Consider an initial capital allocation of $1,000 evaluated across a 12-month timeline with standard risk constraints.
-
-*Note: Artha Bench provides educational frameworks. Always perform personal due diligence.*`;
+    structuredAnswer = createFallbackStructuredFinancialAnswer(
+      fallbackQuestion,
+      lessonObj?.explanationSeed || "Financial concepts require understanding inputs, assumptions, opportunity costs, and risk factors."
+    );
   }
+  const aiExplanation = serializeStructuredFinancialAnswer(structuredAnswer);
   const structuredLesson = {
     title: canonicalTitle,
     objective: canonicalObjective,
     directExplanation: aiExplanation,
+    structuredAnswer,
     keyConcepts: canonicalKeyConcepts,
-    stepByStepLesson: [
-      "Understand the fundamental definition and financial context.",
-      "Apply mathematical formulas or decision frameworks.",
-      "Review limitations, tax implications, and risk management rules."
-    ],
-    workedExample: lessonObj?.examplePrompt || "Example: Calculating net returns after accounting for fees and inflation.",
-    assumptions: ["Standard 12-month calendar year", "No market execution slippage"],
-    risksAndLimitations: lessonObj?.riskAndLimitationNotes || [
+    stepByStepLesson: structuredAnswer.steps.map(
+      (step) => `${step.title}: ${step.explanation}`
+    ),
+    formula: structuredAnswer.formula.expression,
+    workedExample: `${structuredAnswer.example.title}: ${structuredAnswer.example.result}`,
+    assumptions: structuredAnswer.example.inputs,
+    risksAndLimitations: structuredAnswer.risks.length > 0 ? structuredAnswer.risks : lessonObj?.riskAndLimitationNotes || [
       "Educational material only; past performance is not indicative of future returns."
     ],
     commonMistakes: [
@@ -1956,7 +2338,7 @@ async function reviewQuizAnswer(params) {
 }
 
 // server/providers/newsProvider.ts
-import { z } from "zod";
+import { z as z2 } from "zod";
 
 // src/data/newsFixtures.ts
 var DEMO_NEWS_ITEMS = [
@@ -2000,22 +2382,22 @@ var DEMO_NEWS_ITEMS = [
 
 // server/providers/newsProvider.ts
 var DEFAULT_NEWSDATA_URL = "https://newsdata.io/api/1/latest";
-var newsDataArticleSchema = z.object({
-  article_id: z.string().optional(),
-  title: z.string().nullable().optional(),
-  description: z.string().nullable().optional(),
-  link: z.string().nullable().optional(),
-  pubDate: z.string().nullable().optional(),
-  image_url: z.string().nullable().optional(),
-  source_id: z.string().nullable().optional(),
-  source_name: z.string().nullable().optional(),
-  category: z.array(z.string()).nullable().optional(),
-  country: z.array(z.string()).nullable().optional()
+var newsDataArticleSchema = z2.object({
+  article_id: z2.string().optional(),
+  title: z2.string().nullable().optional(),
+  description: z2.string().nullable().optional(),
+  link: z2.string().nullable().optional(),
+  pubDate: z2.string().nullable().optional(),
+  image_url: z2.string().nullable().optional(),
+  source_id: z2.string().nullable().optional(),
+  source_name: z2.string().nullable().optional(),
+  category: z2.array(z2.string()).nullable().optional(),
+  country: z2.array(z2.string()).nullable().optional()
 }).passthrough();
-var newsDataResponseSchema = z.object({
-  status: z.string(),
-  results: z.array(newsDataArticleSchema).optional().default([]),
-  nextPage: z.string().nullable().optional()
+var newsDataResponseSchema = z2.object({
+  status: z2.string(),
+  results: z2.array(newsDataArticleSchema).optional().default([]),
+  nextPage: z2.string().nullable().optional()
 }).passthrough();
 function filterDemoNews(query, category) {
   let filtered = DEMO_NEWS_ITEMS;
@@ -2179,45 +2561,55 @@ async function getBusinessNews(query = "", category = "all", region = "global", 
   return fetchNewsFromProvider(query, category, region, page);
 }
 async function explainNewsArticle(article) {
-  const systemPrompt = `You are Artha Bench, an educational business analyst.
+  const systemPrompt = `You are ArthaBench, an educational business-news analyst.
 Explain the provided news headline and short summary in plain English for learners.
 CRITICAL RULES:
 1. Do not invent facts not present in the article or summary.
 2. Do not offer stock tips or buy/sell advice.
-3. Highlight key business metrics, economic implications, and educational context.`;
+3. Highlight key business metrics, economic implications, and educational context.
+4. Treat the supplied summary as a limited excerpt, not the complete article.
+5. If no meaningful equation applies, put the decision method in the formula section instead of inventing a formula.
+${buildStructuredFinancialAnswerInstructions({
+    audience: "tutor",
+    language: "English",
+    level: "beginner",
+    detail: "short",
+    hasVerifiedCurrentData: true
+  })}`;
   const userPrompt = `News Title: ${article.title}
 Summary: ${article.summary || "N/A"}
 Source: ${article.sourceName}
+Published: ${article.publishedAt || "Publication time unavailable"}
 
 Please explain:
 1. What this news means in simple terms
 2. Key economic/business concepts involved
-3. 2 key takeaways for students or analysts`;
-  let explanationText = "";
+3. A step-by-step method for evaluating the claim
+4. A numerical example if supported; otherwise a clearly labelled illustrative example
+5. Key limitations caused by having only a headline and summary`;
+  let structuredAnswer;
   try {
-    const rawAi = await callGroqChat(systemPrompt, userPrompt);
-    explanationText = sanitizeAIOutput(rawAi);
-  } catch (err) {
-    explanationText = `**Educational Context for "${article.title}"**
-
-This news item touches on key economic indicators and corporate announcements from **${article.sourceName}**.
-
-**Key Takeaways:**
-- Monitor central bank decisions and corporate quarterly filings for official updates.
-- Evaluate broad market metrics rather than single headlines when conducting business analysis.`;
+    structuredAnswer = await callGroqStructuredFinancialAnswer(
+      systemPrompt,
+      userPrompt,
+      { fallbackQuestion: article.title }
+    );
+  } catch {
+    structuredAnswer = createFallbackStructuredFinancialAnswer(
+      article.title,
+      `The supplied headline and summary from ${article.sourceName} are a starting point for analysis. Verify the full article and any linked primary filing or official data release before drawing a conclusion.`
+    );
   }
   return {
-    explanation: explanationText,
-    keyTakeaways: [
-      "Focus on broad macroeconomic drivers rather than single daily headlines.",
-      "Always verify news claims against official company SEC/regulatory filings."
-    ],
-    disclaimer: "AI explanation generated for educational analysis only. Not investment advice."
+    explanation: serializeStructuredFinancialAnswer(structuredAnswer),
+    structuredAnswer,
+    keyTakeaways: structuredAnswer.keyTakeaways,
+    disclaimer: "AI explanation generated from the supplied headline and summary for educational analysis only. Not investment advice."
   };
 }
 
 // server/providers/marketDataProvider.ts
-import { z as z2 } from "zod";
+import { z as z3 } from "zod";
 
 // src/data/marketFixtures.ts
 var DEMO_MARKET_QUOTES = [
@@ -2317,31 +2709,31 @@ var DEMO_MARKET_HISTORY = {
 
 // server/providers/marketDataProvider.ts
 var DEFAULT_TWELVE_DATA_QUOTE_URL = "https://api.twelvedata.com/quote";
-var quoteResponseSchema = z2.object({
-  symbol: z2.string().optional(),
-  name: z2.string().optional(),
-  exchange: z2.string().nullable().optional(),
-  currency: z2.string().optional(),
-  datetime: z2.string().nullable().optional(),
-  timestamp: z2.union([z2.string(), z2.number()]).nullable().optional(),
-  open: z2.union([z2.string(), z2.number()]).nullable().optional(),
-  high: z2.union([z2.string(), z2.number()]).nullable().optional(),
-  low: z2.union([z2.string(), z2.number()]).nullable().optional(),
-  close: z2.union([z2.string(), z2.number()]).nullable().optional(),
-  price: z2.union([z2.string(), z2.number()]).nullable().optional(),
-  previous_close: z2.union([z2.string(), z2.number()]).nullable().optional(),
-  change: z2.union([z2.string(), z2.number()]).nullable().optional(),
-  percent_change: z2.union([z2.string(), z2.number()]).nullable().optional(),
-  volume: z2.union([z2.string(), z2.number()]).nullable().optional(),
-  is_market_open: z2.boolean().optional()
+var quoteResponseSchema = z3.object({
+  symbol: z3.string().optional(),
+  name: z3.string().optional(),
+  exchange: z3.string().nullable().optional(),
+  currency: z3.string().optional(),
+  datetime: z3.string().nullable().optional(),
+  timestamp: z3.union([z3.string(), z3.number()]).nullable().optional(),
+  open: z3.union([z3.string(), z3.number()]).nullable().optional(),
+  high: z3.union([z3.string(), z3.number()]).nullable().optional(),
+  low: z3.union([z3.string(), z3.number()]).nullable().optional(),
+  close: z3.union([z3.string(), z3.number()]).nullable().optional(),
+  price: z3.union([z3.string(), z3.number()]).nullable().optional(),
+  previous_close: z3.union([z3.string(), z3.number()]).nullable().optional(),
+  change: z3.union([z3.string(), z3.number()]).nullable().optional(),
+  percent_change: z3.union([z3.string(), z3.number()]).nullable().optional(),
+  volume: z3.union([z3.string(), z3.number()]).nullable().optional(),
+  is_market_open: z3.boolean().optional()
 }).passthrough();
-var timeSeriesResponseSchema = z2.object({
-  status: z2.string().optional(),
-  values: z2.array(
-    z2.object({
-      datetime: z2.string(),
-      close: z2.union([z2.string(), z2.number()]),
-      volume: z2.union([z2.string(), z2.number()]).nullable().optional()
+var timeSeriesResponseSchema = z3.object({
+  status: z3.string().optional(),
+  values: z3.array(
+    z3.object({
+      datetime: z3.string(),
+      close: z3.union([z3.string(), z3.number()]),
+      volume: z3.union([z3.string(), z3.number()]).nullable().optional()
     }).passthrough()
   ).optional().default([])
 }).passthrough();
@@ -2595,13 +2987,13 @@ async function getMarketHistory(symbol, range = "1m") {
 }
 
 // server/providers/fredProvider.ts
-import { z as z3 } from "zod";
+import { z as z4 } from "zod";
 var DEFAULT_FRED_OBSERVATIONS_URL = "https://api.stlouisfed.org/fred/series/observations";
-var fredResponseSchema = z3.object({
-  observations: z3.array(
-    z3.object({
-      date: z3.string(),
-      value: z3.union([z3.string(), z3.number()])
+var fredResponseSchema = z4.object({
+  observations: z4.array(
+    z4.object({
+      date: z4.string(),
+      value: z4.union([z4.string(), z4.number()])
     }).passthrough()
   ).default([])
 }).passthrough();
@@ -2808,18 +3200,18 @@ async function checkFredDiagnostic() {
 }
 
 // server/providers/worldBankProvider.ts
-import { z as z4 } from "zod";
+import { z as z5 } from "zod";
 var DEFAULT_WORLD_BANK_BASE_URL = "https://api.worldbank.org/v2/country/IND/indicator";
-var worldBankObservationSchema = z4.object({
-  indicator: z4.object({ id: z4.string(), value: z4.string().nullable().optional() }).passthrough(),
-  country: z4.object({ id: z4.string(), value: z4.string() }).passthrough(),
-  countryiso3code: z4.string().optional(),
-  date: z4.string(),
-  value: z4.number().nullable()
+var worldBankObservationSchema = z5.object({
+  indicator: z5.object({ id: z5.string(), value: z5.string().nullable().optional() }).passthrough(),
+  country: z5.object({ id: z5.string(), value: z5.string() }).passthrough(),
+  countryiso3code: z5.string().optional(),
+  date: z5.string(),
+  value: z5.number().nullable()
 }).passthrough();
-var worldBankResponseSchema = z4.tuple([
-  z4.object({ page: z4.number().optional(), pages: z4.number().optional() }).passthrough(),
-  z4.array(worldBankObservationSchema)
+var worldBankResponseSchema = z5.tuple([
+  z5.object({ page: z5.number().optional(), pages: z5.number().optional() }).passthrough(),
+  z5.array(worldBankObservationSchema)
 ]);
 var INDIA_INDICATORS = [
   {
@@ -2983,46 +3375,46 @@ async function checkWorldBankIndiaDiagnostic() {
 }
 
 // server/providers/finnhubProvider.ts
-import { z as z5 } from "zod";
+import { z as z6 } from "zod";
 var DEFAULT_FINNHUB_BASE_URL = "https://finnhub.io/api/v1";
-var profileSchema = z5.object({
-  country: z5.string().optional(),
-  currency: z5.string().optional(),
-  exchange: z5.string().optional(),
-  finnhubIndustry: z5.string().optional(),
-  ipo: z5.string().optional(),
-  logo: z5.string().optional(),
-  marketCapitalization: z5.number().nullable().optional(),
-  name: z5.string().optional(),
-  phone: z5.string().optional(),
-  shareOutstanding: z5.number().nullable().optional(),
-  ticker: z5.string().optional(),
-  weburl: z5.string().optional()
+var profileSchema = z6.object({
+  country: z6.string().optional(),
+  currency: z6.string().optional(),
+  exchange: z6.string().optional(),
+  finnhubIndustry: z6.string().optional(),
+  ipo: z6.string().optional(),
+  logo: z6.string().optional(),
+  marketCapitalization: z6.number().nullable().optional(),
+  name: z6.string().optional(),
+  phone: z6.string().optional(),
+  shareOutstanding: z6.number().nullable().optional(),
+  ticker: z6.string().optional(),
+  weburl: z6.string().optional()
 }).passthrough();
-var metricsSchema = z5.object({
-  metric: z5.record(z5.string(), z5.unknown()).optional().default({})
+var metricsSchema = z6.object({
+  metric: z6.record(z6.string(), z6.unknown()).optional().default({})
 }).passthrough();
-var earningsSchema = z5.array(
-  z5.object({
-    actual: z5.number().nullable().optional(),
-    estimate: z5.number().nullable().optional(),
-    period: z5.string().optional(),
-    quarter: z5.number().nullable().optional(),
-    surprise: z5.number().nullable().optional(),
-    surprisePercent: z5.number().nullable().optional(),
-    symbol: z5.string().optional(),
-    year: z5.number().nullable().optional()
+var earningsSchema = z6.array(
+  z6.object({
+    actual: z6.number().nullable().optional(),
+    estimate: z6.number().nullable().optional(),
+    period: z6.string().optional(),
+    quarter: z6.number().nullable().optional(),
+    surprise: z6.number().nullable().optional(),
+    surprisePercent: z6.number().nullable().optional(),
+    symbol: z6.string().optional(),
+    year: z6.number().nullable().optional()
   }).passthrough()
 );
-var recommendationSchema = z5.array(
-  z5.object({
-    buy: z5.number().optional(),
-    hold: z5.number().optional(),
-    period: z5.string().optional(),
-    sell: z5.number().optional(),
-    strongBuy: z5.number().optional(),
-    strongSell: z5.number().optional(),
-    symbol: z5.string().optional()
+var recommendationSchema = z6.array(
+  z6.object({
+    buy: z6.number().optional(),
+    hold: z6.number().optional(),
+    period: z6.string().optional(),
+    sell: z6.number().optional(),
+    strongBuy: z6.number().optional(),
+    strongSell: z6.number().optional(),
+    symbol: z6.string().optional()
   }).passthrough()
 );
 function safeSymbol2(symbol) {
@@ -3242,79 +3634,93 @@ apiRouter.use((req, res, next) => {
   }
   next();
 });
-var querySchema = z6.object({
-  query: z6.string().min(1, "Query parameter is required.").max(2e3, "Query exceeds maximum length of 2000 characters."),
-  profile: z6.enum(["India", "US", "Global"]).optional()
+var querySchema = z7.object({
+  query: z7.string().min(1, "Query parameter is required.").max(2e3, "Query exceeds maximum length of 2000 characters."),
+  profile: z7.enum(["India", "US", "Global"]).optional()
 });
-var tutorSchema = z6.object({
-  userPrompt: z6.string().min(1, "Prompt is required.").max(2e3, "Prompt exceeds maximum length."),
-  systemPrompt: z6.string().optional(),
-  modelName: z6.string().optional(),
-  history: z6.array(z6.object({ role: z6.string(), content: z6.string() })).optional()
-});
-var batchRunSchema = z6.object({
-  scenarioIds: z6.array(z6.string()).optional(),
-  profile: z6.enum(["India", "US", "Global"]).optional()
-});
-var dashboardAssistantSchema = z6.object({
-  question: z6.string().min(3).max(1200),
-  history: z6.array(
-    z6.object({
-      role: z6.enum(["user", "assistant"]),
-      content: z6.string().min(1).max(4e3)
+var tutorSchema = z7.object({
+  userPrompt: z7.string().min(1, "Prompt is required.").max(2e3, "Prompt exceeds maximum length."),
+  systemPrompt: z7.string().optional(),
+  modelName: z7.string().optional(),
+  history: z7.array(
+    z7.object({
+      role: z7.enum(["user", "assistant"]),
+      content: z7.string().min(1).max(4e3)
     })
   ).max(10).optional(),
-  snapshot: z6.object({
-    capturedAt: z6.string().max(64),
-    selectedSymbol: z6.string().min(1).max(20).regex(/^[A-Za-z0-9][A-Za-z0-9.:_-]*$/),
-    selectedRange: z6.enum(["1d", "1w", "1m", "3m", "6m", "1y"]),
-    selectedCountry: z6.enum(["us", "india"]),
-    quotes: z6.array(
-      z6.object({
-        symbol: z6.string().min(1).max(20),
-        price: z6.number().finite(),
-        changePercent: z6.number().finite().nullable(),
-        freshness: z6.enum(["real_time", "delayed", "end_of_day", "stale", "demo"]),
-        providerName: z6.string().min(1).max(80)
+  context: z7.object({
+    country: z7.enum(["US", "India", "Global"]),
+    currency: z7.enum(["USD", "INR", "EUR", "GBP"]),
+    language: z7.enum(["english", "hindi", "hinglish"]),
+    level: z7.enum(["beginner", "intermediate", "advanced"]),
+    mode: z7.enum(["explain", "quiz", "calc"]),
+    detail: z7.enum(["short", "detailed"]),
+    useOfficialSources: z7.boolean()
+  }).optional()
+});
+var batchRunSchema = z7.object({
+  scenarioIds: z7.array(z7.string()).optional(),
+  profile: z7.enum(["India", "US", "Global"]).optional()
+});
+var dashboardAssistantSchema = z7.object({
+  question: z7.string().min(3).max(1200),
+  history: z7.array(
+    z7.object({
+      role: z7.enum(["user", "assistant"]),
+      content: z7.string().min(1).max(4e3)
+    })
+  ).max(10).optional(),
+  snapshot: z7.object({
+    capturedAt: z7.string().max(64),
+    selectedSymbol: z7.string().min(1).max(20).regex(/^[A-Za-z0-9][A-Za-z0-9.:_-]*$/),
+    selectedRange: z7.enum(["1d", "1w", "1m", "3m", "6m", "1y"]),
+    selectedCountry: z7.enum(["us", "india"]),
+    quotes: z7.array(
+      z7.object({
+        symbol: z7.string().min(1).max(20),
+        price: z7.number().finite(),
+        changePercent: z7.number().finite().nullable(),
+        freshness: z7.enum(["real_time", "delayed", "end_of_day", "stale", "demo"]),
+        providerName: z7.string().min(1).max(80)
       })
     ).max(8),
-    marketHistory: z6.object({
-      symbol: z6.string().min(1).max(20),
-      range: z6.string().min(1).max(8),
-      pointCount: z6.number().int().min(0).max(500),
-      startDate: z6.string().max(32).nullable(),
-      endDate: z6.string().max(32).nullable(),
-      startPrice: z6.number().finite().nullable(),
-      latestPrice: z6.number().finite().nullable(),
-      high: z6.number().finite().nullable(),
-      low: z6.number().finite().nullable(),
-      returnPercent: z6.number().finite().nullable()
+    marketHistory: z7.object({
+      symbol: z7.string().min(1).max(20),
+      range: z7.string().min(1).max(8),
+      pointCount: z7.number().int().min(0).max(500),
+      startDate: z7.string().max(32).nullable(),
+      endDate: z7.string().max(32).nullable(),
+      startPrice: z7.number().finite().nullable(),
+      latestPrice: z7.number().finite().nullable(),
+      high: z7.number().finite().nullable(),
+      low: z7.number().finite().nullable(),
+      returnPercent: z7.number().finite().nullable()
     }).nullable(),
-    economicIndicators: z6.array(
-      z6.object({
-        label: z6.string().min(1).max(120),
-        value: z6.number().finite().nullable(),
-        unit: z6.string().max(32),
-        date: z6.string().max(32).nullable(),
-        sourceName: z6.enum(["FRED", "World Bank"]),
-        status: z6.string().max(40)
+    economicIndicators: z7.array(
+      z7.object({
+        label: z7.string().min(1).max(120),
+        value: z7.number().finite().nullable(),
+        unit: z7.string().max(32),
+        date: z7.string().max(32).nullable(),
+        sourceName: z7.enum(["FRED", "World Bank"]),
+        status: z7.string().max(40)
       })
     ).max(14),
-    providerHealth: z6.object({
-      connected: z6.number().int().min(0).max(50),
-      total: z6.number().int().min(0).max(50),
-      connectedProviders: z6.array(z6.string().max(120)).max(20),
-      unavailableProviders: z6.array(z6.string().max(120)).max(20)
+    providerHealth: z7.object({
+      connected: z7.number().int().min(0).max(50),
+      total: z7.number().int().min(0).max(50),
+      connectedProviders: z7.array(z7.string().max(120)).max(20),
+      unavailableProviders: z7.array(z7.string().max(120)).max(20)
     }),
-    latestEvaluation: z6.object({
-      verificationCode: z6.string().max(80),
-      timestamp: z6.string().max(64),
-      verdict: z6.string().max(80),
-      overallReliabilityScore: z6.number().finite().min(0).max(100),
-      formulaAccuracyScore: z6.number().finite().min(0).max(100),
-      dualModelConsensusScore: z6.number().finite().min(0).max(100),
-      evidenceVerificationScore: z6.number().finite().min(0).max(100),
-      safetyComplianceScore: z6.number().finite().min(0).max(100)
+    latestEvaluation: z7.object({
+      verificationCode: z7.string().max(80),
+      timestamp: z7.string().max(64),
+      verdict: z7.string().max(80),
+      overallReliabilityScore: z7.number().finite().min(0).max(100),
+      formulaAccuracyScore: z7.number().finite().min(0).max(100),
+      dualModelConsensusScore: z7.number().finite().min(0).max(100),
+      evidenceVerificationScore: z7.number().finite().min(0).max(100),
+      safetyComplianceScore: z7.number().finite().min(0).max(100)
     }).nullable()
   })
 });
@@ -3344,6 +3750,38 @@ function buildDashboardDemoAnswer(snapshot) {
 This is a description of observed dashboard data, not a forecast.
 
 Educational analysis only \u2014 not investment advice.`;
+}
+var DEFAULT_TUTOR_CONTEXT = {
+  country: "US",
+  currency: "USD",
+  language: "english",
+  level: "beginner",
+  mode: "explain",
+  detail: "detailed",
+  useOfficialSources: true
+};
+function questionNeedsCurrentData(question) {
+  return /\b(current|currently|latest|today|now|real[ -]?time|inflation|gdp|unemployment|interest rate|federal funds|treasury|economic indicator)\b/i.test(
+    question
+  );
+}
+async function loadTutorCurrentData(question, context) {
+  if (!context.useOfficialSources || !questionNeedsCurrentData(question)) return null;
+  const overviews = context.country === "India" ? [await fetchWorldBankIndiaOverview()] : context.country === "US" ? [await fetchFredOverview()] : await Promise.all([fetchFredOverview(), fetchWorldBankIndiaOverview()]);
+  const indicators = overviews.flatMap((overview) => overview.indicators).filter((indicator) => indicator.status === "connected" && indicator.value !== null).map((indicator) => ({
+    label: indicator.label,
+    value: indicator.value,
+    unit: indicator.unit,
+    observationDate: indicator.date,
+    provider: indicator.sourceName
+  }));
+  if (indicators.length === 0) return null;
+  return {
+    retrievedAt: (/* @__PURE__ */ new Date()).toISOString(),
+    providers: Array.from(new Set(indicators.map((indicator) => indicator.provider))),
+    indicators,
+    freshnessNote: "These are the latest available official observations. Release dates differ, so they must not be described as tick-by-tick real-time values."
+  };
 }
 apiRouter.get("/health", (req, res) => {
   res.json({
@@ -3431,18 +3869,52 @@ var handleTutor = async (req, res, next) => {
     if (!promptText || typeof promptText !== "string") {
       return res.status(400).json({ error: "Prompt is required." });
     }
-    const { systemPrompt, modelName, history } = req.body;
+    const parsed = tutorSchema.safeParse({ ...req.body, userPrompt: promptText });
+    if (!parsed.success) {
+      return res.status(400).json({ error: parsed.error.issues[0]?.message || "Invalid tutor request." });
+    }
+    const { modelName, history } = parsed.data;
+    const context = parsed.data.context || DEFAULT_TUTOR_CONTEXT;
     const safety = checkPromptSafety(promptText);
     if (!safety.safe) {
       return res.status(400).json({ error: safety.reason, safety });
     }
-    const sys = systemPrompt || "You are ArthaBench AI Tutor, an elite financial educator. Provide clear, non-advisory educational guidance and step-by-step reasoning.";
-    const text = await callGroqChat(sys, promptText, modelName, history);
+    const currentData = await loadTutorCurrentData(promptText, context);
+    const sys = `You are ArthaBench AI Tutor, a precise and patient financial educator.
+Teach at the learner's stated level, define unfamiliar terms, show arithmetic clearly, and never confuse illustrative values with current data.
+Country profile: ${context.country}
+Currency preference: ${context.currency}
+Learning mode: ${context.mode}
+${buildStructuredFinancialAnswerInstructions({
+      audience: "tutor",
+      language: context.language,
+      level: context.level,
+      detail: context.detail,
+      hasVerifiedCurrentData: Boolean(currentData)
+    })}`;
+    const userPrompt = `Learner question: ${promptText}
+
+Learner preferences:
+${JSON.stringify(context)}
+
+Verified current/latest official context:
+${currentData ? JSON.stringify(currentData) : "No verified current-data context was required or available. Use an explicitly labelled illustrative worked example."}`;
+    const structuredAnswer = await callGroqStructuredFinancialAnswer(sys, userPrompt, {
+      modelName,
+      history,
+      fallbackQuestion: promptText
+    });
+    const text = serializeStructuredFinancialAnswer(structuredAnswer);
     const demoMode = !process.env.GROQ_API_KEY?.trim();
     res.json({
       answer: text,
       response: text,
-      suggestedFollowUps: ["Explain formula steps", "Give a practice problem"],
+      structuredAnswer,
+      suggestedFollowUps: [
+        "Explain the formula symbols one by one.",
+        "Give me another worked example to solve.",
+        "Quiz me on this concept."
+      ],
       demoMode,
       provider: demoMode ? "demo" : "groq",
       model: demoMode ? null : getGroqModels().tutorModel,
@@ -3484,6 +3956,9 @@ apiRouter.post("/dashboard/assistant", async (req, res, next) => {
       providerHealth: snapshot.providerHealth,
       latestReliabilityEvaluation: snapshot.latestEvaluation
     };
+    const hasVerifiedCurrentData = snapshot.quotes.length > 0 || snapshot.economicIndicators.some(
+      (indicator) => indicator.status === "connected" && indicator.value !== null
+    );
     const systemPrompt = `You are Ask Artha AI, the evidence-grounded dashboard analyst inside ArthaBench Pro.
 
 Rules:
@@ -3492,14 +3967,27 @@ Rules:
 3. Explain charts, comparisons, anomalies, reliability scores, and data limitations in plain language. Mention the relevant observation date or range when available.
 4. Never provide personalized investment advice, buy/sell/hold instructions, target prices, or guaranteed-return language.
 5. Treat analyst opinions and market movements as context, not recommendations.
-6. Keep the response concise and structured, normally under 350 words.
-7. End with: "Educational analysis only \u2014 not investment advice."`;
+6. End with educational, non-advisory takeaways.
+${buildStructuredFinancialAnswerInstructions({
+      audience: "dashboard",
+      language: "English",
+      level: "beginner",
+      detail: "detailed",
+      hasVerifiedCurrentData
+    })}`;
     const userPrompt = `Dashboard question: ${parsed.data.question}
 
 Verified dashboard snapshot:
 ${JSON.stringify(groundedContext)}`;
     const demoMode = !process.env.GROQ_API_KEY?.trim();
-    const answer = demoMode ? buildDashboardDemoAnswer(snapshot) : await callGroqChat(systemPrompt, userPrompt, void 0, parsed.data.history);
+    const structuredAnswer = demoMode ? createFallbackStructuredFinancialAnswer(
+      parsed.data.question,
+      buildDashboardDemoAnswer(snapshot)
+    ) : await callGroqStructuredFinancialAnswer(systemPrompt, userPrompt, {
+      history: parsed.data.history,
+      fallbackQuestion: parsed.data.question
+    });
+    const answer = serializeStructuredFinancialAnswer(structuredAnswer);
     const sourceLabels = Array.from(
       /* @__PURE__ */ new Set([
         ...snapshot.quotes.map((quote) => quote.providerName),
@@ -3509,6 +3997,7 @@ ${JSON.stringify(groundedContext)}`;
     );
     res.json({
       answer,
+      structuredAnswer,
       provider: demoMode ? "demo" : "groq",
       model: demoMode ? null : getGroqModels().tutorModel,
       groundedAt: snapshot.capturedAt,
@@ -3601,8 +4090,8 @@ apiRouter.get("/markets/history", async (req, res, next) => {
 });
 apiRouter.get("/company/intelligence", async (req, res, next) => {
   try {
-    const parsed = z6.object({
-      symbol: z6.string().min(1).max(20).regex(/^[A-Za-z0-9][A-Za-z0-9.:_-]*$/)
+    const parsed = z7.object({
+      symbol: z7.string().min(1).max(20).regex(/^[A-Za-z0-9][A-Za-z0-9.:_-]*$/)
     }).safeParse(req.query);
     if (!parsed.success) {
       return res.status(400).json({ error: "A valid company stock symbol is required." });
@@ -3619,13 +4108,13 @@ apiRouter.get("/company/intelligence", async (req, res, next) => {
 });
 apiRouter.post("/company/assistant", async (req, res, next) => {
   try {
-    const parsed = z6.object({
-      symbol: z6.string().min(1).max(20).regex(/^[A-Za-z0-9][A-Za-z0-9.:_-]*$/),
-      question: z6.string().min(3).max(1200),
-      history: z6.array(
-        z6.object({
-          role: z6.enum(["user", "assistant"]),
-          content: z6.string().min(1).max(4e3)
+    const parsed = z7.object({
+      symbol: z7.string().min(1).max(20).regex(/^[A-Za-z0-9][A-Za-z0-9.:_-]*$/),
+      question: z7.string().min(3).max(1200),
+      history: z7.array(
+        z7.object({
+          role: z7.enum(["user", "assistant"]),
+          content: z7.string().min(1).max(4e3)
         })
       ).max(10).optional()
     }).safeParse(req.body);
@@ -3669,22 +4158,33 @@ Rules:
 3. Never give personalized investment advice, a buy/sell/hold recommendation, a target price, a forecast presented as certain, or guaranteed-return language.
 4. Analyst recommendation counts are third-party historical opinions, not ArthaBench recommendations.
 5. Mention relevant units and observation periods when available. Distinguish live, delayed, end-of-day, or demo quote freshness.
-6. End with: "Educational analysis only \u2014 not investment advice."
-7. Keep the answer focused and structured, normally under 450 words.`;
+6. Keep the answer focused and structured, normally under 600 words.
+${buildStructuredFinancialAnswerInstructions({
+      audience: "dashboard",
+      language: "English",
+      level: "intermediate",
+      detail: "detailed",
+      hasVerifiedCurrentData: true
+    })}`;
     const userPrompt = `Question about ${symbol}: ${parsed.data.question}
 
 Verified structured context:
 ${JSON.stringify(groundedContext)}`;
-    const answer = await callGroqChat(
+    const structuredAnswer = await callGroqStructuredFinancialAnswer(
       systemPrompt,
       userPrompt,
-      void 0,
-      parsed.data.history
+      {
+        history: parsed.data.history,
+        fallbackQuestion: `${parsed.data.question}
+Verified context: ${JSON.stringify(groundedContext)}`
+      }
     );
+    const answer = serializeStructuredFinancialAnswer(structuredAnswer);
     const demoMode = !process.env.GROQ_API_KEY?.trim();
     res.json({
       symbol,
       answer,
+      structuredAnswer,
       provider: demoMode ? "demo" : "groq",
       model: demoMode ? null : getGroqModels().tutorModel,
       groundedAt: company.retrievedAt,
@@ -3715,9 +4215,9 @@ apiRouter.get("/economy/overview", async (_req, res, next) => {
 });
 apiRouter.get("/economy/series", async (req, res, next) => {
   try {
-    const parsed = z6.object({
-      seriesId: z6.string().min(1).max(64).regex(/^[A-Za-z0-9._-]+$/),
-      limit: z6.coerce.number().int().min(1).max(240).optional()
+    const parsed = z7.object({
+      seriesId: z7.string().min(1).max(64).regex(/^[A-Za-z0-9._-]+$/),
+      limit: z7.coerce.number().int().min(1).max(240).optional()
     }).safeParse(req.query);
     if (!parsed.success) {
       return res.status(400).json({ error: "A valid FRED seriesId is required." });
@@ -3741,9 +4241,9 @@ apiRouter.get("/economy/india/overview", async (_req, res, next) => {
 });
 apiRouter.get("/economy/india/series", async (req, res, next) => {
   try {
-    const parsed = z6.object({
-      indicatorId: z6.string().min(2).max(64).regex(/^[A-Za-z0-9._-]+$/),
-      limit: z6.coerce.number().int().min(1).max(240).optional()
+    const parsed = z7.object({
+      indicatorId: z7.string().min(2).max(64).regex(/^[A-Za-z0-9._-]+$/),
+      limit: z7.coerce.number().int().min(1).max(240).optional()
     }).safeParse(req.query);
     if (!parsed.success) {
       return res.status(400).json({ error: "A valid World Bank indicatorId is required." });

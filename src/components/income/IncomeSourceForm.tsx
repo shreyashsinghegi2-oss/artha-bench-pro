@@ -7,6 +7,8 @@ import {
   IncomeSource,
   IncomeSourceDraft,
 } from '../../services/incomeStorage';
+import { IncomeTaxDetails } from '../../types/taxTypes';
+import { TaxAwareIncomeFields } from './tax/TaxAwareIncomeFields';
 
 interface IncomeSourceFormProps {
   source?: IncomeSource;
@@ -36,6 +38,7 @@ export const IncomeSourceForm: React.FC<IncomeSourceFormProps> = ({
   const [startDate, setStartDate] = useState(source?.startDate ?? today());
   const [endDate, setEndDate] = useState(source?.endDate ?? '');
   const [tagText, setTagText] = useState(source?.tags.join(', ') ?? '');
+  const [taxDetails, setTaxDetails] = useState<IncomeTaxDetails>(source?.taxDetails ?? {});
   const [errors, setErrors] = useState<FormErrors>({});
 
   const validate = (): FormErrors => {
@@ -76,6 +79,7 @@ export const IncomeSourceForm: React.FC<IncomeSourceFormProps> = ({
       startDate,
       endDate: endDate || undefined,
       tags: tagText.split(',').map((tag) => tag.trim()).filter(Boolean),
+      taxDetails,
     });
   };
 
@@ -102,7 +106,7 @@ export const IncomeSourceForm: React.FC<IncomeSourceFormProps> = ({
           <label className="text-sm font-semibold text-ink">
             Income type
             <select className={fieldClass} value={type} onChange={(event) => setType(event.target.value as IncomeSourceDraft['type'])}>
-              {INCOME_TYPES.map((option) => <option key={option}>{option}</option>)}
+              {INCOME_TYPES.map((option) => <option key={option} value={option}>{option === 'Investment Returns' ? 'Investments' : option}</option>)}
             </select>
           </label>
           <label className="text-sm font-semibold text-ink">
@@ -131,6 +135,8 @@ export const IncomeSourceForm: React.FC<IncomeSourceFormProps> = ({
           <input className={fieldClass} value={description} maxLength={120} onChange={(event) => setDescription(event.target.value)} aria-describedby={errors.description ? 'income-description-error' : undefined} placeholder="Monthly salary from ABC Pvt Ltd" />
           {errors.description ? <span id="income-description-error" className="mt-1 block text-xs text-danger">{errors.description}</span> : null}
         </label>
+
+        <TaxAwareIncomeFields type={type} details={taxDetails} onChange={setTaxDetails} />
 
         <div className="grid gap-4 sm:grid-cols-3">
           <label className="text-sm font-semibold text-ink">

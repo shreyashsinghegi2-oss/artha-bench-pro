@@ -1,3 +1,6 @@
+import Decimal from 'decimal.js';
+import { IncomeTaxDetails } from '../types/taxTypes';
+
 export const INCOME_STORAGE_KEY = 'artha_income_sources_v1';
 
 export const INCOME_TYPES = [
@@ -27,6 +30,7 @@ export interface IncomeSource {
   startDate: string;
   endDate?: string;
   tags: string[];
+  taxDetails?: IncomeTaxDetails;
   createdAt: string;
   updatedAt: string;
 }
@@ -87,13 +91,14 @@ export function saveIncomeSources(sources: IncomeSource[]): void {
 }
 
 export function monthlyEquivalent(source: Pick<IncomeSource, 'amount' | 'frequency'>): number {
+  const amount = new Decimal(source.amount);
   switch (source.frequency) {
     case 'Monthly':
-      return source.amount;
+      return amount.toNumber();
     case 'Quarterly':
-      return source.amount / 3;
+      return amount.div(3).toNumber();
     case 'Annually':
-      return source.amount / 12;
+      return amount.div(12).toNumber();
     case 'One-time':
       return 0;
   }
@@ -126,15 +131,16 @@ export function summarizeIncomeByCurrency(
 
     if (source.frequency === 'One-time') {
       if (isInYear(source.startDate, asOf.getUTCFullYear())) {
-        summary.oneTimeThisYear += source.amount;
-        summary.annualProjected += source.amount;
-        summary.byType[source.type] = (summary.byType[source.type] ?? 0) + source.amount;
+        summary.oneTimeThisYear = new Decimal(summary.oneTimeThisYear).plus(source.amount).toNumber();
+        summary.annualProjected = new Decimal(summary.annualProjected).plus(source.amount).toNumber();
+        summary.byType[source.type] = new Decimal(summary.byType[source.type] ?? 0).plus(source.amount).toNumber();
       }
     } else if (isActive(source, asOf)) {
       const monthly = monthlyEquivalent(source);
-      summary.monthlyRecurring += monthly;
-      summary.annualProjected += monthly * 12;
-      summary.byType[source.type] = (summary.byType[source.type] ?? 0) + monthly * 12;
+      const annual = new Decimal(monthly).times(12);
+      summary.monthlyRecurring = new Decimal(summary.monthlyRecurring).plus(monthly).toNumber();
+      summary.annualProjected = new Decimal(summary.annualProjected).plus(annual).toNumber();
+      summary.byType[source.type] = new Decimal(summary.byType[source.type] ?? 0).plus(annual).toNumber();
     }
 
     summaries.set(currency, summary);

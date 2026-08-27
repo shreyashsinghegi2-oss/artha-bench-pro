@@ -24,6 +24,17 @@ import {
   summarizeIncomeByCurrency,
 } from '../../services/incomeStorage';
 import { IncomeSourceForm } from './IncomeSourceForm';
+import { calculateIndiaTaxEstimate, compareTaxRegimes } from '../../services/indiaTaxEngine';
+import {
+  createAuditEvent,
+  loadTaxWorkspace,
+  saveTaxWorkspace,
+} from '../../services/taxWorkspaceStorage';
+import { TaxWorkspaceState } from '../../types/taxTypes';
+import { TaxCreditsPanel } from './tax/TaxCreditsPanel';
+import { TaxDashboard } from './tax/TaxDashboard';
+import { TaxDeductionsPanel } from './tax/TaxDeductionsPanel';
+import { TaxProfileCard } from './tax/TaxProfileCard';
 
 function buildRecommendations(sources: IncomeSource[]): string[] {
   if (!sources.length) {
@@ -69,6 +80,7 @@ export const IncomeView: React.FC = () => {
   const [sources, setSources] = useState<IncomeSource[]>(loadIncomeSources);
   const [formOpen, setFormOpen] = useState(false);
   const [editingSource, setEditingSource] = useState<IncomeSource | undefined>();
+  const [taxWorkspace, setTaxWorkspace] = useState<TaxWorkspaceState>(loadTaxWorkspace);
 
   const summaries = useMemo(() => summarizeIncomeByCurrency(sources), [sources]);
   const recommendations = useMemo(() => buildRecommendations(sources), [sources]);
@@ -77,10 +89,27 @@ export const IncomeView: React.FC = () => {
     () => [...sources].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)),
     [sources],
   );
+  const taxComparison = useMemo(
+    () => compareTaxRegimes(sources, taxWorkspace.profile, taxWorkspace.deductions, taxWorkspace.credits),
+    [sources, taxWorkspace.profile, taxWorkspace.deductions, taxWorkspace.credits],
+  );
+  const taxEstimate = useMemo(
+    () => calculateIndiaTaxEstimate(sources, taxWorkspace.profile, taxWorkspace.deductions, taxWorkspace.credits),
+    [sources, taxWorkspace.profile, taxWorkspace.deductions, taxWorkspace.credits],
+  );
 
   const commitSources = (nextSources: IncomeSource[]) => {
     setSources(nextSources);
     saveIncomeSources(nextSources);
+  };
+
+  const commitTaxWorkspace = (nextWorkspace: TaxWorkspaceState, action: string, detail: string) => {
+    const withAudit = {
+      ...nextWorkspace,
+      audit: [createAuditEvent(action, detail), ...nextWorkspace.audit].slice(0, 100),
+    };
+    setTaxWorkspace(withAudit);
+    saveTaxWorkspace(withAudit);
   };
 
   const openCreateForm = () => {
@@ -103,11 +132,13 @@ export const IncomeView: React.FC = () => {
     }
     setFormOpen(false);
     setEditingSource(undefined);
+    commitTaxWorkspace(taxWorkspace, editingSource ? 'Income source updated' : 'Income source added', draft.description);
   };
 
   const handleDelete = (source: IncomeSource) => {
     if (!window.confirm(`Delete “${source.description}”? This only removes the device-local copy.`)) return;
     commitSources(sources.filter((item) => item.id !== source.id));
+    commitTaxWorkspace(taxWorkspace, 'Income source deleted', source.description);
   };
 
   const annualByType: Partial<Record<IncomeType, number>> = primarySummary?.byType ?? {};
@@ -135,6 +166,17 @@ export const IncomeView: React.FC = () => {
           MVP storage: this browser only. No bank account, tax portal, or trading account is connected.
         </div>
       </section>
+
+      <section className="grid gap-2 rounded-2xl border border-line bg-surface p-3 sm:grid-cols-5" aria-label="Tax workspace onboarding">
+        {['1. Choose FY & profile', '2. Add income', '3. Add deductions', '4. Add tax credits', '5. Review estimate'].map((step, index) => (
+          <div key={step} className={`rounded-xl px-3 py-2 text-xs font-bold ${index === 0 || sources.length ? 'bg-brand-soft text-brand-hover' : 'bg-canvas text-secondary'}`}>{step}</div>
+        ))}
+      </section>
+
+      <TaxProfileCard
+        profile={taxWorkspace.profile}
+        onChange={(profile) => commitTaxWorkspace({ ...taxWorkspace, profile }, 'Tax profile changed', `${profile.financialYear} · ${profile.taxRegime} regime`)}
+      />
 
       {formOpen ? (
         <IncomeSourceForm
@@ -249,6 +291,27 @@ export const IncomeView: React.FC = () => {
           </section>
         </aside>
       </section>
+
+      <TaxDeductionsPanel
+        profile={taxWorkspace.profile}
+        entries={taxWorkspace.deductions}
+        onChange={(deductions) => commitTaxWorkspace({ ...taxWorkspace, deductions }, 'Deductions changed', `${deductions.length} deduction entries`)}
+      />
+
+      <TaxCreditsPanel
+        credits={taxWorkspace.credits}
+        documents={taxWorkspace.documents}
+        onCreditsChange={(credits) => commitTaxWorkspace({ ...taxWorkspace, credits }, 'Tax credits changed', `${credits.length} credit entries`)}
+        onDocumentsChange={(documents) => commitTaxWorkspace({ ...taxWorkspace, documents }, 'Document status changed', 'Tax evidence checklist updated')}
+      />
+
+      <TaxDashboard
+        result={taxEstimate}
+        comparison={taxComparison}
+        profile={taxWorkspace.profile}
+        sources={sources}
+        workspace={taxWorkspace}
+      />
     </div>
   );
 };

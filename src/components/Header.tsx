@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { SlidersHorizontal, Menu, X, Sparkles, User } from 'lucide-react';
+import { SlidersHorizontal, Menu, X, Sparkles, User, Moon, Sun } from 'lucide-react';
 import { NavigationDestination } from '../types';
 
 interface HeaderProps {
@@ -36,6 +36,8 @@ const SECONDARY_NAV_ITEMS: NavItem[] = [
 ];
 
 const ALL_NAV_ITEMS: NavItem[] = [...PRIMARY_NAV_ITEMS, ...SECONDARY_NAV_ITEMS];
+const THEME_STORAGE_KEY = 'artha-bench-theme';
+type ThemeMode = 'light' | 'dark';
 
 export const Header: React.FC<HeaderProps> = ({
   currentDestination,
@@ -43,6 +45,24 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isGroqHealthy, setIsGroqHealthy] = useState<boolean | null>(null);
+  const [theme, setTheme] = useState<ThemeMode>(() => {
+    if (typeof window === 'undefined') return 'light';
+
+    const storedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
+    if (storedTheme === 'light' || storedTheme === 'dark') return storedTheme;
+
+    return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  });
+
+  useEffect(() => {
+    const root = document.documentElement;
+    const isDark = theme === 'dark';
+
+    root.classList.toggle('dark', isDark);
+    root.dataset.theme = theme;
+    root.style.colorScheme = theme;
+    window.localStorage.setItem(THEME_STORAGE_KEY, theme);
+  }, [theme]);
 
   useEffect(() => {
     // Check Groq server health
@@ -63,6 +83,8 @@ export const Header: React.FC<HeaderProps> = ({
     onNavigate(id);
     setMobileMenuOpen(false);
   };
+
+  const isDarkMode = theme === 'dark';
 
   return (
     <header className="border-b border-line bg-surface sticky top-0 z-50 px-4 py-3">
@@ -136,6 +158,21 @@ export const Header: React.FC<HeaderProps> = ({
             />
             <span>
               {isGroqHealthy === null ? '● Checking…' : isGroqHealthy ? '● AI Live' : '● Demo Mode'}
+            </span>
+          </button>
+
+          {/* Global Light / Dark Theme Toggle */}
+          <button
+            type="button"
+            onClick={() => setTheme(isDarkMode ? 'light' : 'dark')}
+            className="flex items-center gap-2 p-2 xl:px-3 rounded-xl bg-surface text-secondary hover:text-ink border border-line hover:border-interactive/50 transition-all"
+            title={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+            aria-label={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+            aria-pressed={isDarkMode}
+          >
+            {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            <span className="hidden xl:inline text-xs font-semibold">
+              {isDarkMode ? 'Light' : 'Night'}
             </span>
           </button>
 

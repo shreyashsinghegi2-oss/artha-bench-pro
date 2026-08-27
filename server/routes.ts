@@ -42,6 +42,8 @@ import {
   checkFinnhubDiagnostic,
   fetchFinnhubCompanyIntelligence,
 } from './providers/finnhubProvider';
+import { answerCryptoQuestion, getCryptoKlines, getCryptoMarkets } from './cryptoService';
+import { CRYPTO_INTERVALS, CRYPTO_SYMBOLS } from '../src/components/crypto/cryptoTypes';
 
 export const apiRouter = Router();
 
@@ -195,6 +197,38 @@ const dashboardAssistantSchema = z.object({
         safetyComplianceScore: z.number().finite().min(0).max(100),
       })
       .nullable(),
+  }),
+});
+
+const cryptoKlineQuerySchema = z.object({
+  symbol: z.enum(CRYPTO_SYMBOLS),
+  interval: z.enum(CRYPTO_INTERVALS),
+});
+
+const cryptoAssistantSchema = z.object({
+  question: z.string().min(3).max(500),
+  context: z.object({
+    symbol: z.enum(CRYPTO_SYMBOLS),
+    interval: z.enum(CRYPTO_INTERVALS),
+    candleStatus: z.enum(['Forming', 'Closed']),
+    timeUtc: z.string().min(1).max(80),
+    timeIst: z.string().min(1).max(80),
+    open: z.number().finite().nonnegative(),
+    high: z.number().finite().nonnegative(),
+    low: z.number().finite().nonnegative(),
+    close: z.number().finite().nonnegative(),
+    absoluteChange: z.number().finite(),
+    percentChange: z.number().finite(),
+    baseVolume: z.number().finite().nonnegative(),
+    quoteVolume: z.number().finite().nonnegative(),
+    tradeCount: z.number().int().nonnegative(),
+    provider: z.literal('Binance Public Market Data'),
+    streamStatus: z.enum(['connecting', 'cached', 'live', 'reconnecting', 'stale', 'unavailable']),
+    lastUpdatedAt: z.string().max(80).nullable(),
+  }).refine((context) => context.high >= Math.max(context.open, context.close, context.low), {
+    message: 'Candle high must be greater than or equal to the other OHLC values.',
+  }).refine((context) => context.low <= Math.min(context.open, context.close, context.high), {
+    message: 'Candle low must be less than or equal to the other OHLC values.',
   }),
 });
 
@@ -541,6 +575,49 @@ ${buildStructuredFinancialAnswerInstructions({
     });
   } catch (err) {
     next(err);
+  }
+});
+
+// Crypto Market Lab — public Binance market data plus grounded educational AI.
+apiRouter.get('/crypto/markets', async (_req: Request, res: Response) => {
+  try {
+    const result = await getCryptoMarkets();
+    res.setHeader('Cache-Control', 'public, s-maxage=5, stale-while-revalidate=5');
+    res.json(result);
+  } catch {
+    res.status(503).json({ error: 'Binance public market snapshot is temporarily unavailable.' });
+  }
+});
+
+apiRouter.get('/crypto/klines', async (req: Request, res: Response) => {
+  const parsed = cryptoKlineQuerySchema.safeParse(req.query);
+  if (!parsed.success) {
+    return res.status(400).json({ error: 'A supported Binance symbol and interval are required.' });
+  }
+  try {
+    const result = await getCryptoKlines(parsed.data.symbol, parsed.data.interval);
+    res.setHeader('Cache-Control', 'public, s-maxage=10, stale-while-revalidate=10');
+    res.json(result);
+  } catch {
+    res.status(503).json({ error: 'Binance candle snapshot is temporarily unavailable.' });
+  }
+});
+
+apiRouter.post('/crypto/assistant', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const parsed = cryptoAssistantSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: 'A valid question and verified Binance candle context are required.' });
+    }
+    const safety = checkPromptSafety(parsed.data.question);
+    if (!safety.safe) return res.status(400).json({ error: safety.reason, safety });
+    const result = await answerCryptoQuestion(parsed.data.question, {
+      ...parsed.data.context,
+      lastUpdatedAt: parsed.data.context.lastUpdatedAt ?? null,
+    });
+    res.json({ ...result, disclaimer: 'Educational research guidance only — not investment advice.', requestId: res.getHeader('x-request-id') });
+  } catch (error) {
+    next(error);
   }
 });
 

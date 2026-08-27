@@ -14,7 +14,9 @@ interface NavItem {
 
 const PRIMARY_NAV_ITEMS: NavItem[] = [
   { id: 'overview', label: 'Overview' },
+  { id: 'income', label: 'Income' },
   { id: 'markets', label: 'Market Data' },
+  { id: 'crypto', label: 'Crypto' },
   { id: 'quick-check', label: 'Quick Check' },
   { id: 'tutor', label: 'Financial Tutor' },
   { id: 'evaluation-lab', label: 'Evaluation Lab' },
@@ -101,7 +103,11 @@ export const Header: React.FC<HeaderProps> = ({
                 onClick={() => handleNavClick(item.id)}
                 className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
                   isActive
-                    ? 'bg-interactive-soft text-interactive shadow-sm'
+                    ? item.id === 'income'
+                      ? 'bg-brand text-white shadow-sm'
+                      : 'bg-interactive-soft text-interactive shadow-sm'
+                    : item.id === 'income'
+                      ? 'border border-brand/20 bg-brand-soft text-brand-hover'
                     : 'text-secondary hover:text-ink hover:bg-subtle/60'
                 }`}
               >
@@ -168,7 +174,7 @@ export const Header: React.FC<HeaderProps> = ({
       {/* Mobile Drawer Navigation Menu */}
       {mobileMenuOpen && (
         <div className="lg:hidden mt-3 pt-3 border-t border-line bg-surface rounded-2xl p-4 space-y-2">
-          <div className="text-[10px] uppercase font-bold text-secondary px-2 mb-1">Navigation (15 Destinations)</div>
+          <div className="text-[10px] uppercase font-bold text-secondary px-2 mb-1">Navigation (17 Destinations)</div>
           <div className="grid grid-cols-2 gap-1.5">
             {ALL_NAV_ITEMS.map((item) => {
               const isActive = currentDestination === item.id || (item.id === 'overview' && currentDestination === 'dashboard');
@@ -178,7 +184,11 @@ export const Header: React.FC<HeaderProps> = ({
                   onClick={() => handleNavClick(item.id)}
                   className={`px-3 py-2 rounded-xl text-xs font-medium text-left transition-all ${
                     isActive
-                      ? 'bg-interactive-soft text-interactive font-bold'
+                      ? item.id === 'income'
+                        ? 'bg-brand text-white font-bold'
+                        : 'bg-interactive-soft text-interactive font-bold'
+                      : item.id === 'income'
+                        ? 'border border-brand/20 bg-brand-soft text-brand-hover'
                       : 'text-secondary hover:text-ink hover:bg-subtle/60'
                   }`}
                 >

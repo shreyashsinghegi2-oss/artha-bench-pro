@@ -3,7 +3,7 @@ import express from "express";
 
 // server/routes.ts
 import { Router } from "express";
-import { z as z7 } from "zod";
+import { z as z8 } from "zod";
 
 // server/aiResponseStandard.ts
 import { z } from "zod";
@@ -2693,7 +2693,7 @@ Please explain:
 }
 
 // server/providers/marketDataProvider.ts
-import { z as z3 } from "zod";
+import { z as z4 } from "zod";
 
 // src/data/marketFixtures.ts
 var DEMO_MARKET_QUOTES = [
@@ -2772,6 +2772,196 @@ var DEMO_MARKET_QUOTES = [
     retrievedAt: (/* @__PURE__ */ new Date()).toISOString(),
     freshness: "demo",
     providerName: "Demo Fixture Provider"
+  },
+  {
+    symbol: "RELIANCE:NSE",
+    name: "Reliance Industries Limited (Demo)",
+    assetType: "equity",
+    exchange: "NSE",
+    currency: "INR",
+    price: 1384.4,
+    open: 1372.5,
+    high: 1391.8,
+    low: 1368.2,
+    previousClose: 1371.7,
+    change: 12.7,
+    changePercent: 0.93,
+    volume: 742e4,
+    providerTimestamp: null,
+    retrievedAt: (/* @__PURE__ */ new Date()).toISOString(),
+    freshness: "demo",
+    providerName: "Demo Fixture Provider"
+  },
+  {
+    symbol: "SBIN:NSE",
+    name: "State Bank of India (Demo)",
+    assetType: "equity",
+    exchange: "NSE",
+    currency: "INR",
+    price: 812.65,
+    open: 806.4,
+    high: 817.2,
+    low: 803.9,
+    previousClose: 806.25,
+    change: 6.4,
+    changePercent: 0.79,
+    volume: 126e5,
+    providerTimestamp: null,
+    retrievedAt: (/* @__PURE__ */ new Date()).toISOString(),
+    freshness: "demo",
+    providerName: "Demo Fixture Provider"
+  },
+  {
+    symbol: "INFY:NSE",
+    name: "Infosys Limited (Demo)",
+    assetType: "equity",
+    exchange: "NSE",
+    currency: "INR",
+    price: 1478.3,
+    open: 1469.1,
+    high: 1486.7,
+    low: 1462.8,
+    previousClose: 1466.8,
+    change: 11.5,
+    changePercent: 0.78,
+    volume: 535e4,
+    providerTimestamp: null,
+    retrievedAt: (/* @__PURE__ */ new Date()).toISOString(),
+    freshness: "demo",
+    providerName: "Demo Fixture Provider"
+  },
+  {
+    symbol: "500325:BSE",
+    name: "Reliance Industries Limited (Demo)",
+    assetType: "equity",
+    exchange: "BSE",
+    currency: "INR",
+    price: 1383.9,
+    open: 1372.1,
+    high: 1391.2,
+    low: 1368,
+    previousClose: 1371.2,
+    change: 12.7,
+    changePercent: 0.93,
+    volume: 486e3,
+    providerTimestamp: null,
+    retrievedAt: (/* @__PURE__ */ new Date()).toISOString(),
+    freshness: "demo",
+    providerName: "Demo Fixture Provider"
+  },
+  {
+    symbol: "NIFTY:NSE",
+    name: "NIFTY 50 Index (Demo)",
+    assetType: "index",
+    exchange: "NSE",
+    currency: "INR",
+    price: 25420.4,
+    open: 25376.1,
+    high: 25468.2,
+    low: 25331.6,
+    previousClose: 25366.25,
+    change: 54.15,
+    changePercent: 0.21,
+    volume: null,
+    providerTimestamp: null,
+    retrievedAt: (/* @__PURE__ */ new Date()).toISOString(),
+    freshness: "demo",
+    providerName: "Demo Fixture Provider"
+  },
+  {
+    symbol: "SENSEX:BSE",
+    name: "S&P BSE SENSEX (Demo)",
+    assetType: "index",
+    exchange: "BSE",
+    currency: "INR",
+    price: 82984.6,
+    open: 82776.4,
+    high: 83122.8,
+    low: 82691.2,
+    previousClose: 82759.45,
+    change: 225.15,
+    changePercent: 0.27,
+    volume: null,
+    providerTimestamp: null,
+    retrievedAt: (/* @__PURE__ */ new Date()).toISOString(),
+    freshness: "demo",
+    providerName: "Demo Fixture Provider"
+  },
+  {
+    symbol: "BANKNIFTY:NSE",
+    name: "NIFTY Bank Index (Demo)",
+    assetType: "index",
+    exchange: "NSE",
+    currency: "INR",
+    price: 56172.8,
+    open: 56321.4,
+    high: 56408.7,
+    low: 56091.3,
+    previousClose: 56310.2,
+    change: -137.4,
+    changePercent: -0.24,
+    volume: null,
+    providerTimestamp: null,
+    retrievedAt: (/* @__PURE__ */ new Date()).toISOString(),
+    freshness: "demo",
+    providerName: "Demo Fixture Provider"
+  },
+  {
+    symbol: "USD/INR",
+    name: "US Dollar / Indian Rupee (Demo)",
+    assetType: "forex",
+    exchange: "FX",
+    currency: "INR",
+    price: 87.1,
+    open: 87.04,
+    high: 87.18,
+    low: 86.98,
+    previousClose: 87.03,
+    change: 0.07,
+    changePercent: 0.08,
+    volume: null,
+    providerTimestamp: null,
+    retrievedAt: (/* @__PURE__ */ new Date()).toISOString(),
+    freshness: "demo",
+    providerName: "Demo Fixture Provider"
+  },
+  {
+    symbol: "XAU/INR",
+    name: "Gold Spot / Indian Rupee per Troy Ounce (Demo)",
+    assetType: "commodity",
+    exchange: "FX",
+    currency: "INR",
+    price: 295420,
+    open: 293980,
+    high: 296110,
+    low: 293420,
+    previousClose: 294125,
+    change: 1295,
+    changePercent: 0.44,
+    volume: null,
+    providerTimestamp: null,
+    retrievedAt: (/* @__PURE__ */ new Date()).toISOString(),
+    freshness: "demo",
+    providerName: "Demo Fixture Provider"
+  },
+  {
+    symbol: "GC=F",
+    name: "Gold Futures (Demo)",
+    assetType: "commodity",
+    exchange: "COMEX",
+    currency: "USD",
+    price: 3394.8,
+    open: 3378.3,
+    high: 3402.6,
+    low: 3371.9,
+    previousClose: 3380.1,
+    change: 14.7,
+    changePercent: 0.43,
+    volume: 186420,
+    providerTimestamp: null,
+    retrievedAt: (/* @__PURE__ */ new Date()).toISOString(),
+    freshness: "demo",
+    providerName: "Demo Fixture Provider"
   }
 ];
 var DEMO_MARKET_HISTORY = {
@@ -2788,61 +2978,432 @@ var DEMO_MARKET_HISTORY = {
     { date: "2026-07-29", price: 545 },
     { date: "2026-08-05", price: 549.5 },
     { date: "2026-08-12", price: 552.1 }
+  ],
+  "RELIANCE:NSE": [
+    { date: "2026-07-15", price: 1324.1, open: 1318.4, high: 1330.2, low: 1312.7, close: 1324.1, volume: 611e4 },
+    { date: "2026-07-22", price: 1341.6, open: 1327, high: 1348.5, low: 1321.4, close: 1341.6, volume: 684e4 },
+    { date: "2026-07-29", price: 1362.3, open: 1345.2, high: 1368.9, low: 1338.5, close: 1362.3, volume: 729e4 },
+    { date: "2026-08-05", price: 1371.7, open: 1360.8, high: 1378.4, low: 1355.1, close: 1371.7, volume: 653e4 },
+    { date: "2026-08-12", price: 1384.4, open: 1372.5, high: 1391.8, low: 1368.2, close: 1384.4, volume: 742e4 }
+  ],
+  "SBIN:NSE": [
+    { date: "2026-07-15", price: 778.2, open: 772.8, high: 782.4, low: 768.9, close: 778.2, volume: 109e5 },
+    { date: "2026-07-22", price: 786.5, open: 779.1, high: 790.8, low: 775.6, close: 786.5, volume: 113e5 },
+    { date: "2026-07-29", price: 798.9, open: 788, high: 803.6, low: 784.2, close: 798.9, volume: 121e5 },
+    { date: "2026-08-05", price: 806.25, open: 800.4, high: 810.7, low: 796.8, close: 806.25, volume: 117e5 },
+    { date: "2026-08-12", price: 812.65, open: 806.4, high: 817.2, low: 803.9, close: 812.65, volume: 126e5 }
   ]
 };
 
+// server/providers/yahooFinanceProvider.ts
+import { z as z3 } from "zod";
+var DEFAULT_YAHOO_CHART_URL = "https://query1.finance.yahoo.com/v8/finance/chart";
+var yahooChartResponseSchema = z3.object({
+  chart: z3.object({
+    result: z3.array(z3.object({
+      meta: z3.object({
+        currency: z3.string().optional(),
+        symbol: z3.string().optional(),
+        exchangeName: z3.string().optional(),
+        fullExchangeName: z3.string().optional(),
+        instrumentType: z3.string().optional(),
+        regularMarketTime: z3.number().nullable().optional(),
+        regularMarketPrice: z3.number().nullable().optional(),
+        regularMarketDayHigh: z3.number().nullable().optional(),
+        regularMarketDayLow: z3.number().nullable().optional(),
+        regularMarketVolume: z3.number().nullable().optional(),
+        chartPreviousClose: z3.number().nullable().optional(),
+        previousClose: z3.number().nullable().optional(),
+        exchangeDataDelayedBy: z3.number().nullable().optional(),
+        longName: z3.string().optional(),
+        shortName: z3.string().optional(),
+        currentTradingPeriod: z3.object({
+          regular: z3.object({
+            start: z3.number().optional(),
+            end: z3.number().optional()
+          }).passthrough().optional()
+        }).passthrough().optional()
+      }).passthrough(),
+      timestamp: z3.array(z3.number()).optional().default([]),
+      indicators: z3.object({
+        quote: z3.array(z3.object({
+          open: z3.array(z3.number().nullable()).optional().default([]),
+          high: z3.array(z3.number().nullable()).optional().default([]),
+          low: z3.array(z3.number().nullable()).optional().default([]),
+          close: z3.array(z3.number().nullable()).optional().default([]),
+          volume: z3.array(z3.number().nullable()).optional().default([])
+        }).passthrough()).optional().default([])
+      }).passthrough()
+    }).passthrough()).nullable().optional(),
+    error: z3.unknown().nullable().optional()
+  }).passthrough()
+}).passthrough();
+var YAHOO_SYMBOL_ALIASES = {
+  "NIFTY:NSE": { providerSymbol: "^NSEI", displaySymbol: "NIFTY:NSE", exchange: "NSE" },
+  "NSE:NIFTY": { providerSymbol: "^NSEI", displaySymbol: "NIFTY:NSE", exchange: "NSE" },
+  "^NSEI": { providerSymbol: "^NSEI", displaySymbol: "NIFTY:NSE", exchange: "NSE" },
+  "BANKNIFTY:NSE": { providerSymbol: "^NSEBANK", displaySymbol: "BANKNIFTY:NSE", exchange: "NSE" },
+  "NSE:BANKNIFTY": { providerSymbol: "^NSEBANK", displaySymbol: "BANKNIFTY:NSE", exchange: "NSE" },
+  "^NSEBANK": { providerSymbol: "^NSEBANK", displaySymbol: "BANKNIFTY:NSE", exchange: "NSE" },
+  "SENSEX:BSE": { providerSymbol: "^BSESN", displaySymbol: "SENSEX:BSE", exchange: "BSE" },
+  "BSE:SENSEX": { providerSymbol: "^BSESN", displaySymbol: "SENSEX:BSE", exchange: "BSE" },
+  "^BSESN": { providerSymbol: "^BSESN", displaySymbol: "SENSEX:BSE", exchange: "BSE" },
+  "USD/INR": { providerSymbol: "INR=X", displaySymbol: "USD/INR", exchange: "FX" },
+  "INR=X": { providerSymbol: "INR=X", displaySymbol: "USD/INR", exchange: "FX" },
+  GOLD: { providerSymbol: "GC=F", displaySymbol: "GC=F", exchange: "COMEX" },
+  "GC=F": { providerSymbol: "GC=F", displaySymbol: "GC=F", exchange: "COMEX" }
+};
+function isYahooFinanceProvider(provider) {
+  return provider === "yahoo" || provider === "yahoo-finance" || provider === "yahoofinance";
+}
+function safeYahooSymbol(symbol) {
+  const normalized = symbol.trim().toUpperCase();
+  if (!/^[A-Z0-9^][A-Z0-9.^=_-]{0,39}$/.test(normalized)) {
+    throw new Error("Invalid Yahoo Finance symbol.");
+  }
+  return normalized;
+}
+function normalizeYahooFinanceSymbol(symbol) {
+  const normalized = symbol.trim().toUpperCase();
+  const alias = YAHOO_SYMBOL_ALIASES[normalized];
+  if (alias) return { ...alias };
+  const yahooIndiaSuffix = normalized.match(/^(.+)\.(NS|BO)$/);
+  if (yahooIndiaSuffix) {
+    const baseSymbol = safeYahooSymbol(yahooIndiaSuffix[1]);
+    const exchange = yahooIndiaSuffix[2] === "NS" ? "NSE" : "BSE";
+    return {
+      providerSymbol: `${baseSymbol}.${yahooIndiaSuffix[2]}`,
+      displaySymbol: `${baseSymbol}:${exchange}`,
+      exchange
+    };
+  }
+  const exchangeQualified = normalized.match(/^([^:]+):(NSE|BSE)$/);
+  const exchangePrefixed = normalized.match(/^(NSE|BSE):([^:]+)$/);
+  if (exchangeQualified || exchangePrefixed) {
+    const exchange = exchangeQualified?.[2] || exchangePrefixed?.[1];
+    const baseSymbol = safeYahooSymbol(exchangeQualified?.[1] || exchangePrefixed?.[2] || "");
+    return {
+      providerSymbol: `${baseSymbol}.${exchange === "NSE" ? "NS" : "BO"}`,
+      displaySymbol: `${baseSymbol}:${exchange}`,
+      exchange
+    };
+  }
+  const providerSymbol = safeYahooSymbol(normalized);
+  return { providerSymbol, displaySymbol: providerSymbol, exchange: null };
+}
+function buildChartUrl(symbol, range, interval) {
+  const baseUrl = process.env.YAHOO_FINANCE_BASE_URL?.trim() || DEFAULT_YAHOO_CHART_URL;
+  const url = new URL(baseUrl);
+  if (url.protocol !== "https:") throw new Error("Yahoo Finance provider URL must use HTTPS.");
+  url.pathname = `${url.pathname.replace(/\/$/, "")}/${encodeURIComponent(symbol)}`;
+  url.search = "";
+  url.searchParams.set("range", range);
+  url.searchParams.set("interval", interval);
+  url.searchParams.set("includePrePost", "false");
+  url.searchParams.set("events", "div,splits");
+  return url;
+}
+function toFiniteNumber(value) {
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+function firstFinite(values) {
+  for (const value of values) {
+    const numberValue = toFiniteNumber(value);
+    if (numberValue !== null) return numberValue;
+  }
+  return null;
+}
+function valueAt(values, index) {
+  return toFiniteNumber(values[index]);
+}
+function fallbackQuote(symbol, assetType) {
+  const fixture = DEMO_MARKET_QUOTES.find((quote) => quote.symbol === symbol.displaySymbol);
+  if (fixture) return { ...fixture, retrievedAt: (/* @__PURE__ */ new Date()).toISOString() };
+  const isIndia = symbol.exchange === "NSE" || symbol.exchange === "BSE";
+  return {
+    symbol: symbol.displaySymbol,
+    name: `${symbol.displaySymbol} (Demo)`,
+    assetType,
+    exchange: symbol.exchange,
+    currency: isIndia ? "INR" : "USD",
+    price: 100,
+    open: 100,
+    high: 100,
+    low: 100,
+    previousClose: 100,
+    change: 0,
+    changePercent: 0,
+    volume: 0,
+    providerTimestamp: null,
+    retrievedAt: (/* @__PURE__ */ new Date()).toISOString(),
+    freshness: "demo",
+    providerName: "Demo Market Fixtures"
+  };
+}
+function resolveFreshness(meta, providerTimestampSeconds) {
+  const nowSeconds = Math.floor(Date.now() / 1e3);
+  const regular = meta.currentTradingPeriod?.regular;
+  const isRegularSession = Boolean(
+    regular?.start && regular?.end && nowSeconds >= regular.start && nowSeconds <= regular.end
+  );
+  if (!isRegularSession) return "end_of_day";
+  if (!providerTimestampSeconds) return "stale";
+  const ageSeconds = Math.max(0, nowSeconds - providerTimestampSeconds);
+  const delayMinutes = meta.exchangeDataDelayedBy;
+  const expectedDelaySeconds = typeof delayMinutes === "number" ? delayMinutes * 60 : 900;
+  if (ageSeconds > expectedDelaySeconds + 300) return "stale";
+  if (delayMinutes === 0 && ageSeconds <= 180) return "real_time";
+  return "delayed";
+}
+function providerErrorStatus(httpStatus) {
+  if (httpStatus === 429) return "rate_limited";
+  if (httpStatus === 401 || httpStatus === 403) return "invalid_credentials";
+  return "error";
+}
+async function fetchYahooFinanceQuote(symbol, assetType = "equity") {
+  const normalizedSymbol = normalizeYahooFinanceSymbol(symbol);
+  const fallback = fallbackQuote(normalizedSymbol, assetType);
+  try {
+    const url = buildChartUrl(normalizedSymbol.providerSymbol, "1d", "1m");
+    const response = await fetch(url, {
+      headers: { Accept: "application/json" },
+      signal: AbortSignal.timeout(8e3)
+    });
+    if (!response.ok) {
+      const status = providerErrorStatus(response.status);
+      return {
+        quote: fallback,
+        status,
+        message: status === "rate_limited" ? "Yahoo Finance rate limit reached. Displaying a labelled demo quote." : `Yahoo Finance request failed with HTTP ${response.status}.`
+      };
+    }
+    const rawData = await response.json().catch(() => null);
+    const parsed = yahooChartResponseSchema.safeParse(rawData);
+    const result = parsed.success ? parsed.data.chart.result?.[0] : null;
+    const series = result?.indicators.quote[0];
+    if (!result || !series) {
+      return {
+        quote: fallback,
+        status: "invalid_response",
+        message: "Yahoo Finance returned an unexpected chart response."
+      };
+    }
+    let latestIndex = -1;
+    for (let index = result.timestamp.length - 1; index >= 0; index -= 1) {
+      if (valueAt(series.close, index) !== null) {
+        latestIndex = index;
+        break;
+      }
+    }
+    const latestClose = latestIndex >= 0 ? valueAt(series.close, latestIndex) : null;
+    const price = toFiniteNumber(result.meta.regularMarketPrice) ?? latestClose;
+    if (price === null) {
+      return {
+        quote: fallback,
+        status: "invalid_response",
+        message: "Yahoo Finance did not return a usable market price."
+      };
+    }
+    const providerTimestampSeconds = (latestIndex >= 0 ? result.timestamp[latestIndex] : null) ?? toFiniteNumber(result.meta.regularMarketTime);
+    const previousClose = toFiniteNumber(result.meta.previousClose) ?? toFiniteNumber(result.meta.chartPreviousClose);
+    const change = previousClose === null ? null : price - previousClose;
+    const changePercent = previousClose && change !== null ? change / previousClose * 100 : null;
+    const freshness = resolveFreshness(result.meta, providerTimestampSeconds);
+    return {
+      quote: {
+        symbol: normalizedSymbol.displaySymbol,
+        name: result.meta.longName || result.meta.shortName || result.meta.symbol || normalizedSymbol.displaySymbol,
+        assetType: result.meta.instrumentType?.toLowerCase() || assetType,
+        exchange: normalizedSymbol.exchange || result.meta.fullExchangeName || result.meta.exchangeName || null,
+        currency: result.meta.currency || (normalizedSymbol.exchange === "NSE" || normalizedSymbol.exchange === "BSE" ? "INR" : "USD"),
+        price,
+        open: firstFinite(series.open),
+        high: toFiniteNumber(result.meta.regularMarketDayHigh) ?? (latestIndex >= 0 ? valueAt(series.high, latestIndex) : null),
+        low: toFiniteNumber(result.meta.regularMarketDayLow) ?? (latestIndex >= 0 ? valueAt(series.low, latestIndex) : null),
+        previousClose,
+        change: change ?? 0,
+        changePercent: changePercent ?? 0,
+        volume: toFiniteNumber(result.meta.regularMarketVolume) ?? (latestIndex >= 0 ? valueAt(series.volume, latestIndex) : null),
+        providerTimestamp: providerTimestampSeconds ? new Date(providerTimestampSeconds * 1e3).toISOString() : null,
+        retrievedAt: (/* @__PURE__ */ new Date()).toISOString(),
+        freshness,
+        providerName: "Yahoo Finance (Experimental)"
+      },
+      status: "connected",
+      message: `Yahoo Finance quote loaded with ${freshness.replaceAll("_", " ")} freshness.`
+    };
+  } catch {
+    return {
+      quote: fallback,
+      status: "error",
+      message: "Yahoo Finance is temporarily unreachable. Displaying a labelled demo quote."
+    };
+  }
+}
+function historyConfiguration(range) {
+  const configurations = {
+    "1d": { range: "1d", interval: "5m" },
+    "1w": { range: "5d", interval: "15m" },
+    "1m": { range: "1mo", interval: "1d" },
+    "3m": { range: "3mo", interval: "1d" },
+    "6m": { range: "6mo", interval: "1d" },
+    "1y": { range: "1y", interval: "1d" }
+  };
+  return configurations[range] || configurations["1m"];
+}
+async function fetchYahooFinanceHistory(symbol, range = "1m") {
+  const normalizedSymbol = normalizeYahooFinanceSymbol(symbol);
+  try {
+    const configuration = historyConfiguration(range);
+    const url = buildChartUrl(
+      normalizedSymbol.providerSymbol,
+      configuration.range,
+      configuration.interval
+    );
+    const response = await fetch(url, {
+      headers: { Accept: "application/json" },
+      signal: AbortSignal.timeout(8e3)
+    });
+    if (!response.ok) return [];
+    const rawData = await response.json().catch(() => null);
+    const parsed = yahooChartResponseSchema.safeParse(rawData);
+    const result = parsed.success ? parsed.data.chart.result?.[0] : null;
+    const series = result?.indicators.quote[0];
+    if (!result || !series) return [];
+    const points = result.timestamp.flatMap((timestamp, index) => {
+      const close = valueAt(series.close, index);
+      if (close === null) return [];
+      const open = valueAt(series.open, index);
+      const high = valueAt(series.high, index);
+      const low = valueAt(series.low, index);
+      const volume = valueAt(series.volume, index);
+      return [{
+        date: new Date(timestamp * 1e3).toISOString(),
+        price: close,
+        ...open === null ? {} : { open },
+        ...high === null ? {} : { high },
+        ...low === null ? {} : { low },
+        close,
+        ...volume === null ? {} : { volume }
+      }];
+    });
+    return points;
+  } catch {
+    return [];
+  }
+}
+
 // server/providers/marketDataProvider.ts
 var DEFAULT_TWELVE_DATA_QUOTE_URL = "https://api.twelvedata.com/quote";
-var quoteResponseSchema = z3.object({
-  symbol: z3.string().optional(),
-  name: z3.string().optional(),
-  exchange: z3.string().nullable().optional(),
-  currency: z3.string().optional(),
-  datetime: z3.string().nullable().optional(),
-  timestamp: z3.union([z3.string(), z3.number()]).nullable().optional(),
-  open: z3.union([z3.string(), z3.number()]).nullable().optional(),
-  high: z3.union([z3.string(), z3.number()]).nullable().optional(),
-  low: z3.union([z3.string(), z3.number()]).nullable().optional(),
-  close: z3.union([z3.string(), z3.number()]).nullable().optional(),
-  price: z3.union([z3.string(), z3.number()]).nullable().optional(),
-  previous_close: z3.union([z3.string(), z3.number()]).nullable().optional(),
-  change: z3.union([z3.string(), z3.number()]).nullable().optional(),
-  percent_change: z3.union([z3.string(), z3.number()]).nullable().optional(),
-  volume: z3.union([z3.string(), z3.number()]).nullable().optional(),
-  is_market_open: z3.boolean().optional()
+var quoteResponseSchema = z4.object({
+  symbol: z4.string().optional(),
+  name: z4.string().optional(),
+  exchange: z4.string().nullable().optional(),
+  currency: z4.string().optional(),
+  datetime: z4.string().nullable().optional(),
+  timestamp: z4.union([z4.string(), z4.number()]).nullable().optional(),
+  open: z4.union([z4.string(), z4.number()]).nullable().optional(),
+  high: z4.union([z4.string(), z4.number()]).nullable().optional(),
+  low: z4.union([z4.string(), z4.number()]).nullable().optional(),
+  close: z4.union([z4.string(), z4.number()]).nullable().optional(),
+  price: z4.union([z4.string(), z4.number()]).nullable().optional(),
+  previous_close: z4.union([z4.string(), z4.number()]).nullable().optional(),
+  change: z4.union([z4.string(), z4.number()]).nullable().optional(),
+  percent_change: z4.union([z4.string(), z4.number()]).nullable().optional(),
+  volume: z4.union([z4.string(), z4.number()]).nullable().optional(),
+  is_market_open: z4.boolean().optional()
 }).passthrough();
-var timeSeriesResponseSchema = z3.object({
-  status: z3.string().optional(),
-  values: z3.array(
-    z3.object({
-      datetime: z3.string(),
-      close: z3.union([z3.string(), z3.number()]),
-      volume: z3.union([z3.string(), z3.number()]).nullable().optional()
+var timeSeriesResponseSchema = z4.object({
+  status: z4.string().optional(),
+  values: z4.array(
+    z4.object({
+      datetime: z4.string(),
+      open: z4.union([z4.string(), z4.number()]).nullable().optional(),
+      high: z4.union([z4.string(), z4.number()]).nullable().optional(),
+      low: z4.union([z4.string(), z4.number()]).nullable().optional(),
+      close: z4.union([z4.string(), z4.number()]),
+      volume: z4.union([z4.string(), z4.number()]).nullable().optional()
     }).passthrough()
   ).optional().default([])
 }).passthrough();
 function getConfiguration2() {
   return {
     provider: (process.env.MARKET_DATA_PROVIDER || "twelvedata").trim().toLowerCase(),
+    primaryProvider: (process.env.MARKET_DATA_PRIMARY_PROVIDER || "yahoo").trim().toLowerCase(),
+    fallbackProvider: (process.env.MARKET_DATA_FALLBACK_PROVIDER || "twelvedata").trim().toLowerCase(),
     apiKey: process.env.MARKET_DATA_API_KEY?.trim() || "",
     baseUrl: process.env.MARKET_DATA_BASE_URL?.trim() || DEFAULT_TWELVE_DATA_QUOTE_URL
   };
+}
+function normalizeProviderName(provider) {
+  if (isYahooFinanceProvider(provider)) return "yahoo";
+  if (provider === "twelvedata" || provider === "twelve-data") return "twelvedata";
+  return null;
+}
+function providerLabel(provider) {
+  return provider === "yahoo" ? "Yahoo Finance" : "Twelve Data";
 }
 function toNumber(value) {
   if (value === null || value === void 0 || value === "") return null;
   const numberValue = typeof value === "number" ? value : Number(value);
   return Number.isFinite(numberValue) ? numberValue : null;
 }
+var INDIA_EXCHANGE_ALIASES = {
+  NSE: "NSE",
+  XNSE: "NSE",
+  NS: "NSE",
+  BSE: "BSE",
+  XBOM: "BSE",
+  BO: "BSE"
+};
+function normalizeTwelveDataSymbol(symbol) {
+  let normalized = symbol.trim().toUpperCase();
+  let exchange = null;
+  const yahooSuffix = normalized.match(/^(.+)\.(NS|BO)$/);
+  if (yahooSuffix) {
+    normalized = yahooSuffix[1];
+    exchange = INDIA_EXCHANGE_ALIASES[yahooSuffix[2]];
+  } else {
+    const qualified = normalized.match(/^([^:]+):([^:]+)$/);
+    if (qualified) {
+      const prefixExchange = INDIA_EXCHANGE_ALIASES[qualified[1]];
+      const suffixExchange = INDIA_EXCHANGE_ALIASES[qualified[2]];
+      if (prefixExchange) {
+        normalized = qualified[2];
+        exchange = prefixExchange;
+      } else if (suffixExchange) {
+        normalized = qualified[1];
+        exchange = suffixExchange;
+      }
+    }
+  }
+  const baseSymbol = safeSymbol(normalized);
+  return {
+    providerSymbol: exchange ? `${baseSymbol}:${exchange}` : baseSymbol,
+    baseSymbol,
+    exchange
+  };
+}
+function isIndianExchange(exchange) {
+  if (!exchange) return false;
+  return Boolean(INDIA_EXCHANGE_ALIASES[exchange.trim().toUpperCase()]);
+}
+function resolveQuoteFreshness(exchange, isMarketOpen) {
+  if (isIndianExchange(exchange)) return "end_of_day";
+  return isMarketOpen ? "delayed" : "end_of_day";
+}
 function buildFallbackQuote(symbol, assetType) {
   const uppercaseSymbol = symbol.toUpperCase();
   const fixture = DEMO_MARKET_QUOTES.find((quote) => quote.symbol === uppercaseSymbol);
   if (fixture) return { ...fixture, retrievedAt: (/* @__PURE__ */ new Date()).toISOString() };
+  const exchange = uppercaseSymbol.endsWith(":NSE") ? "NSE" : uppercaseSymbol.endsWith(":BSE") ? "BSE" : null;
+  const baseSymbol = exchange ? uppercaseSymbol.slice(0, -(exchange.length + 1)) : uppercaseSymbol;
   return {
     symbol: uppercaseSymbol,
-    name: `${uppercaseSymbol} (Demo)`,
+    name: `${baseSymbol} (Demo)`,
     assetType,
-    exchange: null,
-    currency: "USD",
+    exchange,
+    currency: exchange ? "INR" : "USD",
     price: 100,
     open: 100,
     high: 100,
@@ -2885,34 +3446,27 @@ function safeSymbol(symbol) {
   }
   return normalized;
 }
-async function fetchQuoteFromProvider(symbol, assetType = "equity") {
-  const normalizedSymbol = safeSymbol(symbol);
-  const fallbackQuote = buildFallbackQuote(normalizedSymbol, assetType);
-  const { provider, apiKey, baseUrl } = getConfiguration2();
+async function fetchTwelveDataQuote(symbol, assetType, configuration) {
+  const normalizedSymbol = normalizeTwelveDataSymbol(symbol);
+  const fallbackQuote2 = buildFallbackQuote(normalizedSymbol.providerSymbol, assetType);
+  const { apiKey, baseUrl } = configuration;
   if (!apiKey) {
     return {
-      quote: fallbackQuote,
+      quote: fallbackQuote2,
       status: "not_configured",
       message: "Twelve Data API key is not configured. Displaying a labelled demo quote."
     };
   }
-  if (provider !== "twelvedata" && provider !== "twelve-data") {
-    return {
-      quote: fallbackQuote,
-      status: "error",
-      message: "Unsupported market-data provider configuration."
-    };
-  }
   try {
     const url = buildProviderUrl(baseUrl, "quote");
-    url.searchParams.set("symbol", normalizedSymbol);
+    url.searchParams.set("symbol", normalizedSymbol.providerSymbol);
     url.searchParams.set("apikey", apiKey);
     const response = await fetch(url, { signal: AbortSignal.timeout(8e3) });
     const rawData = await response.json().catch(() => null);
     const providerError = classifyProviderError(rawData, response.status);
     if (providerError) {
       return {
-        quote: fallbackQuote,
+        quote: fallbackQuote2,
         status: providerError,
         message: providerError === "invalid_credentials" ? "Twelve Data rejected the configured credential." : providerError === "rate_limited" ? "Twelve Data rate limit reached. Displaying a labelled demo quote." : `Twelve Data request failed with HTTP ${response.status}.`
       };
@@ -2920,7 +3474,7 @@ async function fetchQuoteFromProvider(symbol, assetType = "equity") {
     const parsed = quoteResponseSchema.safeParse(rawData);
     if (!parsed.success) {
       return {
-        quote: fallbackQuote,
+        quote: fallbackQuote2,
         status: "invalid_response",
         message: "Twelve Data returned an unexpected quote response."
       };
@@ -2929,7 +3483,7 @@ async function fetchQuoteFromProvider(symbol, assetType = "equity") {
     const price = toNumber(data.close) ?? toNumber(data.price);
     if (price === null) {
       return {
-        quote: fallbackQuote,
+        quote: fallbackQuote2,
         status: "invalid_response",
         message: "Twelve Data did not return a usable market price."
       };
@@ -2937,12 +3491,15 @@ async function fetchQuoteFromProvider(symbol, assetType = "equity") {
     const previousClose = toNumber(data.previous_close);
     const change = toNumber(data.change) ?? (previousClose === null ? null : price - previousClose);
     const changePercent = toNumber(data.percent_change) ?? (previousClose && change !== null ? change / previousClose * 100 : null);
+    const responseIndiaExchange = data.exchange ? INDIA_EXCHANGE_ALIASES[data.exchange.trim().toUpperCase()] || null : null;
+    const indiaExchange = normalizedSymbol.exchange || responseIndiaExchange;
+    const responseBaseSymbol = data.symbol ? normalizeTwelveDataSymbol(data.symbol).baseSymbol : normalizedSymbol.baseSymbol;
     const quote = {
-      symbol: data.symbol || normalizedSymbol,
-      name: data.name || data.symbol || normalizedSymbol,
+      symbol: indiaExchange ? `${responseBaseSymbol}:${indiaExchange}` : data.symbol || normalizedSymbol.baseSymbol,
+      name: data.name || data.symbol || normalizedSymbol.baseSymbol,
       assetType,
-      exchange: data.exchange || null,
-      currency: data.currency || "USD",
+      exchange: indiaExchange || data.exchange || null,
+      currency: data.currency || (indiaExchange ? "INR" : "USD"),
       price,
       open: toNumber(data.open),
       high: toNumber(data.high),
@@ -2953,22 +3510,81 @@ async function fetchQuoteFromProvider(symbol, assetType = "equity") {
       volume: toNumber(data.volume),
       providerTimestamp: data.datetime || (data.timestamp !== null && data.timestamp !== void 0 ? String(data.timestamp) : null),
       retrievedAt: (/* @__PURE__ */ new Date()).toISOString(),
-      // The free plan can include delayed exchange data, so do not overstate freshness.
-      freshness: data.is_market_open ? "delayed" : "end_of_day",
+      freshness: resolveQuoteFreshness(
+        indiaExchange || data.exchange,
+        data.is_market_open
+      ),
       providerName: "Twelve Data"
     };
     return {
       quote,
       status: "connected",
-      message: "Live Twelve Data quote loaded."
+      message: indiaExchange ? "Twelve Data India end-of-day quote loaded." : "Twelve Data quote loaded with conservative freshness labelling."
     };
   } catch {
     return {
-      quote: fallbackQuote,
+      quote: fallbackQuote2,
       status: "error",
       message: "Twelve Data is temporarily unreachable. Displaying a labelled demo quote."
     };
   }
+}
+function isUsableProviderQuote(result) {
+  return result.status === "connected" && result.quote.freshness !== "demo" && result.quote.freshness !== "stale" && Number.isFinite(result.quote.price);
+}
+async function fetchQuoteForNamedProvider(provider, symbol, assetType, configuration) {
+  return provider === "yahoo" ? fetchYahooFinanceQuote(symbol, assetType) : fetchTwelveDataQuote(symbol, assetType, configuration);
+}
+async function fetchHybridQuote(symbol, assetType, configuration) {
+  const primary = normalizeProviderName(configuration.primaryProvider) || "yahoo";
+  const fallback = normalizeProviderName(configuration.fallbackProvider) || "twelvedata";
+  const primaryResult = await fetchQuoteForNamedProvider(
+    primary,
+    symbol,
+    assetType,
+    configuration
+  );
+  if (isUsableProviderQuote(primaryResult) || primary === fallback) {
+    return {
+      ...primaryResult,
+      message: `Hybrid primary ${providerLabel(primary)}: ${primaryResult.message || primaryResult.status}.`
+    };
+  }
+  const fallbackResult = await fetchQuoteForNamedProvider(
+    fallback,
+    symbol,
+    assetType,
+    configuration
+  );
+  if (isUsableProviderQuote(fallbackResult)) {
+    return {
+      ...fallbackResult,
+      message: `Hybrid failover used ${providerLabel(fallback)} because ${providerLabel(primary)} returned ${primaryResult.status}. ${fallbackResult.message || ""}`.trim()
+    };
+  }
+  return {
+    ...fallbackResult,
+    message: `Hybrid providers unavailable: ${providerLabel(primary)} returned ${primaryResult.status}; ${providerLabel(fallback)} returned ${fallbackResult.status}.`
+  };
+}
+async function fetchQuoteFromProvider(symbol, assetType = "equity") {
+  const configuration = getConfiguration2();
+  if (configuration.provider === "hybrid") {
+    return fetchHybridQuote(symbol, assetType, configuration);
+  }
+  const provider = normalizeProviderName(configuration.provider);
+  if (provider) {
+    return fetchQuoteForNamedProvider(provider, symbol, assetType, configuration);
+  }
+  const fallbackQuote2 = buildFallbackQuote(
+    normalizeTwelveDataSymbol(symbol).providerSymbol,
+    assetType
+  );
+  return {
+    quote: fallbackQuote2,
+    status: "error",
+    message: "Unsupported market-data provider configuration."
+  };
 }
 function historyFallback(symbol) {
   const normalizedSymbol = symbol.toUpperCase();
@@ -2986,7 +3602,18 @@ function historyFallback(symbol) {
   }
   return points;
 }
-function rangeConfiguration(range) {
+function rangeConfiguration(range, indiaEndOfDay = false) {
+  if (indiaEndOfDay) {
+    const indiaConfigurations = {
+      "1d": { interval: "1day", outputsize: "2" },
+      "1w": { interval: "1day", outputsize: "5" },
+      "1m": { interval: "1day", outputsize: "30" },
+      "3m": { interval: "1day", outputsize: "90" },
+      "6m": { interval: "1day", outputsize: "180" },
+      "1y": { interval: "1day", outputsize: "365" }
+    };
+    return indiaConfigurations[range] || indiaConfigurations["1m"];
+  }
   const configurations = {
     "1d": { interval: "5min", outputsize: "78" },
     "1w": { interval: "1h", outputsize: "40" },
@@ -2997,17 +3624,17 @@ function rangeConfiguration(range) {
   };
   return configurations[range] || configurations["1m"];
 }
-async function fetchHistoryFromProvider(symbol, range = "1m") {
-  const normalizedSymbol = safeSymbol(symbol);
-  const fallback = historyFallback(normalizedSymbol);
-  const { provider, apiKey, baseUrl } = getConfiguration2();
-  if (!apiKey || provider !== "twelvedata" && provider !== "twelve-data") return fallback;
+async function fetchTwelveDataHistory(symbol, range, configuration) {
+  const normalizedSymbol = normalizeTwelveDataSymbol(symbol);
+  const fallback = historyFallback(normalizedSymbol.providerSymbol);
+  const { apiKey, baseUrl } = configuration;
+  if (!apiKey) return fallback;
   try {
     const url = buildProviderUrl(baseUrl, "time_series");
-    const configuration = rangeConfiguration(range);
-    url.searchParams.set("symbol", normalizedSymbol);
-    url.searchParams.set("interval", configuration.interval);
-    url.searchParams.set("outputsize", configuration.outputsize);
+    const configuration2 = rangeConfiguration(range, normalizedSymbol.exchange !== null);
+    url.searchParams.set("symbol", normalizedSymbol.providerSymbol);
+    url.searchParams.set("interval", configuration2.interval);
+    url.searchParams.set("outputsize", configuration2.outputsize);
     url.searchParams.set("order", "ASC");
     url.searchParams.set("apikey", apiKey);
     const response = await fetch(url, { signal: AbortSignal.timeout(8e3) });
@@ -3015,29 +3642,66 @@ async function fetchHistoryFromProvider(symbol, range = "1m") {
     if (classifyProviderError(rawData, response.status)) return fallback;
     const parsed = timeSeriesResponseSchema.safeParse(rawData);
     if (!parsed.success || parsed.data.values.length === 0) return fallback;
-    const points = parsed.data.values.map((value) => ({
-      date: value.datetime,
-      price: toNumber(value.close),
-      volume: toNumber(value.volume)
-    })).filter(
-      (value) => value.price !== null
-    ).map((value) => ({
-      date: value.date,
-      price: value.price,
-      ...value.volume === null ? {} : { volume: value.volume }
-    }));
+    const points = parsed.data.values.flatMap((value) => {
+      const close = toNumber(value.close);
+      if (close === null) return [];
+      const open = toNumber(value.open);
+      const high = toNumber(value.high);
+      const low = toNumber(value.low);
+      const volume = toNumber(value.volume);
+      return [{
+        date: value.datetime,
+        price: close,
+        ...open === null ? {} : { open },
+        ...high === null ? {} : { high },
+        ...low === null ? {} : { low },
+        close,
+        ...volume === null ? {} : { volume }
+      }];
+    });
     return points.length > 0 ? points : fallback;
   } catch {
     return fallback;
   }
 }
+async function fetchHistoryForNamedProvider(provider, symbol, range, configuration) {
+  return provider === "yahoo" ? fetchYahooFinanceHistory(symbol, range) : fetchTwelveDataHistory(symbol, range, configuration);
+}
+async function fetchHistoryFromProvider(symbol, range = "1m") {
+  const configuration = getConfiguration2();
+  if (configuration.provider !== "hybrid") {
+    const provider = normalizeProviderName(configuration.provider);
+    return provider ? fetchHistoryForNamedProvider(provider, symbol, range, configuration) : [];
+  }
+  const primary = normalizeProviderName(configuration.primaryProvider) || "yahoo";
+  const fallback = normalizeProviderName(configuration.fallbackProvider) || "twelvedata";
+  const primaryQuote = await fetchQuoteForNamedProvider(
+    primary,
+    symbol,
+    "equity",
+    configuration
+  );
+  if (isUsableProviderQuote(primaryQuote)) {
+    const primaryPoints = await fetchHistoryForNamedProvider(
+      primary,
+      symbol,
+      range,
+      configuration
+    );
+    if (primaryPoints.length > 0 || primary === fallback) return primaryPoints;
+  }
+  return fetchHistoryForNamedProvider(fallback, symbol, range, configuration);
+}
 async function checkMarketProviderDiagnostic() {
   const startedAt = Date.now();
-  const result = await fetchQuoteFromProvider("AAPL");
+  const configuration = getConfiguration2();
+  const isHybrid = configuration.provider === "hybrid";
+  const isYahoo = isYahooFinanceProvider(configuration.provider);
+  const result = await fetchQuoteFromProvider("INFY:NSE");
   return {
     id: "market-data",
-    name: "Twelve Data",
-    role: "Stock, ETF, forex, and crypto market data",
+    name: isHybrid ? "Hybrid Market Data" : isYahoo ? "Yahoo Finance (Experimental)" : "Twelve Data India",
+    role: isHybrid ? `${providerLabel(normalizeProviderName(configuration.primaryProvider) || "yahoo")} primary with ${providerLabel(normalizeProviderName(configuration.fallbackProvider) || "twelvedata")} fallback` : isYahoo ? "Timestamped market quotes with conservative freshness labelling" : "Global market data with conservatively labelled India EOD coverage",
     status: result.status,
     lastChecked: (/* @__PURE__ */ new Date()).toISOString(),
     latencyMs: Date.now() - startedAt,
@@ -3051,7 +3715,9 @@ async function getMarketQuote(symbol, assetType = "equity") {
 }
 async function searchMarketQuotes(query, assetType = "all") {
   const apiKey = process.env.MARKET_DATA_API_KEY;
-  if (!apiKey || apiKey.trim() === "") {
+  const provider = (process.env.MARKET_DATA_PROVIDER || "twelvedata").trim().toLowerCase();
+  const providerNeedsApiKey = !["hybrid", "yahoo", "yahoo-finance", "yahoofinance"].includes(provider);
+  if (providerNeedsApiKey && (!apiKey || apiKey.trim() === "")) {
     const q = query.toLowerCase();
     const results = DEMO_MARKET_QUOTES.filter(
       (item) => item.symbol.toLowerCase().includes(q) || item.name.toLowerCase().includes(q)
@@ -3070,14 +3736,113 @@ async function getMarketHistory(symbol, range = "1m") {
   return { points };
 }
 
+// server/indiaMarketTickerService.ts
+var TICKER_CACHE_MS = 45e3;
+var MAX_CONCURRENT_REQUESTS = 2;
+var SOURCE_LABEL = "Yahoo Finance \xB7 delayed / availability varies";
+var INDIA_MARKET_INSTRUMENTS = [
+  { id: "nifty-50", label: "NIFTY 50", yahooSymbol: "^NSEI", assetType: "index" },
+  { id: "bank-nifty", label: "BANK NIFTY", yahooSymbol: "^NSEBANK", assetType: "index" },
+  { id: "sensex", label: "SENSEX", yahooSymbol: "^BSESN", assetType: "index" },
+  { id: "reliance", label: "RELIANCE", yahooSymbol: "RELIANCE.NS", assetType: "equity" },
+  { id: "tcs", label: "TCS", yahooSymbol: "TCS.NS", assetType: "equity" },
+  { id: "hdfcbank", label: "HDFCBANK", yahooSymbol: "HDFCBANK.NS", assetType: "equity" },
+  { id: "infy", label: "INFY", yahooSymbol: "INFY.NS", assetType: "equity" },
+  { id: "icicibank", label: "ICICIBANK", yahooSymbol: "ICICIBANK.NS", assetType: "equity" }
+];
+var cache;
+var inFlightRequest;
+function unavailableItem(instrument) {
+  return {
+    id: instrument.id,
+    label: instrument.label,
+    yahooSymbol: instrument.yahooSymbol,
+    status: "unavailable",
+    price: null,
+    change: null,
+    changePercent: null,
+    currency: null,
+    freshness: null,
+    providerTimestamp: null
+  };
+}
+async function fetchTickerItem(instrument) {
+  try {
+    const result = await fetchYahooFinanceQuote(
+      instrument.yahooSymbol,
+      instrument.assetType
+    );
+    const { quote } = result;
+    const isUsable = result.status === "connected" && quote.freshness !== "demo" && quote.freshness !== "stale" && Number.isFinite(quote.price);
+    if (!isUsable) return unavailableItem(instrument);
+    return {
+      id: instrument.id,
+      label: instrument.label,
+      yahooSymbol: instrument.yahooSymbol,
+      status: "available",
+      price: quote.price,
+      change: Number.isFinite(quote.change) ? quote.change : null,
+      changePercent: Number.isFinite(quote.changePercent) ? quote.changePercent : null,
+      currency: quote.currency || null,
+      freshness: quote.freshness,
+      providerTimestamp: quote.providerTimestamp
+    };
+  } catch {
+    return unavailableItem(instrument);
+  }
+}
+async function mapWithConcurrency(values, concurrency, mapper) {
+  const results = new Array(values.length);
+  let nextIndex = 0;
+  const workers = Array.from(
+    { length: Math.min(concurrency, values.length) },
+    async () => {
+      while (nextIndex < values.length) {
+        const currentIndex = nextIndex;
+        nextIndex += 1;
+        results[currentIndex] = await mapper(values[currentIndex]);
+      }
+    }
+  );
+  await Promise.all(workers);
+  return results;
+}
+async function loadIndiaMarketTicker() {
+  const items = await mapWithConcurrency(
+    INDIA_MARKET_INSTRUMENTS,
+    MAX_CONCURRENT_REQUESTS,
+    fetchTickerItem
+  );
+  const availableCount = items.filter((item) => item.status === "available").length;
+  const status = availableCount === items.length ? "available" : availableCount > 0 ? "partial" : "unavailable";
+  return {
+    status,
+    sourceLabel: SOURCE_LABEL,
+    retrievedAt: (/* @__PURE__ */ new Date()).toISOString(),
+    items
+  };
+}
+async function getIndiaMarketTicker() {
+  const now = Date.now();
+  if (cache && cache.expiresAt > now) return cache.payload;
+  if (inFlightRequest) return inFlightRequest;
+  inFlightRequest = loadIndiaMarketTicker().then((payload) => {
+    cache = { expiresAt: Date.now() + TICKER_CACHE_MS, payload };
+    return payload;
+  }).finally(() => {
+    inFlightRequest = void 0;
+  });
+  return inFlightRequest;
+}
+
 // server/providers/fredProvider.ts
-import { z as z4 } from "zod";
+import { z as z5 } from "zod";
 var DEFAULT_FRED_OBSERVATIONS_URL = "https://api.stlouisfed.org/fred/series/observations";
-var fredResponseSchema = z4.object({
-  observations: z4.array(
-    z4.object({
-      date: z4.string(),
-      value: z4.union([z4.string(), z4.number()])
+var fredResponseSchema = z5.object({
+  observations: z5.array(
+    z5.object({
+      date: z5.string(),
+      value: z5.union([z5.string(), z5.number()])
     }).passthrough()
   ).default([])
 }).passthrough();
@@ -3284,18 +4049,18 @@ async function checkFredDiagnostic() {
 }
 
 // server/providers/worldBankProvider.ts
-import { z as z5 } from "zod";
+import { z as z6 } from "zod";
 var DEFAULT_WORLD_BANK_BASE_URL = "https://api.worldbank.org/v2/country/IND/indicator";
-var worldBankObservationSchema = z5.object({
-  indicator: z5.object({ id: z5.string(), value: z5.string().nullable().optional() }).passthrough(),
-  country: z5.object({ id: z5.string(), value: z5.string() }).passthrough(),
-  countryiso3code: z5.string().optional(),
-  date: z5.string(),
-  value: z5.number().nullable()
+var worldBankObservationSchema = z6.object({
+  indicator: z6.object({ id: z6.string(), value: z6.string().nullable().optional() }).passthrough(),
+  country: z6.object({ id: z6.string(), value: z6.string() }).passthrough(),
+  countryiso3code: z6.string().optional(),
+  date: z6.string(),
+  value: z6.number().nullable()
 }).passthrough();
-var worldBankResponseSchema = z5.tuple([
-  z5.object({ page: z5.number().optional(), pages: z5.number().optional() }).passthrough(),
-  z5.array(worldBankObservationSchema)
+var worldBankResponseSchema = z6.tuple([
+  z6.object({ page: z6.number().optional(), pages: z6.number().optional() }).passthrough(),
+  z6.array(worldBankObservationSchema)
 ]);
 var INDIA_INDICATORS = [
   {
@@ -3459,46 +4224,46 @@ async function checkWorldBankIndiaDiagnostic() {
 }
 
 // server/providers/finnhubProvider.ts
-import { z as z6 } from "zod";
+import { z as z7 } from "zod";
 var DEFAULT_FINNHUB_BASE_URL = "https://finnhub.io/api/v1";
-var profileSchema = z6.object({
-  country: z6.string().optional(),
-  currency: z6.string().optional(),
-  exchange: z6.string().optional(),
-  finnhubIndustry: z6.string().optional(),
-  ipo: z6.string().optional(),
-  logo: z6.string().optional(),
-  marketCapitalization: z6.number().nullable().optional(),
-  name: z6.string().optional(),
-  phone: z6.string().optional(),
-  shareOutstanding: z6.number().nullable().optional(),
-  ticker: z6.string().optional(),
-  weburl: z6.string().optional()
+var profileSchema = z7.object({
+  country: z7.string().optional(),
+  currency: z7.string().optional(),
+  exchange: z7.string().optional(),
+  finnhubIndustry: z7.string().optional(),
+  ipo: z7.string().optional(),
+  logo: z7.string().optional(),
+  marketCapitalization: z7.number().nullable().optional(),
+  name: z7.string().optional(),
+  phone: z7.string().optional(),
+  shareOutstanding: z7.number().nullable().optional(),
+  ticker: z7.string().optional(),
+  weburl: z7.string().optional()
 }).passthrough();
-var metricsSchema = z6.object({
-  metric: z6.record(z6.string(), z6.unknown()).optional().default({})
+var metricsSchema = z7.object({
+  metric: z7.record(z7.string(), z7.unknown()).optional().default({})
 }).passthrough();
-var earningsSchema = z6.array(
-  z6.object({
-    actual: z6.number().nullable().optional(),
-    estimate: z6.number().nullable().optional(),
-    period: z6.string().optional(),
-    quarter: z6.number().nullable().optional(),
-    surprise: z6.number().nullable().optional(),
-    surprisePercent: z6.number().nullable().optional(),
-    symbol: z6.string().optional(),
-    year: z6.number().nullable().optional()
+var earningsSchema = z7.array(
+  z7.object({
+    actual: z7.number().nullable().optional(),
+    estimate: z7.number().nullable().optional(),
+    period: z7.string().optional(),
+    quarter: z7.number().nullable().optional(),
+    surprise: z7.number().nullable().optional(),
+    surprisePercent: z7.number().nullable().optional(),
+    symbol: z7.string().optional(),
+    year: z7.number().nullable().optional()
   }).passthrough()
 );
-var recommendationSchema = z6.array(
-  z6.object({
-    buy: z6.number().optional(),
-    hold: z6.number().optional(),
-    period: z6.string().optional(),
-    sell: z6.number().optional(),
-    strongBuy: z6.number().optional(),
-    strongSell: z6.number().optional(),
-    symbol: z6.string().optional()
+var recommendationSchema = z7.array(
+  z7.object({
+    buy: z7.number().optional(),
+    hold: z7.number().optional(),
+    period: z7.string().optional(),
+    sell: z7.number().optional(),
+    strongBuy: z7.number().optional(),
+    strongSell: z7.number().optional(),
+    symbol: z7.string().optional()
   }).passthrough()
 );
 function safeSymbol2(symbol) {
@@ -3688,6 +4453,171 @@ async function checkFinnhubDiagnostic() {
   };
 }
 
+// src/components/crypto/cryptoTypes.ts
+var CRYPTO_SYMBOLS = [
+  "BTCUSDT",
+  "ETHUSDT",
+  "BNBUSDT",
+  "SOLUSDT",
+  "XRPUSDT",
+  "ADAUSDT",
+  "DOGEUSDT"
+];
+var CRYPTO_INTERVALS = ["1m", "5m", "15m", "1h", "4h", "1d"];
+
+// server/cryptoService.ts
+var BINANCE_REST_BASES = [
+  "https://data-api.binance.vision",
+  "https://api.binance.com",
+  "https://api1.binance.com"
+];
+var SOURCE_LABEL2 = "Binance Public Market Data";
+var QUOTE_CACHE_MS = 5e3;
+var KLINE_CACHE_MS = 1e4;
+var quoteCache;
+var klineCache = /* @__PURE__ */ new Map();
+async function fetchBinanceJson(path) {
+  let lastStatus;
+  for (const baseUrl of BINANCE_REST_BASES) {
+    try {
+      const response = await fetch(`${baseUrl}${path}`, {
+        headers: { Accept: "application/json", "User-Agent": "ArthaBench-Pro/2.0" },
+        signal: AbortSignal.timeout(7e3)
+      });
+      lastStatus = response.status;
+      if (!response.ok) continue;
+      return await response.json();
+    } catch {
+    }
+  }
+  throw new Error(`Binance public market data is unavailable${lastStatus ? ` (HTTP ${lastStatus})` : ""}.`);
+}
+function normalizeRestQuote(value) {
+  if (!value || typeof value !== "object") return null;
+  const quote = value;
+  const symbol = String(quote.symbol || "").toUpperCase();
+  if (!CRYPTO_SYMBOLS.includes(symbol)) return null;
+  const numericKeys = ["lastPrice", "priceChange", "priceChangePercent", "highPrice", "lowPrice", "volume", "quoteVolume", "bidPrice", "askPrice"];
+  if (numericKeys.some((key) => !Number.isFinite(Number(quote[key])))) return null;
+  return {
+    symbol,
+    baseAsset: symbol.replace(/USDT$/, ""),
+    quoteAsset: "USDT",
+    price: Number(quote.lastPrice),
+    change: Number(quote.priceChange),
+    changePercent: Number(quote.priceChangePercent),
+    high24h: Number(quote.highPrice),
+    low24h: Number(quote.lowPrice),
+    volume24h: Number(quote.volume),
+    quoteVolume24h: Number(quote.quoteVolume),
+    bid: Number(quote.bidPrice),
+    ask: Number(quote.askPrice),
+    providerTimestamp: new Date(Number(quote.closeTime) || Date.now()).toISOString()
+  };
+}
+async function getCryptoMarkets() {
+  if (quoteCache && quoteCache.expiresAt > Date.now()) return quoteCache.value;
+  const symbols = encodeURIComponent(JSON.stringify(CRYPTO_SYMBOLS));
+  const payload = await fetchBinanceJson(`/api/v3/ticker/24hr?symbols=${symbols}`);
+  if (!Array.isArray(payload)) throw new Error("Binance returned an invalid market response.");
+  const markets = payload.map(normalizeRestQuote).filter((quote) => Boolean(quote));
+  if (markets.length !== CRYPTO_SYMBOLS.length) throw new Error("Binance returned an incomplete tracked-market response.");
+  markets.sort((a, b) => CRYPTO_SYMBOLS.indexOf(a.symbol) - CRYPTO_SYMBOLS.indexOf(b.symbol));
+  const value = { sourceLabel: SOURCE_LABEL2, retrievedAt: (/* @__PURE__ */ new Date()).toISOString(), markets };
+  quoteCache = { expiresAt: Date.now() + QUOTE_CACHE_MS, value };
+  return value;
+}
+function normalizeRestCandle(value) {
+  if (!Array.isArray(value) || value.length < 9) return null;
+  const numericValues = value.slice(0, 9).map(Number);
+  if (numericValues.some((number) => !Number.isFinite(number))) return null;
+  return {
+    openTime: Number(value[0]),
+    open: Number(value[1]),
+    high: Number(value[2]),
+    low: Number(value[3]),
+    close: Number(value[4]),
+    volume: Number(value[5]),
+    closeTime: Number(value[6]),
+    quoteVolume: Number(value[7]),
+    trades: Math.max(0, Math.trunc(Number(value[8])))
+  };
+}
+async function getCryptoKlines(symbol, interval) {
+  const cacheKey = `${symbol}:${interval}`;
+  const cached = klineCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) {
+    return { sourceLabel: SOURCE_LABEL2, symbol, interval, ...cached.value };
+  }
+  const payload = await fetchBinanceJson(`/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=500`);
+  if (!Array.isArray(payload)) throw new Error("Binance returned an invalid candle response.");
+  const candles = payload.map(normalizeRestCandle).filter((candle) => Boolean(candle));
+  if (!candles.length) throw new Error("Binance returned no valid candles.");
+  const value = { retrievedAt: (/* @__PURE__ */ new Date()).toISOString(), candles };
+  klineCache.set(cacheKey, { expiresAt: Date.now() + KLINE_CACHE_MS, value });
+  return { sourceLabel: SOURCE_LABEL2, symbol, interval, ...value };
+}
+function formattedNumber(value, maximumFractionDigits = 6) {
+  return value.toLocaleString("en-US", { maximumFractionDigits });
+}
+function buildCryptoAssistantFallback(question, context) {
+  const direction = context.absoluteChange > 0 ? "up" : context.absoluteChange < 0 ? "down" : "flat";
+  const range = context.high - context.low;
+  const bodyToRange = range ? Math.abs(context.absoluteChange) / range * 100 : 0;
+  return `## Selected Data
+- ${context.symbol.replace("USDT", "/USDT")} \xB7 ${context.interval} \xB7 ${context.candleStatus}
+- ${context.timeUtc} UTC \xB7 ${context.timeIst} IST
+- Source: ${context.provider} \xB7 Feed: ${context.streamStatus.toUpperCase()}
+
+## Price Summary
+| Open | ${formattedNumber(context.open)} USDT |
+| Close | ${formattedNumber(context.close)} USDT |
+| High / Low | ${formattedNumber(context.high)} / ${formattedNumber(context.low)} USDT |
+| Candle change | ${context.absoluteChange >= 0 ? "+" : ""}${formattedNumber(context.absoluteChange)} (${context.percentChange >= 0 ? "+" : ""}${context.percentChange.toFixed(2)}%) |
+| Base volume / trades | ${formattedNumber(context.baseVolume, 4)} / ${context.tradeCount.toLocaleString("en-US")} |
+
+## What the Data Shows
+- This candle is ${direction}; its body uses ${bodyToRange.toFixed(1)}% of the observed high-low range.
+- Volume and trade count describe activity, not the identity or intent of buyers and sellers.
+
+## Educational Interpretation
+- The question was: ${question.trim()}
+- One candle cannot establish a durable trend. Compare it with several closed candles, volume, volatility, and broader market conditions.
+
+## Purchase Decision Framework
+- Research further only if the asset, venue, custody risk, fees, liquidity, and downside limits fit a written plan.
+- Avoid acting when the decision depends on one forming candle, urgency, leverage, borrowed money, or a promised return.
+- ArthaBench does not issue a buy, sell, hold, or target-price instruction.
+
+## Scenario Analysis
+- Bullish: follow-through closes above the observed high with consistent participation.
+- Neutral: price remains inside the candle range and evidence stays mixed.
+- Bearish: follow-through closes below the observed low or liquidity weakens.
+
+## Risk and Limitations
+- USDT may not equal USD exactly; crypto prices differ across venues and forming candles can change before close.
+- Educational research guidance only\u2014not personalized investment advice.`;
+}
+async function answerCryptoQuestion(question, context) {
+  const fallback = buildCryptoAssistantFallback(question, context);
+  if (!process.env.GROQ_API_KEY?.trim()) return { answer: fallback, provider: "deterministic", model: null };
+  const systemPrompt = `You are ArthaBench Crypto Assistant, an evidence-grounded financial educator.
+Use only the supplied Binance candle context for specific numbers. Return Markdown with exactly these section headings: Selected Data, Price Summary, What the Data Shows, Educational Interpretation, Purchase Decision Framework, Scenario Analysis, Risk and Limitations. Use ## headings, short bullets, and a two-column pipe table under Price Summary. Never provide personalized buy/sell/hold instructions, target prices, guaranteed returns, or certainty. A purchase/avoid request must receive a conditional due-diligence checklist, not an order. Explicitly label forming candles and data freshness. Keep the response under 650 words.`;
+  try {
+    const answer = await callGroqChat(
+      systemPrompt,
+      `Question: ${question}
+
+Verified Binance candle context:
+${JSON.stringify(context)}`,
+      getGroqModels().tutorModel
+    );
+    return { answer: answer.includes("## ") ? answer : fallback, provider: "groq", model: getGroqModels().tutorModel };
+  } catch {
+    return { answer: fallback, provider: "deterministic", model: null };
+  }
+}
+
 // server/routes.ts
 var apiRouter = Router();
 var rateLimitMap = /* @__PURE__ */ new Map();
@@ -3718,94 +4648,124 @@ apiRouter.use((req, res, next) => {
   }
   next();
 });
-var querySchema = z7.object({
-  query: z7.string().min(1, "Query parameter is required.").max(2e3, "Query exceeds maximum length of 2000 characters."),
-  profile: z7.enum(["India", "US", "Global"]).optional()
+var querySchema = z8.object({
+  query: z8.string().min(1, "Query parameter is required.").max(2e3, "Query exceeds maximum length of 2000 characters."),
+  profile: z8.enum(["India", "US", "Global"]).optional()
 });
-var tutorSchema = z7.object({
-  userPrompt: z7.string().min(1, "Prompt is required.").max(2e3, "Prompt exceeds maximum length."),
-  systemPrompt: z7.string().optional(),
-  modelName: z7.string().optional(),
-  history: z7.array(
-    z7.object({
-      role: z7.enum(["user", "assistant"]),
-      content: z7.string().min(1).max(4e3)
+var tutorSchema = z8.object({
+  userPrompt: z8.string().min(1, "Prompt is required.").max(2e3, "Prompt exceeds maximum length."),
+  systemPrompt: z8.string().optional(),
+  modelName: z8.string().optional(),
+  history: z8.array(
+    z8.object({
+      role: z8.enum(["user", "assistant"]),
+      content: z8.string().min(1).max(4e3)
     })
   ).max(10).optional(),
-  context: z7.object({
-    country: z7.enum(["US", "India", "Global"]),
-    currency: z7.enum(["USD", "INR", "EUR", "GBP"]),
-    language: z7.enum(["english", "hindi", "hinglish"]),
-    level: z7.enum(["beginner", "intermediate", "advanced"]),
-    mode: z7.enum(["explain", "quiz", "calc"]),
-    detail: z7.enum(["short", "detailed"]),
-    useOfficialSources: z7.boolean()
+  context: z8.object({
+    country: z8.enum(["US", "India", "Global"]),
+    currency: z8.enum(["USD", "INR", "EUR", "GBP"]),
+    language: z8.enum(["english", "hindi", "hinglish"]),
+    level: z8.enum(["beginner", "intermediate", "advanced"]),
+    mode: z8.enum(["explain", "quiz", "calc"]),
+    detail: z8.enum(["short", "detailed"]),
+    useOfficialSources: z8.boolean()
   }).optional()
 });
-var batchRunSchema = z7.object({
-  scenarioIds: z7.array(z7.string()).optional(),
-  profile: z7.enum(["India", "US", "Global"]).optional()
+var batchRunSchema = z8.object({
+  scenarioIds: z8.array(z8.string()).optional(),
+  profile: z8.enum(["India", "US", "Global"]).optional()
 });
-var dashboardAssistantSchema = z7.object({
-  question: z7.string().min(3).max(1200),
-  history: z7.array(
-    z7.object({
-      role: z7.enum(["user", "assistant"]),
-      content: z7.string().min(1).max(4e3)
+var dashboardAssistantSchema = z8.object({
+  question: z8.string().min(3).max(1200),
+  history: z8.array(
+    z8.object({
+      role: z8.enum(["user", "assistant"]),
+      content: z8.string().min(1).max(4e3)
     })
   ).max(10).optional(),
-  snapshot: z7.object({
-    capturedAt: z7.string().max(64),
-    selectedSymbol: z7.string().min(1).max(20).regex(/^[A-Za-z0-9][A-Za-z0-9.:_-]*$/),
-    selectedRange: z7.enum(["1d", "1w", "1m", "3m", "6m", "1y"]),
-    selectedCountry: z7.enum(["us", "india"]),
-    quotes: z7.array(
-      z7.object({
-        symbol: z7.string().min(1).max(20),
-        price: z7.number().finite(),
-        changePercent: z7.number().finite().nullable(),
-        freshness: z7.enum(["real_time", "delayed", "end_of_day", "stale", "demo"]),
-        providerName: z7.string().min(1).max(80)
+  snapshot: z8.object({
+    capturedAt: z8.string().max(64),
+    selectedSymbol: z8.string().min(1).max(20).regex(/^[A-Za-z0-9][A-Za-z0-9.:_-]*$/),
+    selectedRange: z8.enum(["1d", "1w", "1m", "3m", "6m", "1y"]),
+    selectedCountry: z8.enum(["us", "india"]),
+    quotes: z8.array(
+      z8.object({
+        symbol: z8.string().min(1).max(20),
+        price: z8.number().finite(),
+        changePercent: z8.number().finite().nullable(),
+        freshness: z8.enum(["real_time", "delayed", "end_of_day", "stale", "demo"]),
+        providerName: z8.string().min(1).max(80)
       })
     ).max(8),
-    marketHistory: z7.object({
-      symbol: z7.string().min(1).max(20),
-      range: z7.string().min(1).max(8),
-      pointCount: z7.number().int().min(0).max(500),
-      startDate: z7.string().max(32).nullable(),
-      endDate: z7.string().max(32).nullable(),
-      startPrice: z7.number().finite().nullable(),
-      latestPrice: z7.number().finite().nullable(),
-      high: z7.number().finite().nullable(),
-      low: z7.number().finite().nullable(),
-      returnPercent: z7.number().finite().nullable()
+    marketHistory: z8.object({
+      symbol: z8.string().min(1).max(20),
+      range: z8.string().min(1).max(8),
+      pointCount: z8.number().int().min(0).max(500),
+      startDate: z8.string().max(32).nullable(),
+      endDate: z8.string().max(32).nullable(),
+      startPrice: z8.number().finite().nullable(),
+      latestPrice: z8.number().finite().nullable(),
+      high: z8.number().finite().nullable(),
+      low: z8.number().finite().nullable(),
+      returnPercent: z8.number().finite().nullable()
     }).nullable(),
-    economicIndicators: z7.array(
-      z7.object({
-        label: z7.string().min(1).max(120),
-        value: z7.number().finite().nullable(),
-        unit: z7.string().max(32),
-        date: z7.string().max(32).nullable(),
-        sourceName: z7.enum(["FRED", "World Bank"]),
-        status: z7.string().max(40)
+    economicIndicators: z8.array(
+      z8.object({
+        label: z8.string().min(1).max(120),
+        value: z8.number().finite().nullable(),
+        unit: z8.string().max(32),
+        date: z8.string().max(32).nullable(),
+        sourceName: z8.enum(["FRED", "World Bank"]),
+        status: z8.string().max(40)
       })
     ).max(14),
-    providerHealth: z7.object({
-      connected: z7.number().int().min(0).max(50),
-      total: z7.number().int().min(0).max(50),
-      connectedProviders: z7.array(z7.string().max(120)).max(20),
-      unavailableProviders: z7.array(z7.string().max(120)).max(20)
+    providerHealth: z8.object({
+      connected: z8.number().int().min(0).max(50),
+      total: z8.number().int().min(0).max(50),
+      connectedProviders: z8.array(z8.string().max(120)).max(20),
+      unavailableProviders: z8.array(z8.string().max(120)).max(20)
     }),
-    latestEvaluation: z7.object({
-      verificationCode: z7.string().max(80),
-      timestamp: z7.string().max(64),
-      verdict: z7.string().max(80),
-      overallReliabilityScore: z7.number().finite().min(0).max(100),
-      formulaAccuracyScore: z7.number().finite().min(0).max(100),
-      dualModelConsensusScore: z7.number().finite().min(0).max(100),
-      evidenceVerificationScore: z7.number().finite().min(0).max(100),
-      safetyComplianceScore: z7.number().finite().min(0).max(100)
+    latestEvaluation: z8.object({
+      verificationCode: z8.string().max(80),
+      timestamp: z8.string().max(64),
+      verdict: z8.string().max(80),
+      overallReliabilityScore: z8.number().finite().min(0).max(100),
+      formulaAccuracyScore: z8.number().finite().min(0).max(100),
+      dualModelConsensusScore: z8.number().finite().min(0).max(100),
+      evidenceVerificationScore: z8.number().finite().min(0).max(100),
+      safetyComplianceScore: z8.number().finite().min(0).max(100)
     }).nullable()
+  })
+});
+var cryptoKlineQuerySchema = z8.object({
+  symbol: z8.enum(CRYPTO_SYMBOLS),
+  interval: z8.enum(CRYPTO_INTERVALS)
+});
+var cryptoAssistantSchema = z8.object({
+  question: z8.string().min(3).max(500),
+  context: z8.object({
+    symbol: z8.enum(CRYPTO_SYMBOLS),
+    interval: z8.enum(CRYPTO_INTERVALS),
+    candleStatus: z8.enum(["Forming", "Closed"]),
+    timeUtc: z8.string().min(1).max(80),
+    timeIst: z8.string().min(1).max(80),
+    open: z8.number().finite().nonnegative(),
+    high: z8.number().finite().nonnegative(),
+    low: z8.number().finite().nonnegative(),
+    close: z8.number().finite().nonnegative(),
+    absoluteChange: z8.number().finite(),
+    percentChange: z8.number().finite(),
+    baseVolume: z8.number().finite().nonnegative(),
+    quoteVolume: z8.number().finite().nonnegative(),
+    tradeCount: z8.number().int().nonnegative(),
+    provider: z8.literal("Binance Public Market Data"),
+    streamStatus: z8.enum(["connecting", "cached", "live", "reconnecting", "stale", "unavailable"]),
+    lastUpdatedAt: z8.string().max(80).nullable()
+  }).refine((context) => context.high >= Math.max(context.open, context.close, context.low), {
+    message: "Candle high must be greater than or equal to the other OHLC values."
+  }).refine((context) => context.low <= Math.min(context.open, context.close, context.high), {
+    message: "Candle low must be less than or equal to the other OHLC values."
   })
 });
 function buildDashboardDemoAnswer(snapshot) {
@@ -4099,6 +5059,45 @@ ${JSON.stringify(groundedContext)}`;
     next(err);
   }
 });
+apiRouter.get("/crypto/markets", async (_req, res) => {
+  try {
+    const result = await getCryptoMarkets();
+    res.setHeader("Cache-Control", "public, s-maxage=5, stale-while-revalidate=5");
+    res.json(result);
+  } catch {
+    res.status(503).json({ error: "Binance public market snapshot is temporarily unavailable." });
+  }
+});
+apiRouter.get("/crypto/klines", async (req, res) => {
+  const parsed = cryptoKlineQuerySchema.safeParse(req.query);
+  if (!parsed.success) {
+    return res.status(400).json({ error: "A supported Binance symbol and interval are required." });
+  }
+  try {
+    const result = await getCryptoKlines(parsed.data.symbol, parsed.data.interval);
+    res.setHeader("Cache-Control", "public, s-maxage=10, stale-while-revalidate=10");
+    res.json(result);
+  } catch {
+    res.status(503).json({ error: "Binance candle snapshot is temporarily unavailable." });
+  }
+});
+apiRouter.post("/crypto/assistant", async (req, res, next) => {
+  try {
+    const parsed = cryptoAssistantSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: "A valid question and verified Binance candle context are required." });
+    }
+    const safety = checkPromptSafety(parsed.data.question);
+    if (!safety.safe) return res.status(400).json({ error: safety.reason, safety });
+    const result = await answerCryptoQuestion(parsed.data.question, {
+      ...parsed.data.context,
+      lastUpdatedAt: parsed.data.context.lastUpdatedAt ?? null
+    });
+    res.json({ ...result, disclaimer: "Educational research guidance only \u2014 not investment advice.", requestId: res.getHeader("x-request-id") });
+  } catch (error) {
+    next(error);
+  }
+});
 apiRouter.post("/learning/lesson", async (req, res, next) => {
   try {
     const lessonData = await generateLessonContent(req.body);
@@ -4153,6 +5152,15 @@ var handleMarketQuote = async (req, res, next) => {
 };
 apiRouter.get("/markets/quote", handleMarketQuote);
 apiRouter.get("/markets/quotes", handleMarketQuote);
+apiRouter.get("/markets/india-ticker", async (_req, res, next) => {
+  try {
+    const ticker = await getIndiaMarketTicker();
+    res.setHeader("Cache-Control", "public, s-maxage=45, stale-while-revalidate=30");
+    res.json(ticker);
+  } catch (err) {
+    next(err);
+  }
+});
 apiRouter.get("/markets/search", async (req, res, next) => {
   try {
     const query = req.query.query || "";
@@ -4174,8 +5182,8 @@ apiRouter.get("/markets/history", async (req, res, next) => {
 });
 apiRouter.get("/company/intelligence", async (req, res, next) => {
   try {
-    const parsed = z7.object({
-      symbol: z7.string().min(1).max(20).regex(/^[A-Za-z0-9][A-Za-z0-9.:_-]*$/)
+    const parsed = z8.object({
+      symbol: z8.string().min(1).max(20).regex(/^[A-Za-z0-9][A-Za-z0-9.:_-]*$/)
     }).safeParse(req.query);
     if (!parsed.success) {
       return res.status(400).json({ error: "A valid company stock symbol is required." });
@@ -4192,13 +5200,13 @@ apiRouter.get("/company/intelligence", async (req, res, next) => {
 });
 apiRouter.post("/company/assistant", async (req, res, next) => {
   try {
-    const parsed = z7.object({
-      symbol: z7.string().min(1).max(20).regex(/^[A-Za-z0-9][A-Za-z0-9.:_-]*$/),
-      question: z7.string().min(3).max(1200),
-      history: z7.array(
-        z7.object({
-          role: z7.enum(["user", "assistant"]),
-          content: z7.string().min(1).max(4e3)
+    const parsed = z8.object({
+      symbol: z8.string().min(1).max(20).regex(/^[A-Za-z0-9][A-Za-z0-9.:_-]*$/),
+      question: z8.string().min(3).max(1200),
+      history: z8.array(
+        z8.object({
+          role: z8.enum(["user", "assistant"]),
+          content: z8.string().min(1).max(4e3)
         })
       ).max(10).optional()
     }).safeParse(req.body);
@@ -4299,9 +5307,9 @@ apiRouter.get("/economy/overview", async (_req, res, next) => {
 });
 apiRouter.get("/economy/series", async (req, res, next) => {
   try {
-    const parsed = z7.object({
-      seriesId: z7.string().min(1).max(64).regex(/^[A-Za-z0-9._-]+$/),
-      limit: z7.coerce.number().int().min(1).max(240).optional()
+    const parsed = z8.object({
+      seriesId: z8.string().min(1).max(64).regex(/^[A-Za-z0-9._-]+$/),
+      limit: z8.coerce.number().int().min(1).max(240).optional()
     }).safeParse(req.query);
     if (!parsed.success) {
       return res.status(400).json({ error: "A valid FRED seriesId is required." });
@@ -4325,9 +5333,9 @@ apiRouter.get("/economy/india/overview", async (_req, res, next) => {
 });
 apiRouter.get("/economy/india/series", async (req, res, next) => {
   try {
-    const parsed = z7.object({
-      indicatorId: z7.string().min(2).max(64).regex(/^[A-Za-z0-9._-]+$/),
-      limit: z7.coerce.number().int().min(1).max(240).optional()
+    const parsed = z8.object({
+      indicatorId: z8.string().min(2).max(64).regex(/^[A-Za-z0-9._-]+$/),
+      limit: z8.coerce.number().int().min(1).max(240).optional()
     }).safeParse(req.query);
     if (!parsed.success) {
       return res.status(400).json({ error: "A valid World Bank indicatorId is required." });

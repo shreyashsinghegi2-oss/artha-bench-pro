@@ -30,6 +30,18 @@ const MarketView = lazy(() =>
   })),
 );
 
+const IncomeView = lazy(() =>
+  import('./components/income/IncomeView').then((module) => ({
+    default: module.IncomeView,
+  })),
+);
+
+const CryptoDashboardView = lazy(() =>
+  import('./components/crypto/CryptoDashboardView').then((module) => ({
+    default: module.CryptoDashboardView,
+  })),
+);
+
 export default function App() {
   const [currentDestination, setCurrentDestination] = useState<NavigationDestination>('overview');
 
@@ -40,6 +52,30 @@ export default function App() {
         return <DashboardView onNavigate={setCurrentDestination} />;
       case 'learning':
         return <LearningView />;
+      case 'income':
+        return (
+          <Suspense
+            fallback={
+              <div className="max-w-[1500px] mx-auto px-4 py-20 text-center text-sm text-secondary">
+                Loading Income Workspace…
+              </div>
+            }
+          >
+            <IncomeView />
+          </Suspense>
+        );
+      case 'crypto':
+        return (
+          <Suspense
+            fallback={
+              <div className="max-w-[1500px] mx-auto px-4 py-20 text-center text-sm text-secondary">
+                Loading Crypto Dashboard…
+              </div>
+            }
+          >
+            <CryptoDashboardView />
+          </Suspense>
+        );
       case 'markets':
         return (
           <Suspense

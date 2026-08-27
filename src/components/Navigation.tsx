@@ -8,7 +8,9 @@ interface NavigationProps {
 
 export const NAVIGATION_ITEMS: { id: NavigationDestination; label: string }[] = [
   { id: 'overview', label: 'Overview' },
+  { id: 'income', label: 'Income' },
   { id: 'markets', label: 'Market Data' },
+  { id: 'crypto', label: 'Crypto' },
   { id: 'quick-check', label: 'Quick Check' },
   { id: 'tutor', label: 'Financial Tutor' },
   { id: 'evaluation-lab', label: 'Evaluation Lab' },
@@ -36,7 +38,11 @@ export const Navigation: React.FC<NavigationProps> = ({ currentDestination, onNa
               onClick={() => onNavigate(item.id)}
               className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
                 isActive
-                  ? 'bg-interactive-soft text-interactive shadow-sm'
+                  ? item.id === 'income'
+                    ? 'bg-brand text-white shadow-sm'
+                    : 'bg-interactive-soft text-interactive shadow-sm'
+                  : item.id === 'income'
+                    ? 'border border-brand/20 bg-brand-soft text-brand-hover'
                   : 'text-secondary hover:text-ink hover:bg-surface'
               }`}
             >

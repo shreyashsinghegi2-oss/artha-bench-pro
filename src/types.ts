@@ -5,6 +5,8 @@
 // Navigation Destinations
 export type NavigationDestination =
   | 'overview'
+  | 'income'
+  | 'crypto'
   | 'quick-check'
   | 'tutor'
   | 'evaluation-lab'

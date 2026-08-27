@@ -84,10 +84,61 @@
     --cyan-support: var(--interactive);
   }
 
+  :root.dark,
+  :root[data-theme='dark'] {
+    color-scheme: dark;
+
+    --bg-canvas: #07111F;
+    --bg-surface: #0D1726;
+    --bg-subtle: #132033;
+    --bg-hover: #1A2A3F;
+    --text-primary: #E7EEF8;
+    --text-secondary: #9BAEC6;
+    --border-subtle: #24364B;
+    --border-strong: #36506D;
+
+    --brand-primary: #2BC49A;
+    --brand-hover: #57D9B6;
+    --brand-soft: #12372F;
+    --brand-foreground: #ECFFF8;
+    --interactive: #60A5FA;
+    --interactive-soft: #172B4D;
+
+    --success: #4ADE80;
+    --success-foreground: #86EFAC;
+    --success-soft: #12351F;
+    --warning: #F59E0B;
+    --warning-foreground: #FCD34D;
+    --warning-soft: #3A2B12;
+    --danger: #F87171;
+    --danger-soft: #3A181B;
+    --premium: #E2B85B;
+    --premium-foreground: #F5D98C;
+    --premium-soft: #332910;
+
+    --chart-primary: #60A5FA;
+    --chart-comparison: #2DD4BF;
+    --chart-reference: #FBBF24;
+    --chart-grid: #24364B;
+    --chart-tooltip: #E7EEF8;
+    --chart-tooltip-foreground: #07111F;
+  }
+
+  html,
+  body,
+  #root {
+    min-height: 100%;
+  }
+
+  html {
+    background-color: var(--bg-canvas);
+  }
+
   body {
     background-color: var(--bg-canvas);
     color: var(--text-primary);
     font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    transition: background-color 180ms ease, color 180ms ease;
   }
 }
 

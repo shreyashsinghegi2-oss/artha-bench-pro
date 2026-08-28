@@ -56,6 +56,13 @@ function TickerItem({ item }: { item: IndiaMarketTickerItem }) {
     : direction === 'down'
       ? ArrowDownRight
       : Minus;
+  const sentiment = direction === 'up' ? 'Bullish' : direction === 'down' ? 'Bearish' : 'Neutral';
+  const sentimentDot = direction === 'up' ? 'bg-emerald-400' : direction === 'down' ? 'bg-red-400' : 'bg-amber-300';
+  const sentimentClass = direction === 'up'
+    ? 'border-emerald-400/25 bg-emerald-400/10 text-emerald-200'
+    : direction === 'down'
+      ? 'border-red-400/25 bg-red-400/10 text-red-200'
+      : 'border-amber-300/25 bg-amber-300/10 text-amber-100';
 
   return (
     <li className="flex h-10 shrink-0 items-center gap-2.5 border-r border-slate-700/80 px-5 text-xs tabular-nums">
@@ -67,6 +74,14 @@ function TickerItem({ item }: { item: IndiaMarketTickerItem }) {
         <DirectionIcon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
         <span>{signedNumber(change)}</span>
         <span>({signedNumber(changePercent, '%')})</span>
+      </span>
+      <span
+        className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-bold ${sentimentClass}`}
+        aria-label={`AI sentiment ${sentiment}`}
+        title="ArthaMind AI sentiment derived from the displayed price-change direction"
+      >
+        <span className={`h-1.5 w-1.5 rounded-full ${sentimentDot}`} aria-hidden="true" />
+        {sentiment}
       </span>
     </li>
   );

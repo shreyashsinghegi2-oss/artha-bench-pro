@@ -30,9 +30,9 @@ const MarketView = lazy(() =>
   })),
 );
 
-const IncomeView = lazy(() =>
-  import('./components/income/IncomeView').then((module) => ({
-    default: module.IncomeView,
+const IncomeWorkspaceView = lazy(() =>
+  import('./components/income/IncomeWorkspaceView').then((module) => ({
+    default: module.IncomeWorkspaceView,
   })),
 );
 
@@ -61,7 +61,7 @@ export default function App() {
               </div>
             }
           >
-            <IncomeView />
+            <IncomeWorkspaceView />
           </Suspense>
         );
       case 'crypto':

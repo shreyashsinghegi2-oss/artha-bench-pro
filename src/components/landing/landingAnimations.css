@@ -1,0 +1,52 @@
+@keyframes artha-float-a { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-4px)} }
+@keyframes artha-float-b { 0%,100%{transform:translateY(0)} 50%{transform:translateY(5px)} }
+@keyframes artha-path { 0%,100%{stroke-opacity:.22} 50%{stroke-opacity:.58} }
+@keyframes artha-optin { 0%,48%,100%{border-color:rgba(255,255,255,.14);box-shadow:none} 58%,72%{border-color:rgba(94,234,212,.42);box-shadow:0 0 28px rgba(94,234,212,.08)} }
+@keyframes artha-chip { 0%,48%,100%{color:#64748b;background:transparent} 58%,72%{color:#5eead4;background:rgba(94,234,212,.08)} }
+@keyframes artha-personal-link { 0%,48%,100%{stroke-opacity:.18} 58%,72%{stroke-opacity:.75;stroke:#5eead4} }
+@keyframes artha-personal-particle { 0%,52%,100%{opacity:0} 58%,70%{opacity:1} }
+@keyframes artha-evidence { 0%,15%{opacity:0;transform:translateY(4px)} 25%,100%{opacity:1;transform:none} }
+@keyframes artha-ticker-scroll { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+@keyframes artha-spark-draw { from{stroke-dashoffset:140} to{stroke-dashoffset:0} }
+@keyframes artha-flow-signal { 0%{opacity:0;transform:translateX(-55px)} 30%{opacity:1} 70%{opacity:1} 100%{opacity:0;transform:translateX(55px)} }
+@keyframes artha-hero-in { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:none} }
+
+.artha-map-node { animation: artha-float-a 6s ease-in-out infinite; }
+.artha-map-node:nth-of-type(even) { animation-name: artha-float-b; animation-duration:7.5s; }
+.artha-core-node { animation: artha-float-a 8s ease-in-out infinite; }
+.artha-path-pulse { animation: artha-path 6s ease-in-out infinite; }
+.artha-path-pulse.delay-a{animation-delay:1s}.artha-path-pulse.delay-b{animation-delay:2s}.artha-path-pulse.delay-c{animation-delay:3s}.artha-path-pulse.delay-d{animation-delay:4s}
+.artha-personal-node { animation: artha-optin 8s ease-in-out infinite; }
+.artha-optin-chip,.artha-optin-switch { animation: artha-chip 8s ease-in-out infinite; }
+.artha-personal-link { animation: artha-personal-link 8s ease-in-out infinite; }
+.artha-personal-particle { animation: artha-personal-particle 8s ease-in-out infinite; }
+.artha-evidence-row { opacity:0; animation: artha-evidence 7s ease-out infinite; }
+.artha-evidence-row.row-2{animation-delay:.6s}.artha-evidence-row.row-3{animation-delay:1.2s}
+.artha-ticker-track { animation: artha-ticker-scroll 32s linear infinite; }
+.artha-ticker:hover .artha-ticker-track,.artha-ticker:focus .artha-ticker-track,.artha-ticker:focus-within .artha-ticker-track { animation-play-state:paused; }
+.artha-sparkline,.artha-flow-spark { stroke-dasharray:140; stroke-dashoffset:140; animation: artha-spark-draw 1.4s ease-out .45s forwards; }
+.artha-flow-signal { position:absolute; right:-42px; top:50%; width:84px; height:1px; background:linear-gradient(90deg,transparent,#5eead4,transparent); animation: artha-flow-signal 6s ease-in-out infinite; }
+.artha-reason-step,.artha-output-row { opacity:.55; animation: artha-evidence 7s ease-out infinite; }
+.artha-reason-step.step-2,.artha-output-row.output-2{animation-delay:.8s}.artha-reason-step.step-3,.artha-output-row.output-3{animation-delay:1.6s}
+.artha-optin-flow { animation: artha-optin 8s ease-in-out infinite; }
+.artha-hero-stagger > * { opacity:0; animation: artha-hero-in .55s ease-out forwards; }
+.artha-hero-stagger > *:nth-child(2){animation-delay:.08s}.artha-hero-stagger > *:nth-child(3){animation-delay:.16s}.artha-hero-stagger > *:nth-child(4){animation-delay:.24s}.artha-hero-stagger > *:nth-child(5){animation-delay:.32s}.artha-hero-stagger > *:nth-child(6){animation-delay:.4s}
+.artha-feature-card { transition:transform 180ms ease,border-color 180ms ease,background-color 180ms ease; }
+.artha-feature-card:hover { transform:translateY(-3px); }
+.artha-button { transition:transform 180ms ease,box-shadow 180ms ease,background-color 180ms ease; }
+.artha-button:hover { transform:translateY(-2px); }
+.artha-button:focus-visible,.artha-ticker:focus-visible { outline:2px solid #5eead4; outline-offset:3px; }
+.artha-reliability-divider { animation: artha-float-a 5s ease-in-out infinite; }
+.artha-mini-bar-a,.artha-mini-bar-b { transform-origin:bottom; animation: artha-hero-in .7s ease-out both; }
+.artha-report-check { animation: artha-evidence 1s ease-out .5s both; }
+
+@media (max-width: 1023px) {
+  .artha-flow-grid { grid-template-columns:1fr; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .artha-map-node,.artha-core-node,.artha-path-pulse,.artha-personal-node,.artha-optin-chip,.artha-optin-switch,.artha-personal-link,.artha-personal-particle,.artha-evidence-row,.artha-ticker-track,.artha-sparkline,.artha-flow-spark,.artha-flow-signal,.artha-reason-step,.artha-output-row,.artha-optin-flow,.artha-hero-stagger > *,.artha-reliability-divider,.artha-mini-bar-a,.artha-mini-bar-b,.artha-report-check { animation:none !important; transform:none !important; opacity:1 !important; stroke-dashoffset:0 !important; }
+  .artha-signal-particle,.artha-personal-particle { display:none; }
+  .artha-feature-card,.artha-button { transition:none !important; }
+  .artha-feature-card:hover,.artha-button:hover { transform:none !important; }
+}

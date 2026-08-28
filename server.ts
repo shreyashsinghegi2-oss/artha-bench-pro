@@ -3,6 +3,7 @@ import path from 'path';
 import dotenv from 'dotenv';
 import { createServer as createViteServer } from 'vite';
 import { apiRouter } from './server/routes';
+import { personalAccountRouter } from './server/personalAccountRoutes';
 
 dotenv.config();
 
@@ -14,22 +15,17 @@ async function startServer() {
 
   app.use(express.json({ limit: '2mb' }));
 
-  // Mount Unified API Router
+  // Mount existing unified APIs and additive personalized account APIs.
   app.use('/api', apiRouter);
+  app.use('/api', personalAccountRouter);
 
-  // Vite Development Middleware vs Production Static Serving with SPA fallback
   if (process.env.NODE_ENV !== 'production') {
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: 'spa',
-    });
+    const vite = await createViteServer({ server: { middlewareMode: true }, appType: 'spa' });
     app.use(vite.middlewares);
   } else {
     const distPath = path.join(process.cwd(), 'dist');
     app.use(express.static(distPath));
-    app.get('*', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
-    });
+    app.get('*', (req, res) => { res.sendFile(path.join(distPath, 'index.html')); });
   }
 
   app.listen(PORT, '0.0.0.0', () => {

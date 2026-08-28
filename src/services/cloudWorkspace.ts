@@ -16,6 +16,9 @@ export const CLOUD_SYNC_KEYS = [
   'arthabench_reports',
   'arthabench_tutor_chats',
   'artha-bench-theme',
+  'arthabench_ai_context_v1',
+  'arthabench_notifications_v1',
+  'arthabench_dashboard_preferences_v1',
 ] as const;
 
 const GUEST_BACKUP_KEY = 'arthabench_guest_workspace_backup_v1';

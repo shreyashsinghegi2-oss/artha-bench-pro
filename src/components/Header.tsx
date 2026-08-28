@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { SlidersHorizontal, Menu, X, Sparkles, User, Moon, Sun } from 'lucide-react';
+import { SlidersHorizontal, Menu, X, User, Moon, Sun } from 'lucide-react';
 import { NavigationDestination } from '../types';
+import { ArthaBenchLogo } from './branding/ArthaBenchLogo';
 
 interface HeaderProps {
   currentDestination: NavigationDestination;
@@ -15,6 +16,8 @@ interface NavItem {
 const PRIMARY_NAV_ITEMS: NavItem[] = [
   { id: 'overview', label: 'Overview' },
   { id: 'income', label: 'Income' },
+  { id: 'expenses', label: 'Expenses' },
+  { id: 'budgeting', label: 'Budgeting' },
   { id: 'markets', label: 'Market Data' },
   { id: 'crypto', label: 'Crypto' },
   { id: 'quick-check', label: 'Quick Check' },
@@ -38,6 +41,8 @@ const SECONDARY_NAV_ITEMS: NavItem[] = [
 const ALL_NAV_ITEMS: NavItem[] = [...PRIMARY_NAV_ITEMS, ...SECONDARY_NAV_ITEMS];
 const THEME_STORAGE_KEY = 'artha-bench-theme';
 type ThemeMode = 'light' | 'dark';
+
+const isPersonalFinance = (id: NavigationDestination) => id === 'income' || id === 'expenses' || id === 'budgeting';
 
 export const Header: React.FC<HeaderProps> = ({
   currentDestination,
@@ -65,7 +70,6 @@ export const Header: React.FC<HeaderProps> = ({
   }, [theme]);
 
   useEffect(() => {
-    // Check Groq server health
     fetch('/api/diagnostics')
       .then((res) => res.json())
       .then((data) => {
@@ -89,33 +93,15 @@ export const Header: React.FC<HeaderProps> = ({
   return (
     <header className="border-b border-line bg-surface sticky top-0 z-50 px-4 py-3">
       <div className="max-w-[1700px] mx-auto flex items-center justify-between gap-4">
-        {/* Branding & Product Name */}
-        <div
+        <button
+          type="button"
           onClick={() => handleNavClick('overview')}
-          className="flex items-center gap-3 cursor-pointer group shrink-0"
+          className="group shrink-0 rounded-2xl text-left focus:outline-none focus:ring-2 focus:ring-interactive focus:ring-offset-2 focus:ring-offset-canvas"
+          aria-label="Open Artha Bench overview"
         >
-          <div className="w-10 h-10 rounded-2xl bg-interactive p-0.5 shadow-sm transition-all flex items-center justify-center">
-            <div className="w-full h-full bg-surface rounded-[14px] flex items-center justify-center">
-              <Sparkles className="w-5 h-5 text-interactive" />
-            </div>
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <div className="flex flex-col leading-tight">
-                <span className="text-sm font-extrabold text-ink tracking-tight">Artha</span>
-                <span className="text-sm font-extrabold text-ink tracking-tight -mt-1">Bench</span>
-              </div>
-              <span className="text-[10px] font-bold tracking-wider px-2.5 py-0.5 rounded-full bg-premium-soft text-premium border border-premium-fill/30">
-                PRO V2.0
-              </span>
-            </div>
-            <p className="text-[10px] text-secondary hidden xl:block mt-0.5">
-              AI Financial Reliability Evaluation Framework
-            </p>
-          </div>
-        </div>
+          <ArthaBenchLogo />
+        </button>
 
-        {/* Large Rounded Primary Navigation Container (Desktop) */}
         <nav className="hidden lg:flex items-center bg-surface border border-line rounded-2xl p-1.5 gap-1 overflow-x-auto scrollbar-thin max-w-full">
           {ALL_NAV_ITEMS.map((item) => {
             const isActive = currentDestination === item.id || (item.id === 'overview' && currentDestination === 'dashboard');
@@ -125,12 +111,12 @@ export const Header: React.FC<HeaderProps> = ({
                 onClick={() => handleNavClick(item.id)}
                 className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
                   isActive
-                    ? item.id === 'income'
+                    ? isPersonalFinance(item.id)
                       ? 'bg-brand text-white shadow-sm'
                       : 'bg-interactive-soft text-interactive shadow-sm'
-                    : item.id === 'income'
+                    : isPersonalFinance(item.id)
                       ? 'border border-brand/20 bg-brand-soft text-brand-hover'
-                    : 'text-secondary hover:text-ink hover:bg-subtle/60'
+                      : 'text-secondary hover:text-ink hover:bg-subtle/60'
                 }`}
               >
                 {item.label}
@@ -139,9 +125,7 @@ export const Header: React.FC<HeaderProps> = ({
           })}
         </nav>
 
-        {/* Controls Right */}
         <div className="flex items-center gap-2 shrink-0">
-          {/* Consolidated Single Environment / AI Connection Control */}
           <button
             onClick={() => handleNavClick('connections')}
             className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all ${
@@ -151,17 +135,10 @@ export const Header: React.FC<HeaderProps> = ({
             }`}
             title="Open live provider diagnostics"
           >
-            <span
-              className={`w-2 h-2 rounded-full ${
-                isGroqHealthy ? 'bg-success-fill animate-pulse' : 'bg-warning-fill'
-              }`}
-            />
-            <span>
-              {isGroqHealthy === null ? '● Checking…' : isGroqHealthy ? '● AI Live' : '● Demo Mode'}
-            </span>
+            <span className={`w-2 h-2 rounded-full ${isGroqHealthy ? 'bg-success-fill animate-pulse' : 'bg-warning-fill'}`} />
+            <span>{isGroqHealthy === null ? '● Checking…' : isGroqHealthy ? '● AI Live' : '● Demo Mode'}</span>
           </button>
 
-          {/* Global Light / Dark Theme Toggle */}
           <button
             type="button"
             onClick={() => setTheme(isDarkMode ? 'light' : 'dark')}
@@ -171,47 +148,38 @@ export const Header: React.FC<HeaderProps> = ({
             aria-pressed={isDarkMode}
           >
             {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-            <span className="hidden xl:inline text-xs font-semibold">
-              {isDarkMode ? 'Light' : 'Night'}
-            </span>
+            <span className="hidden xl:inline text-xs font-semibold">{isDarkMode ? 'Light' : 'Night'}</span>
           </button>
 
-          {/* Settings Control Button */}
           <button
             onClick={() => handleNavClick('settings')}
-            className={`p-2 rounded-xl bg-surface text-secondary hover:text-ink border transition-all ${
-              currentDestination === 'settings' ? 'border-interactive text-ink' : 'border-line hover:border-interactive/50'
-            }`}
+            className={`p-2 rounded-xl bg-surface text-secondary hover:text-ink border transition-all ${currentDestination === 'settings' ? 'border-interactive text-ink' : 'border-line hover:border-interactive/50'}`}
             title="Settings & Controls"
           >
             <SlidersHorizontal className="w-4 h-4" />
           </button>
 
-          {/* Account & Research Workspace Button */}
           <button
             onClick={() => handleNavClick('account')}
-            className={`p-2 rounded-xl bg-surface text-secondary hover:text-ink border transition-all ${
-              currentDestination === 'account' ? 'border-interactive text-ink' : 'border-line hover:border-interactive/50'
-            }`}
+            className={`p-2 rounded-xl bg-surface text-secondary hover:text-ink border transition-all ${currentDestination === 'account' ? 'border-interactive text-ink' : 'border-line hover:border-interactive/50'}`}
             title="User Profile & Account Workspace"
           >
             <User className="w-4 h-4" />
           </button>
 
-          {/* Mobile Menu Toggle */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="p-2 rounded-xl bg-surface text-secondary hover:text-ink border border-line lg:hidden"
+            aria-label="Toggle navigation menu"
           >
             {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
         </div>
       </div>
 
-      {/* Mobile Drawer Navigation Menu */}
       {mobileMenuOpen && (
         <div className="lg:hidden mt-3 pt-3 border-t border-line bg-surface rounded-2xl p-4 space-y-2">
-          <div className="text-[10px] uppercase font-bold text-secondary px-2 mb-1">Navigation (17 Destinations)</div>
+          <div className="text-[10px] uppercase font-bold text-secondary px-2 mb-1">Navigation (19 Destinations)</div>
           <div className="grid grid-cols-2 gap-1.5">
             {ALL_NAV_ITEMS.map((item) => {
               const isActive = currentDestination === item.id || (item.id === 'overview' && currentDestination === 'dashboard');
@@ -221,12 +189,12 @@ export const Header: React.FC<HeaderProps> = ({
                   onClick={() => handleNavClick(item.id)}
                   className={`px-3 py-2 rounded-xl text-xs font-medium text-left transition-all ${
                     isActive
-                      ? item.id === 'income'
+                      ? isPersonalFinance(item.id)
                         ? 'bg-brand text-white font-bold'
                         : 'bg-interactive-soft text-interactive font-bold'
-                      : item.id === 'income'
+                      : isPersonalFinance(item.id)
                         ? 'border border-brand/20 bg-brand-soft text-brand-hover'
-                      : 'text-secondary hover:text-ink hover:bg-subtle/60'
+                        : 'text-secondary hover:text-ink hover:bg-subtle/60'
                   }`}
                 >
                   {item.label}

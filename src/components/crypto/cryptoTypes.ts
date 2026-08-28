@@ -74,10 +74,13 @@ export interface CryptoKlinesResponse {
   candles: CryptoCandle[];
 }
 
+export type CryptoCandleSelectionMode = 'latest' | 'hover' | 'pinned';
+
 export interface CryptoChartContext {
   symbol: CryptoSymbol;
   interval: CryptoInterval;
   candle: CryptoCandle | null;
+  selectionMode: CryptoCandleSelectionMode;
   status: CryptoFeedStatus;
   updatedAt: string | null;
 }

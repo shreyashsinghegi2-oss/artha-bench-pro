@@ -1,186 +1,36 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
-import {
-  ChartCandlestick,
-  Search,
-  ShieldCheck,
-  TrendingDown,
-  TrendingUp,
-  Wifi,
-  WifiOff,
-} from 'lucide-react';
+import { ChartCandlestick, Search, ShieldCheck, TrendingDown, TrendingUp, Wifi, WifiOff } from 'lucide-react';
 import { CandleDetails, CryptoChart } from './CryptoChart';
 import { CryptoAssistant } from './CryptoAssistant';
 import { useCryptoMarkets } from './useCryptoMarketData';
 import {
-  CRYPTO_INTERVALS,
-  CRYPTO_SYMBOLS,
-  CryptoChartContext,
-  CryptoDiagnostics,
-  CryptoFeedStatus,
-  CryptoInterval,
-  CryptoObservation,
-  CryptoQuote,
-  CryptoSymbol,
+  CRYPTO_INTERVALS, CRYPTO_SYMBOLS, CryptoChartContext, CryptoDiagnostics, CryptoFeedStatus,
+  CryptoInterval, CryptoObservation, CryptoQuote, CryptoSymbol,
 } from './cryptoTypes';
 
 const OBSERVATION_STORAGE_KEY = 'artha_crypto_observations_v1';
+interface StoredObservations { version: 1; observations: CryptoObservation[]; }
+function statusLabel(status: CryptoFeedStatus){return status.toUpperCase();}
+function statusClass(status: CryptoFeedStatus){if(status==='live')return'text-success border-success-fill/30 bg-success-fill/10';if(status==='unavailable'||status==='stale')return'text-danger border-danger/30 bg-danger/10';return'text-warning border-warning-fill/30 bg-warning-fill/10';}
+function formatPrice(value:number){return value.toLocaleString('en-US',{minimumFractionDigits:value<1?6:2,maximumFractionDigits:value<1?6:2});}
+function compactNumber(value:number){return new Intl.NumberFormat('en-US',{notation:'compact',maximumFractionDigits:2}).format(value);}
+function formatIst(value:string|null){return value?new Intl.DateTimeFormat('en-IN',{timeZone:'Asia/Kolkata',dateStyle:'medium',timeStyle:'medium'}).format(new Date(value)):'—';}
+function loadObservations():CryptoObservation[]{try{const raw=localStorage.getItem(OBSERVATION_STORAGE_KEY);if(!raw)return[];const parsed=JSON.parse(raw) as CryptoObservation[]|StoredObservations;if(Array.isArray(parsed))return parsed;return parsed.version===1&&Array.isArray(parsed.observations)?parsed.observations:[];}catch{return[];}}
 
-interface StoredObservations {
-  version: 1;
-  observations: CryptoObservation[];
-}
-
-function statusLabel(status: CryptoFeedStatus) {
-  return status.toUpperCase();
-}
-
-function statusClass(status: CryptoFeedStatus) {
-  if (status === 'live') return 'text-success border-success-fill/30 bg-success-fill/10';
-  if (status === 'unavailable' || status === 'stale') return 'text-danger border-danger/30 bg-danger/10';
-  return 'text-warning border-warning-fill/30 bg-warning-fill/10';
-}
-
-function formatPrice(value: number) {
-  return value.toLocaleString('en-US', { minimumFractionDigits: value < 1 ? 6 : 2, maximumFractionDigits: value < 1 ? 6 : 2 });
-}
-
-function compactNumber(value: number) {
-  return new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 2 }).format(value);
-}
-
-function formatIst(value: string | null) {
-  return value ? new Intl.DateTimeFormat('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'medium', timeStyle: 'medium' }).format(new Date(value)) : '—';
-}
-
-function loadObservations(): CryptoObservation[] {
-  try {
-    const raw = localStorage.getItem(OBSERVATION_STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw) as CryptoObservation[] | StoredObservations;
-    if (Array.isArray(parsed)) return parsed;
-    return parsed.version === 1 && Array.isArray(parsed.observations) ? parsed.observations : [];
-  } catch {
-    return [];
-  }
-}
-
-const CryptoTicker: React.FC<{ quotes: CryptoQuote[]; status: CryptoFeedStatus; diagnostics: CryptoDiagnostics }> = ({ quotes, status, diagnostics }) => {
-  const renderGroup = (duplicate = false) => (
-    <ul className={`india-market-ticker-group flex shrink-0 items-center ${duplicate ? 'india-market-ticker-duplicate' : ''}`} aria-hidden={duplicate || undefined}>
-      {quotes.map((quote) => {
-        const advancing = quote.changePercent >= 0;
-        const DirectionIcon = advancing ? TrendingUp : TrendingDown;
-        return (
-          <li key={quote.symbol} className="flex h-14 shrink-0 items-center gap-3 border-r border-slate-700/80 px-6 font-mono text-sm tabular-nums">
-            <span className="font-bold text-white">{quote.baseAsset}/USDT</span>
-            <span className="font-semibold text-slate-100">{formatPrice(quote.price)} USDT</span>
-            <span className={`inline-flex items-center gap-1 font-bold ${advancing ? 'text-emerald-300' : 'text-red-300'}`}><DirectionIcon className="h-4 w-4" />{advancing ? '+' : ''}{quote.change.toFixed(quote.price < 1 ? 6 : 2)} ({advancing ? '+' : ''}{quote.changePercent.toFixed(2)}%)</span>
-          </li>
-        );
-      })}
-    </ul>
-  );
-
-  return (
-    <>
-      <section className="india-market-ticker-shell flex min-h-14 overflow-hidden rounded-xl bg-[#050817] shadow-sm ring-1 ring-slate-900/10" aria-label={`Crypto markets ticker. Binance Public Market Data. ${statusLabel(status)}.`}>
-        <div className="relative z-10 flex shrink-0 items-center gap-3 border-r border-slate-700 bg-[#050817] px-4"><span className={`h-2.5 w-2.5 rounded-full ${status === 'live' ? 'bg-emerald-400' : status === 'unavailable' ? 'bg-red-400' : 'bg-amber-400'}`} /><div className="leading-tight"><p className="text-xs font-bold tracking-[0.13em] text-white">CRYPTO MARKETS</p><p className="text-[10px] text-slate-300">Binance Public Market Data · {statusLabel(status)}</p></div></div>
-        <div className="india-market-ticker-viewport min-w-0 flex-1 overflow-hidden" tabIndex={0}>{quotes.length ? <div className="india-market-ticker-track flex w-max items-center">{renderGroup()}{renderGroup(true)}</div> : <div className="flex h-14 items-center px-5 text-xs text-slate-300">{status === 'unavailable' ? 'Crypto market data temporarily unavailable' : 'Connecting to Binance public market data…'}</div>}</div>
-      </section>
-      <details className="mt-3 rounded-xl border border-line bg-surface px-3 py-2 text-xs text-secondary"><summary className="cursor-pointer font-bold text-ink">Ticker connection diagnostics</summary><dl className="mt-2 grid gap-2 sm:grid-cols-3"><div><dt className="font-semibold">Socket</dt><dd>{diagnostics.socketState}</dd></div><div><dt className="font-semibold">REST snapshot</dt><dd>{formatIst(diagnostics.restSnapshotAt)}</dd></div><div><dt className="font-semibold">Last verified</dt><dd>{formatIst(diagnostics.lastValidMessageAt)}</dd></div></dl></details>
-    </>
-  );
+const CryptoTicker:React.FC<{quotes:CryptoQuote[];status:CryptoFeedStatus;diagnostics:CryptoDiagnostics}>=({quotes,status,diagnostics})=>{
+  const renderGroup=(duplicate=false)=><ul className={`india-market-ticker-group flex shrink-0 items-center ${duplicate?'india-market-ticker-duplicate':''}`} aria-hidden={duplicate||undefined}>{quotes.map((quote)=>{const advancing=quote.changePercent>=0;const DirectionIcon=advancing?TrendingUp:TrendingDown;return <li key={quote.symbol} className="flex h-14 shrink-0 items-center gap-3 border-r border-slate-700/80 px-6 font-mono text-sm tabular-nums"><span className="font-bold text-white">{quote.baseAsset}/USDT</span><span className="font-semibold text-slate-100">{formatPrice(quote.price)} USDT</span><span className={`inline-flex items-center gap-1 font-bold ${advancing?'text-emerald-300':'text-red-300'}`}><DirectionIcon className="h-4 w-4" />{advancing?'+':''}{quote.change.toFixed(quote.price<1?6:2)} ({advancing?'+':''}{quote.changePercent.toFixed(2)}%)</span></li>;})}</ul>;
+  return <><section className="india-market-ticker-shell flex min-h-14 overflow-hidden rounded-xl bg-[#050817] shadow-sm ring-1 ring-slate-900/10" aria-label={`Crypto markets ticker. Binance Public Market Data. ${statusLabel(status)}.`}><div className="relative z-10 flex shrink-0 items-center gap-3 border-r border-slate-700 bg-[#050817] px-4"><span className={`h-2.5 w-2.5 rounded-full ${status==='live'?'bg-emerald-400':status==='unavailable'?'bg-red-400':'bg-amber-400'}`} /><div className="leading-tight"><p className="text-xs font-bold tracking-[0.13em] text-white">CRYPTO MARKETS</p><p className="text-[10px] text-slate-300">Binance Public Market Data · {statusLabel(status)}</p></div></div><div className="india-market-ticker-viewport min-w-0 flex-1 overflow-hidden" tabIndex={0}>{quotes.length?<div className="india-market-ticker-track flex w-max items-center">{renderGroup()}{renderGroup(true)}</div>:<div className="flex h-14 items-center px-5 text-xs text-slate-300">{status==='unavailable'?'Crypto market data temporarily unavailable':'Connecting to Binance public market data…'}</div>}</div></section><details className="mt-3 rounded-xl border border-line bg-surface px-3 py-2 text-xs text-secondary"><summary className="cursor-pointer font-bold text-ink">Ticker connection diagnostics</summary><dl className="mt-2 grid gap-2 sm:grid-cols-3"><div><dt className="font-semibold">Socket</dt><dd>{diagnostics.socketState}</dd></div><div><dt className="font-semibold">REST snapshot</dt><dd>{formatIst(diagnostics.restSnapshotAt)}</dd></div><div><dt className="font-semibold">Last verified</dt><dd>{formatIst(diagnostics.lastValidMessageAt)}</dd></div></dl></details></>;
 };
 
-export const CryptoDashboardView: React.FC = () => {
-  const market = useCryptoMarkets();
-  const [search, setSearch] = useState('');
-  const [symbol, setSymbolState] = useState<CryptoSymbol>(() => {
-    const saved = localStorage.getItem('artha_crypto_symbol');
-    return CRYPTO_SYMBOLS.includes(saved as CryptoSymbol) ? saved as CryptoSymbol : 'BTCUSDT';
-  });
-  const [interval, setIntervalState] = useState<CryptoInterval>(() => {
-    const saved = localStorage.getItem('artha_crypto_interval');
-    return CRYPTO_INTERVALS.includes(saved as CryptoInterval) ? saved as CryptoInterval : '1m';
-  });
-  const [chartContext, setChartContext] = useState<CryptoChartContext | null>(null);
-  const [observationText, setObservationText] = useState('');
-  const [observationTag, setObservationTag] = useState<CryptoObservation['tag']>('trend');
-  const [observations, setObservations] = useState<CryptoObservation[]>(loadObservations);
-  const chartSectionRef = useRef<HTMLDivElement | null>(null);
-
-  const setSymbol = useCallback((nextSymbol: CryptoSymbol, scrollToChart = false) => {
-    setSymbolState(nextSymbol);
-    localStorage.setItem('artha_crypto_symbol', nextSymbol);
-    if (scrollToChart) {
-      window.requestAnimationFrame(() => chartSectionRef.current?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' }));
-    }
-  }, []);
-  const setInterval = useCallback((nextInterval: CryptoInterval) => {
-    setIntervalState(nextInterval);
-    localStorage.setItem('artha_crypto_interval', nextInterval);
-  }, []);
-  const handleContextChange = useCallback((context: CryptoChartContext) => setChartContext(context), []);
-
-  const filteredQuotes = useMemo(() => {
-    const query = search.trim().toUpperCase();
-    return market.quotes.filter((quote) => `${quote.baseAsset} ${quote.symbol}`.includes(query));
-  }, [market.quotes, search]);
-  const advancingCount = market.quotes.filter((quote) => quote.changePercent > 0).length;
-
-  const saveObservation = () => {
-    if (!chartContext?.candle || !observationText.trim()) return;
-    const nextObservations: CryptoObservation[] = [{ id: crypto.randomUUID(), symbol: chartContext.symbol, interval: chartContext.interval, note: observationText.trim(), tag: observationTag, recordedAt: new Date().toISOString() }, ...observations].slice(0, 50);
-    setObservations(nextObservations);
-    const stored: StoredObservations = { version: 1, observations: nextObservations };
-    localStorage.setItem(OBSERVATION_STORAGE_KEY, JSON.stringify(stored));
-    setObservationText('');
-  };
-
-  return (
-    <div className="mx-auto max-w-[1500px] space-y-6 px-4 py-7 sm:px-6">
-      <section className="rounded-3xl border border-line bg-surface p-5 shadow-sm sm:p-7">
-        <div className="mb-2 flex flex-wrap items-center gap-2"><span className="rounded-full border border-warning-fill/25 bg-warning-fill/10 px-3 py-1 text-xs font-bold text-warning">CRYPTO MARKET LAB</span><span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold ${statusClass(market.status)}`}>{market.status === 'live' ? <Wifi className="h-3.5 w-3.5" /> : <WifiOff className="h-3.5 w-3.5" />}{statusLabel(market.status)}</span></div>
-        <h1 className="text-3xl font-black text-ink">Crypto Dashboard</h1>
-        <p className="mt-2 max-w-3xl text-sm leading-6 text-secondary">Binance public spot-market learning workspace with a compact live ticker, candlestick analysis, observations and grounded educational AI. No account or trading permission is connected.</p>
-      </section>
-
-      <CryptoTicker quotes={market.quotes} status={market.status} diagnostics={market.diagnostics} />
-
-      <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        {[
-          ['Tracked markets', market.quotes.length || '—'],
-          ['Advancing', market.quotes.length ? `${advancingCount}/${market.quotes.length}` : '—'],
-          ['Feed', statusLabel(market.status)],
-          ['Source', 'Binance Public'],
-        ].map(([label, value]) => <div key={label} className="rounded-2xl border border-line bg-surface p-4 shadow-sm"><p className="text-xs font-bold uppercase tracking-wider text-secondary">{label}</p><p className="mt-2 text-lg font-black capitalize text-ink">{value}</p></div>)}
-      </section>
-
-      <section className="rounded-3xl border border-line bg-surface p-4">
-        <label className="relative block max-w-md"><Search className="absolute left-3 top-2.5 h-4 w-4 text-secondary" /><input value={search} onChange={(event) => setSearch(event.target.value)} aria-label="Search crypto markets" placeholder="Search BTC, ETH, SOL…" className="w-full rounded-xl border border-line bg-canvas py-2.5 pl-9 pr-3 text-sm text-ink outline-none focus:ring-2 focus:ring-interactive/20" /></label>
-        <div className="scrollbar-thin mt-3 flex gap-2 overflow-x-auto">
-          {filteredQuotes.map((quote) => {
-            const selected = quote.symbol === symbol;
-            const advancing = quote.changePercent >= 0;
-            return <button key={quote.symbol} type="button" aria-pressed={selected} onClick={() => setSymbol(quote.symbol, true)} className={`min-w-[210px] rounded-xl border p-3 text-left outline-none transition focus-visible:ring-2 focus-visible:ring-interactive ${selected ? 'border-interactive bg-interactive-soft' : 'border-line bg-canvas hover:border-interactive/40'}`}><div className="flex items-center justify-between"><p className="text-sm font-black text-ink">{quote.baseAsset}/USDT</p><p className={`flex items-center text-xs font-bold ${advancing ? 'text-success' : 'text-danger'}`}>{advancing ? <TrendingUp className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5" />}{advancing ? '+' : ''}{quote.changePercent.toFixed(2)}%</p></div><p className="mt-2 font-mono text-base font-bold tabular-nums text-ink">{formatPrice(quote.price)} USDT</p><p className="mt-1 text-xs text-secondary">Quote volume {compactNumber(quote.quoteVolume24h)}</p></button>;
-          })}
-        </div>
-      </section>
-
-      <div ref={chartSectionRef} className="scroll-mt-24 grid items-start gap-4 xl:grid-cols-[minmax(0,7fr)_minmax(320px,3fr)]">
-        <CryptoChart symbol={symbol} interval={interval} onSymbolChange={setSymbol} onIntervalChange={setInterval} onContextChange={handleContextChange} />
-        <aside className="space-y-4"><CandleDetails candle={chartContext?.candle ?? null} symbol={symbol} latest /><CryptoAssistant candle={chartContext?.candle ?? null} symbol={symbol} interval={interval} status={chartContext?.status ?? 'connecting'} updatedAt={chartContext?.updatedAt ?? null} /></aside>
-      </div>
-
-      <section className="grid gap-4 xl:grid-cols-2">
-        <div className="rounded-2xl border border-line bg-surface p-5"><div className="flex items-center gap-2 text-sm font-black text-ink"><ChartCandlestick className="h-4 w-4 text-interactive" /> Market observation</div><div className="mt-3 flex flex-col gap-2"><select aria-label="Observation category" value={observationTag} onChange={(event) => setObservationTag(event.target.value as CryptoObservation['tag'])} className="rounded-xl border border-line bg-canvas px-3 py-2 text-sm text-ink"><option value="trend">Trend</option><option value="volatility">Volatility</option><option value="support-resistance">Support / resistance</option><option value="risk">Risk</option></select><textarea aria-label="Market observation" value={observationText} onChange={(event) => setObservationText(event.target.value)} maxLength={500} placeholder="What do you observe?" className="rounded-xl border border-line bg-canvas p-3 text-sm text-ink" /><button type="button" onClick={saveObservation} disabled={!observationText.trim() || !chartContext?.candle} className="rounded-xl bg-brand px-4 py-2 text-sm font-bold text-white disabled:opacity-40">Save observation</button></div></div>
-        <div className="rounded-2xl border border-line bg-surface p-5"><p className="text-sm font-black text-ink">Recent observations</p><div className="mt-3 max-h-40 space-y-2 overflow-y-auto">{observations.slice(0, 5).map((observation) => <div key={observation.id} className="border-l-2 border-interactive pl-3"><p className="text-xs font-bold text-ink">{observation.symbol} · {observation.interval} · {observation.tag}</p><p className="text-xs leading-5 text-secondary">{observation.note}</p></div>)}{observations.length ? null : <p className="text-xs text-secondary">No saved observations yet.</p>}</div></div>
-      </section>
-
-      <section className="grid gap-4 lg:grid-cols-2">
-        <div className="rounded-2xl border border-line bg-surface p-5"><div className="flex items-center gap-2 text-sm font-black text-ink"><ShieldCheck className="h-4 w-4 text-success" /> Data reliability</div><p className="mt-2 text-sm leading-6 text-secondary">Binance REST provides startup and recovery snapshots. Official Binance market-data WebSocket endpoints are tried in sequence; only a valid normalized message changes the label to LIVE.</p></div>
-        <div className="rounded-2xl border border-warning/30 bg-warning/5 p-5"><p className="text-sm font-black text-ink">Crypto risk disclosure</p><p className="mt-2 text-sm leading-6 text-secondary">USDT may not equal USD exactly. Crypto is volatile, prices differ across exchanges, and forming candles can change before close. Educational data only—not investment advice.</p></div>
-      </section>
-    </div>
-  );
+export const CryptoDashboardView:React.FC=()=>{
+  const market=useCryptoMarkets();const[search,setSearch]=useState('');
+  const[symbol,setSymbolState]=useState<CryptoSymbol>(()=>{const saved=localStorage.getItem('artha_crypto_symbol');return CRYPTO_SYMBOLS.includes(saved as CryptoSymbol)?saved as CryptoSymbol:'BTCUSDT';});
+  const[interval,setIntervalState]=useState<CryptoInterval>(()=>{const saved=localStorage.getItem('artha_crypto_interval');return CRYPTO_INTERVALS.includes(saved as CryptoInterval)?saved as CryptoInterval:'1m';});
+  const[chartContext,setChartContext]=useState<CryptoChartContext|null>(null);const[observationText,setObservationText]=useState('');const[observationTag,setObservationTag]=useState<CryptoObservation['tag']>('trend');const[observations,setObservations]=useState<CryptoObservation[]>(loadObservations);const chartSectionRef=useRef<HTMLDivElement|null>(null);
+  const setSymbol=useCallback((nextSymbol:CryptoSymbol,scrollToChart=false)=>{setSymbolState(nextSymbol);localStorage.setItem('artha_crypto_symbol',nextSymbol);if(scrollToChart)window.requestAnimationFrame(()=>chartSectionRef.current?.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'}));},[]);
+  const setInterval=useCallback((nextInterval:CryptoInterval)=>{setIntervalState(nextInterval);localStorage.setItem('artha_crypto_interval',nextInterval);},[]);
+  const handleContextChange=useCallback((context:CryptoChartContext)=>setChartContext(context),[]);
+  const filteredQuotes=useMemo(()=>{const query=search.trim().toUpperCase();return market.quotes.filter((quote)=>`${quote.baseAsset} ${quote.symbol}`.includes(query));},[market.quotes,search]);const advancingCount=market.quotes.filter((quote)=>quote.changePercent>0).length;
+  const saveObservation=()=>{if(!chartContext?.candle||!observationText.trim())return;const nextObservations:CryptoObservation[]=[{id:crypto.randomUUID(),symbol:chartContext.symbol,interval:chartContext.interval,note:observationText.trim(),tag:observationTag,recordedAt:new Date().toISOString()},...observations].slice(0,50);setObservations(nextObservations);localStorage.setItem(OBSERVATION_STORAGE_KEY,JSON.stringify({version:1,observations:nextObservations} satisfies StoredObservations));setObservationText('');};
+  return <div className="mx-auto max-w-[1500px] space-y-6 px-4 py-7 sm:px-6"><section className="rounded-3xl border border-line bg-surface p-5 shadow-sm sm:p-7"><div className="mb-2 flex flex-wrap items-center gap-2"><span className="rounded-full border border-warning-fill/25 bg-warning-fill/10 px-3 py-1 text-xs font-bold text-warning">CRYPTO MARKET LAB</span><span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold ${statusClass(market.status)}`}>{market.status==='live'?<Wifi className="h-3.5 w-3.5"/>:<WifiOff className="h-3.5 w-3.5"/>}{statusLabel(market.status)}</span></div><h1 className="text-3xl font-black text-ink">Crypto Dashboard</h1><p className="mt-2 max-w-3xl text-sm leading-6 text-secondary">Binance public spot-market learning workspace with a compact ticker, zoomable candlestick analysis, observations and grounded educational AI. No account or trading permission is connected.</p></section><CryptoTicker quotes={market.quotes} status={market.status} diagnostics={market.diagnostics}/><section className="grid grid-cols-2 gap-3 lg:grid-cols-4">{[['Tracked markets',market.quotes.length||'—'],['Advancing',market.quotes.length?`${advancingCount}/${market.quotes.length}`:'—'],['Feed',statusLabel(market.status)],['Source','Binance Public']].map(([label,value])=><div key={label} className="rounded-2xl border border-line bg-surface p-4 shadow-sm"><p className="text-xs font-bold uppercase tracking-wider text-secondary">{label}</p><p className="mt-2 text-lg font-black capitalize text-ink">{value}</p></div>)}</section><section className="rounded-3xl border border-line bg-surface p-4"><label className="relative block max-w-md"><Search className="absolute left-3 top-2.5 h-4 w-4 text-secondary"/><input value={search} onChange={(event)=>setSearch(event.target.value)} aria-label="Search crypto markets" placeholder="Search BTC, ETH, SOL…" className="w-full rounded-xl border border-line bg-canvas py-2.5 pl-9 pr-3 text-sm text-ink outline-none focus:ring-2 focus:ring-interactive/20"/></label><div className="scrollbar-thin mt-3 flex gap-2 overflow-x-auto">{filteredQuotes.map((quote)=>{const selected=quote.symbol===symbol;const advancing=quote.changePercent>=0;return <button key={quote.symbol} type="button" aria-pressed={selected} onClick={()=>setSymbol(quote.symbol,true)} className={`min-w-[210px] rounded-xl border p-3 text-left outline-none transition focus-visible:ring-2 focus-visible:ring-interactive ${selected?'border-interactive bg-interactive-soft':'border-line bg-canvas hover:border-interactive/40'}`}><div className="flex items-center justify-between"><p className="text-sm font-black text-ink">{quote.baseAsset}/USDT</p><p className={`flex items-center text-xs font-bold ${advancing?'text-success':'text-danger'}`}>{advancing?<TrendingUp className="h-3.5 w-3.5"/>:<TrendingDown className="h-3.5 w-3.5"/>}{advancing?'+':''}{quote.changePercent.toFixed(2)}%</p></div><p className="mt-2 font-mono text-base font-bold tabular-nums text-ink">{formatPrice(quote.price)} USDT</p><p className="mt-1 text-xs text-secondary">Quote volume {compactNumber(quote.quoteVolume24h)}</p></button>;})}</div></section><div ref={chartSectionRef} className="scroll-mt-28 grid items-start gap-4 xl:grid-cols-[minmax(0,7fr)_minmax(320px,3fr)]"><CryptoChart symbol={symbol} interval={interval} onSymbolChange={setSymbol} onIntervalChange={setInterval} onContextChange={handleContextChange}/><aside className="space-y-4"><CandleDetails candle={chartContext?.candle??null} symbol={symbol} mode={chartContext?.selectionMode??'latest'}/><CryptoAssistant candle={chartContext?.candle??null} symbol={symbol} interval={interval} status={chartContext?.status??'connecting'} updatedAt={chartContext?.updatedAt??null}/></aside></div><section className="grid gap-4 xl:grid-cols-2"><div className="rounded-2xl border border-line bg-surface p-5"><div className="flex items-center gap-2 text-sm font-black text-ink"><ChartCandlestick className="h-4 w-4 text-interactive"/> Market observation</div><div className="mt-3 flex flex-col gap-2"><select aria-label="Observation category" value={observationTag} onChange={(event)=>setObservationTag(event.target.value as CryptoObservation['tag'])} className="rounded-xl border border-line bg-canvas px-3 py-2 text-sm text-ink"><option value="trend">Trend</option><option value="volatility">Volatility</option><option value="support-resistance">Support / resistance</option><option value="risk">Risk</option></select><textarea aria-label="Market observation" value={observationText} onChange={(event)=>setObservationText(event.target.value)} maxLength={500} placeholder="What do you observe?" className="rounded-xl border border-line bg-canvas p-3 text-sm text-ink"/><button type="button" onClick={saveObservation} disabled={!observationText.trim()||!chartContext?.candle} className="rounded-xl bg-brand px-4 py-2 text-sm font-bold text-white disabled:opacity-40">Save observation</button></div></div><div className="rounded-2xl border border-line bg-surface p-5"><p className="text-sm font-black text-ink">Recent observations</p><div className="mt-3 max-h-40 space-y-2 overflow-y-auto">{observations.slice(0,5).map((observation)=><div key={observation.id} className="border-l-2 border-interactive pl-3"><p className="text-xs font-bold text-ink">{observation.symbol} · {observation.interval} · {observation.tag}</p><p className="text-xs leading-5 text-secondary">{observation.note}</p></div>)}{observations.length?null:<p className="text-xs text-secondary">No saved observations yet.</p>}</div></div></section><section className="grid gap-4 lg:grid-cols-2"><div className="rounded-2xl border border-line bg-surface p-5"><div className="flex items-center gap-2 text-sm font-black text-ink"><ShieldCheck className="h-4 w-4 text-success"/> Data reliability</div><p className="mt-2 text-sm leading-6 text-secondary">Binance REST provides startup and recovery snapshots. Official Binance market-data WebSocket endpoints are tried in sequence; only a valid normalized message changes the label to LIVE.</p></div><div className="rounded-2xl border border-warning/30 bg-warning/5 p-5"><p className="text-sm font-black text-ink">Crypto risk disclosure</p><p className="mt-2 text-sm leading-6 text-secondary">USDT may not equal USD exactly. Crypto is volatile, prices differ across exchanges, and forming candles can change before close. Educational data only—not investment advice.</p></div></section></div>;
 };

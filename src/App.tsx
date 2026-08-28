@@ -1,7 +1,9 @@
 import React, { lazy, Suspense, useEffect, useState } from 'react';
 import { NavigationDestination } from './types';
+import { AppNavigationDestination, isFinanceDestination } from './navigationTypes';
 import { Header } from './components/Header';
 import { Navigation } from './components/Navigation';
+import { FinanceWorkspaceNavigation } from './components/finance/FinanceWorkspaceNavigation';
 import { Footer } from './components/Footer';
 import { DashboardView } from './components/dashboard/DashboardView';
 import { PersonalFinancialIntelligence } from './components/dashboard/PersonalFinancialIntelligence';
@@ -28,6 +30,8 @@ const MarketView = lazy(() => import('./components/market/MarketView').then((mod
 const IncomeWorkspaceView = lazy(() => import('./components/income/IncomeWorkspaceView').then((module) => ({ default: module.IncomeWorkspaceView })));
 const ExpensesView = lazy(() => import('./components/expenses/ExpensesView').then((module) => ({ default: module.ExpensesView })));
 const BudgetingView = lazy(() => import('./components/budgeting/BudgetingView').then((module) => ({ default: module.BudgetingView })));
+const FinanceReportsView = lazy(() => import('./components/finance/FinanceReportsView').then((module) => ({ default: module.FinanceReportsView })));
+const EmiManagerView = lazy(() => import('./components/finance/EmiManagerView').then((module) => ({ default: module.EmiManagerView })));
 const CryptoDashboardView = lazy(() => import('./components/crypto/CryptoDashboardView').then((module) => ({ default: module.CryptoDashboardView })));
 
 const LoadingView = ({ label }: { label: string }) => (
@@ -36,7 +40,7 @@ const LoadingView = ({ label }: { label: string }) => (
 
 export default function App() {
   const auth = useAuth();
-  const [currentDestination, setCurrentDestination] = useState<NavigationDestination>('overview');
+  const [currentDestination, setCurrentDestination] = useState<AppNavigationDestination>('overview');
   const [showLanding, setShowLanding] = useState(() => typeof window === 'undefined' || window.location.hash !== '#workspace');
 
   useEffect(() => {
@@ -60,8 +64,8 @@ export default function App() {
 
   const dashboard = () => (
     <>
-      {auth.user && <div className="mx-auto max-w-[1700px] px-4 pt-7 sm:px-6"><PersonalFinancialIntelligence onNavigate={setCurrentDestination} /></div>}
-      <DashboardView onNavigate={setCurrentDestination} />
+      {auth.user && <div className="mx-auto max-w-[1700px] px-4 pt-7 sm:px-6"><PersonalFinancialIntelligence onNavigate={(destination) => setCurrentDestination(destination)} /></div>}
+      <DashboardView onNavigate={(destination) => setCurrentDestination(destination)} />
     </>
   );
 
@@ -73,6 +77,8 @@ export default function App() {
       case 'income': return <Suspense fallback={<LoadingView label="Income Workspace" />}><IncomeWorkspaceView /></Suspense>;
       case 'expenses': return <Suspense fallback={<LoadingView label="Expenses Workspace" />}><ExpensesView /></Suspense>;
       case 'budgeting': return <Suspense fallback={<LoadingView label="Budgeting Workspace" />}><BudgetingView /></Suspense>;
+      case 'finance-reports': return <Suspense fallback={<LoadingView label="Finance Reports" />}><FinanceReportsView onNavigate={setCurrentDestination} /></Suspense>;
+      case 'emi-manager': return <Suspense fallback={<LoadingView label="EMI Manager" />}><EmiManagerView /></Suspense>;
       case 'crypto': return <Suspense fallback={<LoadingView label="Crypto Dashboard" />}><CryptoDashboardView /></Suspense>;
       case 'markets': return <Suspense fallback={<LoadingView label="Company Intelligence Dashboard" />}><MarketView /></Suspense>;
       case 'economy': return <Suspense fallback={<LoadingView label="Economic Dashboard" />}><EconomicDashboardView /></Suspense>;
@@ -105,10 +111,12 @@ export default function App() {
     );
   }
 
+  const financeWorkspace = isFinanceDestination(currentDestination);
+
   return (
     <div className="min-h-screen bg-canvas text-ink flex flex-col font-sans selection:bg-interactive selection:text-white">
       <Header currentDestination={currentDestination} onNavigate={setCurrentDestination} />
-      <Navigation currentDestination={currentDestination} onNavigate={setCurrentDestination} />
+      {financeWorkspace ? <FinanceWorkspaceNavigation currentDestination={currentDestination} onNavigate={setCurrentDestination} /> : <Navigation currentDestination={currentDestination} onNavigate={setCurrentDestination} />}
       <main className="flex-1">{renderActiveView()}</main>
       <Footer />
       <AuthModal />

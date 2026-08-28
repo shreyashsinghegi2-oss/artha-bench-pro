@@ -17,85 +17,54 @@ import { MethodologyView } from './components/evaluation/MethodologyView';
 import { ConnectionsView } from './components/evaluation/ConnectionsView';
 import { SettingsView } from './components/evaluation/SettingsView';
 import { AccountView } from './components/account/AccountView';
+import { AuthModal } from './components/auth/AuthModal';
+import { useAuth } from './auth/AuthContext';
 
-const EconomicDashboardView = lazy(() =>
-  import('./components/economy/EconomicDashboardView').then((module) => ({ default: module.EconomicDashboardView })),
-);
-
-const MarketView = lazy(() =>
-  import('./components/market/MarketView').then((module) => ({ default: module.MarketView })),
-);
-
-const IncomeWorkspaceView = lazy(() =>
-  import('./components/income/IncomeWorkspaceView').then((module) => ({ default: module.IncomeWorkspaceView })),
-);
-
-const ExpensesView = lazy(() =>
-  import('./components/expenses/ExpensesView').then((module) => ({ default: module.ExpensesView })),
-);
-
-const BudgetingView = lazy(() =>
-  import('./components/budgeting/BudgetingView').then((module) => ({ default: module.BudgetingView })),
-);
-
-const CryptoDashboardView = lazy(() =>
-  import('./components/crypto/CryptoDashboardView').then((module) => ({ default: module.CryptoDashboardView })),
-);
+const EconomicDashboardView = lazy(() => import('./components/economy/EconomicDashboardView').then((module) => ({ default: module.EconomicDashboardView })));
+const MarketView = lazy(() => import('./components/market/MarketView').then((module) => ({ default: module.MarketView })));
+const IncomeWorkspaceView = lazy(() => import('./components/income/IncomeWorkspaceView').then((module) => ({ default: module.IncomeWorkspaceView })));
+const ExpensesView = lazy(() => import('./components/expenses/ExpensesView').then((module) => ({ default: module.ExpensesView })));
+const BudgetingView = lazy(() => import('./components/budgeting/BudgetingView').then((module) => ({ default: module.BudgetingView })));
+const CryptoDashboardView = lazy(() => import('./components/crypto/CryptoDashboardView').then((module) => ({ default: module.CryptoDashboardView })));
 
 const LoadingView = ({ label }: { label: string }) => (
   <div className="max-w-[1500px] mx-auto px-4 py-20 text-center text-sm text-secondary">Loading {label}…</div>
 );
 
 export default function App() {
+  const auth = useAuth();
   const [currentDestination, setCurrentDestination] = useState<NavigationDestination>('overview');
 
   const renderActiveView = () => {
     switch (currentDestination) {
       case 'dashboard':
-      case 'overview':
-        return <DashboardView onNavigate={setCurrentDestination} />;
-      case 'learning':
-        return <LearningView />;
-      case 'income':
-        return <Suspense fallback={<LoadingView label="Income Workspace" />}><IncomeWorkspaceView /></Suspense>;
-      case 'expenses':
-        return <Suspense fallback={<LoadingView label="Expenses Workspace" />}><ExpensesView /></Suspense>;
-      case 'budgeting':
-        return <Suspense fallback={<LoadingView label="Budgeting Workspace" />}><BudgetingView /></Suspense>;
-      case 'crypto':
-        return <Suspense fallback={<LoadingView label="Crypto Dashboard" />}><CryptoDashboardView /></Suspense>;
-      case 'markets':
-        return <Suspense fallback={<LoadingView label="Company Intelligence Dashboard" />}><MarketView /></Suspense>;
-      case 'economy':
-        return <Suspense fallback={<LoadingView label="Economic Dashboard" />}><EconomicDashboardView /></Suspense>;
-      case 'news':
-        return <NewsView />;
-      case 'quick-check':
-        return <QuickCheckView />;
-      case 'tutor':
-        return <TutorView />;
-      case 'evaluation-lab':
-        return <EvaluationLabView />;
-      case 'comparison':
-        return <ComparisonView />;
-      case 'scenarios':
-        return <ScenariosView />;
-      case 'batch':
-        return <BatchBenchmarkView />;
-      case 'reports':
-        return <ReportsView />;
-      case 'methodology':
-        return <MethodologyView />;
-      case 'connections':
-        return <ConnectionsView />;
-      case 'settings':
-        return <SettingsView />;
-      case 'account':
-        return <AccountView />;
-      default:
-        return <DashboardView onNavigate={setCurrentDestination} />;
+      case 'overview': return <DashboardView onNavigate={setCurrentDestination} />;
+      case 'learning': return <LearningView />;
+      case 'income': return <Suspense fallback={<LoadingView label="Income Workspace" />}><IncomeWorkspaceView /></Suspense>;
+      case 'expenses': return <Suspense fallback={<LoadingView label="Expenses Workspace" />}><ExpensesView /></Suspense>;
+      case 'budgeting': return <Suspense fallback={<LoadingView label="Budgeting Workspace" />}><BudgetingView /></Suspense>;
+      case 'crypto': return <Suspense fallback={<LoadingView label="Crypto Dashboard" />}><CryptoDashboardView /></Suspense>;
+      case 'markets': return <Suspense fallback={<LoadingView label="Company Intelligence Dashboard" />}><MarketView /></Suspense>;
+      case 'economy': return <Suspense fallback={<LoadingView label="Economic Dashboard" />}><EconomicDashboardView /></Suspense>;
+      case 'news': return <NewsView />;
+      case 'quick-check': return <QuickCheckView />;
+      case 'tutor': return <TutorView />;
+      case 'evaluation-lab': return <EvaluationLabView />;
+      case 'comparison': return <ComparisonView />;
+      case 'scenarios': return <ScenariosView />;
+      case 'batch': return <BatchBenchmarkView />;
+      case 'reports': return <ReportsView />;
+      case 'methodology': return <MethodologyView />;
+      case 'connections': return <ConnectionsView />;
+      case 'settings': return <SettingsView />;
+      case 'account': return <AccountView />;
+      default: return <DashboardView onNavigate={setCurrentDestination} />;
     }
   };
+
+  if (auth.loading) {
+    return <div className="min-h-screen bg-canvas text-ink flex items-center justify-center"><div className="rounded-2xl border border-line bg-surface px-6 py-5 text-sm font-semibold text-secondary shadow-sm">Restoring your Artha Bench workspace…</div></div>;
+  }
 
   return (
     <div className="min-h-screen bg-canvas text-ink flex flex-col font-sans selection:bg-interactive selection:text-white">
@@ -103,6 +72,7 @@ export default function App() {
       <Navigation currentDestination={currentDestination} onNavigate={setCurrentDestination} />
       <main className="flex-1">{renderActiveView()}</main>
       <Footer />
+      <AuthModal />
     </div>
   );
 }

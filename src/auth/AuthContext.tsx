@@ -12,7 +12,8 @@ import {
   signInWithPassword,
   signOutRemote,
   signUpWithPassword,
-  startGoogleOAuth,
+  SocialAuthProvider,
+  startSocialOAuth,
   updatePassword,
   upsertProfile,
   UserProfile,
@@ -41,6 +42,7 @@ interface AuthContextValue {
   closeAuth: () => void;
   signIn: (email: string, password: string, remember: boolean) => Promise<void>;
   signUp: (input: { fullName: string; email: string; password: string; country: string; financialDataConsent: boolean }) => Promise<void>;
+  continueWithSocial: (provider: SocialAuthProvider) => void;
   continueWithGoogle: () => void;
   forgotPassword: (email: string) => Promise<void>;
   resetPassword: (password: string) => Promise<void>;
@@ -192,6 +194,11 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
     setAuthOpen(true);
   };
 
+  const continueWithSocial = (provider: SocialAuthProvider) => {
+    if (!configured) throw new Error('Social sign-in is not configured on this deployment yet.');
+    startSocialOAuth(provider);
+  };
+
   const forgotPassword = async (email: string) => {
     if (!configured) throw new Error('Password reset is not configured on this deployment yet.');
     await sendPasswordReset(email.trim());
@@ -229,8 +236,9 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
   const value = useMemo<AuthContextValue>(() => ({
     configured, loading, syncing, session, user: session?.user ?? null, profile,
     authOpen, authScreen, authMessage, openAuth, closeAuth, signIn, signUp,
-    continueWithGoogle: startGoogleOAuth, forgotPassword, resetPassword, signOut,
-    saveProfile, syncNow, refreshProfile,
+    continueWithSocial,
+    continueWithGoogle: () => continueWithSocial('google'),
+    forgotPassword, resetPassword, signOut, saveProfile, syncNow, refreshProfile,
   }), [configured, loading, syncing, session, profile, authOpen, authScreen, authMessage, syncNow]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

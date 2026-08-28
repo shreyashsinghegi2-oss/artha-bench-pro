@@ -8,6 +8,7 @@ import {
   ShieldCheck,
   Sparkles,
   User,
+  Wrench,
 } from 'lucide-react';
 import { askDashboardAssistant } from '../../services/learningApi';
 import {
@@ -45,7 +46,7 @@ export const DashboardAssistant: React.FC<DashboardAssistantProps> = ({
     {
       role: 'assistant',
       content:
-        'I can explain the live market, economic, provider-health, and reliability data currently visible on this dashboard. Ask me about a chart, comparison, or limitation.',
+        'I can explain the live market, economic, provider-health, and reliability data currently visible on this dashboard—grounded in SEBI-compliant Indian data where available. Ask me about a chart, comparison, or limitation.',
     },
   ]);
   const [question, setQuestion] = useState('');
@@ -93,7 +94,7 @@ export const DashboardAssistant: React.FC<DashboardAssistantProps> = ({
       setError(
         requestError instanceof Error
           ? requestError.message
-          : 'Ask Artha AI is temporarily unavailable.',
+          : 'ArthaMind AI is temporarily unavailable.',
       );
     } finally {
       setLoading(false);
@@ -115,9 +116,12 @@ export const DashboardAssistant: React.FC<DashboardAssistantProps> = ({
             </div>
             <div>
               <div className="flex flex-wrap items-center gap-2">
-                <h2 className="text-base font-extrabold text-ink">Ask Artha AI</h2>
+                <h2 className="text-base font-extrabold text-ink">Ask ArthaMind AI</h2>
                 <span className="rounded-full border border-success-fill/30 bg-success-fill/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-success">
                   Data grounded
+                </span>
+                <span className="inline-flex items-center gap-1 rounded-full border border-interactive/30 bg-interactive-soft px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-interactive">
+                  <Wrench className="h-3 w-3" /> Tool-Calling Enabled
                 </span>
               </div>
               <p className="mt-1 text-[11px] leading-relaxed text-secondary">
@@ -139,11 +143,7 @@ export const DashboardAssistant: React.FC<DashboardAssistantProps> = ({
             className={`flex items-start gap-2.5 ${message.role === 'user' ? 'flex-row-reverse' : ''}`}
           >
             <div
-              className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border ${
-                message.role === 'user'
-                  ? 'border-interactive/30 bg-interactive/10 text-interactive'
-                  : 'border-interactive/30 bg-interactive/10 text-interactive'
-              }`}
+              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-interactive/30 bg-interactive/10 text-interactive"
             >
               {message.role === 'user' ? <User className="h-3.5 w-3.5" /> : <Bot className="h-3.5 w-3.5" />}
             </div>
@@ -199,7 +199,7 @@ export const DashboardAssistant: React.FC<DashboardAssistantProps> = ({
 
         <form onSubmit={handleSubmit} className="relative">
           <label htmlFor="dashboard-assistant-question" className="sr-only">
-            Ask Artha AI about this dashboard
+            Ask ArthaMind AI about this dashboard
           </label>
           <textarea
             id="dashboard-assistant-question"
@@ -214,7 +214,7 @@ export const DashboardAssistant: React.FC<DashboardAssistantProps> = ({
             rows={3}
             maxLength={1200}
             disabled={!ready || loading}
-            placeholder="Ask what changed, compare indicators, or explain a chart…"
+            placeholder="I can explain the live market... grounded in SEBI-compliant Indian data."
             className="w-full resize-none rounded-2xl border border-line-strong bg-surface px-4 py-3 pr-12 text-xs leading-5 text-ink outline-none placeholder:text-secondary focus:border-interactive focus:ring-2 focus:ring-interactive disabled:cursor-not-allowed disabled:opacity-60"
           />
           <button

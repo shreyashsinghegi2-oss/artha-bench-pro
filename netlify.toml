@@ -18,3 +18,5 @@
   from = "/*"
   to = "/index.html"
   status = 200
+
+# Deployment trigger: 2026-08-28

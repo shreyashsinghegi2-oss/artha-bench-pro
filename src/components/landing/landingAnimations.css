@@ -3,11 +3,10 @@
 @keyframes artha-candle-in { from{opacity:0;transform:scaleY(.12)} to{opacity:1;transform:scaleY(1)} }
 @keyframes artha-grid-in { from{opacity:0} to{opacity:1} }
 @keyframes artha-line-in { from{opacity:0} to{opacity:1} }
-@keyframes artha-crosshair-sweep { 0%,10%{opacity:0;transform:translateX(0)} 18%{opacity:1} 82%{opacity:1} 90%,100%{opacity:0;transform:translateX(315px)} }
 @keyframes artha-answer-in { from{opacity:0;transform:translateY(5px)} to{opacity:1;transform:none} }
 @keyframes artha-boundary-in { from{opacity:0} to{opacity:1} }
 
-.artha-ticker-track { animation: artha-ticker-scroll 46s linear infinite; }
+.artha-ticker-track { animation: artha-ticker-scroll 52s linear infinite; }
 .artha-ticker:hover .artha-ticker-track,.artha-ticker:focus .artha-ticker-track,.artha-ticker:focus-within .artha-ticker-track { animation-play-state:paused; }
 .artha-hero-stagger > * { opacity:0; animation: artha-hero-in .55s ease-out forwards; }
 .artha-hero-stagger > *:nth-child(2){animation-delay:.08s}.artha-hero-stagger > *:nth-child(3){animation-delay:.16s}.artha-hero-stagger > *:nth-child(4){animation-delay:.24s}.artha-hero-stagger > *:nth-child(5){animation-delay:.32s}.artha-hero-stagger > *:nth-child(6){animation-delay:.4s}
@@ -24,13 +23,21 @@
 .artha-research-workspace.is-visible .artha-final-price-line { animation:artha-line-in .4s ease-out 2.35s forwards; }
 .artha-research-workspace.is-visible .artha-answer-reveal { animation:artha-answer-in .38s ease-out forwards; }
 .artha-research-workspace.is-visible .artha-context-boundary { animation:artha-boundary-in .4s ease-out 4.05s forwards; }
-.artha-research-workspace.is-visible .artha-crosshair { animation:artha-crosshair-sweep 10s ease-in-out 5.5s infinite; }
+.artha-crosshair { opacity:0; transition:opacity 160ms ease; }
+.artha-research-chart:hover .artha-crosshair,.artha-research-chart:focus-visible .artha-crosshair { opacity:1; }
 .artha-crosshair-tooltip { opacity:.95; }
 
-.artha-feature-card { transition:transform 180ms ease,border-color 180ms ease,background-color 180ms ease; }
-.artha-feature-card:hover { transform:translateY(-3px); }
-.artha-button { transition:transform 180ms ease,box-shadow 180ms ease,background-color 180ms ease; }
-.artha-button:hover { transform:translateY(-2px); }
+.artha-preview-action { transition:transform 170ms ease,background-color 170ms ease,border-color 170ms ease,color 170ms ease,box-shadow 170ms ease; }
+.artha-preview-action:hover { transform:translateY(-2px); }
+.artha-preview-action:active { transform:translateY(0); }
+.artha-preview-action:focus-visible { outline:2px solid #0f766e; outline-offset:3px; }
+.artha-watch-row:hover { border-color:#99f6e4; background:#f0fdfa; box-shadow:0 8px 20px rgba(15,118,110,.07); }
+
+.artha-feature-card { transition:transform 180ms ease,border-color 180ms ease,background-color 180ms ease,box-shadow 180ms ease; }
+.artha-feature-card:hover { transform:translateY(-3px); box-shadow:0 12px 30px rgba(0,0,0,.10); }
+.artha-button { transition:transform 180ms ease,box-shadow 180ms ease,background-color 180ms ease,border-color 180ms ease; }
+.artha-button:hover { transform:translateY(-2px); box-shadow:0 10px 24px rgba(0,0,0,.14); }
+.artha-button:active { transform:translateY(0); }
 .artha-button:focus-visible,.artha-ticker:focus-visible { outline:2px solid #5eead4; outline-offset:3px; }
 .artha-reliability-divider { transition:transform .6s ease; }
 .artha-feature-card:hover .artha-reliability-divider { transform:translateX(2px); }
@@ -40,11 +47,12 @@
 @keyframes artha-spark-draw { from{stroke-dashoffset:140} to{stroke-dashoffset:0} }
 
 @media (max-width: 1023px) {
-  .artha-research-workspace .artha-crosshair { display:none; }
+  .artha-crosshair { display:none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .artha-ticker-track,.artha-hero-stagger > *,.artha-hero-product,.artha-hero-candle,.artha-hero-price-line,.artha-research-workspace,.artha-watch-row,.artha-chart-grid,.artha-candle,.artha-final-price-line,.artha-answer-reveal,.artha-context-boundary,.artha-crosshair,.artha-mini-bar-a,.artha-mini-bar-b,.artha-report-check,.artha-flow-spark { animation:none !important; transition:none !important; transform:none !important; opacity:1 !important; stroke-dashoffset:0 !important; }
-  .artha-feature-card,.artha-button { transition:none !important; }
-  .artha-feature-card:hover,.artha-button:hover { transform:none !important; }
+  .artha-ticker-track,.artha-hero-stagger > *,.artha-hero-product,.artha-hero-candle,.artha-hero-price-line,.artha-research-workspace,.artha-watch-row,.artha-chart-grid,.artha-candle,.artha-final-price-line,.artha-answer-reveal,.artha-context-boundary,.artha-mini-bar-a,.artha-mini-bar-b,.artha-report-check,.artha-flow-spark { animation:none !important; transition:none !important; transform:none !important; opacity:1 !important; stroke-dashoffset:0 !important; }
+  .artha-crosshair { display:none !important; }
+  .artha-feature-card,.artha-button,.artha-preview-action { transition:none !important; }
+  .artha-feature-card:hover,.artha-button:hover,.artha-preview-action:hover { transform:none !important; }
 }

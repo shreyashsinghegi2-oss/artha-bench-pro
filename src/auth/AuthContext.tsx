@@ -81,37 +81,33 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
   const [authOpen, setAuthOpen] = useState(false);
   const [authScreen, setAuthScreen] = useState<AuthScreen>('login');
   const [authMessage, setAuthMessage] = useState<string | null>(null);
-  const rememberRef = useRef(true);
   const fingerprintRef = useRef('');
 
-  const establishSession = useCallback(async (nextSession: AuthSession, remember: boolean) => {
-    rememberRef.current = remember;
+  const establishSession = useCallback(async (nextSession: AuthSession, remember: boolean, suppressOnboarding = false) => {
     persistSession(nextSession, remember);
     if (!isCloudWorkspaceActiveFor(nextSession.user.id)) {
       await hydrateCloudWorkspace(nextSession.access_token, nextSession.user.id);
     }
     let nextProfile = await getProfile(nextSession.access_token);
-    if (!nextProfile) {
-      nextProfile = await upsertProfile(nextSession.access_token, defaultProfile(nextSession.user));
-    }
+    if (!nextProfile) nextProfile = await upsertProfile(nextSession.access_token, defaultProfile(nextSession.user));
     setSession(nextSession);
     setProfile(nextProfile);
     fingerprintRef.current = workspaceFingerprint();
-    if (!nextProfile.onboarding_completed) {
+    if (!suppressOnboarding && !nextProfile.onboarding_completed) {
       setAuthScreen('onboarding');
       setAuthOpen(true);
     }
+    return nextProfile;
   }, []);
 
   useEffect(() => {
-    if (!configured) {
-      setLoading(false);
-      return;
-    }
+    if (!configured) { setLoading(false); return; }
     let cancelled = false;
     const bootstrap = async () => {
       setLoading(true);
       try {
+        const query = new URLSearchParams(window.location.search);
+        const isResetFlow = query.get('auth') === 'reset';
         const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''));
         const accessToken = hash.get('access_token');
         const refreshToken = hash.get('refresh_token');
@@ -124,21 +120,24 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
             expires_at: Math.floor(Date.now() / 1000) + Number(hash.get('expires_in') || 3600),
             user,
           };
-          window.history.replaceState({}, document.title, `${window.location.pathname}${window.location.search}`);
-          if (!cancelled) await establishSession(nextSession, true);
+          window.history.replaceState({}, document.title, window.location.pathname);
+          if (!cancelled) {
+            await establishSession(nextSession, true, isResetFlow);
+            if (isResetFlow) { setAuthScreen('reset'); setAuthOpen(true); }
+          }
           return;
         }
 
         const stored = loadStoredSession();
         if (!stored.session) return;
-        rememberRef.current = stored.remember;
         let activeSession = stored.session;
         if (activeSession.expires_at <= Math.floor(Date.now() / 1000) + 60) {
           activeSession = await refreshAuthSession(activeSession.refresh_token);
         } else {
           activeSession = { ...activeSession, user: await fetchCurrentUser(activeSession.access_token) };
         }
-        if (!cancelled) await establishSession(activeSession, stored.remember);
+        if (!cancelled) await establishSession(activeSession, stored.remember, isResetFlow);
+        if (!cancelled && isResetFlow) { setAuthScreen('reset'); setAuthOpen(true); }
       } catch (error) {
         console.warn('Authentication bootstrap failed:', error);
         persistSession(null);
@@ -157,25 +156,17 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
     try {
       await syncCloudWorkspace(session.access_token, session.user.id);
       fingerprintRef.current = workspaceFingerprint();
-    } finally {
-      setSyncing(false);
-    }
+    } finally { setSyncing(false); }
   }, [session]);
 
   useEffect(() => {
     if (!session) return;
     const id = window.setInterval(() => {
-      const current = workspaceFingerprint();
-      if (current !== fingerprintRef.current) void syncNow();
+      if (workspaceFingerprint() !== fingerprintRef.current) void syncNow();
     }, 7000);
-    const onVisibility = () => {
-      if (document.visibilityState === 'hidden') void syncNow();
-    };
+    const onVisibility = () => { if (document.visibilityState === 'hidden') void syncNow(); };
     document.addEventListener('visibilitychange', onVisibility);
-    return () => {
-      clearInterval(id);
-      document.removeEventListener('visibilitychange', onVisibility);
-    };
+    return () => { clearInterval(id); document.removeEventListener('visibilitychange', onVisibility); };
   }, [session, syncNow]);
 
   const openAuth = (screen: AuthScreen = 'login') => {
@@ -183,32 +174,19 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
     setAuthScreen(screen);
     setAuthOpen(true);
   };
-  const closeAuth = () => {
-    if (authScreen === 'onboarding' && profile && !profile.onboarding_completed) return;
-    setAuthOpen(false);
-    setAuthMessage(null);
-  };
+  const closeAuth = () => { setAuthOpen(false); setAuthMessage(null); };
 
   const signIn = async (email: string, password: string, remember: boolean) => {
     if (!configured) throw new Error('Account sign-in is not configured on this deployment yet.');
     const next = await signInWithPassword(email.trim(), password);
-    await establishSession(next, remember);
-    setAuthOpen(false);
+    const nextProfile = await establishSession(next, remember);
+    if (nextProfile.onboarding_completed) setAuthOpen(false);
   };
 
   const signUp = async (input: { fullName: string; email: string; password: string; country: string; financialDataConsent: boolean }) => {
     if (!configured) throw new Error('Account sign-up is not configured on this deployment yet.');
-    const result = await signUpWithPassword({
-      email: input.email.trim(),
-      password: input.password,
-      fullName: input.fullName,
-      country: input.country,
-      financialDataConsent: input.financialDataConsent,
-    });
-    if (result.session) {
-      await establishSession(result.session, true);
-      return;
-    }
+    const result = await signUpWithPassword({ email: input.email.trim(), password: input.password, fullName: input.fullName, country: input.country, financialDataConsent: input.financialDataConsent });
+    if (result.session) { await establishSession(result.session, true); return; }
     setAuthMessage('Check your email to verify your account, then return here to sign in.');
     setAuthScreen('verify');
     setAuthOpen(true);
@@ -241,42 +219,18 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
     window.location.reload();
   };
 
-  const refreshProfile = async () => {
-    if (!session) return;
-    setProfile(await getProfile(session.access_token));
-  };
-
+  const refreshProfile = async () => { if (session) setProfile(await getProfile(session.access_token)); };
   const saveProfile = async (changes: Partial<UserProfile>) => {
     if (!session) throw new Error('Sign in to save profile preferences.');
-    const saved = await upsertProfile(session.access_token, {
-      ...(profile ?? defaultProfile(session.user)),
-      ...changes,
-      user_id: session.user.id,
-    });
+    const saved = await upsertProfile(session.access_token, { ...(profile ?? defaultProfile(session.user)), ...changes, user_id: session.user.id });
     setProfile(saved);
   };
 
   const value = useMemo<AuthContextValue>(() => ({
-    configured,
-    loading,
-    syncing,
-    session,
-    user: session?.user ?? null,
-    profile,
-    authOpen,
-    authScreen,
-    authMessage,
-    openAuth,
-    closeAuth,
-    signIn,
-    signUp,
-    continueWithGoogle: startGoogleOAuth,
-    forgotPassword,
-    resetPassword,
-    signOut,
-    saveProfile,
-    syncNow,
-    refreshProfile,
+    configured, loading, syncing, session, user: session?.user ?? null, profile,
+    authOpen, authScreen, authMessage, openAuth, closeAuth, signIn, signUp,
+    continueWithGoogle: startGoogleOAuth, forgotPassword, resetPassword, signOut,
+    saveProfile, syncNow, refreshProfile,
   }), [configured, loading, syncing, session, profile, authOpen, authScreen, authMessage, syncNow]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

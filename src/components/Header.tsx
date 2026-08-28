@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { SlidersHorizontal, Menu, X, User, Moon, Sun } from 'lucide-react';
 import { NavigationDestination } from '../types';
 import { ArthaBenchLogo } from './branding/ArthaBenchLogo';
+import { AllFeaturesMenu } from './AllFeaturesMenu';
+import { useAuth } from '../auth/AuthContext';
 
 interface HeaderProps {
   currentDestination: NavigationDestination;
@@ -44,25 +46,20 @@ type ThemeMode = 'light' | 'dark';
 
 const isPersonalFinance = (id: NavigationDestination) => id === 'income' || id === 'expenses' || id === 'budgeting';
 
-export const Header: React.FC<HeaderProps> = ({
-  currentDestination,
-  onNavigate,
-}) => {
+export const Header: React.FC<HeaderProps> = ({ currentDestination, onNavigate }) => {
+  const auth = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isGroqHealthy, setIsGroqHealthy] = useState<boolean | null>(null);
   const [theme, setTheme] = useState<ThemeMode>(() => {
     if (typeof window === 'undefined') return 'light';
-
     const storedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
     if (storedTheme === 'light' || storedTheme === 'dark') return storedTheme;
-
     return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   });
 
   useEffect(() => {
     const root = document.documentElement;
     const isDark = theme === 'dark';
-
     root.classList.toggle('dark', isDark);
     root.dataset.theme = theme;
     root.style.colorScheme = theme;
@@ -76,9 +73,7 @@ export const Header: React.FC<HeaderProps> = ({
         if (Array.isArray(data.diagnostics)) {
           const primaryGroq = data.diagnostics.find((diagnostic: any) => diagnostic.id === 'groq-primary');
           setIsGroqHealthy(primaryGroq?.status === 'connected');
-        } else {
-          setIsGroqHealthy(false);
-        }
+        } else setIsGroqHealthy(false);
       })
       .catch(() => setIsGroqHealthy(false));
   }, []);
@@ -87,18 +82,14 @@ export const Header: React.FC<HeaderProps> = ({
     onNavigate(id);
     setMobileMenuOpen(false);
   };
-
   const isDarkMode = theme === 'dark';
 
   return (
     <header className="border-b border-line bg-surface sticky top-0 z-50 px-4 py-3">
       <div className="max-w-[1700px] mx-auto flex items-center justify-between gap-4">
-        <button
-          type="button"
-          onClick={() => handleNavClick('overview')}
+        <button type="button" onClick={() => handleNavClick('overview')}
           className="group shrink-0 rounded-2xl text-left focus:outline-none focus:ring-2 focus:ring-interactive focus:ring-offset-2 focus:ring-offset-canvas"
-          aria-label="Open Artha Bench overview"
-        >
+          aria-label="Open Artha Bench overview">
           <ArthaBenchLogo />
         </button>
 
@@ -106,19 +97,8 @@ export const Header: React.FC<HeaderProps> = ({
           {ALL_NAV_ITEMS.map((item) => {
             const isActive = currentDestination === item.id || (item.id === 'overview' && currentDestination === 'dashboard');
             return (
-              <button
-                key={item.id}
-                onClick={() => handleNavClick(item.id)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
-                  isActive
-                    ? isPersonalFinance(item.id)
-                      ? 'bg-brand text-white shadow-sm'
-                      : 'bg-interactive-soft text-interactive shadow-sm'
-                    : isPersonalFinance(item.id)
-                      ? 'border border-brand/20 bg-brand-soft text-brand-hover'
-                      : 'text-secondary hover:text-ink hover:bg-subtle/60'
-                }`}
-              >
+              <button key={item.id} onClick={() => handleNavClick(item.id)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${isActive ? isPersonalFinance(item.id) ? 'bg-brand text-white shadow-sm' : 'bg-interactive-soft text-interactive shadow-sm' : isPersonalFinance(item.id) ? 'border border-brand/20 bg-brand-soft text-brand-hover' : 'text-secondary hover:text-ink hover:bg-subtle/60'}`}>
                 {item.label}
               </button>
             );
@@ -126,52 +106,37 @@ export const Header: React.FC<HeaderProps> = ({
         </nav>
 
         <div className="flex items-center gap-2 shrink-0">
-          <button
-            onClick={() => handleNavClick('connections')}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all ${
-              isGroqHealthy
-                ? 'bg-success-fill/10 text-success border-success-fill/30 hover:bg-success-fill/20'
-                : 'bg-warning-fill/10 text-warning border-warning-fill/30 hover:bg-warning-fill/20'
-            }`}
-            title="Open live provider diagnostics"
-          >
+          <button onClick={() => handleNavClick('connections')}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all ${isGroqHealthy ? 'bg-success-fill/10 text-success border-success-fill/30 hover:bg-success-fill/20' : 'bg-warning-fill/10 text-warning border-warning-fill/30 hover:bg-warning-fill/20'}`}
+            title="Open live provider diagnostics">
             <span className={`w-2 h-2 rounded-full ${isGroqHealthy ? 'bg-success-fill animate-pulse' : 'bg-warning-fill'}`} />
             <span>{isGroqHealthy === null ? '● Checking…' : isGroqHealthy ? '● AI Live' : '● Demo Mode'}</span>
           </button>
 
-          <button
-            type="button"
-            onClick={() => setTheme(isDarkMode ? 'light' : 'dark')}
+          <button type="button" onClick={() => setTheme(isDarkMode ? 'light' : 'dark')}
             className="flex items-center gap-2 p-2 xl:px-3 rounded-xl bg-surface text-secondary hover:text-ink border border-line hover:border-interactive/50 transition-all"
-            title={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
-            aria-label={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
-            aria-pressed={isDarkMode}
-          >
+            title={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'} aria-label={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'} aria-pressed={isDarkMode}>
             {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             <span className="hidden xl:inline text-xs font-semibold">{isDarkMode ? 'Light' : 'Night'}</span>
           </button>
 
-          <button
-            onClick={() => handleNavClick('settings')}
+          <AllFeaturesMenu currentDestination={currentDestination} onNavigate={handleNavClick} isDarkMode={isDarkMode} onToggleTheme={() => setTheme(isDarkMode ? 'light' : 'dark')} />
+
+          <button onClick={() => handleNavClick('settings')}
             className={`p-2 rounded-xl bg-surface text-secondary hover:text-ink border transition-all ${currentDestination === 'settings' ? 'border-interactive text-ink' : 'border-line hover:border-interactive/50'}`}
-            title="Settings & Controls"
-          >
+            title="Settings & Controls">
             <SlidersHorizontal className="w-4 h-4" />
           </button>
 
-          <button
-            onClick={() => handleNavClick('account')}
-            className={`p-2 rounded-xl bg-surface text-secondary hover:text-ink border transition-all ${currentDestination === 'account' ? 'border-interactive text-ink' : 'border-line hover:border-interactive/50'}`}
-            title="User Profile & Account Workspace"
-          >
+          <button onClick={() => handleNavClick('account')}
+            className={`relative p-2 rounded-xl bg-surface text-secondary hover:text-ink border transition-all ${currentDestination === 'account' ? 'border-interactive text-ink' : 'border-line hover:border-interactive/50'}`}
+            title={auth.user ? `Account: ${auth.user.email ?? 'signed in'}` : 'User Profile & Account Workspace'} aria-label="User Profile & Account Workspace">
             <User className="w-4 h-4" />
+            {auth.user && <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full border-2 border-surface bg-success-fill" aria-label="Signed in" />}
           </button>
 
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="p-2 rounded-xl bg-surface text-secondary hover:text-ink border border-line lg:hidden"
-            aria-label="Toggle navigation menu"
-          >
+          <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="p-2 rounded-xl bg-surface text-secondary hover:text-ink border border-line lg:hidden" aria-label="Toggle navigation menu">
             {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
         </div>
@@ -184,19 +149,8 @@ export const Header: React.FC<HeaderProps> = ({
             {ALL_NAV_ITEMS.map((item) => {
               const isActive = currentDestination === item.id || (item.id === 'overview' && currentDestination === 'dashboard');
               return (
-                <button
-                  key={item.id}
-                  onClick={() => handleNavClick(item.id)}
-                  className={`px-3 py-2 rounded-xl text-xs font-medium text-left transition-all ${
-                    isActive
-                      ? isPersonalFinance(item.id)
-                        ? 'bg-brand text-white font-bold'
-                        : 'bg-interactive-soft text-interactive font-bold'
-                      : isPersonalFinance(item.id)
-                        ? 'border border-brand/20 bg-brand-soft text-brand-hover'
-                        : 'text-secondary hover:text-ink hover:bg-subtle/60'
-                  }`}
-                >
+                <button key={item.id} onClick={() => handleNavClick(item.id)}
+                  className={`px-3 py-2 rounded-xl text-xs font-medium text-left transition-all ${isActive ? isPersonalFinance(item.id) ? 'bg-brand text-white font-bold' : 'bg-interactive-soft text-interactive font-bold' : isPersonalFinance(item.id) ? 'border border-brand/20 bg-brand-soft text-brand-hover' : 'text-secondary hover:text-ink hover:bg-subtle/60'}`}>
                   {item.label}
                 </button>
               );

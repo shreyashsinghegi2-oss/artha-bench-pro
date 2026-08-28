@@ -19,6 +19,7 @@ import { ConnectionsView } from './components/evaluation/ConnectionsView';
 import { SettingsView } from './components/evaluation/SettingsView';
 import { AccountView } from './components/account/AccountView';
 import { AuthModal } from './components/auth/AuthModal';
+import { SocialAuthDock } from './components/auth/SocialAuthDock';
 import { useAuth } from './auth/AuthContext';
 
 const EconomicDashboardView = lazy(() => import('./components/economy/EconomicDashboardView').then((module) => ({ default: module.EconomicDashboardView })));
@@ -81,6 +82,7 @@ export default function App() {
       <main className="flex-1">{renderActiveView()}</main>
       <Footer />
       <AuthModal />
+      <SocialAuthDock />
     </div>
   );
 }

@@ -1,0 +1,20 @@
+[build]
+  command = "npx vite build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+# Keep the latest Netlify frontend connected to the already-running backend
+# while private provider secrets are migrated from Vercel.
+[[redirects]]
+  from = "/api/*"
+  to = "https://artha-bench-pro.vercel.app/api/:splat"
+  status = 200
+  force = true
+
+# Vite single-page app fallback.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

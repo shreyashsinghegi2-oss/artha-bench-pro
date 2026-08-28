@@ -1,78 +1,55 @@
 import React from 'react';
-import { LockKeyhole } from 'lucide-react';
 import { ArthaMindLogo } from './ArthaMindLogo';
 
-const ContextCard = ({ className, title, detail, accent = 'emerald' }: { className: string; title: string; detail: string; accent?: 'emerald' | 'blue' | 'gold' | 'violet' }) => (
-  <div className={`artha-map-node ${className} rounded-xl border border-white/10 bg-[#0A1422]/95 p-3 shadow-[0_16px_45px_rgba(0,0,0,.26)]`}>
-    <div className={`text-[9px] font-black uppercase tracking-[0.12em] ${accent === 'gold' ? 'text-amber-300' : accent === 'violet' ? 'text-violet-300' : accent === 'blue' ? 'text-sky-300' : 'text-emerald-300'}`}>{title}</div>
-    <div className="mt-1 text-[9px] leading-4 text-slate-500">{detail}</div>
-    <svg viewBox="0 0 86 22" className="mt-2 h-5 w-full" aria-hidden="true">
-      <path d="M2 17 C12 12, 18 16, 27 9 S42 14, 50 7 S66 10, 84 3" fill="none" stroke="currentColor" strokeOpacity=".55" strokeWidth="2" className="artha-sparkline" />
-    </svg>
-  </div>
-);
+const heroCandles = [
+  [44, 146, 132, 125, 154], [68, 132, 139, 127, 146], [92, 139, 121, 114, 145], [116, 121, 128, 116, 136],
+  [140, 128, 111, 104, 134], [164, 111, 118, 106, 126], [188, 118, 101, 94, 124], [212, 101, 106, 96, 114],
+  [236, 106, 92, 85, 112], [260, 92, 99, 88, 107], [284, 99, 84, 77, 105], [308, 84, 89, 80, 98],
+  [332, 89, 76, 70, 94], [356, 76, 82, 72, 90], [380, 82, 73, 67, 88], [404, 73, 78, 69, 86],
+];
 
 export const ArthaMindHeroVisual: React.FC = () => (
-  <div className="relative mx-auto aspect-square w-full max-w-[520px]" aria-label="ArthaMind Intelligence Map">
-    <div className="absolute inset-[12%] rounded-full border border-emerald-300/10 bg-emerald-300/[0.025]" />
-    <svg className="absolute inset-0 h-full w-full" viewBox="0 0 520 520" aria-hidden="true">
-      <g fill="none" stroke="#4E6677" strokeOpacity=".38" strokeWidth="1.5">
-        <path className="artha-path-pulse" d="M118 120 C190 155 205 196 260 256" />
-        <path className="artha-path-pulse delay-a" d="M405 118 C332 157 310 194 260 256" />
-        <path className="artha-path-pulse delay-b" d="M93 312 C168 299 196 281 260 256" />
-        <path className="artha-path-pulse delay-c" d="M417 314 C346 298 320 279 260 256" />
-        <path className="artha-path-pulse delay-d" d="M258 104 C258 158 258 199 260 256" />
-        <path className="artha-personal-link" strokeDasharray="6 7" d="M143 418 C192 367 216 324 260 256" />
-        <path stroke="#5EEAD4" strokeOpacity=".36" d="M260 256 C319 266 357 286 404 370" />
-      </g>
-      <circle className="artha-signal-particle p1" cx="0" cy="0" r="3" fill="#5EEAD4">
-        <animateMotion dur="7s" repeatCount="indefinite" path="M118 120 C190 155 205 196 260 256" />
-      </circle>
-      <circle className="artha-signal-particle p2" cx="0" cy="0" r="3" fill="#38BDF8">
-        <animateMotion dur="8s" begin="2.5s" repeatCount="indefinite" path="M405 118 C332 157 310 194 260 256" />
-      </circle>
-      <circle className="artha-signal-particle p3" cx="0" cy="0" r="3" fill="#5EEAD4">
-        <animateMotion dur="6.5s" begin="1.5s" repeatCount="indefinite" path="M260 256 C319 266 357 286 404 370" />
-      </circle>
-      <circle className="artha-personal-particle" cx="0" cy="0" r="3" fill="#5EEAD4">
-        <animateMotion dur="7s" begin="4s" repeatCount="indefinite" path="M143 418 C192 367 216 324 260 256" />
-      </circle>
-    </svg>
-
-    <ContextCard className="absolute left-[2%] top-[8%] w-[31%]" title="India Markets" detail="NIFTY 50 • SENSEX • RELIANCE • TCS\nPublic market context" />
-    <ContextCard className="absolute right-[2%] top-[8%] w-[31%]" title="US Markets" detail="S&P 500 • NASDAQ • AAPL • NVDA\nPublic market context" accent="blue" />
-    <ContextCard className="absolute left-[0%] top-[52%] w-[29%]" title="Gold / XAU" detail="Commodity signal\nIllustrative context" accent="gold" />
-    <ContextCard className="absolute right-[0%] top-[52%] w-[29%]" title="Crypto" detail="BTC • ETH\nIllustrative context" accent="violet" />
-    <ContextCard className="absolute left-[34%] top-[0%] w-[31%]" title="Economy" detail="CPI • RBI Rate • Fed Rate" accent="blue" />
-
-    <div className="artha-core-node absolute left-1/2 top-1/2 w-[34%] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-emerald-300/20 bg-[#07101C]/95 p-3 text-center shadow-[0_22px_70px_rgba(0,0,0,.38)]">
-      <ArthaMindLogo className="mx-auto h-20 w-20" />
-      <div className="mt-1 text-sm font-black">ArthaMind AI</div>
-      <div className="mt-1 text-[9px] leading-4 text-slate-500">Inspectable financial reasoning</div>
-    </div>
-
-    <div className="artha-personal-node absolute bottom-[2%] left-[7%] w-[35%] rounded-xl border border-dashed border-white/15 bg-[#0A1422]/90 p-3">
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-[9px] font-black uppercase tracking-[0.12em] text-slate-400">Optional personal context</span>
-        <LockKeyhole className="h-3.5 w-3.5 text-slate-500" />
-      </div>
-      <div className="mt-1 text-[9px] text-slate-600">Income • Expenses • Budget • Goals</div>
-      <div className="artha-optin-chip mt-2 inline-flex rounded-full border border-white/10 px-2 py-1 text-[8px] font-black uppercase tracking-[0.12em] text-slate-500">Opt-in</div>
-    </div>
-
-    <div className="absolute bottom-[6%] right-[2%] w-[33%] rounded-xl border border-sky-300/15 bg-[#0A1422]/95 p-3">
-      <div className="text-[9px] font-black uppercase tracking-[0.12em] text-sky-300">Artha Bench Pro</div>
-      <div className="mt-1 text-[9px] text-slate-500">Evaluate • Learn • Manage</div>
-    </div>
-
-    <div className="artha-evidence-card absolute right-[24%] top-[61%] w-[34%] rounded-xl border border-white/10 bg-[#07101C]/95 p-3 shadow-[0_12px_36px_rgba(0,0,0,.3)]">
-      {['Sources checked', 'Assumptions visible', 'Verification needed'].map((row, index) => (
-        <div key={row} className={`artha-evidence-row row-${index + 1} flex items-center gap-2 py-1 text-[8px] text-slate-400`}>
-          <span className="h-1.5 w-1.5 rounded-full bg-emerald-300/70" /> {row}
+  <div className="artha-hero-product mx-auto w-full max-w-[520px]" aria-label="Illustrative ArthaMind financial research preview">
+    <div className="overflow-hidden rounded-[22px] border border-slate-200 bg-white shadow-[0_24px_80px_rgba(15,23,42,0.16)]">
+      <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
+        <div className="flex items-center gap-2.5">
+          <ArthaMindLogo className="h-7 w-7" compact />
+          <div><div className="text-[11px] font-bold text-slate-900">Research snapshot</div><div className="text-[8px] text-slate-400">Illustrative market context</div></div>
         </div>
-      ))}
-    </div>
+        <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[8px] font-semibold text-slate-500">Demo</span>
+      </div>
 
-    <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 whitespace-nowrap text-[8px] uppercase tracking-[0.15em] text-slate-700">Illustrative market signals • no investment advice</div>
+      <div className="p-4 sm:p-5">
+        <div className="flex items-end justify-between gap-4">
+          <div><div className="text-[10px] font-semibold text-slate-500">NIFTY 50</div><div className="mt-1 text-xl font-black tracking-tight text-slate-950">Market research view</div></div>
+          <div className="text-right"><div className="text-[9px] font-semibold text-emerald-700">+0.42% ↑</div><div className="mt-0.5 text-[8px] text-slate-400">illustrative</div></div>
+        </div>
+
+        <svg viewBox="0 0 450 210" className="mt-4 block h-auto w-full" role="img" aria-labelledby="hero-chart-title hero-chart-desc">
+          <title id="hero-chart-title">Illustrative market candlestick chart</title>
+          <desc id="hero-chart-desc">A calm non-live candlestick illustration for the ArthaMind research experience.</desc>
+          <g stroke="#E2E8F0" strokeWidth="1" opacity=".8">
+            {[35,75,115,155,195].map((y) => <line key={y} x1="20" y1={y} x2="430" y2={y} />)}
+          </g>
+          <g>
+            {heroCandles.map(([x, open, close, high, low], index) => {
+              const up = close < open;
+              const top = Math.min(open, close);
+              const height = Math.max(5, Math.abs(close - open));
+              return <g key={x} className="artha-hero-candle" style={{ animationDelay: `${0.25 + index * 0.07}s` }}><line x1={x} x2={x} y1={high} y2={low} stroke={up ? '#0F766E' : '#B4535A'} strokeWidth="1.5" /><rect x={x - 5} y={top} width="10" height={height} rx="1.5" fill={up ? '#2A9D8F' : '#C96A70'} /></g>;
+            })}
+          </g>
+          <path className="artha-hero-price-line" d="M332 78 H430" fill="none" stroke="#0F766E" strokeWidth="1.4" strokeDasharray="4 5" />
+          <g fill="#94A3B8" fontSize="8"><text x="24" y="206">09:30</text><text x="196" y="206">12:00</text><text x="382" y="206">15:15</text></g>
+        </svg>
+
+        <div className="mt-3 grid gap-2 sm:grid-cols-3">
+          <div className="rounded-xl bg-slate-50 px-3 py-2.5"><div className="text-[8px] uppercase tracking-[0.12em] text-slate-400">Question</div><div className="mt-1 text-[9px] font-semibold leading-4 text-slate-700">What may be driving this move?</div></div>
+          <div className="rounded-xl bg-slate-50 px-3 py-2.5"><div className="text-[8px] uppercase tracking-[0.12em] text-slate-400">Evidence</div><div className="mt-1 text-[9px] font-semibold leading-4 text-slate-700">Sources and assumptions visible</div></div>
+          <div className="rounded-xl bg-slate-50 px-3 py-2.5"><div className="text-[8px] uppercase tracking-[0.12em] text-slate-400">Boundary</div><div className="mt-1 text-[9px] font-semibold leading-4 text-slate-700">Personal context stays off</div></div>
+        </div>
+      </div>
+    </div>
+    <p className="mt-3 text-center text-[8px] uppercase tracking-[0.14em] text-slate-600">Illustrative research preview — not live market data</p>
   </div>
 );

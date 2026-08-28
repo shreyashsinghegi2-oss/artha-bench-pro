@@ -4,6 +4,7 @@ import { Header } from './components/Header';
 import { Navigation } from './components/Navigation';
 import { Footer } from './components/Footer';
 import { DashboardView } from './components/dashboard/DashboardView';
+import { PersonalFinancialIntelligence } from './components/dashboard/PersonalFinancialIntelligence';
 import { LearningView } from './components/learning/LearningView';
 import { NewsView } from './components/news/NewsView';
 import { QuickCheckView } from './components/quickcheck/QuickCheckView';
@@ -35,10 +36,17 @@ export default function App() {
   const auth = useAuth();
   const [currentDestination, setCurrentDestination] = useState<NavigationDestination>('overview');
 
+  const dashboard = () => (
+    <>
+      {auth.user && <div className="mx-auto max-w-[1700px] px-4 pt-7 sm:px-6"><PersonalFinancialIntelligence onNavigate={setCurrentDestination} /></div>}
+      <DashboardView onNavigate={setCurrentDestination} />
+    </>
+  );
+
   const renderActiveView = () => {
     switch (currentDestination) {
       case 'dashboard':
-      case 'overview': return <DashboardView onNavigate={setCurrentDestination} />;
+      case 'overview': return dashboard();
       case 'learning': return <LearningView />;
       case 'income': return <Suspense fallback={<LoadingView label="Income Workspace" />}><IncomeWorkspaceView /></Suspense>;
       case 'expenses': return <Suspense fallback={<LoadingView label="Expenses Workspace" />}><ExpensesView /></Suspense>;
@@ -58,7 +66,7 @@ export default function App() {
       case 'connections': return <ConnectionsView />;
       case 'settings': return <SettingsView />;
       case 'account': return <AccountView />;
-      default: return <DashboardView onNavigate={setCurrentDestination} />;
+      default: return dashboard();
     }
   };
 

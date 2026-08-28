@@ -1,6 +1,19 @@
+export interface AuthIdentity {
+  id?: string;
+  provider: string;
+  created_at?: string;
+  last_sign_in_at?: string;
+}
+
 export interface AuthUser {
   id: string;
   email: string | null;
+  phone?: string | null;
+  created_at?: string;
+  updated_at?: string;
+  last_sign_in_at?: string;
+  email_confirmed_at?: string | null;
+  identities?: AuthIdentity[];
   user_metadata?: Record<string, unknown>;
   app_metadata?: Record<string, unknown>;
 }
@@ -30,12 +43,16 @@ export interface UserProfile {
   updated_at?: string;
 }
 
+export type SocialAuthProvider = 'google' | 'github' | 'azure' | 'apple';
+
 const LOCAL_SESSION_KEY = 'arthabench_supabase_session_v1';
 const SESSION_SESSION_KEY = 'arthabench_supabase_session_session_v1';
+const DEFAULT_SUPABASE_URL = 'https://agjbvoosukxfvrritgto.supabase.co';
+const DEFAULT_SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_KOdXB7LW5Ho5hDjsi3GMiw_xdogy5oR';
 
 function config() {
-  const url = (import.meta.env.VITE_SUPABASE_URL as string | undefined)?.replace(/\/$/, '') ?? '';
-  const anonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined) ?? '';
+  const url = ((import.meta.env.VITE_SUPABASE_URL as string | undefined) || DEFAULT_SUPABASE_URL).replace(/\/$/, '');
+  const anonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined) || DEFAULT_SUPABASE_PUBLISHABLE_KEY;
   return { url, anonKey, enabled: Boolean(url && anonKey) };
 }
 
@@ -179,10 +196,16 @@ export async function signUpWithPassword(input: {
   return { session: normalizeSession(payload), user: payload?.user ?? null };
 }
 
-export function startGoogleOAuth(): void {
+export function startSocialOAuth(provider: SocialAuthProvider): void {
   const { url } = config();
   const redirectTo = `${window.location.origin}/?auth=callback`;
-  window.location.assign(`${url}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(redirectTo)}`);
+  const query = new URLSearchParams({ provider, redirect_to: redirectTo });
+  if (provider === 'azure') query.set('scopes', 'email openid profile');
+  window.location.assign(`${url}/auth/v1/authorize?${query.toString()}`);
+}
+
+export function startGoogleOAuth(): void {
+  startSocialOAuth('google');
 }
 
 export async function sendPasswordReset(email: string): Promise<void> {

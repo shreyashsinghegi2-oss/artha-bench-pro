@@ -9,6 +9,8 @@ interface NavigationProps {
 export const NAVIGATION_ITEMS: { id: NavigationDestination; label: string }[] = [
   { id: 'overview', label: 'Overview' },
   { id: 'income', label: 'Income' },
+  { id: 'expenses', label: 'Expenses' },
+  { id: 'budgeting', label: 'Budgeting' },
   { id: 'markets', label: 'Market Data' },
   { id: 'crypto', label: 'Crypto' },
   { id: 'quick-check', label: 'Quick Check' },
@@ -26,6 +28,8 @@ export const NAVIGATION_ITEMS: { id: NavigationDestination; label: string }[] = 
   { id: 'settings', label: 'Settings' },
 ];
 
+const isPersonalFinance = (id: NavigationDestination) => id === 'income' || id === 'expenses' || id === 'budgeting';
+
 export const Navigation: React.FC<NavigationProps> = ({ currentDestination, onNavigate }) => {
   return (
     <div className="bg-canvas border-b border-line px-4 py-2 overflow-x-auto scrollbar-thin lg:hidden">
@@ -38,12 +42,12 @@ export const Navigation: React.FC<NavigationProps> = ({ currentDestination, onNa
               onClick={() => onNavigate(item.id)}
               className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
                 isActive
-                  ? item.id === 'income'
+                  ? isPersonalFinance(item.id)
                     ? 'bg-brand text-white shadow-sm'
                     : 'bg-interactive-soft text-interactive shadow-sm'
-                  : item.id === 'income'
+                  : isPersonalFinance(item.id)
                     ? 'border border-brand/20 bg-brand-soft text-brand-hover'
-                  : 'text-secondary hover:text-ink hover:bg-surface'
+                    : 'text-secondary hover:text-ink hover:bg-surface'
               }`}
             >
               {item.label}

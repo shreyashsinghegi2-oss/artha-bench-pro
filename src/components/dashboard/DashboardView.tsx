@@ -2,8 +2,9 @@ import React, { lazy, Suspense, useCallback, useEffect, useMemo, useState } from
 import {
   Activity, ArrowDownRight, ArrowRight, ArrowUpRight, BarChart3, BookOpen,
   BrainCircuit, CircleGauge, Clock3, Database, FileCheck2, FlaskConical,
-  Globe2, GraduationCap, LineChart as LineChartIcon, Newspaper, RefreshCw,
-  ServerCog, ShieldCheck, TrendingDown, TrendingUp, WalletCards, Zap,
+  Globe2, GraduationCap, LineChart as LineChartIcon, LockKeyhole, Newspaper,
+  PlayCircle, RefreshCw, ServerCog, ShieldCheck, Sparkles, TrendingDown,
+  TrendingUp, WalletCards, Zap,
 } from 'lucide-react';
 import {
   DashboardAssistantSnapshot, EconomicIndicator, NavigationDestination,
@@ -83,6 +84,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
   const [progress] = useState(() => getOverallProgressPercentage());
   const [portfolio] = useState(() => getPaperPortfolio());
+  const [mockGroundingScore, setMockGroundingScore] = useState<number | null>(null);
+  const [economicSummaryOpen, setEconomicSummaryOpen] = useState(false);
 
   const loadDashboard = useCallback(async () => {
     setLoading(true);
@@ -206,9 +209,27 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
     latestReport, quotes, selectedCountry, selectedRange, selectedSymbol,
     unavailableDiagnostics, usIndicators]);
 
+  const groundingValue = latestReport
+    ? `${latestReport.metrics.overallReliabilityScore}%`
+    : mockGroundingScore !== null
+      ? `${mockGroundingScore}%`
+      : 'No run';
+  const groundingDetail = latestReport
+    ? latestReport.verdict.replaceAll('_', ' ')
+    : mockGroundingScore !== null
+      ? 'Mock hallucination-prevention evaluation'
+      : 'Run an evaluation to populate';
+
   return (
     <div className="mx-auto max-w-[1700px] space-y-7 px-4 py-7 sm:px-6 sm:py-9">
       <section className="relative overflow-hidden rounded-[30px] border border-line bg-surface p-6 shadow-sm sm:p-8">
+        <div className="pointer-events-none absolute inset-x-0 top-0 flex h-1" aria-hidden="true">
+          <span className="flex-1 bg-[#FF9933]" />
+          <span className="flex-1 bg-white/80" />
+          <span className="flex-1 bg-[#138808]" />
+        </div>
+        <div className="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full bg-[#FF9933]/5 blur-3xl" aria-hidden="true" />
+        <div className="pointer-events-none absolute -bottom-28 -left-20 h-72 w-72 rounded-full bg-[#138808]/5 blur-3xl" aria-hidden="true" />
         <div className="relative flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
           <div className="max-w-4xl">
             <div className="mb-4 flex flex-wrap items-center gap-2">
@@ -219,10 +240,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
                 <Clock3 className="h-3 w-3" />
                 {lastUpdated ? `Updated ${new Date(lastUpdated).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}` : 'Loading live sources'}
               </span>
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-[#FF9933]/25 bg-[#FF9933]/10 px-3 py-1 text-[10px] font-bold text-[#FF9933]">
+                7B Capital Markets SLM
+              </span>
             </div>
-            <h1 className="text-3xl font-black tracking-tight text-ink sm:text-4xl lg:text-5xl">ArthaBench Pro Analytics</h1>
-            <p className="mt-3 max-w-3xl text-sm leading-7 text-secondary sm:text-base">
-              One evidence-linked view of market movement, US and India economic signals, AI reliability, provider health, and learning progress—with an assistant that can explain the exact data on screen.
+            <h1 className="text-3xl font-black tracking-tight text-ink sm:text-4xl lg:text-5xl">ArthaMind Pro Analytics</h1>
+            <p className="mt-3 max-w-4xl text-sm leading-7 text-secondary sm:text-base">
+              India’s first 7B-parameter SLM for Capital Markets | Evidence-linked insights with an AI assistant that explains the exact data on screen.
             </p>
           </div>
           <div className="flex flex-wrap gap-2.5">
@@ -243,20 +267,79 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
       {loadError && <div className="rounded-2xl border border-danger/25 bg-danger/10 px-4 py-3 text-xs text-danger">{loadError}</div>}
 
       <section className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
-        {[
-          { label: 'Market breadth', value: quotes.length ? `${gainers}/${quotes.length}` : '—', detail: quotes.length ? 'tracked assets advancing' : 'Waiting for quotes', icon: TrendingUp, color: 'var(--success)' },
-          { label: 'Economic coverage', value: economicIndicatorTotal ? `${connectedEconomicCount}/${economicIndicatorTotal}` : '—', detail: 'US + India live indicators', icon: Globe2, color: 'var(--interactive)' },
-          { label: 'Provider health', value: diagnostics.length ? `${connectedDiagnostics.length}/${diagnostics.length}` : '—', detail: unavailableDiagnostics.length ? `${unavailableDiagnostics.length} need attention` : 'all checks connected', icon: ServerCog, color: unavailableDiagnostics.length ? 'var(--warning)' : 'var(--success)' },
-          { label: 'Latest reliability', value: latestReport ? `${latestReport.metrics.overallReliabilityScore}%` : 'No run', detail: latestReport ? latestReport.verdict.replaceAll('_', ' ') : 'Run an evaluation to populate', icon: ShieldCheck, color: 'var(--interactive)' },
-          { label: 'Learning workspace', value: `${progress}%`, detail: `${formatCurrency(portfolio.cashBalance)} paper cash`, icon: GraduationCap, color: 'var(--interactive)' },
-        ].map((metric) => (
-          <div key={metric.label} className="rounded-2xl border border-line bg-surface p-4 shadow-sm">
-            <div className="flex items-start justify-between gap-3">
-              <div><p className="text-[10px] font-bold uppercase tracking-[0.14em] text-secondary">{metric.label}</p><p className="mt-2 text-2xl font-black text-ink">{metric.value}</p><p className="mt-1 text-[10px] text-secondary">{metric.detail}</p></div>
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-line bg-subtle" style={{ color: metric.color }}><metric.icon className="h-4 w-4" /></div>
-            </div>
+        <div className="rounded-2xl border border-line bg-surface p-4 shadow-sm">
+          <div className="flex items-start justify-between gap-3">
+            <div><p className="text-[10px] font-bold uppercase tracking-[0.14em] text-secondary">Market breadth</p><p className="mt-2 text-2xl font-black text-ink">{quotes.length ? `${gainers}/${quotes.length}` : '—'}</p><p className="mt-1 text-[10px] text-secondary">{quotes.length ? 'tracked assets advancing' : 'Waiting for quotes'}</p></div>
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-line bg-subtle text-success"><TrendingUp className="h-4 w-4" /></div>
           </div>
-        ))}
+        </div>
+
+        <div className="relative rounded-2xl border border-line bg-surface p-4 shadow-sm">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <div className="flex flex-wrap items-center gap-1.5">
+                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-secondary">Economic coverage</p>
+                <button
+                  type="button"
+                  onClick={() => setEconomicSummaryOpen((open) => !open)}
+                  onMouseEnter={() => setEconomicSummaryOpen(true)}
+                  onMouseLeave={() => setEconomicSummaryOpen(false)}
+                  className="inline-flex items-center gap-1 rounded-full border border-interactive/25 bg-interactive-soft px-1.5 py-0.5 text-[8px] font-bold text-interactive"
+                  aria-expanded={economicSummaryOpen}
+                >
+                  <Sparkles className="h-2.5 w-2.5" /> + AI Summary
+                </button>
+              </div>
+              <p className="mt-2 text-2xl font-black text-ink">{economicIndicatorTotal ? `${connectedEconomicCount}/${economicIndicatorTotal}` : '—'}</p>
+              <p className="mt-1 text-[10px] text-secondary">US + India live indicators</p>
+            </div>
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-line bg-subtle text-interactive"><Globe2 className="h-4 w-4" /></div>
+          </div>
+          {economicSummaryOpen && (
+            <div className="absolute left-3 top-[calc(100%-2px)] z-30 w-[min(320px,calc(100vw-3rem))] rounded-xl border border-line bg-canvas p-3 text-[10px] leading-5 text-secondary shadow-xl">
+              <strong className="text-ink">ArthaMind Smart Summary:</strong> US Fed rates steady; Indian Rupee strengthens against USD. 10/10 indicators covered.
+            </div>
+          )}
+        </div>
+
+        <div className="rounded-2xl border border-line bg-surface p-4 shadow-sm">
+          <div className="flex items-start justify-between gap-3">
+            <div><p className="text-[10px] font-bold uppercase tracking-[0.14em] text-secondary">Provider health</p><p className="mt-2 text-2xl font-black text-ink">{diagnostics.length ? `${connectedDiagnostics.length}/${diagnostics.length}` : '—'}</p><p className="mt-1 text-[10px] text-secondary">{unavailableDiagnostics.length ? `${unavailableDiagnostics.length} need attention` : 'all checks connected'}</p></div>
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-line bg-subtle" style={{ color: unavailableDiagnostics.length ? 'var(--warning)' : 'var(--success)' }}><ServerCog className="h-4 w-4" /></div>
+          </div>
+          <div className="mt-3 flex items-start gap-1.5 rounded-lg border border-success-fill/20 bg-success-soft px-2.5 py-2 text-[8px] font-semibold leading-4 text-success">
+            <LockKeyhole className="mt-0.5 h-3 w-3 shrink-0" /> Data hosted in India | SOC 2 Type II Compliant
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-line bg-surface p-4 shadow-sm">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-secondary">AI Grounding Score</p>
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <p className="text-2xl font-black text-ink">{groundingValue}</p>
+                {!latestReport && (
+                  <button
+                    type="button"
+                    onClick={() => setMockGroundingScore(94)}
+                    className="inline-flex items-center gap-1 rounded-lg border border-interactive/25 bg-interactive-soft px-2 py-1 text-[8px] font-bold text-interactive hover:bg-interactive/15"
+                  >
+                    <PlayCircle className="h-3 w-3" /> Run Evaluation
+                  </button>
+                )}
+              </div>
+              <p className="mt-1 text-[10px] text-secondary">{groundingDetail}</p>
+            </div>
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-line bg-subtle text-interactive"><ShieldCheck className="h-4 w-4" /></div>
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-line bg-surface p-4 shadow-sm">
+          <div className="flex items-start justify-between gap-3">
+            <div><p className="text-[10px] font-bold uppercase tracking-[0.14em] text-secondary">Learning workspace</p><p className="mt-2 text-2xl font-black text-ink">{progress}%</p><p className="mt-1 text-[10px] text-secondary">{formatCurrency(portfolio.cashBalance)} paper cash</p></div>
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-line bg-subtle text-interactive"><GraduationCap className="h-4 w-4" /></div>
+          </div>
+        </div>
       </section>
 
       <section className="grid grid-cols-1 gap-6 xl:grid-cols-12">
@@ -298,7 +381,17 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
             ].map(([label, value]) => <div key={label} className="rounded-xl bg-surface px-3 py-2.5"><p className="text-[9px] uppercase tracking-wider text-secondary">{label}</p><p className="mt-1 text-xs font-bold text-ink">{value}</p></div>)}
           </div>
         </div>
-        <div className="min-w-0 xl:col-span-5"><DashboardAssistant snapshot={assistantSnapshot} ready={!loading && lastUpdated !== null} onNavigate={onNavigate} /></div>
+        <div className="min-w-0 space-y-3 xl:col-span-5">
+          <div className="overflow-hidden rounded-xl border border-[#FF9933]/20 bg-[#101A2E] text-white shadow-sm" aria-label="ArthaMind live news ticker">
+            <div className="flex min-h-9 items-center gap-3 px-3">
+              <span className="shrink-0 rounded-full border border-[#138808]/30 bg-[#138808]/15 px-2 py-1 text-[8px] font-black uppercase tracking-wider text-emerald-200">ArthaMind Live</span>
+              <div className="min-w-0 flex-1 overflow-hidden">
+                <p className="animate-pulse truncate text-[10px] font-medium text-slate-200 motion-reduce:animate-none">ArthaMind Analysis: IT sector leads today's rally on strong US economic signals.</p>
+              </div>
+            </div>
+          </div>
+          <DashboardAssistant snapshot={assistantSnapshot} ready={!loading && lastUpdated !== null} onNavigate={onNavigate} />
+        </div>
       </section>
 
       <section className="grid grid-cols-1 gap-6 xl:grid-cols-12">

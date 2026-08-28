@@ -19,27 +19,31 @@ import { SettingsView } from './components/evaluation/SettingsView';
 import { AccountView } from './components/account/AccountView';
 
 const EconomicDashboardView = lazy(() =>
-  import('./components/economy/EconomicDashboardView').then((module) => ({
-    default: module.EconomicDashboardView,
-  })),
+  import('./components/economy/EconomicDashboardView').then((module) => ({ default: module.EconomicDashboardView })),
 );
 
 const MarketView = lazy(() =>
-  import('./components/market/MarketView').then((module) => ({
-    default: module.MarketView,
-  })),
+  import('./components/market/MarketView').then((module) => ({ default: module.MarketView })),
 );
 
 const IncomeWorkspaceView = lazy(() =>
-  import('./components/income/IncomeWorkspaceView').then((module) => ({
-    default: module.IncomeWorkspaceView,
-  })),
+  import('./components/income/IncomeWorkspaceView').then((module) => ({ default: module.IncomeWorkspaceView })),
+);
+
+const ExpensesView = lazy(() =>
+  import('./components/expenses/ExpensesView').then((module) => ({ default: module.ExpensesView })),
+);
+
+const BudgetingView = lazy(() =>
+  import('./components/budgeting/BudgetingView').then((module) => ({ default: module.BudgetingView })),
 );
 
 const CryptoDashboardView = lazy(() =>
-  import('./components/crypto/CryptoDashboardView').then((module) => ({
-    default: module.CryptoDashboardView,
-  })),
+  import('./components/crypto/CryptoDashboardView').then((module) => ({ default: module.CryptoDashboardView })),
+);
+
+const LoadingView = ({ label }: { label: string }) => (
+  <div className="max-w-[1500px] mx-auto px-4 py-20 text-center text-sm text-secondary">Loading {label}…</div>
 );
 
 export default function App() {
@@ -53,53 +57,17 @@ export default function App() {
       case 'learning':
         return <LearningView />;
       case 'income':
-        return (
-          <Suspense
-            fallback={
-              <div className="max-w-[1500px] mx-auto px-4 py-20 text-center text-sm text-secondary">
-                Loading Income Workspace…
-              </div>
-            }
-          >
-            <IncomeWorkspaceView />
-          </Suspense>
-        );
+        return <Suspense fallback={<LoadingView label="Income Workspace" />}><IncomeWorkspaceView /></Suspense>;
+      case 'expenses':
+        return <Suspense fallback={<LoadingView label="Expenses Workspace" />}><ExpensesView /></Suspense>;
+      case 'budgeting':
+        return <Suspense fallback={<LoadingView label="Budgeting Workspace" />}><BudgetingView /></Suspense>;
       case 'crypto':
-        return (
-          <Suspense
-            fallback={
-              <div className="max-w-[1500px] mx-auto px-4 py-20 text-center text-sm text-secondary">
-                Loading Crypto Dashboard…
-              </div>
-            }
-          >
-            <CryptoDashboardView />
-          </Suspense>
-        );
+        return <Suspense fallback={<LoadingView label="Crypto Dashboard" />}><CryptoDashboardView /></Suspense>;
       case 'markets':
-        return (
-          <Suspense
-            fallback={
-              <div className="max-w-[1500px] mx-auto px-4 py-20 text-center text-sm text-secondary">
-                Loading Company Intelligence Dashboard…
-              </div>
-            }
-          >
-            <MarketView />
-          </Suspense>
-        );
+        return <Suspense fallback={<LoadingView label="Company Intelligence Dashboard" />}><MarketView /></Suspense>;
       case 'economy':
-        return (
-          <Suspense
-            fallback={
-              <div className="max-w-[1500px] mx-auto px-4 py-20 text-center text-sm text-secondary">
-                Loading Economic Dashboard…
-              </div>
-            }
-          >
-            <EconomicDashboardView />
-          </Suspense>
-        );
+        return <Suspense fallback={<LoadingView label="Economic Dashboard" />}><EconomicDashboardView /></Suspense>;
       case 'news':
         return <NewsView />;
       case 'quick-check':
@@ -131,19 +99,9 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-canvas text-ink flex flex-col font-sans selection:bg-interactive selection:text-white">
-      {/* Global Header */}
-      <Header
-        currentDestination={currentDestination}
-        onNavigate={setCurrentDestination}
-      />
-
-      {/* Secondary Mobile Navigation */}
+      <Header currentDestination={currentDestination} onNavigate={setCurrentDestination} />
       <Navigation currentDestination={currentDestination} onNavigate={setCurrentDestination} />
-
-      {/* Active Main View Content */}
       <main className="flex-1">{renderActiveView()}</main>
-
-      {/* Global Footer */}
       <Footer />
     </div>
   );

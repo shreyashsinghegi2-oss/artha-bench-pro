@@ -1,55 +1,47 @@
 /**
  * Market Data Service Router
+ * Production policy: return provider data or an honest empty/unavailable state.
+ * Never substitute demo prices in user-facing production paths.
  */
 
 import { NormalizedMarketQuote } from '../src/types';
 import { fetchQuoteFromProvider, fetchHistoryFromProvider } from './providers/marketDataProvider';
-import { DEMO_MARKET_QUOTES } from '../src/data/marketFixtures';
+
+function isUsableQuote(quote: NormalizedMarketQuote | null | undefined) {
+  return Boolean(
+    quote &&
+    quote.freshness !== 'demo' &&
+    Number.isFinite(quote.price),
+  );
+}
 
 export async function getMarketQuote(symbol: string, assetType = 'equity') {
-  return fetchQuoteFromProvider(symbol, assetType);
+  const result = await fetchQuoteFromProvider(symbol, assetType);
+  if (result.status !== 'connected' || !isUsableQuote(result.quote)) {
+    throw new Error(result.message || `Real market data is unavailable for ${symbol}.`);
+  }
+  return result;
 }
 
 export async function searchMarketQuotes(query: string, assetType = 'all') {
-  const apiKey = process.env.MARKET_DATA_API_KEY;
-  const provider = (process.env.MARKET_DATA_PROVIDER || 'twelvedata').trim().toLowerCase();
-  const providerNeedsApiKey = !['hybrid', 'yahoo', 'yahoo-finance', 'yahoofinance'].includes(provider);
-
-  if (providerNeedsApiKey && (!apiKey || apiKey.trim() === '')) {
-    const q = query.toLowerCase();
-    const results = DEMO_MARKET_QUOTES.filter(
-      (item) =>
-        item.symbol.toLowerCase().includes(q) ||
-        item.name.toLowerCase().includes(q)
-    );
-    return { results };
-  }
-
-  // If live provider configured, attempt query or fallback
   try {
-    const quoteRes = await fetchQuoteFromProvider(query, assetType);
-    return { results: [quoteRes.quote] };
+    const quoteRes = await getMarketQuote(query, assetType);
+    return { results: isUsableQuote(quoteRes.quote) ? [quoteRes.quote] : [] };
   } catch {
-    return { results: DEMO_MARKET_QUOTES };
+    return { results: [] };
   }
 }
 
 export async function getMarketHistory(symbol: string, range = '1m') {
   const points = await fetchHistoryFromProvider(symbol, range);
-  return { points };
+  return { points: Array.isArray(points) ? points : [] };
 }
 
 export async function getMarketOverview(symbols: string[]) {
-  const quotes = await Promise.all(
-    symbols.map(async (s) => {
-      try {
-        const res = await getMarketQuote(s);
-        return res.quote;
-      } catch {
-        const found = DEMO_MARKET_QUOTES.find((q) => q.symbol === s);
-        return found || null;
-      }
-    })
+  const settled = await Promise.allSettled(symbols.map((symbol) => getMarketQuote(symbol)));
+  return settled.flatMap((result) =>
+    result.status === 'fulfilled' && isUsableQuote(result.value.quote)
+      ? [result.value.quote]
+      : [],
   );
-  return quotes.filter(Boolean);
 }

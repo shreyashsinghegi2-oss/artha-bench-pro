@@ -15,7 +15,7 @@ import {
   X,
 } from 'lucide-react';
 import { useAuth } from '../../auth/AuthContext';
-import { isSocialProviderEnabled } from '../../services/supabaseRest';
+import { isSocialProviderEnabled, resendSignupConfirmation } from '../../services/supabaseRest';
 import { ArthaBenchLogo } from '../branding/ArthaBenchLogo';
 
 const inputClass = 'w-full rounded-xl border border-line-strong bg-canvas px-3.5 py-3 text-sm text-ink outline-none placeholder:text-secondary transition focus:border-interactive focus:ring-2 focus:ring-interactive/20';
@@ -49,6 +49,7 @@ export const AuthModal: React.FC = () => {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [googleAvailable, setGoogleAvailable] = useState<boolean | null>(null);
+  const [verificationSent, setVerificationSent] = useState(false);
 
   const [goal, setGoal] = useState('all');
   const [currency, setCurrency] = useState('INR');
@@ -145,6 +146,19 @@ export const AuthModal: React.FC = () => {
     if (password.length < 8) return setError('Use at least 8 characters for your new password.');
     if (password !== confirmPassword) return setError('Passwords do not match.');
     void run(() => auth.resetPassword(password));
+  };
+
+  const resendVerification = () => {
+    const normalizedEmail = email.trim();
+    if (!normalizedEmail) {
+      setError('Enter your email on the sign-in screen first, then resend verification.');
+      return;
+    }
+    setVerificationSent(false);
+    void run(async () => {
+      await resendSignupConfirmation(normalizedEmail);
+      setVerificationSent(true);
+    });
   };
 
   const submitOnboarding = (event: FormEvent) => {
@@ -322,8 +336,16 @@ export const AuthModal: React.FC = () => {
             {auth.authScreen === 'verify' && (
               <div className="space-y-5 rounded-2xl border border-line bg-canvas p-6 text-center">
                 <CheckCircle2 className="mx-auto h-12 w-12 text-success" />
-                <div><h3 className="text-lg font-black text-ink">Check your inbox</h3><p className="mt-2 text-sm leading-6 text-secondary">Use the secure verification link sent by Supabase Auth, then return to Artha Bench and sign in.</p></div>
-                <button type="button" onClick={() => auth.openAuth('login')} className="rounded-xl bg-brand px-5 py-3 text-sm font-black text-white">Return to sign in</button>
+                <div>
+                  <h3 className="text-lg font-black text-ink">Verify your email once</h3>
+                  <p className="mt-2 text-sm leading-6 text-secondary">Your account is already created. Open the latest Artha Bench / Supabase confirmation email and click the verification link. After verification, the same email and password can sign in normally.</p>
+                </div>
+                {verificationSent && <div className="rounded-xl border border-success-fill/30 bg-success-soft px-4 py-3 text-xs font-bold text-success">A fresh verification email has been sent.</div>}
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <button type="button" disabled={busy || !email.trim()} onClick={resendVerification} className="rounded-xl border border-line-strong bg-surface px-5 py-3 text-sm font-black text-ink disabled:cursor-not-allowed disabled:opacity-50">{busy ? 'Sending…' : 'Resend verification email'}</button>
+                  <button type="button" onClick={() => auth.openAuth('login')} className="rounded-xl bg-brand px-5 py-3 text-sm font-black text-white">I verified it — sign in</button>
+                </div>
+                <p className="text-[10px] leading-5 text-secondary">If the email is not visible, check Spam or Promotions. Verification is required once so another person cannot create an account using your email address.</p>
               </div>
             )}
 

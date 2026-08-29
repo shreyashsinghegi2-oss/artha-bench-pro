@@ -47,6 +47,86 @@ jobs:
               raise SystemExit(f'Expected 5 calculator validation guards, found {text.count(old_guard)}')
           text = text.replace(old_guard, 'if (parsed.success === false) return calculatorValidationError(res, parsed);')
           routes.write_text(text)
+
+          engine = Path('server/financeEngine.ts')
+          e = engine.read_text()
+
+          quick_old = """  if (currentLiabilities <= 0) {
+            throw new Error('Current liabilities must be greater than zero.');
+          }"""
+          quick_new = """  if (![cash, marketableSecurities, receivables, currentLiabilities].every(Number.isFinite)) {
+            throw new Error('Quick-ratio inputs must be finite numbers.');
+          }
+          if (cash < 0 || marketableSecurities < 0 || receivables < 0) {
+            throw new Error('Quick assets cannot be negative.');
+          }
+          if (currentLiabilities <= 0) {
+            throw new Error('Current liabilities must be greater than zero.');
+          }"""
+          if quick_old in e:
+              e = e.replace(quick_old, quick_new, 1)
+          elif 'Quick assets cannot be negative.' not in e:
+              raise SystemExit('Could not harden quick-ratio inputs')
+
+          cagr_old = """  if (initialValue <= 0 || years <= 0) {
+            throw new Error('Initial value and years must be greater than zero.');
+          }"""
+          cagr_new = """  if (![initialValue, finalValue, years].every(Number.isFinite)) {
+            throw new Error('CAGR inputs must be finite numbers.');
+          }
+          if (initialValue <= 0 || finalValue <= 0 || years <= 0) {
+            throw new Error('Initial value, final value, and years must be greater than zero.');
+          }"""
+          if cagr_old in e:
+              e = e.replace(cagr_old, cagr_new, 1)
+          elif 'final value, and years must be greater than zero' not in e.lower():
+              raise SystemExit('Could not harden CAGR inputs')
+
+          pow_old = "const cagrDec = new Decimal(Math.pow(ratio.toNumber(), 1 / yearsDec.toNumber())).minus(1).times(100);"
+          pow_new = "const exponent = new Decimal(1).div(yearsDec);\n  const cagrDec = ratio.pow(exponent).minus(1).times(100);"
+          if pow_old in e:
+              e = e.replace(pow_old, pow_new, 1)
+
+          compound_old = """  if (principal < 0 || annualRatePercent < 0 || years <= 0 || compoundingFrequencyPerYear <= 0) {
+            throw new Error('Invalid input parameters for compound interest calculation.');
+          }"""
+          compound_new = """  if (![principal, annualRatePercent, years, monthlyContribution, compoundingFrequencyPerYear].every(Number.isFinite)) {
+            throw new Error('Compound-interest inputs must be finite numbers.');
+          }
+          if (principal < 0 || annualRatePercent < 0 || years <= 0 || monthlyContribution < 0 || compoundingFrequencyPerYear <= 0) {
+            throw new Error('Invalid input parameters for compound interest calculation.');
+          }"""
+          if compound_old in e:
+              e = e.replace(compound_old, compound_new, 1)
+
+          dti_old = """  if (monthlyGrossIncome <= 0) {
+            throw new Error('Monthly gross income must be greater than zero.');
+          }"""
+          dti_new = """  if (![monthlyGrossIncome, monthlyDebtPayments].every(Number.isFinite)) {
+            throw new Error('DTI inputs must be finite numbers.');
+          }
+          if (monthlyGrossIncome <= 0 || monthlyDebtPayments < 0) {
+            throw new Error('Monthly gross income must be greater than zero and monthly debt payments cannot be negative.');
+          }"""
+          if dti_old in e:
+              e = e.replace(dti_old, dti_new, 1)
+
+          break_anchor = """  const fc = new Decimal(fixedCosts);
+            const p = new Decimal(pricePerUnit);
+            const vc = new Decimal(variableCostPerUnit);"""
+          if 'Break-even inputs must be finite numbers.' not in e and break_anchor in e:
+              e = e.replace(break_anchor, """  if (![fixedCosts, pricePerUnit, variableCostPerUnit].every(Number.isFinite)) {
+            throw new Error('Break-even inputs must be finite numbers.');
+          }
+          if (fixedCosts < 0 || pricePerUnit <= 0 || variableCostPerUnit < 0) {
+            throw new Error('Fixed costs and variable costs cannot be negative, and price per unit must be greater than zero.');
+          }
+
+          const fc = new Decimal(fixedCosts);
+          const p = new Decimal(pricePerUnit);
+          const vc = new Decimal(variableCostPerUnit);""", 1)
+
+          engine.write_text(e)
       - name: Install dependencies
         run: npm ci
       - name: TypeScript validation

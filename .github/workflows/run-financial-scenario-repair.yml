@@ -51,7 +51,7 @@ jobs:
           e = engine.read_text()
 
           def replace_prelude(text, result_type, first_statement, replacement):
-              pattern = rf"(\): {result_type} \{{)\n[\s\S]*?(?=\n  {re.escape(first_statement)})"
+              pattern = rf"(\): {result_type} \{{)\n[\s\S]*?(?=\n\s*{re.escape(first_statement)})"
               updated, count = re.subn(pattern, lambda m: m.group(1) + '\n' + replacement, text, count=1)
               if count != 1:
                   raise SystemExit(f'Could not harden {result_type}')

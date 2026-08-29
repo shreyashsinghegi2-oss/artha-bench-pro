@@ -196,6 +196,19 @@ export async function signUpWithPassword(input: {
   return { session: normalizeSession(payload), user: payload?.user ?? null };
 }
 
+export async function isSocialProviderEnabled(provider: SocialAuthProvider): Promise<boolean> {
+  const { url } = config();
+  try {
+    const settings = await requestJSON<any>(`${url}/auth/v1/settings`, { headers: authHeaders() });
+    const value = settings?.external?.[provider];
+    if (typeof value === 'boolean') return value;
+    if (value && typeof value === 'object') return value.enabled !== false;
+    return false;
+  } catch {
+    return false;
+  }
+}
+
 export function startSocialOAuth(provider: SocialAuthProvider): void {
   const { url } = config();
   const redirectTo = `${window.location.origin}/?auth=callback`;

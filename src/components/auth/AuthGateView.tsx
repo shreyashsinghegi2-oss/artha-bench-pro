@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ArrowLeft, LockKeyhole, Mail, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../../auth/AuthContext';
+import { isSocialProviderEnabled } from '../../services/supabaseRest';
 import { ArthaBenchLogo } from '../branding/ArthaBenchLogo';
 
 type Props = {
@@ -12,8 +13,22 @@ type Props = {
 export const AuthGateView: React.FC<Props> = ({ returnTo, onCancel, onEmail }) => {
   const auth = useAuth();
   const [error, setError] = useState<string | null>(null);
+  const [googleAvailable, setGoogleAvailable] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    if (!auth.configured) {
+      setGoogleAvailable(false);
+      return;
+    }
+    let active = true;
+    void isSocialProviderEnabled('google').then((enabled) => {
+      if (active) setGoogleAvailable(enabled);
+    });
+    return () => { active = false; };
+  }, [auth.configured]);
 
   const continueWithGoogle = () => {
+    if (!googleAvailable) return;
     setError(null);
     try {
       auth.continueWithGoogle();
@@ -51,9 +66,10 @@ export const AuthGateView: React.FC<Props> = ({ returnTo, onCancel, onEmail }) =
             {error && <div role="alert" className="mt-5 rounded-2xl border border-danger/25 bg-danger-soft p-3 text-xs leading-5 text-danger">{error}</div>}
 
             <div className="mt-7 space-y-3">
-              <button type="button" disabled={!auth.configured} onClick={continueWithGoogle} className="w-full rounded-xl border border-line-strong bg-surface px-4 py-3 text-sm font-black text-ink hover:border-interactive/40 disabled:opacity-50">
-                Continue with Google
+              <button type="button" disabled={!auth.configured || googleAvailable !== true} onClick={continueWithGoogle} className="w-full rounded-xl border border-line-strong bg-surface px-4 py-3 text-sm font-black text-ink transition hover:border-interactive/40 disabled:cursor-not-allowed disabled:opacity-50">
+                {googleAvailable === null ? 'Checking Google sign-in…' : googleAvailable ? 'Continue with Google' : 'Google sign-in unavailable'}
               </button>
+              {googleAvailable === false && <p className="text-center text-[10px] leading-4 text-secondary">Email sign-in is available now. Google automatically becomes available here after it is enabled in Supabase Auth.</p>}
               <button type="button" onClick={onEmail} className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand px-4 py-3 text-sm font-black text-white hover:bg-brand-hover">
                 <Mail className="h-4 w-4" /> Continue with email
               </button>

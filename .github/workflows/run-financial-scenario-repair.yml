@@ -34,6 +34,19 @@ jobs:
           raw_script = workflow[run_start:run_end]
           script = '\n'.join(line[10:] if line.startswith('          ') else line for line in raw_script.splitlines())
           exec(compile(script, 'financial-scenario-repair.py', 'exec'), {})
+
+          routes = Path('server/routes.ts')
+          text = routes.read_text()
+          old_return = "): Record<string, unknown> {\n  if (scenario === 'compound') {"
+          new_return = "): any {\n  if (scenario === 'compound') {"
+          if old_return not in text:
+              raise SystemExit('Could not locate recalculateScenario return type')
+          text = text.replace(old_return, new_return, 1)
+          old_guard = 'if (!parsed.success) return calculatorValidationError(res, parsed);'
+          if text.count(old_guard) != 5:
+              raise SystemExit(f'Expected 5 calculator validation guards, found {text.count(old_guard)}')
+          text = text.replace(old_guard, 'if (parsed.success === false) return calculatorValidationError(res, parsed);')
+          routes.write_text(text)
       - name: Install dependencies
         run: npm ci
       - name: TypeScript validation

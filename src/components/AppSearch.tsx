@@ -14,23 +14,28 @@ type SearchItem = {
 };
 
 const SEARCH_ITEMS: SearchItem[] = [
-  { title: 'Overview', description: 'ArthaMind Pro Analytics and provider-backed dashboard context.', destination: 'overview', keywords: ['dashboard', 'home', 'intelligence'] },
-  { title: 'Income', description: 'Private income sources and recurring income workspace.', destination: 'income', keywords: ['salary', 'earnings', 'personal finance'] },
-  { title: 'Expenses', description: 'Private spending, categories and transaction records.', destination: 'expenses', keywords: ['spending', 'transactions', 'personal finance'] },
-  { title: 'Budgeting', description: 'Private budget plans, limits and recorded spending comparison.', destination: 'budgeting', keywords: ['budget', 'plan', 'limits'] },
-  { title: 'Reports', description: 'Private personal-finance reports and period analysis.', destination: 'finance-reports', keywords: ['finance reports', 'spending report', 'budget report'] },
-  { title: 'EMI Manager', description: 'Private EMI commitments, schedules and repayment tracking.', destination: 'emi-manager', keywords: ['loan', 'instalment', 'repayment'] },
-  { title: 'Full Market Lab', description: 'Market and company intelligence workspace.', destination: 'markets', keywords: ['market lab', 'market data', 'company intelligence', 'stocks'] },
-  { title: 'Crypto Markets', description: 'Crypto market data, candles and source diagnostics.', destination: 'crypto', keywords: ['bitcoin', 'btc', 'ethereum', 'binance'] },
-  { title: 'Evaluation Laboratory', description: 'Run financial-AI reliability evaluations.', destination: 'evaluation-lab', keywords: ['evaluation', 'reliability', 'benchmark', 'run evaluation'] },
-  { title: 'Structured Learning', description: 'Financial lessons, quizzes and learning progress.', destination: 'learning', keywords: ['learning', 'lessons', 'education', 'course'] },
-  { title: 'Verified Reports', description: 'Review evaluation evidence, scores, flags and saved reports.', destination: 'reports', keywords: ['evaluation reports', 'history', 'evidence'] },
-  { title: 'Financial Tutor', description: 'Open the full financial tutor workspace.', destination: 'tutor', keywords: ['tutor', 'ask', 'learn', 'open full tutor'] },
-  { title: 'Provider Health', description: 'Connection diagnostics, source status and provider timestamps.', destination: 'connections', keywords: ['provider health', 'connection diagnostics', 'source status', 'freshness', 'trust'] },
-  { title: 'Business News', description: 'Current business and financial headlines from connected sources.', destination: 'news', keywords: ['news', 'headlines', 'business brief'] },
-  { title: 'Economic Data', description: 'US and India economic indicators and source dates.', destination: 'economy', keywords: ['economy', 'macro', 'fred', 'world bank'] },
-  { title: 'Methodology', description: 'Evaluation methodology, evidence rules and limitations.', destination: 'methodology', keywords: ['methodology', 'trust', 'limitations', 'evidence'] },
-  { title: 'Settings', description: 'Platform settings and configuration.', destination: 'settings', keywords: ['settings', 'configuration', 'controls'] },
+  { title: 'Overview', description: 'Market, reliability and intelligence command centre.', destination: 'overview', keywords: ['dashboard', 'home', 'intelligence', 'finance overview'] },
+  { title: 'Income', description: 'Private income sources, tax context and recurring income workspace.', destination: 'income', keywords: ['salary', 'earnings', 'personal finance', 'income sources'] },
+  { title: 'Expenses', description: 'Private spending, categories, transactions and grounded insights.', destination: 'expenses', keywords: ['spending', 'transactions', 'personal finance', 'expense tracking'] },
+  { title: 'Budgeting', description: 'Private budget plans, limits, savings awareness and coaching.', destination: 'budgeting', keywords: ['budget', 'plan', 'limits', 'savings'] },
+  { title: 'Finance Reports', description: 'Private spending, savings, budget and EMI period reports.', destination: 'finance-reports', keywords: ['finance reports', 'spending report', 'budget report', 'personal reports'] },
+  { title: 'EMI Manager', description: 'Private EMI commitments, balances, schedules and repayment tracking.', destination: 'emi-manager', keywords: ['loan', 'instalment', 'installment', 'repayment', 'emi'] },
+  { title: 'Market Data / Full Market Lab', description: 'Company and market intelligence workspace.', destination: 'markets', keywords: ['market lab', 'market data', 'company intelligence', 'stocks', 'full market lab'] },
+  { title: 'Crypto Markets', description: 'Crypto market data, candles, assistant and source diagnostics.', destination: 'crypto', keywords: ['bitcoin', 'btc', 'ethereum', 'binance', 'crypto chart'] },
+  { title: 'Quick Check', description: 'Rapid prompt-safety and supplied-response reliability evaluation.', destination: 'quick-check', keywords: ['quick check', 'prompt check', 'safety', 'response evaluation'] },
+  { title: 'Financial Tutor', description: 'Structured finance learning, explanations and educational calculations.', destination: 'tutor', keywords: ['tutor', 'ask', 'learn', 'open full tutor', 'financial tutor'] },
+  { title: 'Provider Health / Connection Diagnostics', description: 'Provider health, source status, model availability and freshness diagnostics.', destination: 'connections', keywords: ['provider health', 'connection diagnostics', 'source status', 'freshness', 'trust', 'ai connections'] },
+  { title: 'Evaluation Laboratory', description: 'Run seven-dimension financial-AI reliability evaluations.', destination: 'evaluation-lab', keywords: ['evaluation', 'reliability', 'benchmark', 'run evaluation', 'evaluation lab'] },
+  { title: 'Response Comparison', description: 'Compare two AI responses across all reliability dimensions.', destination: 'comparison', keywords: ['comparison', 'model comparison', 'prompt comparison', 'response comparison', 'side by side'] },
+  { title: 'Financial Scenarios & Calculators', description: 'Deterministic compound interest, ratio, CAGR, break-even and DTI calculations.', destination: 'scenarios', keywords: ['scenarios', 'calculator', 'compound interest', 'cagr', 'dti', 'quick ratio', 'break even'] },
+  { title: 'Batch Benchmark', description: 'Run benchmark suites across financial scenarios and dual models.', destination: 'batch', keywords: ['batch', 'benchmark', 'suite', 'test scenarios'] },
+  { title: 'Verified Reports & History', description: 'Review saved AI evaluations, seven-dimension scores, evidence and flags.', destination: 'reports', keywords: ['evaluation reports', 'history', 'evidence', 'verified reports', 'audit'] },
+  { title: 'Methodology', description: 'Understand reliability scoring, evidence rules, weights and limitations.', destination: 'methodology', keywords: ['methodology', 'trust', 'limitations', 'evidence', 'scoring'] },
+  { title: 'Structured Learning', description: 'Financial lessons, quizzes, tracks and learning progress.', destination: 'learning', keywords: ['learning', 'lessons', 'education', 'course', 'structured learning'] },
+  { title: 'Business News', description: 'Business and financial headlines with source context.', destination: 'news', keywords: ['news', 'headlines', 'business brief', 'view feed'] },
+  { title: 'Economic Data', description: 'FRED and World Bank economic indicators and source dates.', destination: 'economy', keywords: ['economy', 'macro', 'fred', 'world bank', 'economic indicators'] },
+  { title: 'Account & Privacy', description: 'Profile, privacy, personal-data controls, security and personalization.', destination: 'account', keywords: ['account', 'profile', 'privacy', 'security', 'personalization', 'data controls'] },
+  { title: 'Settings', description: 'Platform settings and configuration workspace.', destination: 'settings', keywords: ['settings', 'configuration', 'controls'] },
 ];
 
 export const AppSearch: React.FC<Props> = ({ onNavigate }) => {
@@ -68,11 +73,11 @@ export const AppSearch: React.FC<Props> = ({ onNavigate }) => {
 
   const results = useMemo(() => {
     const normalized = query.trim().toLowerCase();
-    if (!normalized) return SEARCH_ITEMS.slice(0, 8);
+    if (!normalized) return SEARCH_ITEMS;
     return SEARCH_ITEMS.filter((item) => {
       const haystack = [item.title, item.description, ...item.keywords].join(' ').toLowerCase();
       return haystack.includes(normalized);
-    }).slice(0, 10);
+    });
   }, [query]);
 
   useEffect(() => setActiveIndex(0), [query]);
@@ -88,7 +93,7 @@ export const AppSearch: React.FC<Props> = ({ onNavigate }) => {
     if (event.key === 'ArrowDown') {
       event.preventDefault();
       setOpen(true);
-      setActiveIndex((index) => Math.min(results.length - 1, index + 1));
+      setActiveIndex((index) => Math.min(Math.max(0, results.length - 1), index + 1));
     } else if (event.key === 'ArrowUp') {
       event.preventDefault();
       setActiveIndex((index) => Math.max(0, index - 1));
@@ -112,11 +117,11 @@ export const AppSearch: React.FC<Props> = ({ onNavigate }) => {
           onFocus={() => setOpen(true)}
           onKeyDown={handleInputKeyDown}
           role="combobox"
-          aria-label="Search Artha Bench modules"
+          aria-label="Search every Artha Bench workspace"
           aria-expanded={open}
           aria-controls="artha-app-search-results"
           aria-activedescendant={open && results[activeIndex] ? `artha-search-result-${activeIndex}` : undefined}
-          placeholder="Search workspace…"
+          placeholder="Search all workspaces…"
           className="h-10 w-full rounded-xl border border-line bg-canvas pl-9 pr-16 text-xs font-medium text-ink outline-none transition focus:border-interactive/50 focus:ring-2 focus:ring-interactive/15"
         />
         {query ? (
@@ -129,7 +134,7 @@ export const AppSearch: React.FC<Props> = ({ onNavigate }) => {
       </div>
 
       {open && (
-        <div id="artha-app-search-results" role="listbox" className="absolute left-0 right-0 top-[calc(100%+8px)] z-[80] max-h-[min(420px,70vh)] overflow-y-auto rounded-2xl border border-line bg-surface p-2 shadow-2xl">
+        <div id="artha-app-search-results" role="listbox" className="absolute left-0 right-0 top-[calc(100%+8px)] z-[80] max-h-[min(520px,72vh)] overflow-y-auto rounded-2xl border border-line bg-surface p-2 shadow-2xl scrollbar-thin">
           {results.length ? results.map((item, index) => (
             <button
               id={`artha-search-result-${index}`}
@@ -147,7 +152,7 @@ export const AppSearch: React.FC<Props> = ({ onNavigate }) => {
           )) : (
             <div className="px-3 py-7 text-center text-xs text-secondary">No matching workspace found.</div>
           )}
-          <div className="mt-1 border-t border-line px-3 py-2 text-[9px] text-secondary">↑ ↓ navigate · Enter open · Esc close</div>
+          <div className="sticky bottom-0 mt-1 border-t border-line bg-surface px-3 py-2 text-[9px] text-secondary">{results.length} workspace{results.length === 1 ? '' : 's'} · ↑ ↓ navigate · Enter open · Esc close</div>
         </div>
       )}
     </div>

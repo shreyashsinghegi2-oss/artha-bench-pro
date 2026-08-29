@@ -1,0 +1,51 @@
+name: Run Financial Scenario Studio repair
+
+on:
+  push:
+    branches:
+      - fix-financial-scenario-studio
+
+permissions:
+  contents: write
+
+jobs:
+  validate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Apply repair script
+        shell: python
+        run: |
+          from pathlib import Path
+          import textwrap
+          workflow = Path('.github/workflows/fix-financial-scenario-studio.yml').read_text()
+          start_marker = '      - name: Repair calculators and add scenario-aware ArthaMind\n'
+          run_marker = '        run: |\n'
+          end_marker = '\n      - name: Install dependencies\n'
+          start = workflow.index(start_marker)
+          run_start = workflow.index(run_marker, start) + len(run_marker)
+          run_end = workflow.index(end_marker, run_start)
+          script = textwrap.dedent(workflow[run_start:run_end])
+          exec(compile(script, 'financial-scenario-repair.py', 'exec'), {})
+      - name: Install dependencies
+        run: npm ci
+      - name: TypeScript validation
+        run: npm run lint
+      - name: Production build
+        run: npm run build
+      - name: Financial engine and route tests
+        run: npx vitest run tests/financeEngine.test.ts tests/scenarioRoutes.test.ts tests/aiResponseStandard.test.ts tests/groqService.test.ts
+      - name: Commit validated source repair
+        run: |
+          git config user.name "SHREYASH SINGH"
+          git config user.email "shreyashsinghegi2@gmail.com"
+          git add server/routes.ts server/financeEngine.ts src/components/scenarios/CalculationResultPanel.tsx src/components/scenarios/ScenariosView.tsx src/components/scenarios/ScenarioAssistantPanel.tsx tests/financeEngine.test.ts tests/scenarioRoutes.test.ts
+          git commit -m "Repair Financial Scenario Studio and add ArthaMind analysis"
+          git push origin HEAD:fix-financial-scenario-studio

@@ -1,0 +1,34 @@
+name: Production API smoke
+
+on:
+  push:
+    branches: [api-smoke-test]
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call production endpoints
+        shell: bash
+        run: |
+          set -u
+          base="https://artha-bench-pro.vercel.app"
+          endpoints=(
+            "/api/health"
+            "/api/diagnostics"
+            "/api/markets/quote?symbol=SPY&assetType=equity"
+            "/api/markets/india-ticker"
+            "/api/news"
+            "/api/economy/overview"
+            "/api/economy/india/overview"
+            "/api/crypto/markets"
+          )
+          for endpoint in "${endpoints[@]}"; do
+            echo "===== ${endpoint} ====="
+            tmp=$(mktemp)
+            code=$(curl -L -sS --max-time 25 -o "$tmp" -w "%{http_code}" "${base}${endpoint}" || true)
+            echo "HTTP ${code}"
+            head -c 3000 "$tmp" || true
+            echo
+            rm -f "$tmp"
+          done

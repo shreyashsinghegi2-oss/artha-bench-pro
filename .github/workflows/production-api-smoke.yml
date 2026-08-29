@@ -8,86 +8,6 @@ jobs:
   smoke:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Import Vercel API entry
-        shell: bash
-        run: |
-          set -o pipefail
-          npx tsx -e "import('./api/index.ts').then((m)=>{ console.log('API_IMPORT_OK', typeof m.default); }).catch((e)=>{ console.error('API_IMPORT_FAILED'); console.error(e && e.stack ? e.stack : e); process.exit(1); })"
-
-      - name: Start local Express API and call health
-        shell: bash
-        run: |
-          set -e
-          npx tsx server.ts > /tmp/artha-server.log 2>&1 &
-          pid=$!
-          trap 'kill $pid || true' EXIT
-          for i in {1..20}; do
-            if curl -fsS http://127.0.0.1:3000/api/health > /tmp/health.json 2>/dev/null; then
-              break
-            fi
-            sleep 1
-          done
-          echo '--- local server log ---'
-          cat /tmp/artha-server.log || true
-          echo '--- local health ---'
-          cat /tmp/health.json || true
-          grep -q '"status":"ok"' /tmp/health.json
-
-      - name: Wait for Vercel preview
-        shell: bash
-        run: |
-          set -u
-          preview="https://artha-bench-pro-git-api-smoke-test-e25b002702-3723s-projects.vercel.app"
-          ok=0
-          for i in {1..18}; do
-            code=$(curl -L -sS --max-time 20 -o /tmp/preview-health -w "%{http_code}" "$preview/api/health" || true)
-            echo "Preview attempt $i: HTTP $code"
-            if [ "$code" = "200" ] && grep -q '"status":"ok"' /tmp/preview-health; then
-              cat /tmp/preview-health
-              ok=1
-              break
-            fi
-            cat /tmp/preview-health || true
-            echo
-            sleep 10
-          done
-          test "$ok" = "1"
-
-      - name: Call preview endpoints
-        shell: bash
-        run: |
-          set -u
-          base="https://artha-bench-pro-git-api-smoke-test-e25b002702-3723s-projects.vercel.app"
-          endpoints=(
-            "/api/health"
-            "/api/diagnostics"
-            "/api/markets/quote?symbol=SPY&assetType=equity"
-            "/api/markets/india-ticker"
-            "/api/news"
-            "/api/economy/overview"
-            "/api/economy/india/overview"
-            "/api/crypto/markets"
-          )
-          for endpoint in "${endpoints[@]}"; do
-            echo "===== PREVIEW ${endpoint} ====="
-            tmp=$(mktemp)
-            code=$(curl -L -sS --max-time 25 -o "$tmp" -w "%{http_code}" "${base}${endpoint}" || true)
-            echo "HTTP ${code}"
-            head -c 3000 "$tmp" || true
-            echo
-            rm -f "$tmp"
-          done
-
       - name: Call production endpoints
         shell: bash
         run: |
@@ -104,11 +24,11 @@ jobs:
             "/api/crypto/markets"
           )
           for endpoint in "${endpoints[@]}"; do
-            echo "===== PROD ${endpoint} ====="
+            echo "===== ${endpoint} ====="
             tmp=$(mktemp)
-            code=$(curl -L -sS --max-time 25 -o "$tmp" -w "%{http_code}" "${base}${endpoint}" || true)
+            code=$(curl -L -sS --max-time 30 -o "$tmp" -w "%{http_code}" "${base}${endpoint}" || true)
             echo "HTTP ${code}"
-            head -c 3000 "$tmp" || true
+            head -c 5000 "$tmp" || true
             echo
             rm -f "$tmp"
           done

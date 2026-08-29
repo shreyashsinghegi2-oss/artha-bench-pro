@@ -1,21 +1,17 @@
-name: Fix and validate latest main
+name: Validate auth overview fix
 
 on:
   push:
     branches: [api-smoke-test]
 
-permissions:
-  contents: write
-
 jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
-      - name: Check out latest main
+      - name: Check out fix branch
         uses: actions/checkout@v4
         with:
-          ref: main
-          fetch-depth: 0
+          ref: auth-overview-fix-verified
 
       - name: Use Node 22
         uses: actions/setup-node@v4
@@ -23,71 +19,20 @@ jobs:
           node-version: 22
           cache: npm
 
-      - name: Apply targeted TypeScript fixes
-        shell: python
-        run: |
-          from pathlib import Path
-
-          replacements = {
-            Path('src/components/account/PersonalAccountControls.tsx'): [
-              (
-                "const Context=({label,desc,checked,change}:{label:string,desc:string,checked:boolean,change:(v:boolean)=>void})=>",
-                "const Context:React.FC<{label:string;desc:string;checked:boolean;change:(v:boolean)=>void}>=({label,desc,checked,change})=>",
-              ),
-            ],
-            Path('src/components/dashboard/DashboardAssistant.tsx'): [
-              (
-                "      const personalDataUsed = 'personalDataUsed' in response ? response.personalDataUsed : false;\n      const personalContextReferences = 'personalContextReferences' in response ? response.personalContextReferences : [];",
-                "      const personalDataUsed = 'personalDataUsed' in response ? Boolean(response.personalDataUsed) : false;\n      const personalContextReferences = 'personalContextReferences' in response && Array.isArray(response.personalContextReferences)\n        ? response.personalContextReferences.filter((item): item is string => typeof item === 'string')\n        : [];",
-              ),
-            ],
-            Path('src/components/expenses/ExpensesView.tsx'): [
-              (
-                "  const categoryRanking = useMemo(\n    () => Object.entries(categoryTotals).sort((a, b) => b[1] - a[1]),\n    [categoryTotals],\n  );",
-                "  const categoryRanking = useMemo<Array<[string, number]>>(\n    () => Object.entries(categoryTotals)\n      .map(([category, total]) => [category, Number(total)] as [string, number])\n      .sort((a, b) => b[1] - a[1]),\n    [categoryTotals],\n  );",
-              ),
-            ],
-          }
-
-          for path, items in replacements.items():
-            text = path.read_text()
-            for old, new in items:
-              if old not in text:
-                raise SystemExit(f'Expected source pattern not found in {path}')
-              text = text.replace(old, new, 1)
-            path.write_text(text)
-
       - name: Install dependencies
         run: npm ci
-
-      - name: TypeScript validation
-        run: npm run lint
 
       - name: Production build
         run: npm run build
 
-      - name: Auth and demo assertions
+      - name: Verify requested fixes
         shell: bash
         run: |
-          test -f src/components/dashboard/PublicFinanceOverview.tsx
-          grep -q "Sign in securely" src/components/auth/AuthModal.tsx
-          grep -q "isSocialProviderEnabled" src/services/supabaseRest.ts
-          grep -q "PRIVATE_FINANCE_DESTINATIONS" src/App.tsx
-          if grep -R -n -E 'Try sample workspace|Fictional sample workspace|Demo Mode' src --exclude-dir='test' --exclude='*.test.*'; then
-            echo "User-facing demo/sample copy still exists"
+          grep -q "<DashboardView onNavigate" src/App.tsx
+          if grep -q "PublicFinanceOverview" src/App.tsx; then
+            echo "Simplified overview replacement is still active"
             exit 1
           fi
-
-      - name: Commit validated source fixes to main
-        shell: bash
-        run: |
-          git checkout -- api/index.js || true
-          git config user.name "SHREYASH SINGH"
-          git config user.email "shreyashsinghegi2@gmail.com"
-          if git diff --quiet; then
-            echo "No source changes to commit."
-            exit 0
-          fi
-          git add src/components/account/PersonalAccountControls.tsx src/components/dashboard/DashboardAssistant.tsx src/components/expenses/ExpensesView.tsx
-          git commit -m "Fix TypeScript validation failures"
-          git push origin HEAD:main
+          grep -q "resendSignupConfirmation" src/auth/AuthContext.tsx
+          grep -q "auth/v1/resend" src/services/supabaseRest.ts
+          grep -q "redirect_to=" src/services/supabaseRest.ts

@@ -15,7 +15,7 @@ import {
   X,
 } from 'lucide-react';
 import { useAuth } from '../../auth/AuthContext';
-import { isSocialProviderEnabled, resendSignupConfirmation } from '../../services/supabaseRest';
+import { resendSignupConfirmation } from '../../services/supabaseRest';
 import { ArthaBenchLogo } from '../branding/ArthaBenchLogo';
 
 const inputClass = 'w-full rounded-xl border border-line-strong bg-canvas px-3.5 py-3 text-sm text-ink outline-none placeholder:text-secondary transition focus:border-interactive focus:ring-2 focus:ring-interactive/20';
@@ -48,7 +48,6 @@ export const AuthModal: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [googleAvailable, setGoogleAvailable] = useState<boolean | null>(null);
   const [verificationSent, setVerificationSent] = useState(false);
 
   const [goal, setGoal] = useState('all');
@@ -86,19 +85,6 @@ export const AuthModal: React.FC = () => {
     setError(null);
   }, [auth.authScreen]);
 
-  useEffect(() => {
-    if (!auth.authOpen || !auth.configured) {
-      setGoogleAvailable(false);
-      return;
-    }
-    let active = true;
-    setGoogleAvailable(null);
-    void isSocialProviderEnabled('google').then((enabled) => {
-      if (active) setGoogleAvailable(enabled);
-    });
-    return () => { active = false; };
-  }, [auth.authOpen, auth.configured]);
-
   if (!auth.authOpen) return null;
 
   const run = async (task: () => Promise<void>) => {
@@ -110,16 +96,6 @@ export const AuthModal: React.FC = () => {
       setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
     } finally {
       setBusy(false);
-    }
-  };
-
-  const beginGoogle = () => {
-    if (!googleAvailable) return;
-    setError(null);
-    try {
-      auth.continueWithGoogle();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Google sign-in could not be started.');
     }
   };
 
@@ -257,16 +233,6 @@ export const AuthModal: React.FC = () => {
 
             {auth.authScreen === 'login' && (
               <form onSubmit={submitLogin} className="space-y-4">
-                <button type="button" disabled={!auth.configured || busy || googleAvailable !== true} onClick={beginGoogle} className="flex w-full items-center justify-center gap-3 rounded-xl border border-line-strong bg-canvas px-4 py-3 text-sm font-black text-ink transition hover:border-interactive/40 hover:bg-subtle disabled:cursor-not-allowed disabled:opacity-50">
-                  <span className="flex h-6 w-6 items-center justify-center rounded-md border border-line bg-white text-xs font-black text-[#4285F4]">G</span>
-                  {googleAvailable === null ? 'Checking Google sign-in…' : googleAvailable ? 'Continue with Google' : 'Google sign-in unavailable'}
-                </button>
-                {googleAvailable === false && <p className="-mt-1 text-center text-[10px] leading-4 text-secondary">Email sign-in is available now. This Google option enables automatically after Google is turned on in Supabase Auth.</p>}
-
-                <div className="flex items-center gap-3 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-secondary">
-                  <span className="h-px flex-1 bg-line" /> continue with email <span className="h-px flex-1 bg-line" />
-                </div>
-
                 <div>
                   <label className={labelClass} htmlFor="login-email">Email address</label>
                   <div className="relative">

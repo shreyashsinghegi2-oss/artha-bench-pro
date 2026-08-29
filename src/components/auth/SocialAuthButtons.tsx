@@ -4,7 +4,6 @@ import { useAuth } from '../../auth/AuthContext';
 import { SocialAuthProvider } from '../../services/supabaseRest';
 
 const providers: Array<{ id: SocialAuthProvider; label: string; monogram: string }> = [
-  { id: 'google', label: 'Google', monogram: 'G' },
   { id: 'github', label: 'GitHub', monogram: 'GH' },
   { id: 'azure', label: 'Microsoft', monogram: 'M' },
   { id: 'apple', label: 'Apple', monogram: '' },

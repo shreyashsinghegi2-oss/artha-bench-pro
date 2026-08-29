@@ -1,10 +1,9 @@
 import React from 'react';
-import { Github, Globe2, Laptop, ShieldCheck } from 'lucide-react';
+import { Github, Laptop, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../../auth/AuthContext';
 import { startSocialOAuth, SocialAuthProvider } from '../../services/supabaseRest';
 
 const providers: Array<{ id: SocialAuthProvider; label: string; icon: React.ReactNode }> = [
-  { id: 'google', label: 'Google', icon: <Globe2 className="h-4 w-4" /> },
   { id: 'github', label: 'GitHub', icon: <Github className="h-4 w-4" /> },
   { id: 'azure', label: 'Microsoft', icon: <Laptop className="h-4 w-4" /> },
   { id: 'apple', label: 'Apple', icon: <span className="text-base leading-none"></span> },

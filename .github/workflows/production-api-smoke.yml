@@ -8,7 +8,7 @@ jobs:
   smoke:
     runs-on: ubuntu-latest
     steps:
-      - name: Call production endpoints after Node 22 pin
+      - name: Call import diagnostics and production API
         shell: bash
         run: |
           set -u
@@ -16,22 +16,16 @@ jobs:
           endpoints=(
             "/__probe"
             "/__probe-express"
+            "/__probe-imports"
             "/__probe-routes"
             "/api/health"
-            "/api/diagnostics"
-            "/api/markets/quote?symbol=SPY&assetType=equity"
-            "/api/markets/india-ticker"
-            "/api/news"
-            "/api/economy/overview"
-            "/api/economy/india/overview"
-            "/api/crypto/markets"
           )
           for endpoint in "${endpoints[@]}"; do
             echo "===== ${endpoint} ====="
             tmp=$(mktemp)
-            code=$(curl -L -sS --max-time 30 -o "$tmp" -w "%{http_code}" "${base}${endpoint}" || true)
+            code=$(curl -L -sS --max-time 40 -o "$tmp" -w "%{http_code}" "${base}${endpoint}" || true)
             echo "HTTP ${code}"
-            head -c 5000 "$tmp" || true
+            cat "$tmp" || true
             echo
             rm -f "$tmp"
           done

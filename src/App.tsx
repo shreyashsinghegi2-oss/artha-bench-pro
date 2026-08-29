@@ -4,11 +4,9 @@ import {
   destinationForPath,
   pathForDestination,
   PRIVATE_FINANCE_DESTINATIONS,
-  PublicPageId,
   pushAuth,
   pushDestination,
   pushLanding,
-  pushPublicPage,
   readAppLocation,
 } from './appRoutes';
 import { AppNavigationDestination, isFinanceDestination } from './navigationTypes';
@@ -82,10 +80,7 @@ export default function App() {
   }, []);
 
   const navigateWorkspace = useCallback((destination: AppNavigationDestination = 'overview') => {
-    if (!auth.user && PRIVATE_FINANCE_DESTINATIONS.has(destination)) {
-      requestPrivateDestination(destination);
-      return;
-    }
+    if (!auth.user && PRIVATE_FINANCE_DESTINATIONS.has(destination)) return requestPrivateDestination(destination);
     goToDestination(destination);
   }, [auth.user, goToDestination, requestPrivateDestination]);
 
@@ -98,7 +93,6 @@ export default function App() {
       setLocation({ kind: 'auth', returnTo });
       return;
     }
-
     if (!auth.user) return;
     const pending = window.sessionStorage.getItem(PENDING_RETURN_KEY);
     const returnTo = location.kind === 'auth' ? location.returnTo : pending;
@@ -108,7 +102,6 @@ export default function App() {
     if (destination) goToDestination(destination, true);
   }, [auth.loading, auth.user, goToDestination, location]);
 
-  const navigatePublic = useCallback((page: PublicPageId) => { pushPublicPage(page); setLocation({ kind: 'public', page }); window.scrollTo({ top: 0, behavior: 'auto' }); }, []);
   const goHome = useCallback(() => { pushLanding(); setLocation({ kind: 'landing' }); window.scrollTo({ top: 0, behavior: 'auto' }); }, []);
   const goOverview = useCallback(() => goToDestination('overview'), [goToDestination]);
 
@@ -143,6 +136,10 @@ export default function App() {
 
   if (auth.loading) return <div className="flex min-h-screen items-center justify-center bg-canvas text-ink"><div className="rounded-2xl border border-line bg-surface px-6 py-5 text-sm font-semibold text-secondary shadow-sm">Restoring your Artha Bench workspace…</div></div>;
 
+  if (!auth.user && location.kind === 'workspace' && PRIVATE_FINANCE_DESTINATIONS.has(location.destination)) {
+    const returnTo = pathForDestination(location.destination);
+    return <><AuthGateView returnTo={returnTo} onCancel={goOverview} onEmail={() => auth.openAuth('login')} /><AuthModal /></>;
+  }
   if (location.kind === 'landing') return <><ArthaMindLandingPage signedIn={Boolean(auth.user)} onEnter={(destination) => navigateWorkspace(destination ?? 'overview')} onSignIn={() => auth.openAuth('login')} /><AuthModal /><FirstTimeOnboardingGate onNavigate={navigateWorkspace} /></>;
   if (location.kind === 'public') return <><PublicInfoPage page={location.page} onHome={goHome} onWorkspace={goOverview} /><AuthModal /><FirstTimeOnboardingGate onNavigate={navigateWorkspace} /></>;
   if (location.kind === 'auth') return <><AuthGateView returnTo={location.returnTo} onCancel={goOverview} onEmail={() => auth.openAuth('login')} /><AuthModal /><FirstTimeOnboardingGate onNavigate={navigateWorkspace} /></>;

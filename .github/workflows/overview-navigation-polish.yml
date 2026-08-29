@@ -21,32 +21,53 @@ jobs:
           node-version: 22
           cache: npm
 
-      - name: Wire business headline ticker into existing dashboard
+      - name: Apply dashboard wiring and behavior-neutral TypeScript fixes
         shell: python
         run: |
           from pathlib import Path
-          path = Path('src/components/dashboard/DashboardView.tsx')
-          text = path.read_text()
 
+          dashboard = Path('src/components/dashboard/DashboardView.tsx')
+          text = dashboard.read_text()
           old_import = "import { IndiaMarketTicker } from './IndiaMarketTicker';"
           new_import = "import { IndiaMarketTicker } from './IndiaMarketTicker';\nimport { BusinessNewsTicker } from './BusinessNewsTicker';"
           if "import { BusinessNewsTicker } from './BusinessNewsTicker';" not in text:
               if old_import not in text:
                   raise SystemExit('IndiaMarketTicker import not found')
               text = text.replace(old_import, new_import, 1)
-
           text = text.replace("  const latestHeadline = news[0] ?? null;\n", "", 1)
-
           start_marker = '          <div className="overflow-hidden rounded-xl border border-line bg-[#101A2E] text-white shadow-sm" aria-label="Latest business headline">'
           end_marker = '          <DashboardAssistant '
           if start_marker in text:
               start = text.index(start_marker)
               end = text.index(end_marker, start)
               text = text[:start] + "          <BusinessNewsTicker items={news} onOpenFeed={() => onNavigate('news')} />\n" + text[end:]
-          elif '          <BusinessNewsTicker items={news} onOpenFeed={() => onNavigate(\'news\')} />' not in text:
+          elif 'BusinessNewsTicker items={news}' not in text:
               raise SystemExit('Existing latest headline block not found')
+          dashboard.write_text(text)
 
-          path.write_text(text)
+          account = Path('src/components/account/PersonalAccountControls.tsx')
+          text = account.read_text()
+          old = "const Context=({label,desc,checked,change}:{label:string,desc:string,checked:boolean,change:(v:boolean)=>void})=>"
+          new = "const Context:React.FC<{label:string;desc:string;checked:boolean;change:(v:boolean)=>void}>=({label,desc,checked,change})=>"
+          if old in text:
+              text = text.replace(old, new, 1)
+          account.write_text(text)
+
+          assistant = Path('src/components/dashboard/DashboardAssistant.tsx')
+          text = assistant.read_text()
+          old = "      const personalDataUsed = 'personalDataUsed' in response ? response.personalDataUsed : false;\n      const personalContextReferences = 'personalContextReferences' in response ? response.personalContextReferences : [];"
+          new = "      const personalDataUsed = 'personalDataUsed' in response ? Boolean(response.personalDataUsed) : false;\n      const personalContextReferences = 'personalContextReferences' in response && Array.isArray(response.personalContextReferences)\n        ? response.personalContextReferences.filter((item): item is string => typeof item === 'string')\n        : [];"
+          if old in text:
+              text = text.replace(old, new, 1)
+          assistant.write_text(text)
+
+          expenses = Path('src/components/expenses/ExpensesView.tsx')
+          text = expenses.read_text()
+          old = "  const categoryRanking = useMemo(\n    () => Object.entries(categoryTotals).sort((a, b) => b[1] - a[1]),\n    [categoryTotals],\n  );"
+          new = "  const categoryRanking = useMemo<Array<[string, number]>>(\n    () => Object.entries(categoryTotals)\n      .map(([category, total]) => [category, Number(total)] as [string, number])\n      .sort((a, b) => b[1] - a[1]),\n    [categoryTotals],\n  );"
+          if old in text:
+              text = text.replace(old, new, 1)
+          expenses.write_text(text)
 
       - name: Install dependencies
         run: npm ci
@@ -76,12 +97,12 @@ jobs:
             exit 1
           fi
 
-      - name: Commit validated dashboard wiring and remove temporary workflow
+      - name: Commit validated source and remove temporary workflow
         shell: bash
         run: |
           git config user.name "SHREYASH SINGH"
           git config user.email "shreyashsinghegi2@gmail.com"
           git rm .github/workflows/overview-navigation-polish.yml
-          git add src/components/dashboard/DashboardView.tsx
-          git commit -m "Wire dashboard news ticker and validate navigation"
+          git add src/components/dashboard/DashboardView.tsx src/components/account/PersonalAccountControls.tsx src/components/dashboard/DashboardAssistant.tsx src/components/expenses/ExpensesView.tsx
+          git commit -m "Validate overview navigation and ticker interactions"
           git push origin HEAD:overview-navigation-polish

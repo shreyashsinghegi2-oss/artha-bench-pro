@@ -4,13 +4,9 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "functions": {
-    "api/index.js": { "maxDuration": 60 },
-    "api/probe.ts": { "maxDuration": 10 },
-    "api/probe-express.ts": { "maxDuration": 10 }
+    "api/index.js": { "maxDuration": 60 }
   },
   "rewrites": [
-    { "source": "/__probe", "destination": "/api/probe" },
-    { "source": "/__probe-express", "destination": "/api/probe-express" },
     { "source": "/api/:path*", "destination": "/api/index" },
     { "source": "/finance/:path*", "destination": "/index.html" },
     { "source": "/workspace/:path*", "destination": "/index.html" },

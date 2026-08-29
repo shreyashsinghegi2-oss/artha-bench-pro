@@ -56,6 +56,11 @@ function config() {
   return { url, anonKey, enabled: Boolean(url && anonKey) };
 }
 
+function browserRedirect(kind: 'callback' | 'reset' = 'callback'): string | null {
+  if (typeof window === 'undefined') return null;
+  return `${window.location.origin}/?auth=${kind}`;
+}
+
 export function isSupabaseConfigured(): boolean {
   return config().enabled;
 }
@@ -180,7 +185,9 @@ export async function signUpWithPassword(input: {
   financialDataConsent: boolean;
 }): Promise<{ session: AuthSession | null; user: AuthUser | null }> {
   const { url } = config();
-  const payload = await requestJSON<any>(`${url}/auth/v1/signup`, {
+  const redirectTo = browserRedirect('callback');
+  const endpoint = redirectTo ? `${url}/auth/v1/signup?redirect_to=${encodeURIComponent(redirectTo)}` : `${url}/auth/v1/signup`;
+  const payload = await requestJSON<any>(endpoint, {
     method: 'POST',
     headers: authHeaders(),
     body: JSON.stringify({
@@ -194,6 +201,17 @@ export async function signUpWithPassword(input: {
     }),
   });
   return { session: normalizeSession(payload), user: payload?.user ?? null };
+}
+
+export async function resendSignupConfirmation(email: string): Promise<void> {
+  const { url } = config();
+  const redirectTo = browserRedirect('callback');
+  const endpoint = redirectTo ? `${url}/auth/v1/resend?redirect_to=${encodeURIComponent(redirectTo)}` : `${url}/auth/v1/resend`;
+  await requestJSON(endpoint, {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify({ type: 'signup', email }),
+  });
 }
 
 export async function isSocialProviderEnabled(provider: SocialAuthProvider): Promise<boolean> {
@@ -211,7 +229,7 @@ export async function isSocialProviderEnabled(provider: SocialAuthProvider): Pro
 
 export function startSocialOAuth(provider: SocialAuthProvider): void {
   const { url } = config();
-  const redirectTo = `${window.location.origin}/?auth=callback`;
+  const redirectTo = browserRedirect('callback') || `${window.location.origin}/?auth=callback`;
   const query = new URLSearchParams({ provider, redirect_to: redirectTo });
   if (provider === 'azure') query.set('scopes', 'email openid profile');
   window.location.assign(`${url}/auth/v1/authorize?${query.toString()}`);
@@ -223,10 +241,11 @@ export function startGoogleOAuth(): void {
 
 export async function sendPasswordReset(email: string): Promise<void> {
   const { url } = config();
+  const redirectTo = browserRedirect('reset');
   await requestJSON(`${url}/auth/v1/recover`, {
     method: 'POST',
     headers: authHeaders(),
-    body: JSON.stringify({ email, redirect_to: `${window.location.origin}/?auth=reset` }),
+    body: JSON.stringify({ email, redirect_to: redirectTo || undefined }),
   });
 }
 

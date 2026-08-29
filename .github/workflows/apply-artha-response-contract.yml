@@ -1,0 +1,471 @@
+name: Apply ArthaMind response contract
+
+on:
+  push:
+    branches: [artha-response-contract-v4]
+
+permissions:
+  contents: write
+
+jobs:
+  apply-and-validate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Apply response-engine contract
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+
+          # 1) Central structured response contract.
+          path = Path('server/aiResponseStandard.ts')
+          text = path.read_text()
+          text, count = re.subn(
+              r"keyTakeaways: z\.array\(z\.string\(\)\.min\(1\)\.max\(500\)\)\.min\(1\)\.max\(8\),",
+              "keyTakeaways: z.array(z.string().min(1).max(500)).max(8),",
+              text,
+              count=1,
+          )
+          if count != 1:
+              raise SystemExit('Could not relax optional keyTakeaways schema')
+
+          contract_fn = r'''export function buildStructuredFinancialAnswerInstructions(options: {
+            audience: 'dashboard' | 'tutor';
+            language?: string;
+            level?: string;
+            detail?: 'short' | 'detailed';
+            hasVerifiedCurrentData: boolean;
+          }) {
+            const responseLength = options.detail === 'short' ? '220 to 380' : '420 to 750';
+            const audienceGuidance =
+              options.audience === 'dashboard'
+                ? 'Explain the selected dashboard evidence and keep observations, calculations, and interpretation visibly separate.'
+                : 'Teach the user clearly enough for a non-expert to understand while keeping every material claim easy to verify.';
+
+            return `
+          ARTHAMIND FINANCIAL RESPONSE CONTRACT — REQUIRED OUTPUT BEHAVIOR
+          ${audienceGuidance}
+
+          Response mode:
+          - If the user explicitly requests Quick answer, Step-by-step, Detailed, Professional report, or Teach me, honor that mode.
+          - Otherwise infer the mode: very simple lookup -> Quick answer; short factual/calculation question -> Step-by-step; conceptual/educational question -> Teach me; complex multi-part question -> Detailed.
+          - Mode changes depth and wording only. It never changes mathematical correctness, evidence standards, or the section order below.
+
+          Map the JSON fields to these sections in this exact conceptual order:
+          A. directAnswer = one sentence in plain language with the key result or conclusion. If a numeric result is supported, include the number and currency/unit here.
+          B. example.inputs = 2 to 6 short assumptions/context items. Include amount or income, rate/percentage, time/compounding, currency, jurisdiction/regime/year, pre/post-tax basis, or simplifications when relevant. If the prompt is ambiguous, state the default assumption here.
+          C. formula = the formula or governing rule. Put the simple formula/rule matching the assumptions first in expression. Add an optional general formula after "General:" only when it adds clarity. Explain every symbol in variables. For tax/policy/legal topics, state the jurisdiction, applicable year/regime, rule, and important conditions instead of inventing an equation.
+          D. steps = 2 to 7 ordered calculation/reasoning steps. Each step should contain one main claim, a short explanation, and small readable math where relevant. example.calculation contains concrete substitutions/intermediate arithmetic only; it may be empty for conceptual questions.
+          E. example.result = an explicit final result line, preferably beginning "Final result:" for quantitative questions. Include currency/units and sensible rounding. interpretation = a concise explanation of what the result means; distinguish measured facts from interpretation.
+          F. keyTakeaways = optional "If needed" variations, edge cases, alternative regimes/compounding frequencies, or a genuinely necessary clarifying question. Return [] when no variation is useful.
+          G. risks = 1 to 3 concise limitations and verification notes. State omitted fees, inflation, deductions, taxes, timing, data gaps, or uncertainty where relevant. sources = only supplied/verified sources with exact date/freshness; never fabricate a citation or provider.
+
+          Claim and calculation discipline:
+          1. Keep independent factual claims in separate sentences so automated evaluators can extract them cleanly.
+          2. Never hide the main numeric answer inside a paragraph. Put it in directAnswer and example.result.
+          3. Do not omit calculation steps to sound concise. Convert percentages to decimals where relevant, substitute values, show intermediate values, and then compute the result.
+          4. Use a real formula only when it applies. If no equation is relevant, set expression to "No calculation is required; Rule: ..." and explain the decision method in whenToUse.
+          5. Never invent a current price, market move, interest rate, tax threshold, policy rule, date, provider, or source. Verified current/latest data may be used only when supplied in context.
+          6. Current-data context is ${options.hasVerifiedCurrentData ? 'available; use only the exact provider/date/freshness supplied' : 'not verified; do not present current figures or rules as confirmed and label examples illustrative'}.
+
+          Risk-sensitive behavior:
+          - For specific investments, tax filing/compliance, loan/debt restructuring, credit decisions, insurance coverage, or legal/regulatory interpretation, state assumptions and uncertainty explicitly.
+          - Avoid definitive personalized "you should buy/sell/file/refinance" language. Prefer neutral educational framing such as "a common approach is" or "you may want to verify".
+          - For consequential decisions, recommend verification with the relevant official source or a suitably qualified professional.
+          - Never provide guaranteed returns, approval probabilities, fabricated creditworthiness judgments, or unsupported tax/legal conclusions.
+
+          Localization and style:
+          - Use the currency, jurisdiction, fiscal-year terminology, and local concepts clearly indicated by the user/context. If you infer them from a strong cue such as INR/NIFTY/401(k), state that assumption.
+          - If a local rule is not verified in supplied context, say so instead of guessing.
+          - Use ${options.language || 'English'} at a ${options.level || 'beginner'} learning level. Use plain professional English, short sentences, and concise but complete explanations. Target ${responseLength} words unless the explicit user mode reasonably requires less or more.
+          - Use plain text inside every JSON field. Do not include Markdown markers, HTML, pipe tables, LaTeX delimiters, or <br> tags.
+          - Remain educational and non-advisory. Do not add boilerplate that contradicts the analysis; keep limitations specific and calm.`;
+          }
+
+          function cleanPlainText'''
+          text, count = re.subn(
+              r"export function buildStructuredFinancialAnswerInstructions\([\s\S]*?\n}\n\nfunction cleanPlainText",
+              contract_fn,
+              text,
+              count=1,
+          )
+          if count != 1:
+              raise SystemExit('Could not replace central response instructions')
+
+          # Make deterministic fallback opening exactly one sentence.
+          if 'function oneSentenceDirectAnswer' not in text:
+              anchor = "\nexport function createFallbackStructuredFinancialAnswer("
+              helper = r'''
+
+          function oneSentenceDirectAnswer(rawText: string) {
+            const text = firstUsefulParagraph(rawText).replace(/\s+/g, ' ').trim();
+            const sentence = text.match(/^(.+?[.!?])(?:\s|$)/)?.[1] || text;
+            const normalized = sentence.replace(/[.!?]+$/, '').trim();
+            return `${normalized || 'A structured financial explanation is available'}.`.slice(0, 2200);
+          }
+          '''
+              if anchor not in text:
+                  raise SystemExit('Could not find fallback helper insertion point')
+              text = text.replace(anchor, helper + anchor, 1)
+          text = text.replace('directAnswer: firstUsefulParagraph(rawText),', 'directAnswer: oneSentenceDirectAnswer(rawText),', 1)
+
+          serializer = r'''export function serializeStructuredFinancialAnswer(answer: StructuredFinancialAnswer) {
+            const lines = [
+              `# ${answer.title}`,
+              '',
+              '## Direct answer',
+              answer.directAnswer,
+              '',
+              '## Assumptions and context',
+              ...(answer.example.inputs.length
+                ? answer.example.inputs.map((input) => `- ${input}`)
+                : ['- No additional quantitative assumptions were required beyond the supplied context.']),
+              ...(answer.example.dataAsOf ? [`- Data as of: ${answer.example.dataAsOf}`] : []),
+              `- Data status: ${answer.example.dataStatus.replaceAll('_', ' ')}`,
+              '',
+              '## Formula or rule',
+              answer.formula.expression,
+              ...answer.formula.variables.map((variable) => `- ${variable.symbol}: ${variable.meaning}`),
+              answer.formula.whenToUse,
+              '',
+              '## Step-by-step calculation or reasoning',
+              ...answer.steps.map((step, index) => `${index + 1}. ${step.title}: ${step.explanation}`),
+              ...(answer.example.calculation.length
+                ? ['', 'Calculation details:', ...answer.example.calculation.map((item, index) => `${index + 1}. ${item}`)]
+                : []),
+              '',
+              '## Final result and interpretation',
+              answer.example.result,
+              ...answer.interpretation.map((item) => `- ${item}`),
+              ...(answer.keyTakeaways.length
+                ? ['', '## If needed', ...answer.keyTakeaways.map((item) => `- ${item}`)]
+                : []),
+              '',
+              '## Limitations and verification',
+              ...(answer.risks.length ? answer.risks.map((item) => `- ${item}`) : ['- No additional limitation was identified from the supplied context.']),
+              ...(answer.sources.length
+                ? ['', 'Sources and freshness:', ...answer.sources.map((source) => `- ${source.name}${source.dataDate ? ` · ${source.dataDate}` : ''} · ${source.freshness}`)]
+                : []),
+            ];
+            return lines.join('\n').trim();
+          }
+          '''
+          text, count = re.subn(
+              r"export function serializeStructuredFinancialAnswer\(answer: StructuredFinancialAnswer\) \{[\s\S]*?\n}\s*$",
+              serializer.strip(),
+              text,
+              count=1,
+          )
+          if count != 1:
+              raise SystemExit('Could not replace structured answer serializer')
+          path.write_text(text)
+
+          # 2) Shared frontend renderer: same order as the response contract.
+          renderer = r'''import React from 'react';
+          import {
+            Calculator,
+            CheckCircle2,
+            CircleAlert,
+            Database,
+            Lightbulb,
+            ListChecks,
+            ShieldAlert,
+          } from 'lucide-react';
+          import { FinancialExampleDataStatus, StructuredFinancialAnswer } from '../../types';
+
+          interface StructuredFinancialAnswerProps {
+            answer: StructuredFinancialAnswer;
+            disclaimer?: string;
+            compact?: boolean;
+          }
+
+          const STATUS_LABELS: Record<FinancialExampleDataStatus, string> = {
+            live: 'Live data',
+            latest_available: 'Latest official data',
+            delayed: 'Delayed data',
+            illustrative: 'Illustrative',
+            not_applicable: 'Conceptual',
+          };
+
+          const STATUS_STYLES: Record<FinancialExampleDataStatus, string> = {
+            live: 'border-success-fill/25 bg-success-soft text-success',
+            latest_available: 'border-interactive bg-interactive-soft text-interactive',
+            delayed: 'border-warning-fill/25 bg-warning-soft text-warning',
+            illustrative: 'border-interactive bg-interactive-soft text-interactive',
+            not_applicable: 'border-line bg-subtle text-secondary',
+          };
+
+          const SectionHeading: React.FC<React.PropsWithChildren<{ icon: React.ComponentType<{ className?: string }> }>> = ({ icon: Icon, children }) => (
+            <div className="mb-2.5 flex items-center gap-2">
+              <Icon className="h-4 w-4 text-interactive" aria-hidden="true" />
+              <h4 className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-ink">{children}</h4>
+            </div>
+          );
+
+          export const StructuredFinancialAnswerView: React.FC<StructuredFinancialAnswerProps> = ({
+            answer,
+            disclaimer = 'Educational analysis only — verify consequential financial, tax, legal, or investment decisions with an appropriate official source or qualified professional.',
+            compact = false,
+          }) => (
+            <article className={`w-full overflow-hidden rounded-2xl border border-line bg-surface text-ink shadow-sm ${compact ? 'text-[12px]' : 'text-sm'}`}>
+              <header className="border-b border-line bg-surface px-4 py-4 sm:px-5">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-[9px] font-extrabold uppercase tracking-[0.18em] text-interactive">ArthaMind structured answer</p>
+                    <h3 className="mt-1.5 text-base font-extrabold leading-snug text-ink sm:text-lg">{answer.title}</h3>
+                  </div>
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-success-fill/25 bg-success-soft px-2.5 py-1 text-[9px] font-bold uppercase tracking-wide text-success">
+                    <CheckCircle2 className="h-3 w-3" aria-hidden="true" /> Evaluation-ready
+                  </span>
+                </div>
+              </header>
+
+              <div className={`space-y-5 ${compact ? 'p-4' : 'p-4 sm:p-5'}`}>
+                <section aria-labelledby="direct-answer-heading">
+                  <SectionHeading icon={Lightbulb}>Direct answer</SectionHeading>
+                  <p id="direct-answer-heading" className="rounded-xl border border-interactive bg-interactive-soft/70 px-3.5 py-3 font-semibold leading-6 text-ink">{answer.directAnswer}</p>
+                </section>
+
+                <section className="rounded-xl border border-line bg-subtle p-3.5" aria-labelledby="assumptions-heading">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <SectionHeading icon={CircleAlert}>Assumptions and context</SectionHeading>
+                    <span className={`rounded-full border px-2.5 py-1 text-[9px] font-bold ${STATUS_STYLES[answer.example.dataStatus]}`}>{STATUS_LABELS[answer.example.dataStatus]}</span>
+                  </div>
+                  {answer.example.dataAsOf && <p className="mb-2 text-[10px] font-medium text-secondary">Data as of {answer.example.dataAsOf}</p>}
+                  <ul className="space-y-1.5 leading-5 text-secondary">
+                    {answer.example.inputs.length
+                      ? answer.example.inputs.map((item, index) => <li key={`${item}-${index}`}>• {item}</li>)
+                      : <li>• No additional quantitative assumptions were required beyond the supplied context.</li>}
+                  </ul>
+                </section>
+
+                <section className="overflow-hidden rounded-xl border border-interactive/25 bg-interactive-soft" aria-labelledby="formula-heading">
+                  <div className="flex items-center gap-2 border-b border-interactive px-3.5 py-2.5">
+                    <Calculator className="h-4 w-4 text-interactive" aria-hidden="true" />
+                    <h4 id="formula-heading" className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-ink">Formula or rule</h4>
+                  </div>
+                  <div className="space-y-3 p-3.5">
+                    <div className="overflow-x-auto rounded-lg border border-line bg-surface px-3 py-3 font-mono text-[12px] font-semibold leading-6 text-interactive">{answer.formula.expression}</div>
+                    {answer.formula.variables.length > 0 && (
+                      <dl className="grid gap-2 sm:grid-cols-2">
+                        {answer.formula.variables.map((variable, index) => (
+                          <div key={`${variable.symbol}-${index}`} className="rounded-lg border border-line bg-surface px-3 py-2">
+                            <dt className="font-mono text-[11px] font-extrabold text-interactive">{variable.symbol}</dt>
+                            <dd className="mt-0.5 text-[11px] leading-4 text-secondary">{variable.meaning}</dd>
+                          </div>
+                        ))}
+                      </dl>
+                    )}
+                    <p className="text-[11px] leading-5 text-secondary">{answer.formula.whenToUse}</p>
+                  </div>
+                </section>
+
+                <section aria-labelledby="step-by-step-heading">
+                  <SectionHeading icon={ListChecks}>Step-by-step calculation or reasoning</SectionHeading>
+                  <ol className="space-y-2.5">
+                    {answer.steps.map((step, index) => (
+                      <li key={`${step.title}-${index}`} className="flex gap-3 rounded-xl border border-line bg-subtle px-3 py-3">
+                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-interactive text-[10px] font-extrabold text-white">{index + 1}</span>
+                        <div className="min-w-0"><p className="font-bold leading-5 text-ink">{step.title}</p><p className="mt-0.5 leading-5 text-secondary">{step.explanation}</p></div>
+                      </li>
+                    ))}
+                  </ol>
+                  {answer.example.calculation.length > 0 && (
+                    <div className="mt-3 rounded-xl border border-line bg-canvas p-3.5">
+                      <p className="mb-2 text-[10px] font-extrabold uppercase tracking-wider text-secondary">Calculation details</p>
+                      <ol className="space-y-1.5">
+                        {answer.example.calculation.map((item, index) => <li key={`${item}-${index}`} className="flex gap-2 font-mono text-[11px] leading-5 text-secondary"><span className="font-sans font-extrabold text-interactive">{index + 1}.</span><span>{item}</span></li>)}
+                      </ol>
+                    </div>
+                  )}
+                </section>
+
+                <section className="rounded-xl border border-success-fill/25 bg-success-soft p-3.5" aria-labelledby="final-result-heading">
+                  <h4 id="final-result-heading" className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-success">Final result and interpretation</h4>
+                  <p className="mt-2 font-bold leading-6 text-ink">{answer.example.result}</p>
+                  {answer.interpretation.length > 0 && <ul className="mt-2 space-y-1.5 leading-5 text-secondary">{answer.interpretation.map((item, index) => <li key={`${item}-${index}`}>• {item}</li>)}</ul>}
+                </section>
+
+                {answer.keyTakeaways.length > 0 && (
+                  <section className="rounded-xl border border-interactive bg-interactive-soft/60 p-3.5" aria-labelledby="if-needed-heading">
+                    <h4 id="if-needed-heading" className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-ink">If needed</h4>
+                    <ul className="mt-2 space-y-1.5 leading-5 text-secondary">{answer.keyTakeaways.map((item, index) => <li key={`${item}-${index}`}>• {item}</li>)}</ul>
+                  </section>
+                )}
+
+                <section className="rounded-xl border border-warning-fill/25 bg-warning-soft p-3.5" aria-labelledby="limitations-heading">
+                  <div className="mb-2 flex items-center gap-2"><ShieldAlert className="h-4 w-4 text-warning" aria-hidden="true" /><h4 id="limitations-heading" className="text-[10px] font-extrabold uppercase tracking-wider text-ink">Limitations and verification</h4></div>
+                  {answer.risks.length > 0 && <ul className="space-y-1.5 leading-5 text-secondary">{answer.risks.map((item, index) => <li key={`${item}-${index}`}>• {item}</li>)}</ul>}
+                  {answer.sources.length > 0 && (
+                    <div className="mt-3 border-t border-warning-fill/20 pt-3">
+                      <div className="mb-2 flex items-center gap-2"><Database className="h-3.5 w-3.5 text-secondary" aria-hidden="true" /><span className="text-[10px] font-extrabold uppercase tracking-wider text-ink">Sources and freshness</span></div>
+                      <div className="flex flex-wrap gap-2">{answer.sources.map((source, index) => <span key={`${source.name}-${index}`} className="rounded-lg border border-line bg-surface px-2.5 py-1.5 text-[10px] leading-4 text-secondary"><strong className="text-ink">{source.name}</strong>{source.dataDate ? ` · ${source.dataDate}` : ''} · {source.freshness}</span>)}</div>
+                    </div>
+                  )}
+                  <p className="mt-3 border-t border-warning-fill/20 pt-3 text-[10px] font-medium leading-4 text-secondary">{disclaimer}</p>
+                </section>
+              </div>
+            </article>
+          );
+          '''
+          Path('src/components/ai/StructuredFinancialAnswer.tsx').write_text(renderer)
+
+          # 3) Personal-finance drawer should not fight the centralized heading contract.
+          path = Path('src/components/finance/FinanceAssistantDrawer.tsx')
+          text = path.read_text()
+          replacement = r'''const prompt = `You are ArthaMind inside the ${module} personal-finance module. Use ONLY the authorized JSON snapshot. Do not infer disabled categories or invent transactions. Follow the centralized ArthaMind financial response contract used by the tutor. In assumptions/context, state the selected period and enabled categories. In reasoning, distinguish facts from the snapshot from general educational guidance. Mention data completeness (${dataCompleteness}) as record coverage, not as an accuracy score. If the data is insufficient to support a strength, concern, comparison, or action, say that directly. Educational review actions are allowed; do not provide investment, tax, legal, loan-approval, refinancing, eligibility, creditworthiness, or guaranteed-savings instructions. Selected period: ${periodLabel}. Enabled categories: ${enabledCategories.join(', ')}. Question: ${next.slice(0, 350)}. Authorized snapshot: ${JSON.stringify(snapshot)}`.slice(0, 3500);'''
+          text, count = re.subn(r"const prompt = `You are ArthaMind inside the \$\{module\} personal-finance module\.[\s\S]*?`\.slice\(0, 3500\);", replacement, text, count=1)
+          if count != 1:
+              raise SystemExit('Could not align FinanceAssistantDrawer prompt')
+          path.write_text(text)
+
+          # 4) Crypto assistant uses the same visible answer contract while preserving Binance evidence rules.
+          path = Path('server/cryptoService.ts')
+          text = path.read_text()
+          crypto_block = r'''export function buildCryptoAssistantFallback(question: string, context: CryptoAssistantContext): string {
+            const direction = context.absoluteChange > 0 ? 'up' : context.absoluteChange < 0 ? 'down' : 'flat';
+            const range = context.high - context.low;
+            const bodyToRange = range ? Math.abs(context.absoluteChange) / range * 100 : 0;
+            const direct = `${context.symbol.replace('USDT', '/USDT')} is ${direction} by ${context.absoluteChange >= 0 ? '+' : ''}${formattedNumber(context.absoluteChange)} USDT (${context.percentChange >= 0 ? '+' : ''}${context.percentChange.toFixed(2)}%) in the selected ${context.interval} ${context.candleStatus.toLowerCase()} candle.`;
+            return `## Direct answer
+          ${direct}
+
+          ## Assumptions and context
+          - Instrument: ${context.symbol.replace('USDT', '/USDT')} · interval: ${context.interval} · candle: ${context.candleStatus}
+          - Time: ${context.timeUtc} UTC · ${context.timeIst} IST
+          - Source: ${context.provider} · feed status: ${context.streamStatus.toUpperCase()}
+          - Question: ${question.trim()}
+
+          ## Formula or rule
+          Candle change = Close − Open
+          Percentage change = (Close − Open) / Open × 100
+          Range = High − Low
+
+          ## Step-by-step calculation or reasoning
+          1. Open = ${formattedNumber(context.open)} USDT; Close = ${formattedNumber(context.close)} USDT.
+          2. High = ${formattedNumber(context.high)} USDT; Low = ${formattedNumber(context.low)} USDT; Range = ${formattedNumber(range)} USDT.
+          3. Absolute change = ${context.absoluteChange >= 0 ? '+' : ''}${formattedNumber(context.absoluteChange)} USDT; Percentage change = ${context.percentChange >= 0 ? '+' : ''}${context.percentChange.toFixed(2)}%.
+          4. The candle body uses ${bodyToRange.toFixed(1)}% of the observed high-low range. Volume is ${formattedNumber(context.baseVolume, 4)} base units across ${context.tradeCount.toLocaleString('en-US')} trades.
+          5. One candle describes a measured interval; it does not establish a durable trend or identify buyer/seller intent.
+
+          ## Final result and interpretation
+          Final result: the selected candle is ${direction}, with a ${context.percentChange >= 0 ? '+' : ''}${context.percentChange.toFixed(2)}% open-to-close move.
+          This is a measured candle observation, not a forecast or a buy/sell/hold signal.
+
+          ## If needed
+          - Compare several closed candles, volume, volatility, liquidity, fees, and broader market conditions before drawing a research conclusion.
+          - Bullish, neutral, and bearish scenarios should be framed conditionally around follow-through evidence rather than price targets.
+
+          ## Limitations and verification
+          - ${context.candleStatus === 'Forming' ? 'This candle is still forming and can change before close.' : 'This candle is closed, but later market conditions can differ.'}
+          - USDT may not equal USD exactly, and crypto prices can differ across venues.
+          - Verify consequential decisions independently; ArthaBench does not issue personalized buy, sell, hold, leverage, or target-price instructions.`;
+          }
+
+          export async function answerCryptoQuestion(question: string, context: CryptoAssistantContext) {
+            const fallback = buildCryptoAssistantFallback(question, context);
+            if (!process.env.GROQ_API_KEY?.trim()) return { answer: fallback, provider: 'deterministic' as const, model: null };
+
+            const systemPrompt = `You are ArthaMind Crypto Assistant, an evidence-grounded financial educator. Use only the supplied Binance candle context for specific numbers. Follow these Markdown headings in this exact order: Direct answer; Assumptions and context; Formula or rule; Step-by-step calculation or reasoning; Final result and interpretation; If needed; Limitations and verification. The Direct answer must be one sentence. Show only formulas supported by the supplied candle data. Keep independent factual claims in separate sentences. Preserve exact Binance source, feed status, candle status, UTC/IST timestamps, OHLC, volume and trade-count values. Never provide personalized buy/sell/hold instructions, target prices, leverage instructions, guaranteed returns, or certainty. A purchase/avoid request receives an educational due-diligence framework, not an order. Explicitly label forming candles and data freshness. Keep the response under 650 words.`;
+            try {
+              const answer = await callGroqChat(
+                systemPrompt,
+                `Question: ${question}\n\nVerified Binance candle context:\n${JSON.stringify(context)}`,
+                getGroqModels().tutorModel,
+              );
+              const required = ['## Direct answer', '## Assumptions and context', '## Formula or rule', '## Step-by-step calculation or reasoning', '## Final result and interpretation', '## Limitations and verification'];
+              return { answer: required.every((heading) => answer.includes(heading)) ? answer : fallback, provider: 'groq' as const, model: getGroqModels().tutorModel };
+            } catch {
+              return { answer: fallback, provider: 'deterministic' as const, model: null };
+            }
+          }
+
+          '''
+          text, count = re.subn(r"export function buildCryptoAssistantFallback[\s\S]*?(?=export function resetCryptoCachesForTests)", crypto_block, text, count=1)
+          if count != 1:
+              raise SystemExit('Could not align crypto assistant response contract')
+          path.write_text(text)
+
+          # 5) Contract tests.
+          test = r'''import { describe, expect, it } from 'vitest';
+          import {
+            buildStructuredFinancialAnswerInstructions,
+            createFallbackStructuredFinancialAnswer,
+            serializeStructuredFinancialAnswer,
+            structuredFinancialAnswerSchema,
+          } from '../server/aiResponseStandard';
+          import { buildCryptoAssistantFallback } from '../server/cryptoService';
+
+          describe('ArthaMind financial response contract', () => {
+            it('includes modes, assumptions, final-result, localization, verification, and no-fabrication rules', () => {
+              const prompt = buildStructuredFinancialAnswerInstructions({ audience: 'tutor', language: 'English', level: 'beginner', detail: 'detailed', hasVerifiedCurrentData: false });
+              for (const phrase of ['Quick answer', 'Professional report', 'Assumptions', 'Final result', 'jurisdiction', 'official source', 'Never invent']) {
+                expect(prompt).toContain(phrase);
+              }
+            });
+
+            it('serializes the structured answer in the required section order', () => {
+              const answer = createFallbackStructuredFinancialAnswer('What is compound interest on 10000 at 8% for 5 years?', 'The investment grows using compound interest.');
+              const parsed = structuredFinancialAnswerSchema.parse(answer);
+              const text = serializeStructuredFinancialAnswer(parsed);
+              const headings = ['## Direct answer', '## Assumptions and context', '## Formula or rule', '## Step-by-step calculation or reasoning', '## Final result and interpretation', '## Limitations and verification'];
+              const indices = headings.map((heading) => text.indexOf(heading));
+              expect(indices.every((index) => index >= 0)).toBe(true);
+              expect(indices).toEqual([...indices].sort((a, b) => a - b));
+              expect(parsed.directAnswer.match(/[.!?]/g)?.length).toBe(1);
+            });
+
+            it('allows no If-needed variations when they are irrelevant', () => {
+              const answer = createFallbackStructuredFinancialAnswer('Explain inflation conceptually.', 'Inflation is a sustained increase in the general price level.');
+              expect(structuredFinancialAnswerSchema.parse({ ...answer, keyTakeaways: [] }).keyTakeaways).toEqual([]);
+            });
+
+            it('uses the same visible contract for deterministic crypto answers', () => {
+              const text = buildCryptoAssistantFallback('What does this candle show?', {
+                symbol: 'BTCUSDT', interval: '1m', candleStatus: 'Closed', timeUtc: '2026-08-30 00:00', timeIst: '2026-08-30 05:30',
+                open: 100, high: 103, low: 99, close: 102, absoluteChange: 2, percentChange: 2, baseVolume: 10, quoteVolume: 1010, tradeCount: 50,
+                provider: 'Binance Public Market Data', streamStatus: 'live', lastUpdatedAt: '2026-08-30T00:00:00Z',
+              });
+              for (const heading of ['## Direct answer', '## Assumptions and context', '## Formula or rule', '## Step-by-step calculation or reasoning', '## Final result and interpretation', '## If needed', '## Limitations and verification']) {
+                expect(text).toContain(heading);
+              }
+            });
+          });
+          '''
+          Path('tests/arthaResponseContract.test.ts').write_text(test)
+
+      - name: Install dependencies
+        run: npm ci
+      - name: TypeScript validation
+        run: npm run lint
+      - name: Production build
+        run: npm run build
+      - name: Response contract tests
+        run: npx vitest run tests/arthaResponseContract.test.ts tests/aiResponseStandard.test.ts tests/groqService.test.ts
+      - name: Contract assertions
+        run: |
+          grep -q "Assumptions and context" server/aiResponseStandard.ts
+          grep -q "Final result and interpretation" src/components/ai/StructuredFinancialAnswer.tsx
+          grep -q "official source" server/aiResponseStandard.ts
+          grep -q "Quick answer" server/aiResponseStandard.ts
+          grep -q "Professional report" server/aiResponseStandard.ts
+          grep -q "Limitations and verification" server/cryptoService.ts
+
+      - name: Commit validated changes
+        shell: bash
+        run: |
+          git checkout -- api/index.js || true
+          git config user.name "SHREYASH SINGH"
+          git config user.email "shreyashsinghegi2@gmail.com"
+          git add server/aiResponseStandard.ts server/cryptoService.ts src/components/ai/StructuredFinancialAnswer.tsx src/components/finance/FinanceAssistantDrawer.tsx tests/arthaResponseContract.test.ts
+          git commit -m "Enforce ArthaMind financial response contract"
+          git push origin HEAD:artha-response-contract-v4

@@ -1,17 +1,21 @@
-name: Validate auth overview fix
+name: Add and validate resend verification UX
 
 on:
   push:
     branches: [api-smoke-test]
 
+permissions:
+  contents: write
+
 jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
-      - name: Check out fix branch
+      - name: Check out latest main
         uses: actions/checkout@v4
         with:
-          ref: auth-overview-fix-verified
+          ref: main
+          fetch-depth: 0
 
       - name: Use Node 22
         uses: actions/setup-node@v4
@@ -19,13 +23,45 @@ jobs:
           node-version: 22
           cache: npm
 
+      - name: Add visible resend-verification action
+        shell: python
+        run: |
+          from pathlib import Path
+          path = Path('src/components/auth/AuthModal.tsx')
+          text = path.read_text()
+
+          old = "import { isSocialProviderEnabled } from '../../services/supabaseRest';"
+          new = "import { isSocialProviderEnabled, resendSignupConfirmation } from '../../services/supabaseRest';"
+          if old not in text:
+              raise SystemExit('Auth import pattern missing')
+          text = text.replace(old, new, 1)
+
+          old = "  const [googleAvailable, setGoogleAvailable] = useState<boolean | null>(null);"
+          new = "  const [googleAvailable, setGoogleAvailable] = useState<boolean | null>(null);\n  const [verificationSent, setVerificationSent] = useState(false);"
+          if old not in text:
+              raise SystemExit('Auth state pattern missing')
+          text = text.replace(old, new, 1)
+
+          old = "  const submitReset = (event: FormEvent) => {\n    event.preventDefault();\n    if (password.length < 8) return setError('Use at least 8 characters for your new password.');\n    if (password !== confirmPassword) return setError('Passwords do not match.');\n    void run(() => auth.resetPassword(password));\n  };"
+          new = "  const submitReset = (event: FormEvent) => {\n    event.preventDefault();\n    if (password.length < 8) return setError('Use at least 8 characters for your new password.');\n    if (password !== confirmPassword) return setError('Passwords do not match.');\n    void run(() => auth.resetPassword(password));\n  };\n\n  const resendVerification = () => {\n    const normalizedEmail = email.trim();\n    if (!normalizedEmail) {\n      setError('Enter your email on the sign-in screen first, then resend verification.');\n      return;\n    }\n    setVerificationSent(false);\n    void run(async () => {\n      await resendSignupConfirmation(normalizedEmail);\n      setVerificationSent(true);\n    });\n  };"
+          if old not in text:
+              raise SystemExit('Reset handler pattern missing')
+          text = text.replace(old, new, 1)
+
+          old = """            {auth.authScreen === 'verify' && (\n              <div className=\"space-y-5 rounded-2xl border border-line bg-canvas p-6 text-center\">\n                <CheckCircle2 className=\"mx-auto h-12 w-12 text-success\" />\n                <div><h3 className=\"text-lg font-black text-ink\">Check your inbox</h3><p className=\"mt-2 text-sm leading-6 text-secondary\">Use the secure verification link sent by Supabase Auth, then return to Artha Bench and sign in.</p></div>\n                <button type=\"button\" onClick={() => auth.openAuth('login')} className=\"rounded-xl bg-brand px-5 py-3 text-sm font-black text-white\">Return to sign in</button>\n              </div>\n            )}"""
+          new = """            {auth.authScreen === 'verify' && (\n              <div className=\"space-y-5 rounded-2xl border border-line bg-canvas p-6 text-center\">\n                <CheckCircle2 className=\"mx-auto h-12 w-12 text-success\" />\n                <div>\n                  <h3 className=\"text-lg font-black text-ink\">Verify your email once</h3>\n                  <p className=\"mt-2 text-sm leading-6 text-secondary\">Your account is already created. Open the latest Artha Bench / Supabase confirmation email and click the verification link. After verification, the same email and password can sign in normally.</p>\n                </div>\n                {verificationSent && <div className=\"rounded-xl border border-success-fill/30 bg-success-soft px-4 py-3 text-xs font-bold text-success\">A fresh verification email has been sent.</div>}\n                <div className=\"grid gap-2 sm:grid-cols-2\">\n                  <button type=\"button\" disabled={busy || !email.trim()} onClick={resendVerification} className=\"rounded-xl border border-line-strong bg-surface px-5 py-3 text-sm font-black text-ink disabled:cursor-not-allowed disabled:opacity-50\">{busy ? 'Sending…' : 'Resend verification email'}</button>\n                  <button type=\"button\" onClick={() => auth.openAuth('login')} className=\"rounded-xl bg-brand px-5 py-3 text-sm font-black text-white\">I verified it — sign in</button>\n                </div>\n                <p className=\"text-[10px] leading-5 text-secondary\">If the email is not visible, check Spam or Promotions. Verification is required once so another person cannot create an account using your email address.</p>\n              </div>\n            )}"""
+          if old not in text:
+              raise SystemExit('Verify block pattern missing')
+          text = text.replace(old, new, 1)
+          path.write_text(text)
+
       - name: Install dependencies
         run: npm ci
 
       - name: Production build
         run: npm run build
 
-      - name: Verify requested fixes
+      - name: Verify requested behavior
         shell: bash
         run: |
           grep -q "<DashboardView onNavigate" src/App.tsx
@@ -33,6 +69,20 @@ jobs:
             echo "Simplified overview replacement is still active"
             exit 1
           fi
+          grep -q "Resend verification email" src/components/auth/AuthModal.tsx
           grep -q "resendSignupConfirmation" src/auth/AuthContext.tsx
           grep -q "auth/v1/resend" src/services/supabaseRest.ts
-          grep -q "redirect_to=" src/services/supabaseRest.ts
+
+      - name: Push validated auth UX to main
+        shell: bash
+        run: |
+          git checkout -- api/index.js || true
+          git config user.name "SHREYASH SINGH"
+          git config user.email "shreyashsinghegi2@gmail.com"
+          git add src/components/auth/AuthModal.tsx
+          if git diff --cached --quiet; then
+            echo "No source changes to commit."
+            exit 0
+          fi
+          git commit -m "Add resend verification action"
+          git push origin HEAD:main

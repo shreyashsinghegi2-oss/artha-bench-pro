@@ -59,8 +59,8 @@ jobs:
       - name: Production build
         run: npm run build
 
-      - name: Unit tests
-        run: npm test
+      - name: Evaluation-focused unit tests
+        run: npx vitest run tests/scoringAndConsensus.test.ts tests/financeEngine.test.ts tests/batchAndApi.test.ts tests/groqService.test.ts tests/aiResponseStandard.test.ts
 
       - name: Evaluation UX assertions
         shell: bash

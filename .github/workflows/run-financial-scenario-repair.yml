@@ -24,6 +24,7 @@ jobs:
         shell: python
         run: |
           from pathlib import Path
+          import re
           workflow = Path('.github/workflows/fix-financial-scenario-studio.yml').read_text()
           start_marker = '      - name: Repair calculators and add scenario-aware ArthaMind\n'
           run_marker = '        run: |\n'
@@ -37,11 +38,9 @@ jobs:
 
           routes = Path('server/routes.ts')
           text = routes.read_text()
-          old_return = "): Record<string, unknown> {\n  if (scenario === 'compound') {"
-          new_return = "): any {\n  if (scenario === 'compound') {"
-          if old_return not in text:
-              raise SystemExit('Could not locate recalculateScenario return type')
-          text = text.replace(old_return, new_return, 1)
+          text, n = re.subn(r"(function recalculateScenario\([\s\S]*?\)):\s*Record<string, unknown>\s*\{", r"\1: any {", text, count=1)
+          if n != 1:
+              raise SystemExit('Could not narrow recalculateScenario return type')
           old_guard = 'if (!parsed.success) return calculatorValidationError(res, parsed);'
           if text.count(old_guard) != 5:
               raise SystemExit(f'Expected 5 calculator validation guards, found {text.count(old_guard)}')
@@ -51,10 +50,14 @@ jobs:
           engine = Path('server/financeEngine.ts')
           e = engine.read_text()
 
-          quick_old = """  if (currentLiabilities <= 0) {
-            throw new Error('Current liabilities must be greater than zero.');
-          }"""
-          quick_new = """  if (![cash, marketableSecurities, receivables, currentLiabilities].every(Number.isFinite)) {
+          def replace_prelude(text, result_type, first_statement, replacement):
+              pattern = rf"(\): {result_type} \{{)\n[\s\S]*?(?=\n  {re.escape(first_statement)})"
+              updated, count = re.subn(pattern, lambda m: m.group(1) + '\n' + replacement, text, count=1)
+              if count != 1:
+                  raise SystemExit(f'Could not harden {result_type}')
+              return updated
+
+          e = replace_prelude(e, 'QuickRatioResult', 'const dCash = new Decimal(cash);', """  if (![cash, marketableSecurities, receivables, currentLiabilities].every(Number.isFinite)) {
             throw new Error('Quick-ratio inputs must be finite numbers.');
           }
           if (cash < 0 || marketableSecurities < 0 || receivables < 0) {
@@ -62,70 +65,49 @@ jobs:
           }
           if (currentLiabilities <= 0) {
             throw new Error('Current liabilities must be greater than zero.');
-          }"""
-          if quick_old in e:
-              e = e.replace(quick_old, quick_new, 1)
-          elif 'Quick assets cannot be negative.' not in e:
-              raise SystemExit('Could not harden quick-ratio inputs')
-
-          cagr_old = """  if (initialValue <= 0 || years <= 0) {
-            throw new Error('Initial value and years must be greater than zero.');
-          }"""
-          cagr_new = """  if (![initialValue, finalValue, years].every(Number.isFinite)) {
-            throw new Error('CAGR inputs must be finite numbers.');
           }
-          if (initialValue <= 0 || finalValue <= 0 || years <= 0) {
-            throw new Error('Initial value, final value, and years must be greater than zero.');
-          }"""
-          if cagr_old in e:
-              e = e.replace(cagr_old, cagr_new, 1)
-          elif 'final value, and years must be greater than zero' not in e.lower():
-              raise SystemExit('Could not harden CAGR inputs')
+          """)
 
-          pow_old = "const cagrDec = new Decimal(Math.pow(ratio.toNumber(), 1 / yearsDec.toNumber())).minus(1).times(100);"
-          pow_new = "const exponent = new Decimal(1).div(yearsDec);\n  const cagrDec = ratio.pow(exponent).minus(1).times(100);"
-          if pow_old in e:
-              e = e.replace(pow_old, pow_new, 1)
-
-          compound_old = """  if (principal < 0 || annualRatePercent < 0 || years <= 0 || compoundingFrequencyPerYear <= 0) {
-            throw new Error('Invalid input parameters for compound interest calculation.');
-          }"""
-          compound_new = """  if (![principal, annualRatePercent, years, monthlyContribution, compoundingFrequencyPerYear].every(Number.isFinite)) {
+          e = replace_prelude(e, 'CompoundInterestResult', 'const P = new Decimal(principal);', """  if (![principal, annualRatePercent, years, monthlyContribution, compoundingFrequencyPerYear].every(Number.isFinite)) {
             throw new Error('Compound-interest inputs must be finite numbers.');
           }
           if (principal < 0 || annualRatePercent < 0 || years <= 0 || monthlyContribution < 0 || compoundingFrequencyPerYear <= 0) {
             throw new Error('Invalid input parameters for compound interest calculation.');
-          }"""
-          if compound_old in e:
-              e = e.replace(compound_old, compound_new, 1)
-
-          dti_old = """  if (monthlyGrossIncome <= 0) {
-            throw new Error('Monthly gross income must be greater than zero.');
-          }"""
-          dti_new = """  if (![monthlyGrossIncome, monthlyDebtPayments].every(Number.isFinite)) {
-            throw new Error('DTI inputs must be finite numbers.');
           }
-          if (monthlyGrossIncome <= 0 || monthlyDebtPayments < 0) {
-            throw new Error('Monthly gross income must be greater than zero and monthly debt payments cannot be negative.');
-          }"""
-          if dti_old in e:
-              e = e.replace(dti_old, dti_new, 1)
+          """)
 
-          break_anchor = """  const fc = new Decimal(fixedCosts);
-            const p = new Decimal(pricePerUnit);
-            const vc = new Decimal(variableCostPerUnit);"""
-          if 'Break-even inputs must be finite numbers.' not in e and break_anchor in e:
-              e = e.replace(break_anchor, """  if (![fixedCosts, pricePerUnit, variableCostPerUnit].every(Number.isFinite)) {
+          e = replace_prelude(e, 'CAGRResult', 'const initDec = new Decimal(initialValue);', """  if (![initialValue, finalValue, years].every(Number.isFinite)) {
+            throw new Error('CAGR inputs must be finite numbers.');
+          }
+          if (initialValue <= 0 || finalValue <= 0 || years <= 0) {
+            throw new Error('Initial value, final value, and years must be greater than zero.');
+          }
+          """)
+
+          e = replace_prelude(e, 'BreakEvenResult', 'const fc = new Decimal(fixedCosts);', """  if (![fixedCosts, pricePerUnit, variableCostPerUnit].every(Number.isFinite)) {
             throw new Error('Break-even inputs must be finite numbers.');
           }
           if (fixedCosts < 0 || pricePerUnit <= 0 || variableCostPerUnit < 0) {
             throw new Error('Fixed costs and variable costs cannot be negative, and price per unit must be greater than zero.');
           }
+          """)
 
-          const fc = new Decimal(fixedCosts);
-          const p = new Decimal(pricePerUnit);
-          const vc = new Decimal(variableCostPerUnit);""", 1)
+          e = replace_prelude(e, 'DTIResult', 'const inc = new Decimal(monthlyGrossIncome);', """  if (![monthlyGrossIncome, monthlyDebtPayments].every(Number.isFinite)) {
+            throw new Error('DTI inputs must be finite numbers.');
+          }
+          if (monthlyGrossIncome <= 0 || monthlyDebtPayments < 0) {
+            throw new Error('Monthly gross income must be greater than zero and monthly debt payments cannot be negative.');
+          }
+          """)
 
+          e, n = re.subn(
+              r"const cagrDec = new Decimal\(Math\.pow\(ratio\.toNumber\(\), 1 / yearsDec\.toNumber\(\)\)\)\.minus\(1\)\.times\(100\);",
+              "const exponent = new Decimal(1).div(yearsDec);\n  const cagrDec = ratio.pow(exponent).minus(1).times(100);",
+              e,
+              count=1,
+          )
+          if n != 1 and 'ratio.pow(exponent)' not in e:
+              raise SystemExit('Could not keep CAGR on Decimal.js power path')
           engine.write_text(e)
       - name: Install dependencies
         run: npm ci

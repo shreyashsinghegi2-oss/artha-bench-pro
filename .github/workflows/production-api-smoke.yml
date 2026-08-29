@@ -32,7 +32,7 @@ jobs:
           pid=$!
           trap 'kill $pid || true' EXIT
           for i in {1..20}; do
-            if curl -fsS http://127.0.0.1:3001/api/health > /tmp/health.json 2>/dev/null; then
+            if curl -fsS http://127.0.0.1:3000/api/health > /tmp/health.json 2>/dev/null; then
               break
             fi
             sleep 1
@@ -41,6 +41,52 @@ jobs:
           cat /tmp/artha-server.log || true
           echo '--- local health ---'
           cat /tmp/health.json || true
+          grep -q '"status":"ok"' /tmp/health.json
+
+      - name: Wait for Vercel preview
+        shell: bash
+        run: |
+          set -u
+          preview="https://artha-bench-pro-git-api-smoke-test-e25b002702-3723s-projects.vercel.app"
+          ok=0
+          for i in {1..18}; do
+            code=$(curl -L -sS --max-time 20 -o /tmp/preview-health -w "%{http_code}" "$preview/api/health" || true)
+            echo "Preview attempt $i: HTTP $code"
+            if [ "$code" = "200" ] && grep -q '"status":"ok"' /tmp/preview-health; then
+              cat /tmp/preview-health
+              ok=1
+              break
+            fi
+            cat /tmp/preview-health || true
+            echo
+            sleep 10
+          done
+          test "$ok" = "1"
+
+      - name: Call preview endpoints
+        shell: bash
+        run: |
+          set -u
+          base="https://artha-bench-pro-git-api-smoke-test-e25b002702-3723s-projects.vercel.app"
+          endpoints=(
+            "/api/health"
+            "/api/diagnostics"
+            "/api/markets/quote?symbol=SPY&assetType=equity"
+            "/api/markets/india-ticker"
+            "/api/news"
+            "/api/economy/overview"
+            "/api/economy/india/overview"
+            "/api/crypto/markets"
+          )
+          for endpoint in "${endpoints[@]}"; do
+            echo "===== PREVIEW ${endpoint} ====="
+            tmp=$(mktemp)
+            code=$(curl -L -sS --max-time 25 -o "$tmp" -w "%{http_code}" "${base}${endpoint}" || true)
+            echo "HTTP ${code}"
+            head -c 3000 "$tmp" || true
+            echo
+            rm -f "$tmp"
+          done
 
       - name: Call production endpoints
         shell: bash
@@ -58,7 +104,7 @@ jobs:
             "/api/crypto/markets"
           )
           for endpoint in "${endpoints[@]}"; do
-            echo "===== ${endpoint} ====="
+            echo "===== PROD ${endpoint} ====="
             tmp=$(mktemp)
             code=$(curl -L -sS --max-time 25 -o "$tmp" -w "%{http_code}" "${base}${endpoint}" || true)
             echo "HTTP ${code}"

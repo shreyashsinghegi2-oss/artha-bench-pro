@@ -84,13 +84,23 @@ jobs:
           }
           """)
 
-          e = replace_prelude(e, 'BreakEvenResult', 'const fc = new Decimal(fixedCosts);', """  if (![fixedCosts, pricePerUnit, variableCostPerUnit].every(Number.isFinite)) {
+          if 'Break-even inputs must be finite numbers.' not in e:
+              break_validation = """  if (![fixedCosts, pricePerUnit, variableCostPerUnit].every(Number.isFinite)) {
             throw new Error('Break-even inputs must be finite numbers.');
           }
           if (fixedCosts < 0 || pricePerUnit <= 0 || variableCostPerUnit < 0) {
             throw new Error('Fixed costs and variable costs cannot be negative, and price per unit must be greater than zero.');
           }
-          """)
+
+          """
+              e, count = re.subn(
+                  r"(?m)^\s*const fc = new Decimal\(fixedCosts\);",
+                  lambda m: break_validation + '  const fc = new Decimal(fixedCosts);',
+                  e,
+                  count=1,
+              )
+              if count != 1:
+                  raise SystemExit('Could not harden BreakEvenResult')
 
           e = replace_prelude(e, 'DTIResult', 'const inc = new Decimal(monthlyGrossIncome);', """  if (![monthlyGrossIncome, monthlyDebtPayments].every(Number.isFinite)) {
             throw new Error('DTI inputs must be finite numbers.');

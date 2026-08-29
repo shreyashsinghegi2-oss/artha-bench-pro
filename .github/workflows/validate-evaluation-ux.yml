@@ -21,10 +21,11 @@ jobs:
           node-version: 22
           cache: npm
 
-      - name: Replace raw calculator JSON with professional result panel
+      - name: Finalize calculator and radar integration
         shell: python
         run: |
           from pathlib import Path
+
           path = Path('src/components/scenarios/ScenariosView.tsx')
           text = path.read_text()
           import_line = "import { BookMarked, Calculator, ArrowRight, AlertCircle, CheckCircle2 } from 'lucide-react';\n"
@@ -40,6 +41,14 @@ jobs:
           replacement = "      {calcResult && <CalculationResultPanel activeTab={activeTab} result={calcResult} />}\n    </div>\n  );\n};"
           text = text[:start] + replacement + text[end + len(end_marker):]
           path.write_text(text)
+
+          radar = Path('src/components/evaluation/ReliabilityReportPanel.tsx')
+          radar_text = radar.read_text()
+          old_map = "  const secondaryMap = new Map((secondary || []).map((dimension) => [dimension.id, dimension]));"
+          new_map = "  const secondaryMap = new Map<string, EvaluationDimension>((secondary || []).map((dimension) => [dimension.id, dimension]));"
+          if old_map not in radar_text:
+              raise SystemExit('Expected radar map line not found')
+          radar.write_text(radar_text.replace(old_map, new_map, 1))
 
       - name: Install dependencies
         run: npm ci
@@ -70,12 +79,12 @@ jobs:
           grep -q "CalculationResultPanel" src/components/scenarios/ScenariosView.tsx
           ! grep -q "JSON.stringify(calcResult" src/components/scenarios/ScenariosView.tsx
 
-      - name: Commit validated scenario integration and remove temporary workflow
+      - name: Commit validated integration and remove temporary workflow
         shell: bash
         run: |
           git config user.name "SHREYASH SINGH"
           git config user.email "shreyashsinghegi2@gmail.com"
           git rm .github/workflows/validate-evaluation-ux.yml
-          git add src/components/scenarios/ScenariosView.tsx
+          git add src/components/scenarios/ScenariosView.tsx src/components/evaluation/ReliabilityReportPanel.tsx
           git commit -m "Finish evaluation UX integration"
           git push origin HEAD:evaluation-ux-systematic-results

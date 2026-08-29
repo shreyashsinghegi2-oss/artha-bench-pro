@@ -1,0 +1,981 @@
+name: Fix Financial Scenario Studio
+
+on:
+  push:
+    branches: [fix-financial-scenario-studio]
+
+permissions:
+  contents: write
+
+jobs:
+  repair-and-validate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Repair calculators and add scenario-aware ArthaMind
+        shell: python
+        run: |
+          from pathlib import Path
+
+          # ---- server/routes.ts -------------------------------------------------
+          path = Path('server/routes.ts')
+          text = path.read_text()
+          old_import = "import { generateVerificationCode } from './financeEngine';"
+          new_import = """import {
+            calculateBreakEven,
+            calculateCAGR,
+            calculateCompoundInterest,
+            calculateDTI,
+            calculateQuickRatio,
+            generateVerificationCode,
+          } from './financeEngine';"""
+          if old_import not in text:
+              raise SystemExit('financeEngine import anchor not found')
+          text = text.replace(old_import, new_import, 1)
+
+          schema_anchor = "const dashboardAssistantSchema = z.object({"
+          schemas = r'''const calculatorMoneySchema = z.coerce.number().finite().min(0).max(1_000_000_000_000_000);
+          const calculatorPositiveSchema = z.coerce.number().finite().gt(0).max(1_000_000_000_000_000);
+
+          const compoundInterestInputSchema = z.object({
+            principal: calculatorMoneySchema,
+            annualRatePercent: z.coerce.number().finite().min(0).max(1_000),
+            years: z.coerce.number().finite().gt(0).max(200),
+            monthlyContribution: calculatorMoneySchema.default(0),
+            compoundingFrequencyPerYear: z.coerce.number().int().min(1).max(365).default(12),
+          });
+
+          const quickRatioInputSchema = z.object({
+            cash: calculatorMoneySchema,
+            marketableSecurities: calculatorMoneySchema,
+            receivables: calculatorMoneySchema,
+            currentLiabilities: calculatorPositiveSchema,
+          });
+
+          const cagrInputSchema = z.object({
+            initialValue: calculatorPositiveSchema,
+            finalValue: calculatorPositiveSchema,
+            years: z.coerce.number().finite().gt(0).max(200),
+          });
+
+          const breakEvenInputSchema = z.object({
+            fixedCosts: calculatorMoneySchema,
+            pricePerUnit: calculatorPositiveSchema,
+            variableCostPerUnit: calculatorMoneySchema,
+          }).refine((value) => value.pricePerUnit > value.variableCostPerUnit, {
+            message: 'Price per unit must be greater than variable cost per unit.',
+          });
+
+          const dtiInputSchema = z.object({
+            monthlyGrossIncome: calculatorPositiveSchema,
+            monthlyDebtPayments: calculatorMoneySchema,
+          });
+
+          const scenarioAssistantSchema = z.object({
+            scenario: z.enum(['compound', 'quick-ratio', 'cagr', 'break-even', 'dti']),
+            question: z.string().min(3).max(1200),
+            profile: z.enum(['US', 'India', 'Global']).default('US'),
+            currency: z.enum(['USD', 'INR', 'EUR', 'GBP']).default('USD'),
+            companySymbol: z.string().trim().max(20).regex(/^[A-Za-z0-9][A-Za-z0-9.:_-]*$/).optional().or(z.literal('')),
+            useExternalContext: z.boolean().default(true),
+            inputs: z.record(z.string(), z.union([z.number().finite(), z.string().max(120), z.boolean()])),
+          });
+
+          '''
+          if schema_anchor not in text:
+              raise SystemExit('dashboard schema anchor not found')
+          text = text.replace(schema_anchor, schemas + schema_anchor, 1)
+
+          health_anchor = "// 1. Health Endpoint"
+          routes_block = r'''type FinanceScenarioKind = z.infer<typeof scenarioAssistantSchema>['scenario'];
+
+          function sendDeterministicFinanceResult(
+            res: Response,
+            calculationType: FinanceScenarioKind,
+            result: Record<string, unknown>,
+          ) {
+            const calculatedAt = new Date().toISOString();
+            const verificationCode = generateVerificationCode(`${calculationType}:${JSON.stringify(result)}`);
+            res.json({
+              ...result,
+              calculationType,
+              engine: 'Decimal.js',
+              precisionPolicy: '20 significant digits; ROUND_HALF_UP for reported values',
+              calculatedAt,
+              verificationCode,
+            });
+          }
+
+          function calculatorValidationError(res: Response, parsed: { success: false; error: z.ZodError }) {
+            return res.status(400).json({ error: parsed.error.issues[0]?.message || 'Invalid calculator inputs.' });
+          }
+
+          function requiredScenarioNumber(inputs: Record<string, string | number | boolean>, key: string) {
+            const value = inputs[key];
+            if (typeof value !== 'number' || !Number.isFinite(value)) {
+              throw new Error(`A valid numeric ${key} input is required.`);
+            }
+            return value;
+          }
+
+          function recalculateScenario(
+            scenario: FinanceScenarioKind,
+            inputs: Record<string, string | number | boolean>,
+          ): Record<string, unknown> {
+            if (scenario === 'compound') {
+              return calculateCompoundInterest(
+                requiredScenarioNumber(inputs, 'principal'),
+                requiredScenarioNumber(inputs, 'annualRatePercent'),
+                requiredScenarioNumber(inputs, 'years'),
+                requiredScenarioNumber(inputs, 'monthlyContribution'),
+                requiredScenarioNumber(inputs, 'compoundingFrequencyPerYear'),
+              );
+            }
+            if (scenario === 'quick-ratio') {
+              return calculateQuickRatio(
+                requiredScenarioNumber(inputs, 'cash'),
+                requiredScenarioNumber(inputs, 'marketableSecurities'),
+                requiredScenarioNumber(inputs, 'receivables'),
+                requiredScenarioNumber(inputs, 'currentLiabilities'),
+              );
+            }
+            if (scenario === 'cagr') {
+              return calculateCAGR(
+                requiredScenarioNumber(inputs, 'initialValue'),
+                requiredScenarioNumber(inputs, 'finalValue'),
+                requiredScenarioNumber(inputs, 'years'),
+              );
+            }
+            if (scenario === 'break-even') {
+              return calculateBreakEven(
+                requiredScenarioNumber(inputs, 'fixedCosts'),
+                requiredScenarioNumber(inputs, 'pricePerUnit'),
+                requiredScenarioNumber(inputs, 'variableCostPerUnit'),
+              );
+            }
+            return calculateDTI(
+              requiredScenarioNumber(inputs, 'monthlyGrossIncome'),
+              requiredScenarioNumber(inputs, 'monthlyDebtPayments'),
+            );
+          }
+
+          async function loadScenarioExternalContext(
+            profile: 'US' | 'India' | 'Global',
+            companySymbol: string | undefined,
+            enabled: boolean,
+          ) {
+            if (!enabled) {
+              return {
+                retrievedAt: new Date().toISOString(),
+                economicIndicators: [],
+                company: null,
+                quote: null,
+                sourceLabels: [] as string[],
+                notes: ['External provider context is turned off.'],
+              };
+            }
+
+            const economicTasks: Promise<Awaited<ReturnType<typeof fetchFredOverview>> | Awaited<ReturnType<typeof fetchWorldBankIndiaOverview>>>[] = [];
+            if (profile === 'US' || profile === 'Global') economicTasks.push(fetchFredOverview());
+            if (profile === 'India' || profile === 'Global') economicTasks.push(fetchWorldBankIndiaOverview());
+
+            const economicSettled = await Promise.allSettled(economicTasks);
+            const economicOverviews = economicSettled
+              .filter((item): item is PromiseFulfilledResult<Awaited<ReturnType<typeof fetchFredOverview>> | Awaited<ReturnType<typeof fetchWorldBankIndiaOverview>>> => item.status === 'fulfilled')
+              .map((item) => item.value);
+            const economicIndicators = economicOverviews
+              .flatMap((overview) => overview.indicators)
+              .filter((indicator) => indicator.status === 'connected' && indicator.value !== null)
+              .slice(0, 12)
+              .map((indicator) => ({
+                label: indicator.label,
+                value: indicator.value,
+                unit: indicator.unit,
+                date: indicator.date,
+                sourceName: indicator.sourceName,
+              }));
+
+            let company: Record<string, unknown> | null = null;
+            let quote: Record<string, unknown> | null = null;
+            const sourceLabels = economicOverviews
+              .filter((overview) => overview.status === 'connected')
+              .map((overview) => overview.providerName);
+            const notes: string[] = [];
+
+            const normalizedSymbol = companySymbol?.trim().toUpperCase();
+            if (normalizedSymbol) {
+              const [companyResult, quoteResult] = await Promise.allSettled([
+                fetchFinnhubCompanyIntelligence(normalizedSymbol),
+                getMarketQuote(normalizedSymbol),
+              ]);
+              if (companyResult.status === 'fulfilled' && companyResult.value.status === 'connected') {
+                company = {
+                  symbol: normalizedSymbol,
+                  profile: companyResult.value.profile,
+                  metrics: companyResult.value.metrics,
+                  earnings: companyResult.value.earnings.slice(0, 4),
+                  recommendations: companyResult.value.recommendations.slice(0, 4),
+                  retrievedAt: companyResult.value.retrievedAt,
+                };
+                sourceLabels.push('Finnhub');
+              } else {
+                notes.push(`Company fundamentals were unavailable for ${normalizedSymbol}.`);
+              }
+              if (quoteResult.status === 'fulfilled' && quoteResult.value.quote) {
+                quote = quoteResult.value.quote as unknown as Record<string, unknown>;
+                sourceLabels.push(quoteResult.value.quote.providerName);
+              } else {
+                notes.push(`Market quote context was unavailable for ${normalizedSymbol}.`);
+              }
+            }
+
+            if (economicIndicators.length === 0) {
+              notes.push('No connected official macro observations were available for this request.');
+            }
+
+            return {
+              retrievedAt: new Date().toISOString(),
+              economicIndicators,
+              company,
+              quote,
+              sourceLabels: Array.from(new Set(sourceLabels)),
+              notes,
+            };
+          }
+
+          function scenarioFallbackSummary(scenario: FinanceScenarioKind, result: Record<string, unknown>, currency: string) {
+            if (scenario === 'compound') return `The verified Decimal.js compound-interest result is a final balance of ${currency} ${result.finalBalance}, including ${currency} ${result.totalInterestEarned} of calculated interest.`;
+            if (scenario === 'quick-ratio') return `The verified Decimal.js quick ratio is ${result.quickRatio}, with the calculator assessment recorded as ${result.assessment}.`;
+            if (scenario === 'cagr') return `The verified Decimal.js CAGR is ${result.cagrPercent}% across the entered ${result.years}-year period.`;
+            if (scenario === 'break-even') return `The verified Decimal.js break-even point is ${result.breakEvenUnits} units, corresponding to ${currency} ${result.breakEvenRevenue} of modeled revenue.`;
+            return `The verified Decimal.js debt-to-income ratio is ${result.dtiPercent}%, with the calculator's educational tier recorded as ${result.healthCategory}.`;
+          }
+
+          apiRouter.post('/finance/compound-interest', (req: Request, res: Response) => {
+            const parsed = compoundInterestInputSchema.safeParse(req.body);
+            if (!parsed.success) return calculatorValidationError(res, parsed);
+            try {
+              const value = parsed.data;
+              sendDeterministicFinanceResult(res, 'compound', calculateCompoundInterest(
+                value.principal,
+                value.annualRatePercent,
+                value.years,
+                value.monthlyContribution,
+                value.compoundingFrequencyPerYear,
+              ) as unknown as Record<string, unknown>);
+            } catch (error) {
+              res.status(400).json({ error: error instanceof Error ? error.message : 'Compound-interest calculation failed.' });
+            }
+          });
+
+          apiRouter.post('/finance/quick-ratio', (req: Request, res: Response) => {
+            const parsed = quickRatioInputSchema.safeParse(req.body);
+            if (!parsed.success) return calculatorValidationError(res, parsed);
+            try {
+              const value = parsed.data;
+              sendDeterministicFinanceResult(res, 'quick-ratio', calculateQuickRatio(
+                value.cash,
+                value.marketableSecurities,
+                value.receivables,
+                value.currentLiabilities,
+              ) as unknown as Record<string, unknown>);
+            } catch (error) {
+              res.status(400).json({ error: error instanceof Error ? error.message : 'Quick-ratio calculation failed.' });
+            }
+          });
+
+          apiRouter.post('/finance/cagr', (req: Request, res: Response) => {
+            const parsed = cagrInputSchema.safeParse(req.body);
+            if (!parsed.success) return calculatorValidationError(res, parsed);
+            try {
+              const value = parsed.data;
+              sendDeterministicFinanceResult(res, 'cagr', calculateCAGR(value.initialValue, value.finalValue, value.years) as unknown as Record<string, unknown>);
+            } catch (error) {
+              res.status(400).json({ error: error instanceof Error ? error.message : 'CAGR calculation failed.' });
+            }
+          });
+
+          apiRouter.post('/finance/break-even', (req: Request, res: Response) => {
+            const parsed = breakEvenInputSchema.safeParse(req.body);
+            if (!parsed.success) return calculatorValidationError(res, parsed);
+            try {
+              const value = parsed.data;
+              sendDeterministicFinanceResult(res, 'break-even', calculateBreakEven(value.fixedCosts, value.pricePerUnit, value.variableCostPerUnit) as unknown as Record<string, unknown>);
+            } catch (error) {
+              res.status(400).json({ error: error instanceof Error ? error.message : 'Break-even calculation failed.' });
+            }
+          });
+
+          apiRouter.post('/finance/dti', (req: Request, res: Response) => {
+            const parsed = dtiInputSchema.safeParse(req.body);
+            if (!parsed.success) return calculatorValidationError(res, parsed);
+            try {
+              const value = parsed.data;
+              sendDeterministicFinanceResult(res, 'dti', calculateDTI(value.monthlyGrossIncome, value.monthlyDebtPayments) as unknown as Record<string, unknown>);
+            } catch (error) {
+              res.status(400).json({ error: error instanceof Error ? error.message : 'DTI calculation failed.' });
+            }
+          });
+
+          apiRouter.post('/finance/scenario-assistant', async (req: Request, res: Response, next: NextFunction) => {
+            try {
+              const parsed = scenarioAssistantSchema.safeParse(req.body);
+              if (!parsed.success) {
+                return res.status(400).json({ error: parsed.error.issues[0]?.message || 'A valid scenario question and input set are required.' });
+              }
+              const safety = checkPromptSafety(parsed.data.question);
+              if (!safety.safe) return res.status(400).json({ error: safety.reason, safety });
+
+              const deterministicResult = recalculateScenario(parsed.data.scenario, parsed.data.inputs);
+              const externalContext = await loadScenarioExternalContext(
+                parsed.data.profile,
+                parsed.data.companySymbol || undefined,
+                parsed.data.useExternalContext,
+              );
+              const hasVerifiedCurrentData = externalContext.economicIndicators.length > 0 || Boolean(externalContext.company) || Boolean(externalContext.quote);
+              const systemPrompt = `You are ArthaMind Scenario Analyst inside ArthaBench Pro's deterministic Financial Scenario & Calculation Studio.
+
+Rules:
+1. The supplied Decimal.js result is the numeric source of truth. Explain it; never replace, override, or silently recompute it with guessed AI math.
+2. Use the exact entered inputs and deterministic result for scenario-specific calculations and examples.
+3. External provider context is optional enrichment. Use only values supplied in externalContext, preserve dates/provider/freshness, and never fabricate web data.
+4. Never substitute a policy rate, market return, company metric, or lender convention for the user's entered assumption unless the user explicitly asks for a separate comparison.
+5. For company context, do not claim the user's entered values belong to that company unless the supplied provider data proves the same metric and period.
+6. For CAGR, distinguish historical annualized growth from a forecast. For quick ratio, explain that industry norms differ. For DTI, explain that lender thresholds and definitions vary. For break-even, state that costs and price are modeled assumptions. For compound interest, identify contribution timing/compounding assumptions.
+7. Keep independent factual claims separate and keep the answer educational, not a personalized investment, tax, credit, or lending instruction.
+${buildStructuredFinancialAnswerInstructions({
+  audience: 'dashboard',
+  language: 'English',
+  level: 'beginner',
+  detail: 'detailed',
+  hasVerifiedCurrentData,
+})}`;
+              const userPrompt = `Scenario: ${parsed.data.scenario}
+Profile: ${parsed.data.profile}
+Currency: ${parsed.data.currency}
+Question: ${parsed.data.question}
+Entered inputs: ${JSON.stringify(parsed.data.inputs)}
+Verified deterministic Decimal.js result: ${JSON.stringify(deterministicResult)}
+External connected-provider context: ${JSON.stringify(externalContext)}`;
+
+              const demoMode = !process.env.GROQ_API_KEY?.trim();
+              const structuredAnswer = demoMode
+                ? createFallbackStructuredFinancialAnswer(
+                    `${parsed.data.scenario} ${parsed.data.question}`,
+                    scenarioFallbackSummary(parsed.data.scenario, deterministicResult, parsed.data.currency),
+                  )
+                : await callGroqStructuredFinancialAnswer(systemPrompt, userPrompt, {
+                    fallbackQuestion: `${parsed.data.scenario} ${parsed.data.question}`,
+                  });
+
+              res.json({
+                answer: serializeStructuredFinancialAnswer(structuredAnswer),
+                structuredAnswer,
+                deterministicResult,
+                engine: 'Decimal.js',
+                provider: demoMode ? 'deterministic-fallback' : 'groq',
+                model: demoMode ? null : getGroqModels().tutorModel,
+                groundedAt: externalContext.retrievedAt,
+                sourceLabels: externalContext.sourceLabels,
+                contextNotes: externalContext.notes,
+                suggestedQuestions: [
+                  'Explain the formula and each input in simple language.',
+                  'Which input changes this result the most?',
+                  'Show a conservative and an optimistic variation without changing the original result.',
+                  hasVerifiedCurrentData
+                    ? 'Compare this scenario with the connected external context without substituting the inputs.'
+                    : 'What additional verified data would make this analysis more realistic?',
+                ],
+                disclaimer: 'Educational analysis only. The deterministic calculation is not financial, investment, tax, lending, or legal advice.',
+                requestId: res.getHeader('x-request-id'),
+              });
+            } catch (error) {
+              next(error);
+            }
+          });
+
+          '''
+          if health_anchor not in text:
+              raise SystemExit('health route anchor not found')
+          text = text.replace(health_anchor, routes_block + health_anchor, 1)
+          path.write_text(text)
+
+          # ---- server/financeEngine.ts ------------------------------------------
+          path = Path('server/financeEngine.ts')
+          text = path.read_text()
+          text = text.replace(
+              """  if (currentLiabilities <= 0) {
+            throw new Error('Current liabilities must be greater than zero.');
+          }""",
+              """  if (![cash, marketableSecurities, receivables, currentLiabilities].every(Number.isFinite)) {
+            throw new Error('Quick-ratio inputs must be finite numbers.');
+          }
+          if (cash < 0 || marketableSecurities < 0 || receivables < 0) {
+            throw new Error('Quick assets cannot be negative.');
+          }
+          if (currentLiabilities <= 0) {
+            throw new Error('Current liabilities must be greater than zero.');
+          }""",
+              1,
+          )
+          text = text.replace(
+              """  if (principal < 0 || annualRatePercent < 0 || years <= 0 || compoundingFrequencyPerYear <= 0) {
+            throw new Error('Invalid input parameters for compound interest calculation.');
+          }""",
+              """  if (![principal, annualRatePercent, years, monthlyContribution, compoundingFrequencyPerYear].every(Number.isFinite)) {
+            throw new Error('Compound-interest inputs must be finite numbers.');
+          }
+          if (principal < 0 || annualRatePercent < 0 || years <= 0 || monthlyContribution < 0 || compoundingFrequencyPerYear <= 0) {
+            throw new Error('Invalid input parameters for compound interest calculation.');
+          }""",
+              1,
+          )
+          text = text.replace(
+              """  if (initialValue <= 0 || years <= 0) {
+            throw new Error('Initial value and years must be greater than zero.');
+          }""",
+              """  if (![initialValue, finalValue, years].every(Number.isFinite)) {
+            throw new Error('CAGR inputs must be finite numbers.');
+          }
+          if (initialValue <= 0 || finalValue <= 0 || years <= 0) {
+            throw new Error('Initial value, final value, and years must be greater than zero.');
+          }""",
+              1,
+          )
+          text = text.replace(
+              """  const ratio = finalDec.div(initDec);
+          const cagrDec = new Decimal(Math.pow(ratio.toNumber(), 1 / yearsDec.toNumber())).minus(1).times(100);""",
+              """  const ratio = finalDec.div(initDec);
+          const exponent = new Decimal(1).div(yearsDec);
+          const cagrDec = ratio.pow(exponent).minus(1).times(100);""",
+              1,
+          )
+          text = text.replace(
+              """  const fc = new Decimal(fixedCosts);
+          const p = new Decimal(pricePerUnit);
+          const vc = new Decimal(variableCostPerUnit);
+
+          const cm = p.minus(vc);""",
+              """  if (![fixedCosts, pricePerUnit, variableCostPerUnit].every(Number.isFinite)) {
+            throw new Error('Break-even inputs must be finite numbers.');
+          }
+          if (fixedCosts < 0 || pricePerUnit <= 0 || variableCostPerUnit < 0) {
+            throw new Error('Fixed costs and variable costs cannot be negative, and price per unit must be greater than zero.');
+          }
+
+          const fc = new Decimal(fixedCosts);
+          const p = new Decimal(pricePerUnit);
+          const vc = new Decimal(variableCostPerUnit);
+
+          const cm = p.minus(vc);""",
+              1,
+          )
+          text = text.replace(
+              """  if (monthlyGrossIncome <= 0) {
+            throw new Error('Monthly gross income must be greater than zero.');
+          }""",
+              """  if (![monthlyGrossIncome, monthlyDebtPayments].every(Number.isFinite)) {
+            throw new Error('DTI inputs must be finite numbers.');
+          }
+          if (monthlyGrossIncome <= 0 || monthlyDebtPayments < 0) {
+            throw new Error('Monthly gross income must be greater than zero and monthly debt payments cannot be negative.');
+          }""",
+              1,
+          )
+          path.write_text(text)
+
+          # ---- ScenarioAssistantPanel.tsx ---------------------------------------
+          Path('src/components/scenarios/ScenarioAssistantPanel.tsx').write_text(r'''import React, { useState } from 'react';
+          import { AlertCircle, Database, Globe2, Send, ShieldCheck, Sparkles } from 'lucide-react';
+          import type { StructuredFinancialAnswer } from '../../types';
+          import { StructuredFinancialAnswerView } from '../ai/StructuredFinancialAnswer';
+
+          export type CalculatorTab = 'compound' | 'quick-ratio' | 'cagr' | 'break-even' | 'dti';
+          export type ScenarioProfile = 'US' | 'India' | 'Global';
+          export type ScenarioCurrency = 'USD' | 'INR' | 'EUR' | 'GBP';
+
+          interface ScenarioAssistantPanelProps {
+            activeTab: CalculatorTab;
+            inputs: Record<string, number>;
+            profile: ScenarioProfile;
+            currency: ScenarioCurrency;
+            companySymbol?: string;
+            useExternalContext: boolean;
+          }
+
+          interface ScenarioAssistantResponse {
+            structuredAnswer: StructuredFinancialAnswer;
+            sourceLabels?: string[];
+            contextNotes?: string[];
+            suggestedQuestions?: string[];
+            groundedAt?: string;
+            engine?: string;
+            disclaimer?: string;
+          }
+
+          const DEFAULT_QUESTIONS: Record<CalculatorTab, string> = {
+            compound: 'Explain this compound-interest result and which assumption changes it the most.',
+            'quick-ratio': 'Explain this quick ratio, what it measures, and how I should interpret it carefully.',
+            cagr: 'Explain this CAGR and why it should not be treated as a forecast.',
+            'break-even': 'Explain this break-even result and which cost or price assumption matters most.',
+            dti: 'Explain this DTI result and why lender definitions or thresholds can differ.',
+          };
+
+          export const ScenarioAssistantPanel: React.FC<ScenarioAssistantPanelProps> = ({
+            activeTab,
+            inputs,
+            profile,
+            currency,
+            companySymbol,
+            useExternalContext,
+          }) => {
+            const [question, setQuestion] = useState(DEFAULT_QUESTIONS[activeTab]);
+            const [response, setResponse] = useState<ScenarioAssistantResponse | null>(null);
+            const [loading, setLoading] = useState(false);
+            const [error, setError] = useState<string | null>(null);
+
+            const analyze = async (nextQuestion = question) => {
+              if (nextQuestion.trim().length < 3) return;
+              setLoading(true);
+              setError(null);
+              try {
+                const res = await fetch('/api/finance/scenario-assistant', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    scenario: activeTab,
+                    question: nextQuestion.trim(),
+                    profile,
+                    currency,
+                    companySymbol: companySymbol?.trim() || '',
+                    useExternalContext,
+                    inputs,
+                  }),
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) throw new Error(data.error || 'ArthaMind could not analyze this scenario.');
+                setResponse(data as ScenarioAssistantResponse);
+              } catch (err) {
+                setResponse(null);
+                setError(err instanceof Error ? err.message : 'ArthaMind analysis failed.');
+              } finally {
+                setLoading(false);
+              }
+            };
+
+            return (
+              <section className="space-y-4 rounded-3xl border border-interactive/25 bg-surface p-5 shadow-sm sm:p-6" aria-label="ArthaMind scenario assistant">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <div className="flex items-center gap-2 text-sm font-black text-ink"><Sparkles className="h-4 w-4 text-interactive" /> ArthaMind Scenario Assistant</div>
+                    <p className="mt-1 max-w-3xl text-[11px] leading-5 text-secondary">ArthaMind receives the same inputs, asks the server to recalculate them with Decimal.js, and then explains the verified result. Connected provider data can add current context, but AI cannot replace the deterministic math.</p>
+                  </div>
+                  <span className="inline-flex items-center gap-1.5 self-start rounded-full border border-success-fill/25 bg-success-soft px-2.5 py-1 text-[9px] font-black uppercase tracking-wider text-success"><ShieldCheck className="h-3.5 w-3.5" /> Math locked to engine</span>
+                </div>
+
+                <div className="flex flex-wrap gap-2 text-[10px] text-secondary">
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-line bg-canvas px-2.5 py-1"><Database className="h-3 w-3" /> Decimal.js result context</span>
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-line bg-canvas px-2.5 py-1"><Globe2 className="h-3 w-3" /> {useExternalContext ? `${profile} external context enabled` : 'External context disabled'}</span>
+                  {companySymbol?.trim() && <span className="rounded-full border border-line bg-canvas px-2.5 py-1">Company context: {companySymbol.trim().toUpperCase()}</span>}
+                </div>
+
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <textarea
+                    value={question}
+                    onChange={(event) => setQuestion(event.target.value)}
+                    rows={3}
+                    className="min-h-[84px] flex-1 resize-y rounded-2xl border border-line bg-canvas px-3.5 py-3 text-xs leading-5 text-ink outline-none focus:border-interactive"
+                    placeholder="Ask ArthaMind to explain, compare assumptions, or connect the result to verified context..."
+                  />
+                  <button
+                    type="button"
+                    onClick={() => void analyze()}
+                    disabled={loading || question.trim().length < 3}
+                    className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-brand px-4 py-2.5 text-xs font-black text-brand-foreground transition-colors hover:bg-brand-hover hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <Send className="h-4 w-4" /> {loading ? 'Analyzing…' : 'Analyze result'}
+                  </button>
+                </div>
+
+                {error && <div className="flex items-start gap-2 rounded-xl border border-danger bg-danger-soft p-3 text-xs text-danger"><AlertCircle className="mt-0.5 h-4 w-4 shrink-0" /> {error}</div>}
+
+                {response && (
+                  <div className="space-y-3">
+                    <StructuredFinancialAnswerView answer={response.structuredAnswer} compact disclaimer={response.disclaimer} />
+                    {(response.sourceLabels?.length || response.contextNotes?.length) ? (
+                      <div className="rounded-2xl border border-line bg-canvas p-3.5 text-[10px] leading-5 text-secondary">
+                        <div className="font-black uppercase tracking-wider text-ink">Connected context used</div>
+                        {response.sourceLabels?.length ? <div className="mt-2 flex flex-wrap gap-2">{response.sourceLabels.map((source) => <span key={source} className="rounded-full border border-line bg-surface px-2.5 py-1">{source}</span>)}</div> : null}
+                        {response.contextNotes?.map((note) => <p key={note} className="mt-2">{note}</p>)}
+                        {response.groundedAt && <p className="mt-2">Context retrieved: {new Date(response.groundedAt).toLocaleString()}</p>}
+                      </div>
+                    ) : null}
+                    {response.suggestedQuestions?.length ? (
+                      <div className="flex flex-wrap gap-2">{response.suggestedQuestions.map((item) => <button key={item} type="button" onClick={() => { setQuestion(item); void analyze(item); }} className="rounded-full border border-line bg-surface px-3 py-1.5 text-[10px] font-bold text-secondary hover:border-interactive hover:text-interactive">{item}</button>)}</div>
+                    ) : null}
+                  </div>
+                )}
+              </section>
+            );
+          };
+          ''')
+
+          # ---- CalculationResultPanel.tsx --------------------------------------
+          Path('src/components/scenarios/CalculationResultPanel.tsx').write_text(r'''import React from 'react';
+          import { Calculator, CheckCircle2, Fingerprint, Info } from 'lucide-react';
+          import type { CalculatorTab, ScenarioCurrency } from './ScenarioAssistantPanel';
+
+          const number = (value: number) => new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 }).format(value);
+          const money = (value: number, currency: ScenarioCurrency) => new Intl.NumberFormat(currency === 'INR' ? 'en-IN' : 'en-US', { style: 'currency', currency, maximumFractionDigits: 2 }).format(value);
+
+          export const CalculationResultPanel: React.FC<{ activeTab: CalculatorTab; result: Record<string, unknown>; currency: ScenarioCurrency }> = ({ activeTab, result, currency }) => {
+            const definition = buildDefinition(activeTab, result, currency);
+            return (
+              <section className="space-y-5 rounded-3xl border border-line bg-surface p-6 shadow-sm" aria-label="Deterministic calculation result">
+                <div className="flex flex-col gap-3 border-b border-line pb-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div><h3 className="flex items-center gap-2 text-sm font-black text-ink"><CheckCircle2 className="h-4 w-4 text-success" /> Deterministic Engine Result</h3><p className="mt-1 text-[10px] text-secondary">Calculated on the server by Decimal.js. The AI assistant receives this result as evidence; it does not generate the calculation.</p></div>
+                  <span className="inline-flex items-center gap-1.5 self-start rounded-full border border-success-fill/25 bg-success-soft px-3 py-1 text-[10px] font-black uppercase tracking-wider text-success"><Calculator className="h-3.5 w-3.5" /> Verified calculation</span>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                  {definition.metrics.map((metric) => <Metric key={metric.label} label={metric.label} value={metric.value} emphasize={metric.emphasize} />)}
+                </div>
+
+                <div className="grid gap-4 lg:grid-cols-[0.8fr_1.2fr]">
+                  <div className="rounded-2xl border border-interactive/20 bg-interactive-soft/50 p-4"><div className="text-[9px] font-black uppercase tracking-wider text-interactive">Formula / method</div><div className="mt-2 font-mono text-xs font-bold leading-6 text-ink">{definition.formula}</div></div>
+                  <div className="rounded-2xl border border-line bg-canvas p-4"><div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-secondary"><Info className="h-3.5 w-3.5" /> Interpretation</div><p className="mt-2 text-xs leading-6 text-ink">{definition.interpretation}</p></div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl border border-line bg-canvas px-3.5 py-2.5 text-[10px] text-secondary">
+                  <span className="font-bold text-ink">Engine: {String(result.engine || 'Decimal.js')}</span>
+                  {result.verificationCode && <span className="inline-flex items-center gap-1"><Fingerprint className="h-3 w-3" /> {String(result.verificationCode)}</span>}
+                  {result.calculatedAt && <span>Calculated: {new Date(String(result.calculatedAt)).toLocaleString()}</span>}
+                </div>
+
+                <p className="text-[10px] leading-5 text-secondary">This calculator uses only the values entered in the scenario. External market, company, economic, tax, or lender data is never silently inserted into the deterministic formula. ArthaMind may show connected context separately when you ask it to analyze the result.</p>
+              </section>
+            );
+          };
+
+          function buildDefinition(activeTab: CalculatorTab, result: Record<string, unknown>, currency: ScenarioCurrency) {
+            const n = (key: string) => Number(result[key] ?? 0);
+            if (activeTab === 'compound') {
+              return {
+                metrics: [
+                  { label: 'Final balance', value: money(n('finalBalance'), currency), emphasize: true },
+                  { label: 'Total contributions', value: money(n('totalContributions'), currency) },
+                  { label: 'Interest earned', value: money(n('totalInterestEarned'), currency), emphasize: true },
+                  { label: 'Annual rate', value: `${number(n('annualRatePercent'))}%` },
+                ],
+                formula: `A = P(1 + r/n)^(nt); recurring deposits are modeled monthly. n = ${number(n('compoundingFrequencyPerYear'))}.`,
+                interpretation: `Starting from ${money(n('principal'), currency)}, the entered assumptions produce a final balance of ${money(n('finalBalance'), currency)}. Calculated interest above recorded contributions is ${money(n('totalInterestEarned'), currency)}.`,
+              };
+            }
+            if (activeTab === 'quick-ratio') {
+              return {
+                metrics: [
+                  { label: 'Quick ratio', value: number(n('quickRatio')), emphasize: true },
+                  { label: 'Cash', value: money(n('cash'), currency) },
+                  { label: 'Quick assets', value: money(n('cash') + n('marketableSecurities') + n('receivables'), currency) },
+                  { label: 'Current liabilities', value: money(n('currentLiabilities'), currency) },
+                ],
+                formula: 'Quick Ratio = (Cash + Marketable Securities + Receivables) / Current Liabilities',
+                interpretation: `${String(result.assessment || 'The quick ratio compares readily available assets with current liabilities.')} Industry norms and balance-sheet definitions can differ, so the ratio should be interpreted with the underlying statements.`,
+              };
+            }
+            if (activeTab === 'cagr') {
+              return {
+                metrics: [
+                  { label: 'CAGR', value: `${number(n('cagrPercent'))}%`, emphasize: true },
+                  { label: 'Initial value', value: money(n('initialValue'), currency) },
+                  { label: 'Final value', value: money(n('finalValue'), currency) },
+                  { label: 'Period', value: `${number(n('years'))} years` },
+                ],
+                formula: 'CAGR = (Final Value / Initial Value)^(1 / Years) − 1',
+                interpretation: `The entered start and end values correspond to an annualized compound growth rate of ${number(n('cagrPercent'))}% over ${number(n('years'))} years. CAGR smooths the path and is not a forecast of future returns.`,
+              };
+            }
+            if (activeTab === 'break-even') {
+              return {
+                metrics: [
+                  { label: 'Break-even units', value: number(n('breakEvenUnits')), emphasize: true },
+                  { label: 'Break-even revenue', value: money(n('breakEvenRevenue'), currency), emphasize: true },
+                  { label: 'Contribution margin', value: money(n('contributionMargin'), currency) },
+                  { label: 'Fixed costs', value: money(n('fixedCosts'), currency) },
+                ],
+                formula: 'Break-even Units = Fixed Costs / (Price per Unit − Variable Cost per Unit)',
+                interpretation: `At the entered price and variable cost, contribution margin is ${money(n('contributionMargin'), currency)} per unit. Required modeled volume is rounded up to ${number(n('breakEvenUnits'))} units, corresponding to ${money(n('breakEvenRevenue'), currency)} of revenue.`,
+              };
+            }
+            return {
+              metrics: [
+                { label: 'Debt-to-income', value: `${number(n('dtiPercent'))}%`, emphasize: true },
+                { label: 'Educational tier', value: String(result.healthCategory || '—') },
+                { label: 'Monthly gross income', value: money(n('monthlyGrossIncome'), currency) },
+                { label: 'Monthly debt payments', value: money(n('monthlyDebtPayments'), currency) },
+              ],
+              formula: 'DTI = Monthly Debt Payments / Monthly Gross Income × 100',
+              interpretation: `The entered debt payments equal ${number(n('dtiPercent'))}% of gross monthly income. The displayed tier is an educational calculator classification; actual lender definitions, qualifying debts, and thresholds can differ.`,
+            };
+          }
+
+          const Metric: React.FC<{ label: string; value: React.ReactNode; emphasize?: boolean }> = ({ label, value, emphasize }) => (
+            <div className="rounded-2xl border border-line bg-canvas p-4"><div className="text-[9px] font-black uppercase tracking-wider text-secondary">{label}</div><div className={`mt-1 break-words text-lg font-black ${emphasize ? 'text-success' : 'text-ink'}`}>{value}</div></div>
+          );
+          ''')
+
+          # ---- ScenariosView.tsx -----------------------------------------------
+          Path('src/components/scenarios/ScenariosView.tsx').write_text(r'''import React, { useState } from 'react';
+          import { AlertCircle, BookMarked, Calculator, Globe2, Sparkles } from 'lucide-react';
+          import { CalculationResultPanel } from './CalculationResultPanel';
+          import { CalculatorTab, ScenarioAssistantPanel, ScenarioCurrency, ScenarioProfile } from './ScenarioAssistantPanel';
+
+          const INPUT_CLASS = 'w-full rounded-lg border border-line bg-surface p-2 text-xs text-ink outline-none focus:border-interactive';
+          const CURRENCY_SYMBOL: Record<ScenarioCurrency, string> = { USD: '$', INR: '₹', EUR: '€', GBP: '£' };
+          const ENDPOINTS: Record<CalculatorTab, string> = {
+            compound: 'compound-interest',
+            'quick-ratio': 'quick-ratio',
+            cagr: 'cagr',
+            'break-even': 'break-even',
+            dti: 'dti',
+          };
+
+          export const ScenariosView: React.FC = () => {
+            const [activeTab, setActiveTab] = useState<CalculatorTab>('compound');
+            const [profile, setProfile] = useState<ScenarioProfile>('US');
+            const [currency, setCurrency] = useState<ScenarioCurrency>('USD');
+            const [companySymbol, setCompanySymbol] = useState('');
+            const [useExternalContext, setUseExternalContext] = useState(true);
+
+            const [principal, setPrincipal] = useState(10000);
+            const [rate, setRate] = useState(7);
+            const [years, setYears] = useState(5);
+            const [monthlyContribution, setMonthlyContribution] = useState(200);
+            const [compoundingFrequency, setCompoundingFrequency] = useState(12);
+
+            const [cash, setCash] = useState(50000);
+            const [securities, setSecurities] = useState(20000);
+            const [receivables, setReceivables] = useState(15000);
+            const [liabilities, setLiabilities] = useState(40000);
+
+            const [initialValue, setInitialValue] = useState(50000);
+            const [finalValue, setFinalValue] = useState(100000);
+            const [cagrYears, setCagrYears] = useState(5);
+
+            const [fixedCosts, setFixedCosts] = useState(120000);
+            const [pricePerUnit, setPricePerUnit] = useState(100);
+            const [varCostPerUnit, setVarCostPerUnit] = useState(60);
+
+            const [monthlyIncome, setMonthlyIncome] = useState(8000);
+            const [monthlyDebt, setMonthlyDebt] = useState(2400);
+
+            const [calcResult, setCalcResult] = useState<Record<string, unknown> | null>(null);
+            const [error, setError] = useState<string | null>(null);
+            const [loading, setLoading] = useState(false);
+
+            const inputsFor = (tab = activeTab): Record<string, number> => {
+              if (tab === 'compound') return { principal, annualRatePercent: rate, years, monthlyContribution, compoundingFrequencyPerYear: compoundingFrequency };
+              if (tab === 'quick-ratio') return { cash, marketableSecurities: securities, receivables, currentLiabilities: liabilities };
+              if (tab === 'cagr') return { initialValue, finalValue, years: cagrYears };
+              if (tab === 'break-even') return { fixedCosts, pricePerUnit, variableCostPerUnit: varCostPerUnit };
+              return { monthlyGrossIncome: monthlyIncome, monthlyDebtPayments: monthlyDebt };
+            };
+
+            const switchTab = (tab: CalculatorTab) => {
+              setActiveTab(tab);
+              setCalcResult(null);
+              setError(null);
+            };
+
+            const runCalculator = async () => {
+              setLoading(true);
+              setError(null);
+              try {
+                const res = await fetch(`/api/finance/${ENDPOINTS[activeTab]}`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(inputsFor()),
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) throw new Error(data.error || 'Calculation failed.');
+                setCalcResult(data as Record<string, unknown>);
+              } catch (err) {
+                setCalcResult(null);
+                setError(err instanceof Error ? err.message : 'Validation error.');
+              } finally {
+                setLoading(false);
+              }
+            };
+
+            const symbol = CURRENCY_SYMBOL[currency];
+            const companyContextRelevant = activeTab === 'quick-ratio' || activeTab === 'cagr' || activeTab === 'break-even';
+
+            return (
+              <div className="mx-auto max-w-7xl space-y-8 px-4 py-8">
+                <div className="space-y-5 rounded-3xl border border-line bg-surface p-6 sm:p-8">
+                  <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="rounded-2xl border border-success-fill bg-success-soft p-3 text-success"><BookMarked className="h-6 w-6" /></div>
+                      <div>
+                        <h1 className="text-2xl font-bold text-ink">Financial Scenario & Calculation Studio</h1>
+                        <p className="text-xs text-secondary">Run server-verified Decimal.js calculations, then ask ArthaMind to explain the exact result with optional connected external context.</p>
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-2 text-[9px] font-black uppercase tracking-wider">
+                      <span className="rounded-full border border-success-fill/25 bg-success-soft px-2.5 py-1 text-success">Decimal.js deterministic</span>
+                      <span className="rounded-full border border-interactive bg-interactive-soft px-2.5 py-1 text-interactive">ArthaMind analysis</span>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-3 rounded-2xl border border-line bg-canvas p-4 sm:grid-cols-2 lg:grid-cols-4">
+                    <label className="text-[11px] text-secondary">Profile / data region
+                      <select value={profile} onChange={(event) => setProfile(event.target.value as ScenarioProfile)} className={`${INPUT_CLASS} mt-1`}>
+                        <option value="US">United States</option><option value="India">India</option><option value="Global">Global</option>
+                      </select>
+                    </label>
+                    <label className="text-[11px] text-secondary">Display currency
+                      <select value={currency} onChange={(event) => setCurrency(event.target.value as ScenarioCurrency)} className={`${INPUT_CLASS} mt-1`}>
+                        <option value="USD">USD ($)</option><option value="INR">INR (₹)</option><option value="EUR">EUR (€)</option><option value="GBP">GBP (£)</option>
+                      </select>
+                    </label>
+                    {companyContextRelevant ? <label className="text-[11px] text-secondary">Optional company symbol for connected context
+                      <input value={companySymbol} onChange={(event) => setCompanySymbol(event.target.value)} maxLength={20} placeholder="AAPL or RELIANCE.NS" className={`${INPUT_CLASS} mt-1 uppercase`} />
+                    </label> : <div className="text-[11px] leading-5 text-secondary"><div className="mb-1 font-bold text-ink">External context</div>Official macro observations can be supplied separately to ArthaMind. They never replace the rate, income, debt, or other inputs you enter.</div>}
+                    <label className="flex items-center gap-2 self-end rounded-xl border border-line bg-surface px-3 py-2.5 text-[11px] font-semibold text-secondary">
+                      <input type="checkbox" checked={useExternalContext} onChange={(event) => setUseExternalContext(event.target.checked)} className="h-4 w-4 accent-current" />
+                      <Globe2 className="h-4 w-4 text-interactive" /> Use connected provider context
+                    </label>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2 border-b border-line pb-4 pt-1">
+                    {([
+                      ['compound', 'Compound Interest'],
+                      ['quick-ratio', 'Quick Ratio'],
+                      ['cagr', 'CAGR'],
+                      ['break-even', 'Break-Even Point'],
+                      ['dti', 'Debt-to-Income (DTI)'],
+                    ] as const).map(([tab, label]) => <button key={tab} type="button" onClick={() => switchTab(tab)} className={`rounded-lg px-3 py-1.5 text-xs font-semibold ${activeTab === tab ? 'bg-interactive-soft text-interactive' : 'bg-hover text-secondary'}`}>{label}</button>)}
+                  </div>
+
+                  <div className="space-y-4 pt-1">
+                    {activeTab === 'compound' && <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+                      <NumberField label={`Principal (${symbol})`} value={principal} onChange={setPrincipal} min={0} />
+                      <NumberField label="Annual Interest Rate (%)" value={rate} onChange={setRate} min={0} step={0.01} />
+                      <NumberField label="Time Horizon (Years)" value={years} onChange={setYears} min={0.01} step={0.25} />
+                      <NumberField label={`Monthly Deposit (${symbol})`} value={monthlyContribution} onChange={setMonthlyContribution} min={0} />
+                      <label className="text-[11px] text-secondary">Compounding frequency
+                        <select value={compoundingFrequency} onChange={(event) => setCompoundingFrequency(Number(event.target.value))} className={`${INPUT_CLASS} mt-1`}><option value={1}>Annual</option><option value={4}>Quarterly</option><option value={12}>Monthly</option><option value={365}>Daily</option></select>
+                      </label>
+                    </div>}
+
+                    {activeTab === 'quick-ratio' && <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                      <NumberField label={`Cash (${symbol})`} value={cash} onChange={setCash} min={0} />
+                      <NumberField label={`Marketable Securities (${symbol})`} value={securities} onChange={setSecurities} min={0} />
+                      <NumberField label={`Receivables (${symbol})`} value={receivables} onChange={setReceivables} min={0} />
+                      <NumberField label={`Current Liabilities (${symbol})`} value={liabilities} onChange={setLiabilities} min={0.01} />
+                    </div>}
+
+                    {activeTab === 'cagr' && <div className="grid gap-4 sm:grid-cols-3">
+                      <NumberField label={`Initial Value (${symbol})`} value={initialValue} onChange={setInitialValue} min={0.01} />
+                      <NumberField label={`Final Value (${symbol})`} value={finalValue} onChange={setFinalValue} min={0.01} />
+                      <NumberField label="Years" value={cagrYears} onChange={setCagrYears} min={0.01} step={0.25} />
+                    </div>}
+
+                    {activeTab === 'break-even' && <div className="grid gap-4 sm:grid-cols-3">
+                      <NumberField label={`Total Fixed Costs (${symbol})`} value={fixedCosts} onChange={setFixedCosts} min={0} />
+                      <NumberField label={`Price Per Unit (${symbol})`} value={pricePerUnit} onChange={setPricePerUnit} min={0.01} />
+                      <NumberField label={`Variable Cost Per Unit (${symbol})`} value={varCostPerUnit} onChange={setVarCostPerUnit} min={0} />
+                    </div>}
+
+                    {activeTab === 'dti' && <div className="grid gap-4 sm:grid-cols-2">
+                      <NumberField label={`Monthly Gross Income (${symbol})`} value={monthlyIncome} onChange={setMonthlyIncome} min={0.01} />
+                      <NumberField label={`Monthly Debt Payments (${symbol})`} value={monthlyDebt} onChange={setMonthlyDebt} min={0} />
+                    </div>}
+
+                    <button type="button" onClick={() => void runCalculator()} disabled={loading} className="inline-flex items-center gap-2 rounded-xl bg-brand px-6 py-2.5 text-xs font-bold text-brand-foreground transition-colors hover:bg-brand-hover hover:text-white disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 focus:ring-offset-canvas">
+                      <Calculator className="h-4 w-4" /> {loading ? 'Calculating…' : 'Calculate Deterministic Result'}
+                    </button>
+                  </div>
+                </div>
+
+                {error && <div className="flex items-center gap-2 rounded-2xl border border-danger bg-danger-soft/80 p-4 text-xs text-danger"><AlertCircle className="h-4 w-4 shrink-0" /><span>Calculation error: {error}</span></div>}
+
+                {calcResult && <>
+                  <CalculationResultPanel activeTab={activeTab} result={calcResult} currency={currency} />
+                  <div className="flex items-center gap-2 px-1 text-xs font-bold text-interactive"><Sparkles className="h-4 w-4" /> The assistant below is connected to this exact calculation.</div>
+                  <ScenarioAssistantPanel key={`${activeTab}-${String(calcResult.verificationCode || '')}`} activeTab={activeTab} inputs={inputsFor()} profile={profile} currency={currency} companySymbol={companyContextRelevant ? companySymbol : undefined} useExternalContext={useExternalContext} />
+                </>}
+              </div>
+            );
+          };
+
+          const NumberField: React.FC<{ label: string; value: number; onChange: (value: number) => void; min?: number; step?: number }> = ({ label, value, onChange, min, step }) => (
+            <label className="text-[11px] text-secondary">{label}<input type="number" value={value} min={min} step={step || 1} onChange={(event) => onChange(Number(event.target.value))} className={`${INPUT_CLASS} mt-1`} /></label>
+          );
+          ''')
+
+          # ---- tests ------------------------------------------------------------
+          path = Path('tests/financeEngine.test.ts')
+          text = path.read_text()
+          insertion = r'''
+
+          describe('Input hardening', () => {
+            it('rejects negative quick assets and DTI debt payments', () => {
+              expect(() => calculateQuickRatio(-1, 0, 0, 10)).toThrow();
+              expect(() => calculateDTI(5000, -10)).toThrow();
+            });
+
+            it('rejects non-positive CAGR final values', () => {
+              expect(() => calculateCAGR(100, 0, 5)).toThrow();
+            });
+
+            it('keeps CAGR on the Decimal.js path', () => {
+              expect(calculateCAGR(100000, 250000, 5).cagrPercent).toBe(20.11);
+            });
+          });
+          '''
+          text = text.rstrip() + insertion + '\n'
+          path.write_text(text)
+
+          Path('tests/scenarioRoutes.test.ts').write_text(r'''import { describe, expect, it } from 'vitest';
+          import { apiRouter } from '../server/routes';
+
+          describe('Financial Scenario Studio API registration', () => {
+            it('registers every deterministic calculator and the scenario assistant', () => {
+              const stack = (apiRouter as unknown as { stack: Array<{ route?: { path?: string } }> }).stack;
+              const paths = stack.map((layer) => layer.route?.path).filter(Boolean);
+              for (const path of [
+                '/finance/compound-interest',
+                '/finance/quick-ratio',
+                '/finance/cagr',
+                '/finance/break-even',
+                '/finance/dti',
+                '/finance/scenario-assistant',
+              ]) expect(paths).toContain(path);
+            });
+          });
+          ''')
+
+      - name: Install dependencies
+        run: npm ci
+      - name: TypeScript validation
+        run: npm run lint
+      - name: Production build
+        run: npm run build
+      - name: Financial engine and route tests
+        run: npx vitest run tests/financeEngine.test.ts tests/scenarioRoutes.test.ts tests/aiResponseStandard.test.ts tests/groqService.test.ts
+      - name: Commit validated source repair
+        run: |
+          git config user.name "SHREYASH SINGH"
+          git config user.email "shreyashsinghegi2@gmail.com"
+          git add server/routes.ts server/financeEngine.ts src/components/scenarios/CalculationResultPanel.tsx src/components/scenarios/ScenariosView.tsx src/components/scenarios/ScenarioAssistantPanel.tsx tests/financeEngine.test.ts tests/scenarioRoutes.test.ts
+          git commit -m "Repair Financial Scenario Studio and add ArthaMind analysis"
+          git push origin HEAD:fix-financial-scenario-studio

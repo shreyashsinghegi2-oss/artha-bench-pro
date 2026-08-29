@@ -8,6 +8,40 @@ jobs:
   smoke:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Import Vercel API entry
+        shell: bash
+        run: |
+          set -o pipefail
+          npx tsx -e "import('./api/index.ts').then((m)=>{ console.log('API_IMPORT_OK', typeof m.default); }).catch((e)=>{ console.error('API_IMPORT_FAILED'); console.error(e && e.stack ? e.stack : e); process.exit(1); })"
+
+      - name: Start local Express API and call health
+        shell: bash
+        run: |
+          set -e
+          npx tsx server.ts > /tmp/artha-server.log 2>&1 &
+          pid=$!
+          trap 'kill $pid || true' EXIT
+          for i in {1..20}; do
+            if curl -fsS http://127.0.0.1:3001/api/health > /tmp/health.json 2>/dev/null; then
+              break
+            fi
+            sleep 1
+          done
+          echo '--- local server log ---'
+          cat /tmp/artha-server.log || true
+          echo '--- local health ---'
+          cat /tmp/health.json || true
+
       - name: Call production endpoints
         shell: bash
         run: |

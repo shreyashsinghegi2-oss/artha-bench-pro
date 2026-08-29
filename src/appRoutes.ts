@@ -5,7 +5,7 @@ export type AppLocation =
   | { kind: 'landing' }
   | { kind: 'workspace'; destination: AppNavigationDestination }
   | { kind: 'public'; page: PublicPageId }
-  | { kind: 'sample' };
+  | { kind: 'auth'; returnTo: string };
 
 const financePaths: Partial<Record<AppNavigationDestination, string>> = {
   overview: '/finance/overview',
@@ -52,8 +52,17 @@ const pathToWorkspace = new Map<string, AppNavigationDestination>([
 ].map(([destination, path]) => [path as string, destination as AppNavigationDestination]));
 const pathToPublic = new Map<string, PublicPageId>(Object.entries(publicPaths).map(([page, path]) => [path, page as PublicPageId]));
 
+export const PRIVATE_FINANCE_DESTINATIONS = new Set<AppNavigationDestination>([
+  'income', 'expenses', 'budgeting', 'finance-reports', 'emi-manager',
+]);
+
 export function pathForDestination(destination: AppNavigationDestination): string {
   return financePaths[destination] ?? workspacePaths[destination] ?? '/finance/overview';
+}
+
+export function destinationForPath(path: string): AppNavigationDestination | null {
+  const normalized = path.replace(/\/+$/, '') || '/';
+  return pathToWorkspace.get(normalized) ?? null;
 }
 
 export function pathForPublicPage(page: PublicPageId): string {
@@ -63,7 +72,10 @@ export function pathForPublicPage(page: PublicPageId): string {
 export function readAppLocation(): AppLocation {
   if (typeof window === 'undefined') return { kind: 'landing' };
   const normalized = window.location.pathname.replace(/\/+$/, '') || '/';
-  if (normalized === '/sample-workspace') return { kind: 'sample' };
+  if (normalized === '/auth') {
+    const returnTo = new URLSearchParams(window.location.search).get('returnTo') || '/finance/overview';
+    return { kind: 'auth', returnTo };
+  }
   const publicPage = pathToPublic.get(normalized);
   if (publicPage) return { kind: 'public', page: publicPage };
   const destination = pathToWorkspace.get(normalized);
@@ -77,12 +89,14 @@ export function pushDestination(destination: AppNavigationDestination, replace =
   window.history[replace ? 'replaceState' : 'pushState']({ destination }, '', url);
 }
 
-export function pushPublicPage(page: PublicPageId, replace = false): void {
-  window.history[replace ? 'replaceState' : 'pushState']({ publicPage: page }, '', pathForPublicPage(page));
+export function pushAuth(returnTo: string, replace = false): void {
+  const safeReturnTo = returnTo.startsWith('/') ? returnTo : '/finance/overview';
+  const url = `/auth?returnTo=${encodeURIComponent(safeReturnTo)}`;
+  window.history[replace ? 'replaceState' : 'pushState']({ auth: true, returnTo: safeReturnTo }, '', url);
 }
 
-export function pushSampleWorkspace(replace = false): void {
-  window.history[replace ? 'replaceState' : 'pushState']({ sample: true }, '', '/sample-workspace');
+export function pushPublicPage(page: PublicPageId, replace = false): void {
+  window.history[replace ? 'replaceState' : 'pushState']({ publicPage: page }, '', pathForPublicPage(page));
 }
 
 export function pushLanding(replace = false): void {

@@ -1,0 +1,89 @@
+name: Validate overview navigation polish
+
+on:
+  push:
+    branches: [overview-navigation-polish]
+
+permissions:
+  contents: write
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: overview-navigation-polish
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Wire business headline ticker into existing dashboard
+        shell: python
+        run: |
+          from pathlib import Path
+          path = Path('src/components/dashboard/DashboardView.tsx')
+          text = path.read_text()
+
+          old_import = "import { IndiaMarketTicker } from './IndiaMarketTicker';"
+          new_import = "import { IndiaMarketTicker } from './IndiaMarketTicker';\nimport { BusinessNewsTicker } from './BusinessNewsTicker';"
+          if old_import not in text:
+              raise SystemExit('IndiaMarketTicker import not found')
+          text = text.replace(old_import, new_import, 1)
+
+          text = text.replace("  const latestHeadline = news[0] ?? null;\n", "", 1)
+
+          old_block = '''          <div className="overflow-hidden rounded-xl border border-line bg-[#101A2E] text-white shadow-sm" aria-label="Latest business headline">
+            <div className="flex min-h-9 items-center gap-3 px-3">
+              <span className="shrink-0 rounded-full border border-emerald-300/20 bg-emerald-300/10 px-2 py-1 text-[8px] font-black uppercase tracking-wider text-emerald-200">{latestHeadline ? 'Latest headline' : 'News status'}</span>
+              <div className="min-w-0 flex-1 overflow-hidden">
+                <p className="truncate text-[10px] font-medium text-slate-200">{latestHeadline ? `${latestHeadline.sourceName}: ${latestHeadline.title}` : 'Current business headlines are unavailable.'}</p>
+              </div>
+            </div>
+          </div>'''
+          new_block = '''          <BusinessNewsTicker items={news} onOpenFeed={() => onNavigate('news')} />'''
+          if old_block not in text:
+              raise SystemExit('Existing latest headline block not found')
+          text = text.replace(old_block, new_block, 1)
+          path.write_text(text)
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: TypeScript validation
+        run: npm run lint
+
+      - name: Production build
+        run: npm run build
+
+      - name: Navigation and interaction assertions
+        shell: bash
+        run: |
+          grep -q "href={href}" src/components/finance/FinanceWorkspaceNavigation.tsx
+          grep -q "pathForDestination('overview')" src/components/Header.tsx
+          grep -q "aria-controls=\"artha-main-app-menu\"" src/components/Header.tsx
+          grep -q "Search Artha Bench modules" src/components/AppSearch.tsx
+          grep -q "BusinessNewsTicker items={news}" src/components/dashboard/DashboardView.tsx
+          grep -q "onClick={() => void loadDashboard()}" src/components/dashboard/DashboardView.tsx
+          grep -q "onNavigate('evaluation-lab')" src/components/dashboard/DashboardView.tsx
+          grep -q "onNavigate('connections')" src/components/dashboard/DashboardView.tsx
+          grep -q "onNavigate('tutor')" src/components/dashboard/DashboardView.tsx
+          grep -q "onNavigate('markets')" src/components/dashboard/DashboardView.tsx
+          grep -q "onNavigate('news')" src/components/dashboard/DashboardView.tsx
+          if grep -q "title=\"Settings & Controls\"" src/components/Header.tsx; then
+            echo "Standalone settings plate still present"
+            exit 1
+          fi
+
+      - name: Commit validated dashboard wiring and remove temporary workflow
+        shell: bash
+        run: |
+          git config user.name "SHREYASH SINGH"
+          git config user.email "shreyashsinghegi2@gmail.com"
+          git rm .github/workflows/overview-navigation-polish.yml
+          git add src/components/dashboard/DashboardView.tsx
+          git commit -m "Wire dashboard news ticker and validate navigation"
+          git push origin HEAD:overview-navigation-polish

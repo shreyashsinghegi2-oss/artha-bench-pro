@@ -13,10 +13,10 @@ import { AppNavigationDestination, isFinanceDestination } from './navigationType
 import { Header } from './components/Header';
 import { Navigation } from './components/Navigation';
 import { FinanceWorkspaceNavigation } from './components/finance/FinanceWorkspaceNavigation';
-import { FinanceOverviewView } from './components/finance/FinanceOverviewView';
 import { FinanceAssistantDrawer } from './components/finance/FinanceAssistantDrawer';
 import { Footer } from './components/Footer';
 import { DashboardView } from './components/dashboard/DashboardView';
+import { PersonalFinancialIntelligence } from './components/dashboard/PersonalFinancialIntelligence';
 import { LearningView } from './components/learning/LearningView';
 import { NewsView } from './components/news/NewsView';
 import { QuickCheckView } from './components/quickcheck/QuickCheckView';
@@ -105,10 +105,15 @@ export default function App() {
   const goHome = useCallback(() => { pushLanding(); setLocation({ kind: 'landing' }); window.scrollTo({ top: 0, behavior: 'auto' }); }, []);
   const goOverview = useCallback(() => goToDestination('overview'), [goToDestination]);
 
+  const dashboard = () => <>
+    {auth.user && <div className="mx-auto max-w-[1700px] px-4 pt-7 sm:px-6"><PersonalFinancialIntelligence onNavigate={(destination) => navigateWorkspace(destination)} /></div>}
+    <DashboardView onNavigate={(destination) => navigateWorkspace(destination)} />
+  </>;
+
   const renderActiveView = () => {
     switch (currentDestination) {
-      case 'overview': return <FinanceOverviewView onNavigate={navigateWorkspace} onSignIn={() => requestPrivateDestination('income')} />;
-      case 'dashboard': return <DashboardView onNavigate={(destination) => navigateWorkspace(destination)} />;
+      case 'overview':
+      case 'dashboard': return dashboard();
       case 'learning': return <LearningView />;
       case 'income': return <Suspense fallback={<LoadingView label="Income Workspace" />}><IncomeWorkspaceView /></Suspense>;
       case 'expenses': return <Suspense fallback={<LoadingView label="Expenses Workspace" />}><ExpensesView /></Suspense>;
@@ -130,7 +135,7 @@ export default function App() {
       case 'connections': return <ConnectionsView />;
       case 'settings': return <SettingsView />;
       case 'account': return <AccountView />;
-      default: return <FinanceOverviewView onNavigate={navigateWorkspace} onSignIn={() => requestPrivateDestination('income')} />;
+      default: return dashboard();
     }
   };
 

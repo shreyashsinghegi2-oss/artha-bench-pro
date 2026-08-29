@@ -2,13 +2,13 @@
   "rewrites": [
     { "source": "/finance/:path*", "destination": "/index.html" },
     { "source": "/workspace/:path*", "destination": "/index.html" },
+    { "source": "/auth", "destination": "/index.html" },
     { "source": "/trust", "destination": "/index.html" },
     { "source": "/about", "destination": "/index.html" },
     { "source": "/methodology", "destination": "/index.html" },
     { "source": "/roadmap", "destination": "/index.html" },
     { "source": "/support", "destination": "/index.html" },
     { "source": "/changelog", "destination": "/index.html" },
-    { "source": "/access", "destination": "/index.html" },
-    { "source": "/sample-workspace", "destination": "/index.html" }
+    { "source": "/access", "destination": "/index.html" }
   ]
 }

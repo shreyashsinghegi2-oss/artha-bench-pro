@@ -31,20 +31,14 @@ jobs:
           if import_line not in text:
               raise SystemExit('Expected ScenariosView icon import not found')
           text = text.replace(import_line, "import { BookMarked, Calculator, AlertCircle } from 'lucide-react';\nimport { CalculationResultPanel } from './CalculationResultPanel';\n", 1)
-          old = '''      {calcResult && (
-            <div className="bg-surface border border-line rounded-3xl p-6 space-y-4">
-              <h3 className="text-sm font-bold text-ink flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-success" />
-                <span>Deterministic Engine Calculation Output</span>
-              </h3>
-              <pre className="p-4 bg-surface border border-line rounded-2xl text-xs font-mono text-success overflow-x-auto">
-                {JSON.stringify(calcResult, null, 2)}
-              </pre>
-            </div>
-          )}'''
-          if old not in text:
-              raise SystemExit('Expected raw calculator result block not found')
-          text = text.replace(old, "      {calcResult && <CalculationResultPanel activeTab={activeTab} result={calcResult} />}", 1)
+          start_marker = "      {calcResult && (\n"
+          end_marker = "      )}\n    </div>\n  );\n};"
+          start = text.find(start_marker)
+          end = text.find(end_marker, start)
+          if start < 0 or end < 0:
+              raise SystemExit('Could not locate raw calculator result region')
+          replacement = "      {calcResult && <CalculationResultPanel activeTab={activeTab} result={calcResult} />}\n    </div>\n  );\n};"
+          text = text[:start] + replacement + text[end + len(end_marker):]
           path.write_text(text)
 
       - name: Install dependencies

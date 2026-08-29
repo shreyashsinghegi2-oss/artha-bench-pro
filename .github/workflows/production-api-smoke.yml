@@ -8,7 +8,7 @@ jobs:
   smoke:
     runs-on: ubuntu-latest
     steps:
-      - name: Call production endpoints
+      - name: Call production endpoints after Node 22 pin
         shell: bash
         run: |
           set -u

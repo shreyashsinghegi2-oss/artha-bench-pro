@@ -167,14 +167,27 @@ export async function refreshAuthSession(refreshToken: string): Promise<AuthSess
 
 export async function signInWithPassword(email: string, password: string): Promise<AuthSession> {
   const { url } = config();
-  const payload = await requestJSON<any>(`${url}/auth/v1/token?grant_type=password`, {
-    method: 'POST',
-    headers: authHeaders(),
-    body: JSON.stringify({ email, password }),
-  });
-  const session = normalizeSession(payload);
-  if (!session) throw new Error('Sign-in succeeded but no session was returned.');
-  return session;
+  try {
+    const payload = await requestJSON<any>(`${url}/auth/v1/token?grant_type=password`, {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({ email, password }),
+    });
+    const session = normalizeSession(payload);
+    if (!session) throw new Error('Sign-in succeeded but no session was returned.');
+    return session;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : '';
+    if (!/email not confirmed/i.test(message)) throw error;
+    const recovered = await requestJSON<any>(`${url}/functions/v1/signup-account`, {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({ mode: 'recover', email, password }),
+    });
+    const session = normalizeSession(recovered?.session);
+    if (!session) throw new Error('Account recovery succeeded but no session was returned.');
+    return session;
+  }
 }
 
 export async function signUpWithPassword(input: {
@@ -185,22 +198,20 @@ export async function signUpWithPassword(input: {
   financialDataConsent: boolean;
 }): Promise<{ session: AuthSession | null; user: AuthUser | null }> {
   const { url } = config();
-  const redirectTo = browserRedirect('callback');
-  const endpoint = redirectTo ? `${url}/auth/v1/signup?redirect_to=${encodeURIComponent(redirectTo)}` : `${url}/auth/v1/signup`;
-  const payload = await requestJSON<any>(endpoint, {
+  const payload = await requestJSON<any>(`${url}/functions/v1/signup-account`, {
     method: 'POST',
     headers: authHeaders(),
     body: JSON.stringify({
+      mode: 'signup',
       email: input.email,
       password: input.password,
-      data: {
-        full_name: input.fullName,
-        country: input.country,
-        personal_data_insights_enabled: input.financialDataConsent,
-      },
+      fullName: input.fullName,
+      country: input.country,
+      financialDataConsent: input.financialDataConsent,
     }),
   });
-  return { session: normalizeSession(payload), user: payload?.user ?? null };
+  const session = normalizeSession(payload?.session);
+  return { session, user: session?.user ?? null };
 }
 
 export async function resendSignupConfirmation(email: string): Promise<void> {

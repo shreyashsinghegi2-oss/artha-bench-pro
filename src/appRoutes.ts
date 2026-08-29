@@ -1,0 +1,90 @@
+import { AppNavigationDestination } from './navigationTypes';
+
+export type PublicPageId = 'trust' | 'about' | 'methodology-public' | 'roadmap' | 'support' | 'changelog' | 'access';
+export type AppLocation =
+  | { kind: 'landing' }
+  | { kind: 'workspace'; destination: AppNavigationDestination }
+  | { kind: 'public'; page: PublicPageId }
+  | { kind: 'sample' };
+
+const financePaths: Partial<Record<AppNavigationDestination, string>> = {
+  overview: '/finance/overview',
+  income: '/finance/income',
+  expenses: '/finance/expenses',
+  budgeting: '/finance/budgeting',
+  'finance-reports': '/finance/reports',
+  'emi-manager': '/finance/emi-manager',
+};
+
+const workspacePaths: Partial<Record<AppNavigationDestination, string>> = {
+  dashboard: '/workspace/research-dashboard',
+  markets: '/workspace/markets',
+  crypto: '/workspace/crypto',
+  'quick-check': '/workspace/quick-check',
+  tutor: '/workspace/financial-tutor',
+  'evaluation-lab': '/workspace/evaluation-lab',
+  comparison: '/workspace/comparison',
+  scenarios: '/workspace/scenarios',
+  batch: '/workspace/batch-benchmark',
+  reports: '/workspace/evaluation-reports',
+  methodology: '/workspace/evaluation-methodology',
+  connections: '/workspace/connections',
+  learning: '/workspace/learning',
+  news: '/workspace/business-news',
+  economy: '/workspace/economic-data',
+  settings: '/workspace/settings',
+  account: '/workspace/account',
+};
+
+const publicPaths: Record<PublicPageId, string> = {
+  trust: '/trust',
+  about: '/about',
+  'methodology-public': '/methodology',
+  roadmap: '/roadmap',
+  support: '/support',
+  changelog: '/changelog',
+  access: '/access',
+};
+
+const pathToWorkspace = new Map<string, AppNavigationDestination>([
+  ...Object.entries(financePaths),
+  ...Object.entries(workspacePaths),
+].map(([destination, path]) => [path as string, destination as AppNavigationDestination]));
+const pathToPublic = new Map<string, PublicPageId>(Object.entries(publicPaths).map(([page, path]) => [path, page as PublicPageId]));
+
+export function pathForDestination(destination: AppNavigationDestination): string {
+  return financePaths[destination] ?? workspacePaths[destination] ?? '/finance/overview';
+}
+
+export function pathForPublicPage(page: PublicPageId): string {
+  return publicPaths[page];
+}
+
+export function readAppLocation(): AppLocation {
+  if (typeof window === 'undefined') return { kind: 'landing' };
+  const normalized = window.location.pathname.replace(/\/+$/, '') || '/';
+  if (normalized === '/sample-workspace') return { kind: 'sample' };
+  const publicPage = pathToPublic.get(normalized);
+  if (publicPage) return { kind: 'public', page: publicPage };
+  const destination = pathToWorkspace.get(normalized);
+  if (destination) return { kind: 'workspace', destination };
+  if (window.location.hash === '#workspace') return { kind: 'workspace', destination: 'overview' };
+  return { kind: 'landing' };
+}
+
+export function pushDestination(destination: AppNavigationDestination, replace = false): void {
+  const url = pathForDestination(destination);
+  window.history[replace ? 'replaceState' : 'pushState']({ destination }, '', url);
+}
+
+export function pushPublicPage(page: PublicPageId, replace = false): void {
+  window.history[replace ? 'replaceState' : 'pushState']({ publicPage: page }, '', pathForPublicPage(page));
+}
+
+export function pushSampleWorkspace(replace = false): void {
+  window.history[replace ? 'replaceState' : 'pushState']({ sample: true }, '', '/sample-workspace');
+}
+
+export function pushLanding(replace = false): void {
+  window.history[replace ? 'replaceState' : 'pushState']({ landing: true }, '', '/');
+}

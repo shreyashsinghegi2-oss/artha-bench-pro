@@ -1,48 +1,14 @@
-import React from 'react';
-import { Settings, SlidersHorizontal, ShieldCheck } from 'lucide-react';
+import React, { useState } from 'react';
+import { RotateCcw, Settings, ShieldCheck } from 'lucide-react';
+import { useAuth } from '../../auth/AuthContext';
 
 export const SettingsView: React.FC = () => {
-  return (
-    <div className="max-w-7xl mx-auto px-4 py-8 space-y-8">
-      <div className="bg-surface border border-line rounded-3xl p-6 sm:p-8 space-y-4">
-        <div className="flex items-center gap-3">
-          <div className="p-3 bg-interactive/20 border border-interactive/40 rounded-2xl text-interactive">
-            <Settings className="w-6 h-6" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-ink">Platform Settings & Configuration</h1>
-            <p className="text-xs text-secondary">
-              Server security rules, model overrides, and local workspace preferences.
-            </p>
-          </div>
-        </div>
-
-        <div className="space-y-4 pt-4">
-          <div className="p-5 bg-canvas border border-line rounded-2xl space-y-2">
-            <h3 className="text-sm font-bold text-ink">Server Secret Management</h3>
-            <p className="text-xs text-secondary">
-              GROQ_API_KEY is securely loaded via server environment variables. Never committed or exposed to browser code.
-            </p>
-            <div className="inline-block px-3 py-1 bg-success-fill/10 text-success border border-success-fill/30 text-xs font-bold rounded-lg mt-1">
-              Secure Server Proxy Enforced
-            </div>
-          </div>
-
-          <div className="p-5 bg-canvas border border-line rounded-2xl space-y-2">
-            <h3 className="text-sm font-bold text-ink">Model Configuration</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs pt-1">
-              <div className="p-3 bg-surface border border-line rounded-xl">
-                <span className="text-secondary block">Primary Model</span>
-                <span className="font-mono text-ink font-bold">openai/gpt-oss-120b</span>
-              </div>
-              <div className="p-3 bg-surface border border-line rounded-xl">
-                <span className="text-secondary block">Secondary Model</span>
-                <span className="font-mono text-ink font-bold">openai/gpt-oss-20b</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+  const auth = useAuth();
+  const [status, setStatus] = useState<string | null>(null);
+  const restart = async () => {
+    if (!auth.user) { auth.openAuth('login'); return; }
+    await auth.saveProfile({ onboarding_completed: false });
+    setStatus('Onboarding restarted. Choose your goal and privacy settings in the onboarding panel.');
+  };
+  return <div className="mx-auto max-w-7xl space-y-6 px-4 py-8"><section className="rounded-3xl border border-line bg-surface p-6 shadow-sm sm:p-8"><div className="flex items-center gap-3"><div className="rounded-2xl border border-interactive/30 bg-interactive-soft p-3 text-interactive"><Settings className="h-6 w-6" /></div><div><h1 className="text-2xl font-black text-ink">Platform Settings & Configuration</h1><p className="text-xs text-secondary">Server security information and user-controlled product preferences.</p></div></div>{status && <div className="mt-4 rounded-xl border border-success-fill/25 bg-success-soft p-3 text-xs text-success">{status}</div>}<div className="mt-6 grid gap-4 lg:grid-cols-2"><div className="rounded-2xl border border-line bg-canvas p-5"><h2 className="text-sm font-black text-ink">Server Secret Management</h2><p className="mt-2 text-xs leading-5 text-secondary">Private provider keys are loaded from server environment variables and are not intentionally exposed to browser code.</p><div className="mt-3 inline-flex items-center gap-2 rounded-lg border border-success-fill/30 bg-success-soft px-3 py-1.5 text-xs font-bold text-success"><ShieldCheck className="h-4 w-4" />Server proxy pattern</div></div><div className="rounded-2xl border border-line bg-canvas p-5"><h2 className="text-sm font-black text-ink">First-time experience</h2><p className="mt-2 text-xs leading-5 text-secondary">Restart the short goal/privacy onboarding without deleting any finance records.</p><button type="button" onClick={() => void restart()} className="mt-3 inline-flex items-center gap-2 rounded-xl border border-line bg-surface px-4 py-2.5 text-xs font-black text-ink"><RotateCcw className="h-4 w-4" />Restart onboarding</button></div></div></section><section className="rounded-3xl border border-line bg-surface p-6"><h2 className="text-sm font-black text-ink">Product information</h2><div className="mt-3 flex flex-wrap gap-2">{[['Trust Centre','/trust'],['About','/about'],['Methodology','/methodology'],['Roadmap','/roadmap'],['Support','/support'],['Changelog','/changelog'],['Early access','/access']].map(([label,url]) => <a key={url} href={url} className="rounded-xl border border-line bg-canvas px-3 py-2 text-xs font-bold text-interactive">{label}</a>)}</div></section></div>;
 };

@@ -72,8 +72,10 @@ export const DashboardAssistant: React.FC<DashboardAssistantProps> = ({ snapshot
       const response = personalEnabled && auth.session
         ? await askPersonalizedDashboardAssistant({ token: auth.session.access_token, question: normalized, snapshot, settings: contextPreferences, history: conversationHistory })
         : await askDashboardAssistant({ question: normalized, snapshot, history: conversationHistory });
-      const personalDataUsed = 'personalDataUsed' in response ? response.personalDataUsed : false;
-      const personalContextReferences = 'personalContextReferences' in response ? response.personalContextReferences : [];
+      const personalDataUsed = 'personalDataUsed' in response ? Boolean(response.personalDataUsed) : false;
+      const personalContextReferences = 'personalContextReferences' in response && Array.isArray(response.personalContextReferences)
+        ? response.personalContextReferences.filter((item): item is string => typeof item === 'string')
+        : [];
       setMessages((current) => [...current, { role: 'assistant', content: response.answer, structuredAnswer: response.structuredAnswer, personalDataUsed, personalContextReferences }]);
       if (response.suggestedQuestions.length > 0) setSuggestions(response.suggestedQuestions);
       setSourceLabels(response.sourceLabels);

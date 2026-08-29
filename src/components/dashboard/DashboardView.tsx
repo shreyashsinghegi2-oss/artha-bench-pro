@@ -19,6 +19,7 @@ import { getOverallProgressPercentage, getPaperPortfolio } from '../../services/
 import { SafetyBanner } from '../SafetyBanner';
 import { DashboardAssistant } from './DashboardAssistant';
 import { IndiaMarketTicker } from './IndiaMarketTicker';
+import { BusinessNewsTicker } from './BusinessNewsTicker';
 
 interface DashboardViewProps {
   onNavigate: (destination: NavigationDestination) => void;
@@ -210,7 +211,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
 
   const groundingValue = latestReport ? `${latestReport.metrics.overallReliabilityScore}%` : 'No run';
   const groundingDetail = latestReport ? latestReport.verdict.replaceAll('_', ' ') : 'Run an evaluation to populate';
-  const latestHeadline = news[0] ?? null;
 
   return (
     <div className="mx-auto max-w-[1700px] space-y-7 px-4 py-7 sm:px-6 sm:py-9">
@@ -374,14 +374,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
           </div>
         </div>
         <div className="min-w-0 space-y-3 xl:col-span-5">
-          <div className="overflow-hidden rounded-xl border border-line bg-[#101A2E] text-white shadow-sm" aria-label="Latest business headline">
-            <div className="flex min-h-9 items-center gap-3 px-3">
-              <span className="shrink-0 rounded-full border border-emerald-300/20 bg-emerald-300/10 px-2 py-1 text-[8px] font-black uppercase tracking-wider text-emerald-200">{latestHeadline ? 'Latest headline' : 'News status'}</span>
-              <div className="min-w-0 flex-1 overflow-hidden">
-                <p className="truncate text-[10px] font-medium text-slate-200">{latestHeadline ? `${latestHeadline.sourceName}: ${latestHeadline.title}` : 'Current business headlines are unavailable.'}</p>
-              </div>
-            </div>
-          </div>
+          <BusinessNewsTicker items={news} onOpenFeed={() => onNavigate('news')} />
           <DashboardAssistant snapshot={assistantSnapshot} ready={!loading && lastUpdated !== null} onNavigate={onNavigate} />
         </div>
       </section>

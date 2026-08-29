@@ -109,8 +109,10 @@ export const ExpensesView: React.FC = () => {
   );
   const selectedTotal = totalExpenses(selectedRecords);
   const categoryTotals = useMemo(() => spendingByCategory(selectedRecords), [selectedRecords]);
-  const categoryRanking = useMemo(
-    () => Object.entries(categoryTotals).sort((a, b) => b[1] - a[1]),
+  const categoryRanking = useMemo<Array<[string, number]>>(
+    () => Object.entries(categoryTotals)
+      .map(([category, total]) => [category, Number(total)] as [string, number])
+      .sort((a, b) => b[1] - a[1]),
     [categoryTotals],
   );
   const topCategory = categoryRanking[0] ?? null;

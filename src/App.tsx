@@ -17,6 +17,7 @@ import { FinanceAssistantDrawer } from './components/finance/FinanceAssistantDra
 import { Footer } from './components/Footer';
 import { DashboardView } from './components/dashboard/DashboardView';
 import { PersonalFinancialIntelligence } from './components/dashboard/PersonalFinancialIntelligence';
+import { PublicFinanceOverview } from './components/dashboard/PublicFinanceOverview';
 import { LearningView } from './components/learning/LearningView';
 import { NewsView } from './components/news/NewsView';
 import { QuickCheckView } from './components/quickcheck/QuickCheckView';
@@ -32,7 +33,6 @@ import { SettingsView } from './components/evaluation/SettingsView';
 import { AccountView } from './components/account/AccountView';
 import { AuthModal } from './components/auth/AuthModal';
 import { AuthGateView } from './components/auth/AuthGateView';
-import { SocialAuthDock } from './components/auth/SocialAuthDock';
 import { ArthaMindLandingPage } from './components/landing/ArthaMindLandingPage';
 import { FirstTimeOnboardingGate } from './components/onboarding/FirstTimeOnboardingGate';
 import { PublicInfoPage } from './components/public/PublicInfoPage';
@@ -62,7 +62,10 @@ export default function App() {
       pushDestination('overview', true);
       setLocation({ kind: 'workspace', destination: 'overview' });
     }
-    return () => { window.removeEventListener('popstate', syncFromLocation); window.removeEventListener('hashchange', syncFromLocation); };
+    return () => {
+      window.removeEventListener('popstate', syncFromLocation);
+      window.removeEventListener('hashchange', syncFromLocation);
+    };
   }, [syncFromLocation]);
 
   const goToDestination = useCallback((destination: AppNavigationDestination, replace = false) => {
@@ -80,7 +83,9 @@ export default function App() {
   }, []);
 
   const navigateWorkspace = useCallback((destination: AppNavigationDestination = 'overview') => {
-    if (!auth.user && PRIVATE_FINANCE_DESTINATIONS.has(destination)) return requestPrivateDestination(destination);
+    if (!auth.user && PRIVATE_FINANCE_DESTINATIONS.has(destination)) {
+      return requestPrivateDestination(destination);
+    }
     goToDestination(destination);
   }, [auth.user, goToDestination, requestPrivateDestination]);
 
@@ -102,13 +107,24 @@ export default function App() {
     if (destination) goToDestination(destination, true);
   }, [auth.loading, auth.user, goToDestination, location]);
 
-  const goHome = useCallback(() => { pushLanding(); setLocation({ kind: 'landing' }); window.scrollTo({ top: 0, behavior: 'auto' }); }, []);
+  const goHome = useCallback(() => {
+    pushLanding();
+    setLocation({ kind: 'landing' });
+    window.scrollTo({ top: 0, behavior: 'auto' });
+  }, []);
   const goOverview = useCallback(() => goToDestination('overview'), [goToDestination]);
 
-  const dashboard = () => <>
-    {auth.user && <div className="mx-auto max-w-[1700px] px-4 pt-7 sm:px-6"><PersonalFinancialIntelligence onNavigate={(destination) => navigateWorkspace(destination)} /></div>}
-    <DashboardView onNavigate={(destination) => navigateWorkspace(destination)} />
-  </>;
+  const dashboard = () => {
+    if (!auth.user) {
+      return <PublicFinanceOverview onSignIn={() => auth.openAuth('login')} onNavigate={navigateWorkspace} />;
+    }
+    return <>
+      <div className="mx-auto max-w-[1700px] px-4 pt-7 sm:px-6">
+        <PersonalFinancialIntelligence onNavigate={(destination) => navigateWorkspace(destination)} />
+      </div>
+      <DashboardView onNavigate={(destination) => navigateWorkspace(destination)} />
+    </>;
+  };
 
   const renderActiveView = () => {
     switch (currentDestination) {
@@ -139,16 +155,34 @@ export default function App() {
     }
   };
 
-  if (auth.loading) return <div className="flex min-h-screen items-center justify-center bg-canvas text-ink"><div className="rounded-2xl border border-line bg-surface px-6 py-5 text-sm font-semibold text-secondary shadow-sm">Restoring your Artha Bench workspace…</div></div>;
+  if (auth.loading) {
+    return <div className="flex min-h-screen items-center justify-center bg-canvas text-ink"><div className="rounded-2xl border border-line bg-surface px-6 py-5 text-sm font-semibold text-secondary shadow-sm">Restoring your Artha Bench workspace…</div></div>;
+  }
 
   if (!auth.user && location.kind === 'workspace' && PRIVATE_FINANCE_DESTINATIONS.has(location.destination)) {
     const returnTo = pathForDestination(location.destination);
     return <><AuthGateView returnTo={returnTo} onCancel={goOverview} onEmail={() => auth.openAuth('login')} /><AuthModal /></>;
   }
-  if (location.kind === 'landing') return <><ArthaMindLandingPage signedIn={Boolean(auth.user)} onEnter={(destination) => navigateWorkspace(destination ?? 'overview')} onSignIn={() => auth.openAuth('login')} /><AuthModal /><FirstTimeOnboardingGate onNavigate={navigateWorkspace} /></>;
-  if (location.kind === 'public') return <><PublicInfoPage page={location.page} onHome={goHome} onWorkspace={goOverview} /><AuthModal /><FirstTimeOnboardingGate onNavigate={navigateWorkspace} /></>;
-  if (location.kind === 'auth') return <><AuthGateView returnTo={location.returnTo} onCancel={goOverview} onEmail={() => auth.openAuth('login')} /><AuthModal /><FirstTimeOnboardingGate onNavigate={navigateWorkspace} /></>;
+  if (location.kind === 'landing') {
+    return <><ArthaMindLandingPage signedIn={Boolean(auth.user)} onEnter={(destination) => navigateWorkspace(destination ?? 'overview')} onSignIn={() => auth.openAuth('login')} /><AuthModal /><FirstTimeOnboardingGate onNavigate={navigateWorkspace} /></>;
+  }
+  if (location.kind === 'public') {
+    return <><PublicInfoPage page={location.page} onHome={goHome} onWorkspace={goOverview} /><AuthModal /><FirstTimeOnboardingGate onNavigate={navigateWorkspace} /></>;
+  }
+  if (location.kind === 'auth') {
+    return <><AuthGateView returnTo={location.returnTo} onCancel={goOverview} onEmail={() => auth.openAuth('login')} /><AuthModal /><FirstTimeOnboardingGate onNavigate={navigateWorkspace} /></>;
+  }
 
   const financeWorkspace = isFinanceDestination(currentDestination);
-  return <div className="flex min-h-screen flex-col bg-canvas font-sans text-ink selection:bg-interactive selection:text-white"><Header currentDestination={currentDestination} onNavigate={navigateWorkspace} />{financeWorkspace ? <FinanceWorkspaceNavigation currentDestination={currentDestination} onNavigate={navigateWorkspace} /> : <Navigation currentDestination={currentDestination} onNavigate={navigateWorkspace} />}<main className="flex-1">{renderActiveView()}</main><Footer /><AuthModal /><SocialAuthDock />{auth.user && financeWorkspace && <FinanceAssistantDrawer module={currentDestination} onManageContext={() => navigateWorkspace('account')} />}<FirstTimeOnboardingGate onNavigate={navigateWorkspace} /></div>;
+  return <div className="flex min-h-screen flex-col bg-canvas font-sans text-ink selection:bg-interactive selection:text-white">
+    <Header currentDestination={currentDestination} onNavigate={navigateWorkspace} />
+    {financeWorkspace
+      ? <FinanceWorkspaceNavigation currentDestination={currentDestination} onNavigate={navigateWorkspace} />
+      : <Navigation currentDestination={currentDestination} onNavigate={navigateWorkspace} />}
+    <main className="flex-1">{renderActiveView()}</main>
+    <Footer />
+    <AuthModal />
+    {auth.user && financeWorkspace && <FinanceAssistantDrawer module={currentDestination} onManageContext={() => navigateWorkspace('account')} />}
+    <FirstTimeOnboardingGate onNavigate={navigateWorkspace} />
+  </div>;
 }

@@ -1,0 +1,37 @@
+name: Validate final evaluation UX build
+
+on:
+  push:
+    branches: [evaluation-ux-systematic-results]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: TypeScript validation
+        run: npm run lint
+      - name: Production build
+        run: npm run build
+      - name: Evaluation-focused tests
+        run: npx vitest run tests/financeEngine.test.ts tests/groqService.test.ts tests/scoringAndConsensus.test.ts tests/batchAndApi.test.ts tests/aiResponseStandard.test.ts
+      - name: Evaluation UX assertions
+        run: |
+          grep -q "destination: 'comparison'" src/components/AppSearch.tsx
+          grep -q "destination: 'evaluation-lab'" src/components/AppSearch.tsx
+          grep -q "destination: 'quick-check'" src/components/AppSearch.tsx
+          grep -q "destination: 'batch'" src/components/AppSearch.tsx
+          grep -q "Seven-dimension spider chart" src/components/evaluation/ReliabilityReportPanel.tsx
+          grep -q "Seven-dimension batch spider chart" src/components/evaluation/BatchBenchmarkView.tsx
+          grep -q "/api/compare-responses" src/components/comparison/ComparisonView.tsx
+          grep -q "/api/evaluate-response" src/components/evaluation/EvaluationLabView.tsx
+          grep -q "/api/evaluate-response" src/components/quickcheck/QuickCheckView.tsx
+          grep -q "profile: regionProfile" src/components/evaluation/BatchBenchmarkView.tsx
+          grep -q "data.run" src/components/evaluation/BatchBenchmarkView.tsx
+          grep -q "CalculationResultPanel" src/components/scenarios/ScenariosView.tsx

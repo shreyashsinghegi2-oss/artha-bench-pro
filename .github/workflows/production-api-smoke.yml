@@ -1,44 +1,40 @@
-name: Production API smoke
+name: Validate latest main
 
 on:
   push:
     branches: [api-smoke-test]
 
 jobs:
-  smoke:
+  validate:
     runs-on: ubuntu-latest
     steps:
-      - name: Verify production feature APIs
+      - name: Check out latest main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Use Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: TypeScript validation
+        run: npm run lint
+
+      - name: Production build
+        run: npm run build
+
+      - name: Auth and demo assertions
         shell: bash
         run: |
-          set -u
-          base="https://artha-bench-pro.vercel.app"
-
-          get_call() {
-            endpoint="$1"
-            echo "===== GET ${endpoint} ====="
-            tmp=$(mktemp)
-            code=$(curl -L -sS --max-time 60 -o "$tmp" -w "%{http_code}" "${base}${endpoint}" || true)
-            echo "HTTP ${code}"
-            head -c 10000 "$tmp" || true
-            echo
-            rm -f "$tmp"
-          }
-
-          get_call "/api/health"
-          get_call "/api/diagnostics"
-          get_call "/api/markets/history?symbol=SPY&range=1m"
-          get_call "/api/company/intelligence?symbol=AAPL"
-          get_call "/api/news?category=business"
-          get_call "/api/crypto/klines?symbol=BTCUSDT&interval=1m"
-
-          echo "===== POST /api/tutor ====="
-          tmp=$(mktemp)
-          code=$(curl -L -sS --max-time 90 -o "$tmp" -w "%{http_code}" \
-            -H 'Content-Type: application/json' \
-            -X POST "${base}/api/tutor" \
-            --data '{"userPrompt":"Explain the latest available US unemployment rate in simple language.","context":{"country":"US","currency":"USD","language":"english","level":"beginner","mode":"explain","detail":"short","useOfficialSources":true}}' || true)
-          echo "HTTP ${code}"
-          head -c 12000 "$tmp" || true
-          echo
-          rm -f "$tmp"
+          test -f src/components/dashboard/PublicFinanceOverview.tsx
+          grep -q "Sign in securely" src/components/auth/AuthModal.tsx
+          grep -q "isSocialProviderEnabled" src/services/supabaseRest.ts
+          if grep -R -n -E 'Try sample workspace|Fictional sample workspace|Demo Mode' src --exclude-dir='test' --exclude='*.test.*'; then
+            echo "User-facing demo/sample copy still exists"
+            exit 1
+          fi

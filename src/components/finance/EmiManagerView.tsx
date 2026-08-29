@@ -1,200 +1,51 @@
-import React, { useMemo, useState } from 'react';
-import { CalendarClock, CheckCircle2, IndianRupee, Pencil, Plus, Trash2, X } from 'lucide-react';
-import { useAuth } from '../../auth/AuthContext';
-import { formatINR } from '../../services/personalFinanceStorage';
-import {
-  buildEmiSchedule,
-  daysFromToday,
-  EmiDraft,
-  EmiRecord,
-  loadEmiRecords,
-  markNextEmiPaid,
-  saveEmiDraft,
-  saveEmiRecords,
-} from '../../services/emiStorage';
+import React,{useMemo,useState}from'react';
+import Decimal from'decimal.js';
+import{BarChart,Bar,CartesianGrid,ResponsiveContainer,Tooltip,XAxis,YAxis}from'recharts';
+import{CalendarClock,CheckCircle2,Download,ExternalLink,IndianRupee,Pencil,Plus,Trash2,X}from'lucide-react';
+import{AppNavigationDestination}from'../../navigationTypes';
+import{useAuth}from'../../auth/AuthContext';
+import{loadIncomeSources,monthlyEquivalent}from'../../services/incomeStorage';
+import{createExpense,loadExpenses,saveExpenses,formatINR}from'../../services/personalFinanceStorage';
+import{buildEmiSchedule,calculateEmiPlan,daysFromToday,DEFAULT_EMI_PLANNING,EMI_LOAN_TYPES,EmiDraft,EmiLoanType,EmiRecord,loadEmiPlanning,loadEmiRecords,markNextEmiPaid,saveEmiDraft,saveEmiPlanning,saveEmiRecords,setPaymentLinkedExpense}from'../../services/emiStorage';
+import{PageFeedback}from'../common/PageFeedback';
 
-const EMPTY_DRAFT: EmiDraft = {
-  name: '',
-  lender: '',
-  originalLoanAmount: null,
-  outstandingBalance: null,
-  annualInterestRate: null,
-  emiAmount: null,
-  startDate: '',
-  nextDueDate: '',
-  tenureMonths: null,
-  remainingInstallments: null,
-  paymentFrequency: 'monthly',
-  notes: '',
-  status: 'active',
+type Props={onNavigate:(destination:AppNavigationDestination)=>void};
+const input='w-full rounded-xl border border-line-strong bg-canvas px-3 py-2.5 text-xs text-ink outline-none focus:border-interactive focus:ring-2 focus:ring-interactive/20';
+const emptyDraft:EmiDraft={name:'',lender:'',loanType:'Other',originalLoanAmount:null,outstandingBalance:null,annualInterestRate:null,emiAmount:null,startDate:'',nextDueDate:'',tenureMonths:null,remainingInstallments:null,paymentFrequency:'monthly',notes:'',status:'active',typeDetails:{}};
+const num=(v:string)=>v.trim()===''?null:Number.isFinite(Number(v))?Number(v):null;
+const due=(d:string)=>{const n=daysFromToday(d);return n==null?'Due date not recorded':n<0?`${Math.abs(n)} day${Math.abs(n)===1?'':'s'} overdue`:n===0?'Due today':`Due in ${n} day${n===1?'':'s'}`};
+const download=(name:string,rows:string[][])=>{const csv=rows.map(r=>r.map(c=>`"${String(c).replaceAll('"','""')}"`).join(',')).join('\n');const url=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));const a=document.createElement('a');a.href=url;a.download=name;a.click();URL.revokeObjectURL(url);};
+
+export const EmiManagerView:React.FC<Props>=({onNavigate})=>{
+ const auth=useAuth();const[records,setRecords]=useState<EmiRecord[]>(loadEmiRecords);const[planning,setPlanning]=useState(loadEmiPlanning);const[formOpen,setFormOpen]=useState(false);const[editing,setEditing]=useState<EmiRecord|null>(null);const[draft,setDraft]=useState<EmiDraft>(emptyDraft);const[error,setError]=useState<string|null>(null);const[includeExpense,setIncludeExpense]=useState(false);const[planPrincipal,setPlanPrincipal]=useState('');const[planRate,setPlanRate]=useState('');const[planTenure,setPlanTenure]=useState('');const[planType,setPlanType]=useState<EmiLoanType>('Other');const[override,setOverride]=useState(planning.manualIncomeOverride?.toString()||'');
+ const incomeSources=useMemo(()=>loadIncomeSources().filter(s=>s.currency.toUpperCase()==='INR'),[records.length,formOpen]);
+ const recurring=incomeSources.filter(s=>s.frequency!=='One-time');
+ const recurringMonthly=recurring.reduce((sum,s)=>new Decimal(sum).plus(monthlyEquivalent(s)).toNumber(),0);
+ const irregular=incomeSources.filter(s=>s.frequency==='One-time');const cutoff=new Date();cutoff.setUTCMonth(cutoff.getUTCMonth()-planning.incomeWindow);const irregularWindow=irregular.filter(s=>s.startDate>=cutoff.toISOString().slice(0,10));const irregularAverage=irregularWindow.reduce((sum,s)=>new Decimal(sum).plus(s.amount).toNumber(),0)/planning.incomeWindow;
+ const calculatedIncome=recurringMonthly>0?recurringMonthly:irregularWindow.length?irregularAverage:0;const incomeUsed=planning.manualIncomeOverride??calculatedIncome;
+ const active=records.filter(r=>r.status==='active');const monthlyOutflow=active.reduce((sum,r)=>new Decimal(sum).plus(r.emiAmount??0).toNumber(),0);const outstanding=active.reduce((sum,r)=>new Decimal(sum).plus(r.outstandingBalance??0).toNumber(),0);const nextDue=active.filter(r=>r.nextDueDate).sort((a,b)=>a.nextDueDate.localeCompare(b.nextDueDate))[0]??null;const ratio=incomeUsed>0?monthlyOutflow/incomeUsed*100:null;const remainingIncome=incomeUsed>0?new Decimal(incomeUsed).minus(monthlyOutflow).toNumber():null;const next30=new Date(Date.now()+30*86400000).toISOString().slice(0,10);const today=new Date().toISOString().slice(0,10);const upcoming30=active.filter(r=>r.nextDueDate>=today&&r.nextDueDate<=next30).reduce((s,r)=>new Decimal(s).plus(r.emiAmount??0).toNumber(),0);
+ const plan=useMemo(()=>calculateEmiPlan({principal:Number(planPrincipal),annualRate:Number(planRate),tenureMonths:Number(planTenure)}),[planPrincipal,planRate,planTenure]);
+ const commit=(next:EmiRecord[])=>{setRecords(next);saveEmiRecords(next)};const changePlanning=(next:typeof planning)=>{setPlanning(next);saveEmiPlanning(next)};
+ const openCreate=()=>{setEditing(null);setDraft(emptyDraft);setError(null);setFormOpen(true)};const openEdit=(r:EmiRecord)=>{setEditing(r);const{id,payments,createdAt,updatedAt,...rest}=r;void id;void payments;void createdAt;void updatedAt;setDraft(rest);setError(null);setFormOpen(true)};
+ const save=(e:React.FormEvent)=>{e.preventDefault();if(!draft.name.trim())return setError('Loan / EMI name is required.');const nums=[draft.originalLoanAmount,draft.outstandingBalance,draft.annualInterestRate,draft.emiAmount,draft.tenureMonths,draft.remainingInstallments];if(nums.some(v=>v!=null&&(!Number.isFinite(v)||v<0)))return setError('Amounts, rate, tenure and remaining instalments cannot be negative.');if(draft.tenureMonths!=null&&!Number.isInteger(draft.tenureMonths))return setError('Tenure must be a whole number of months.');if(draft.remainingInstallments!=null&&!Number.isInteger(draft.remainingInstallments))return setError('Remaining instalments must be a whole number.');if(draft.nextDueDate&&draft.startDate&&draft.nextDueDate<draft.startDate)return setError('Next due date cannot be before the start date.');const saved=saveEmiDraft(draft,editing??undefined);commit(editing?records.map(r=>r.id===editing.id?saved:r):[saved,...records]);setFormOpen(false);setEditing(null)};
+ const remove=(r:EmiRecord)=>{if(window.confirm(`Delete EMI “${r.name}”? This also removes its saved EMI payment history.`))commit(records.filter(x=>x.id!==r.id))};
+ const markPaid=(r:EmiRecord)=>{if(!r.emiAmount||!r.nextDueDate)return;if(!window.confirm(`Mark ${r.name} ${formatINR(r.emiAmount)} due ${r.nextDueDate} as paid?`))return;let updated=markNextEmiPaid(r);const payment=updated.payments[0];if(includeExpense&&payment){const existing=loadExpenses();const tag=`[EMI_PAYMENT:${payment.id}]`;if(!existing.some(x=>x.notes.includes(tag))){const expense=createExpense({amount:payment.amount,category:'EMI/Debt',date:payment.paidAt.slice(0,10),merchant:r.lender||r.name,paymentMethod:'Auto-debit',notes:`${r.name} repayment ${tag}`,recurring:false});saveExpenses([expense,...existing]);updated=setPaymentLinkedExpense(updated,payment.id,expense.id);}}commit(records.map(x=>x.id===r.id?updated:x));};
+ const savePlan=()=>{if(!plan)return;const today=new Date().toISOString().slice(0,10);const next=new Date();next.setUTCMonth(next.getUTCMonth()+1);setDraft({...emptyDraft,name:`${planType} plan`,loanType:planType,originalLoanAmount:Number(planPrincipal),outstandingBalance:Number(planPrincipal),annualInterestRate:Number(planRate),emiAmount:plan.monthlyEmi,startDate:today,nextDueDate:next.toISOString().slice(0,10),tenureMonths:Number(planTenure),remainingInstallments:Number(planTenure)});setEditing(null);setFormOpen(true)};
+ const exportSchedule=(r:EmiRecord)=>download(`artha-emi-${r.id}.csv`,[['Due date','EMI','Estimated principal','Estimated interest','Estimated remaining balance','Status'],...buildEmiSchedule(r,Math.min(r.remainingInstallments??120,120)).map(row=>[row.dueDate,String(row.amount??''),String(row.estimatedPrincipal??''),String(row.estimatedInterest??''),String(row.remainingBalance??''),row.status])]);
+ return <div className="mx-auto max-w-[1500px] space-y-6 px-4 py-7 sm:px-6">
+  <section className="rounded-3xl border border-line bg-surface p-5 shadow-sm sm:p-7"><div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"><div><div className="text-[10px] font-black uppercase tracking-[.14em] text-brand">Personal finance · existing commitments</div><h1 className="mt-2 text-3xl font-black text-ink sm:text-4xl">EMI Manager</h1><p className="mt-2 text-sm text-secondary">Track existing EMIs, due dates and estimated repayment progress. This is not lending, underwriting, a credit score or loan approval service.</p></div><button onClick={openCreate} className="inline-flex items-center gap-2 rounded-xl bg-brand px-5 py-3 text-sm font-black text-white"><Plus className="h-4 w-4"/>Add EMI</button></div></section>
+  <section className="rounded-3xl border border-line bg-surface p-5"><div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between"><div><div className="text-[10px] font-black uppercase text-interactive">Income context</div><h2 className="mt-1 text-lg font-black text-ink">{incomeUsed>0?formatINR(incomeUsed):'Income not recorded'}</h2><p className="mt-1 text-xs text-secondary">{planning.manualIncomeOverride!=null?'Manual override for EMI planning':'Calculated from your saved income records'} · {recurringMonthly>0?'recurring monthly estimate':`irregular average over ${planning.incomeWindow} months`}.</p><p className="mt-1 text-[9px] text-secondary">Planning overrides never overwrite Income records and are excluded from historical income reports.</p></div><div className="flex flex-wrap gap-2"><button onClick={()=>onNavigate('income')} className="rounded-xl border border-line px-3 py-2 text-xs font-bold text-ink">Manage income</button><select value={planning.incomeWindow} onChange={e=>changePlanning({...planning,incomeWindow:Number(e.target.value) as 3|6|12})} className={input}><option value={3}>3-month irregular average</option><option value={6}>6-month irregular average</option><option value={12}>12-month irregular average</option></select></div></div><div className="mt-4 flex flex-wrap gap-2"><input value={override} onChange={e=>setOverride(e.target.value)} type="number" min="0" placeholder="Optional planning override (INR)" className={`${input} max-w-xs`}/><button onClick={()=>{const v=num(override);changePlanning({...planning,manualIncomeOverride:v,overrideUpdatedAt:v!=null?new Date().toISOString():null})}} className="rounded-xl border border-line px-3 py-2 text-xs font-bold text-ink">Apply planning override</button>{planning.manualIncomeOverride!=null&&<button onClick={()=>{setOverride('');changePlanning({...DEFAULT_EMI_PLANNING,incomeWindow:planning.incomeWindow})}} className="rounded-xl border border-line px-3 py-2 text-xs font-bold text-secondary">Clear override</button>}</div></section>
+  <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">{[['Active EMIs',String(active.length),'User-entered active commitments'],['Monthly EMI outflow',formatINR(monthlyOutflow),'Recorded EMI amounts'],['Next payment due',nextDue?.nextDueDate||'Not recorded',nextDue?`${nextDue.name} · ${due(nextDue.nextDueDate)}`:'Add a due date'],['Outstanding balance',formatINR(outstanding),'Recorded outstanding balances']].map(([a,b,c])=><div key={a} className="rounded-2xl border border-line bg-surface p-4"><div className="text-[9px] font-black uppercase text-secondary">{a}</div><div className="mt-2 text-xl font-black text-ink">{b}</div><div className="mt-1 text-[9px] text-secondary">{c}</div></div>)}</section>
+  <section className="rounded-3xl border border-line bg-surface p-5"><h2 className="text-sm font-black text-ink">EMI commitment planning view</h2>{ratio==null?<p className="mt-2 text-xs text-secondary">Income records are needed to calculate your EMI commitment ratio. <button onClick={()=>onNavigate('income')} className="font-black text-interactive">Add income</button></p>:<div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4"><Metric label="Monthly income used" value={formatINR(incomeUsed)}/><Metric label="EMI commitment ratio" value={`${ratio.toFixed(1)}%`}/><Metric label="Income after active EMIs" value={formatINR(remainingIncome??0)}/><Metric label="Upcoming next 30 days" value={formatINR(upcoming30)}/></div>}<p className="mt-3 text-[9px] text-secondary">Planning reference only; lender eligibility and affordability assessments vary. This is not an approval or affordability guarantee.</p></section>
+  {records.length===0?<section className="rounded-3xl border border-dashed border-line p-10 text-center"><CalendarClock className="mx-auto h-8 w-8 text-secondary"/><h2 className="mt-4 font-black text-ink">Add an EMI to track upcoming payments and monthly commitments.</h2><button onClick={openCreate} className="mt-4 rounded-xl bg-brand px-4 py-2.5 text-xs font-black text-white">Add first EMI</button></section>:<section className="space-y-4">{records.map(r=>{const schedule=buildEmiSchedule(r,6);return <article key={r.id} className="rounded-3xl border border-line bg-surface p-5"><div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between"><div><div className="flex flex-wrap items-center gap-2"><h2 className="font-black text-ink">{r.name}</h2><span className="rounded-full border border-line px-2 py-0.5 text-[9px] font-bold text-secondary">{r.loanType}</span><span className={`rounded-full px-2 py-0.5 text-[9px] font-bold ${r.status==='active'?'bg-success-soft text-success':'bg-subtle text-secondary'}`}>{r.status}</span></div><p className="mt-1 text-xs text-secondary">{r.lender||'Lender not recorded'}{r.nextDueDate?` · ${due(r.nextDueDate)}`:''}</p></div><div className="flex flex-wrap gap-2"><button onClick={()=>openEdit(r)} className="rounded-xl border border-line px-3 py-2 text-xs font-bold"><Pencil className="mr-1 inline h-3 w-3"/>Edit</button><button onClick={()=>exportSchedule(r)} className="rounded-xl border border-line px-3 py-2 text-xs font-bold"><Download className="mr-1 inline h-3 w-3"/>CSV</button><button onClick={()=>remove(r)} className="rounded-xl border border-danger/25 px-3 py-2 text-xs font-bold text-danger"><Trash2 className="mr-1 inline h-3 w-3"/>Delete</button></div></div><div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4"><Metric label="Monthly EMI" value={r.emiAmount==null?'Not recorded':formatINR(r.emiAmount)}/><Metric label="Outstanding" value={r.outstandingBalance==null?'Not recorded':formatINR(r.outstandingBalance)}/><Metric label="Annual rate" value={r.annualInterestRate==null?'Not recorded':`${r.annualInterestRate.toFixed(2)}%`}/><Metric label="Remaining instalments" value={r.remainingInstallments==null?'Not recorded':String(r.remainingInstallments)}/></div>{r.status==='active'&&r.nextDueDate&&<div className="mt-4 flex flex-col gap-3 rounded-2xl bg-canvas p-4 sm:flex-row sm:items-center sm:justify-between"><label className="flex items-center gap-2 text-[10px] text-secondary"><input type="checkbox" checked={includeExpense} onChange={e=>setIncludeExpense(e.target.checked)}/>Also create an expense record (off by default)</label><button disabled={!r.emiAmount} onClick={()=>markPaid(r)} className="rounded-xl bg-success-soft px-4 py-2 text-xs font-black text-success"><CheckCircle2 className="mr-1 inline h-4 w-4"/>Mark as paid</button></div>}<div className="mt-4 overflow-x-auto"><table className="w-full min-w-[760px] text-xs"><thead className="bg-subtle text-[9px] text-secondary"><tr><th className="p-2 text-left">Due</th><th className="p-2 text-right">EMI</th><th className="p-2 text-right">Est. principal</th><th className="p-2 text-right">Est. interest</th><th className="p-2 text-right">Est. balance</th></tr></thead><tbody>{schedule.map(row=><tr key={row.dueDate} className="border-t border-line"><td className="p-2">{row.dueDate}</td><td className="p-2 text-right">{row.amount==null?'—':formatINR(row.amount)}</td><td className="p-2 text-right">{row.estimatedPrincipal==null?'—':formatINR(row.estimatedPrincipal)}</td><td className="p-2 text-right">{row.estimatedInterest==null?'—':formatINR(row.estimatedInterest)}</td><td className="p-2 text-right">{row.remainingBalance==null?'—':formatINR(row.remainingBalance)}</td></tr>)}</tbody></table></div><p className="mt-2 text-[9px] text-secondary">Estimated schedule based on entered values. Confirm with your lender.</p>{r.payments.length>0&&<div className="mt-3 text-[10px] text-secondary">Payment history: {r.payments.slice(0,4).map(p=>`${p.paidAt.slice(0,10)} ${formatINR(p.amount)}${p.linkedExpenseId?' · expense linked':''}`).join(' | ')}</div>}</article>})}</section>}
+  <section className="rounded-3xl border border-line bg-surface p-5"><div className="text-[10px] font-black uppercase text-brand">Planning calculator</div><h2 className="mt-1 text-xl font-black text-ink">Plan an EMI</h2><p className="mt-1 text-xs text-secondary">Calculator only—not a lender offer. Enter your own assumed rate; no bank rate is prefilled.</p><div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4"><select value={planType} onChange={e=>setPlanType(e.target.value as EmiLoanType)} className={input}>{EMI_LOAN_TYPES.map(t=><option key={t}>{t}</option>)}</select><input className={input} type="number" min="0" value={planPrincipal} onChange={e=>setPlanPrincipal(e.target.value)} placeholder="Principal INR"/><input className={input} type="number" min="0" step="0.01" value={planRate} onChange={e=>setPlanRate(e.target.value)} placeholder="Annual rate %"/><input className={input} type="number" min="1" step="1" value={planTenure} onChange={e=>setPlanTenure(e.target.value)} placeholder="Tenure months"/></div>{plan&&<><div className="mt-4 grid gap-3 sm:grid-cols-3"><Metric label="Estimated monthly EMI" value={formatINR(plan.monthlyEmi)}/><Metric label="Total estimated interest" value={formatINR(plan.totalInterest)}/><Metric label="Total estimated repayment" value={formatINR(plan.totalRepayment)}/></div><div className="mt-4 h-52"><ResponsiveContainer width="100%" height="100%"><BarChart data={plan.rows.filter((_,i)=>i%Math.max(1,Math.floor(plan.rows.length/18))===0)}><CartesianGrid strokeDasharray="3 3"/><XAxis dataKey="month"/><YAxis/><Tooltip formatter={(v:any)=>formatINR(Number(v))}/><Bar dataKey="balance" name="Remaining balance" fill="var(--chart-comparison)"/></BarChart></ResponsiveContainer></div><button onClick={savePlan} className="mt-3 rounded-xl bg-brand px-4 py-2.5 text-xs font-black text-white">Save as EMI</button><p className="mt-2 text-[9px] text-secondary">Estimate based on values you entered. Actual lender schedule may differ.</p></>}</section>
+  <section className="grid gap-4 lg:grid-cols-2"><Info title="RBI policy-rate references"><p>Verified RBI policy-rate integration is not connected in this build. Policy rates are reference information, not the interest rate on your loan.</p><a href="https://www.rbi.org.in/" target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex items-center gap-1 font-black text-interactive">Reserve Bank of India official website <ExternalLink className="h-3 w-3"/></a></Info><Info title="Published lender-rate references"><p>Published lender-rate references are not connected yet. Confirm current rates directly with lenders. Artha Bench does not rank “best” loans, predict eligibility or show targeted lending offers.</p></Info></section>
+  <PageFeedback module="emi-manager"/>
+  {formOpen&&<div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/60 p-4"><form onSubmit={save} className="max-h-[92vh] w-full max-w-4xl overflow-y-auto rounded-3xl border border-line bg-surface p-5"><div className="flex justify-between"><h2 className="text-lg font-black">{editing?'Edit EMI':'Add EMI'}</h2><button type="button" onClick={()=>setFormOpen(false)} aria-label="Close EMI form"><X className="h-4 w-4"/></button></div>{error&&<div className="mt-3 rounded-xl bg-danger-soft p-3 text-xs text-danger">{error}</div>}<div className="mt-4 grid gap-3 sm:grid-cols-2"><Field label="Loan / EMI name *"><input className={input} value={draft.name} onChange={e=>setDraft({...draft,name:e.target.value})}/></Field><Field label="Loan type"><select className={input} value={draft.loanType} onChange={e=>setDraft({...draft,loanType:e.target.value as EmiLoanType,typeDetails:{}})}>{EMI_LOAN_TYPES.map(t=><option key={t}>{t}</option>)}</select></Field><Field label="Lender"><input className={input} value={draft.lender} onChange={e=>setDraft({...draft,lender:e.target.value})}/></Field><N label="Original principal" value={draft.originalLoanAmount} set={v=>setDraft({...draft,originalLoanAmount:v})}/><N label="Outstanding balance" value={draft.outstandingBalance} set={v=>setDraft({...draft,outstandingBalance:v})}/><N label="Annual interest rate %" value={draft.annualInterestRate} set={v=>setDraft({...draft,annualInterestRate:v})}/><N label="EMI amount" value={draft.emiAmount} set={v=>setDraft({...draft,emiAmount:v})}/><Field label="Start date"><input type="date" className={input} value={draft.startDate} onChange={e=>setDraft({...draft,startDate:e.target.value})}/></Field><Field label="Next due date"><input type="date" className={input} value={draft.nextDueDate} onChange={e=>setDraft({...draft,nextDueDate:e.target.value})}/></Field><N label="Original tenure (months)" value={draft.tenureMonths} set={v=>setDraft({...draft,tenureMonths:v})} step="1"/><N label="Remaining instalments" value={draft.remainingInstallments} set={v=>setDraft({...draft,remainingInstallments:v})} step="1"/><Field label="Status"><select className={input} value={draft.status} onChange={e=>setDraft({...draft,status:e.target.value as 'active'|'closed'})}><option value="active">Active</option><option value="closed">Closed</option></select></Field></div><TypeFields draft={draft} setDraft={setDraft}/><Field label="Notes"><textarea rows={3} className={`${input} mt-1`} value={draft.notes} onChange={e=>setDraft({...draft,notes:e.target.value})} placeholder="Do not store account numbers, PAN, Aadhaar, PINs, CVV or lender passwords."/></Field><div className="mt-4 flex justify-end gap-2"><button type="button" onClick={()=>setFormOpen(false)} className="rounded-xl border border-line px-4 py-2 text-xs font-bold">Cancel</button><button className="rounded-xl bg-brand px-4 py-2 text-xs font-black text-white"><IndianRupee className="mr-1 inline h-4 w-4"/>Save EMI</button></div></form></div>}
+ </div>;
 };
-
-const inputClass = 'w-full rounded-xl border border-line-strong bg-canvas px-3 py-2.5 text-xs text-ink outline-none focus:border-interactive focus:ring-2 focus:ring-interactive/20';
-
-function dueLabel(date: string) {
-  const days = daysFromToday(date);
-  if (days == null) return 'Due date not recorded';
-  if (days < 0) return `${Math.abs(days)} day${Math.abs(days) === 1 ? '' : 's'} overdue`;
-  if (days === 0) return 'Due today';
-  return `Due in ${days} day${days === 1 ? '' : 's'}`;
-}
-
-function numberOrNull(value: string): number | null {
-  if (!value.trim()) return null;
-  const number = Number(value);
-  return Number.isFinite(number) ? number : null;
-}
-
-export const EmiManagerView: React.FC = () => {
-  const auth = useAuth();
-  const [records, setRecords] = useState<EmiRecord[]>(loadEmiRecords);
-  const [formOpen, setFormOpen] = useState(false);
-  const [editing, setEditing] = useState<EmiRecord | null>(null);
-  const [draft, setDraft] = useState<EmiDraft>(EMPTY_DRAFT);
-  const [error, setError] = useState<string | null>(null);
-
-  const active = useMemo(() => records.filter((record) => record.status === 'active'), [records]);
-  const monthlyOutflow = active.reduce((sum, record) => sum + (record.emiAmount ?? 0), 0);
-  const totalOutstanding = active.reduce((sum, record) => sum + (record.outstandingBalance ?? 0), 0);
-  const nextDue = active.filter((record) => record.nextDueDate).sort((a, b) => a.nextDueDate.localeCompare(b.nextDueDate))[0] ?? null;
-
-  const commit = (next: EmiRecord[]) => {
-    setRecords(next);
-    saveEmiRecords(next);
-  };
-
-  const openCreate = () => {
-    setEditing(null);
-    setDraft(EMPTY_DRAFT);
-    setError(null);
-    setFormOpen(true);
-  };
-
-  const openEdit = (record: EmiRecord) => {
-    setEditing(record);
-    const { id: _id, payments: _payments, createdAt: _createdAt, updatedAt: _updatedAt, ...editable } = record;
-    setDraft(editable);
-    setError(null);
-    setFormOpen(true);
-  };
-
-  const save = (event: React.FormEvent) => {
-    event.preventDefault();
-    if (!draft.name.trim()) return setError('Loan / EMI name is required.');
-    const numericValues = [draft.originalLoanAmount, draft.outstandingBalance, draft.annualInterestRate, draft.emiAmount, draft.tenureMonths, draft.remainingInstallments];
-    if (numericValues.some((value) => value != null && (!Number.isFinite(value) || value < 0))) return setError('Amounts, rates and instalment counts cannot be negative.');
-    if (draft.remainingInstallments != null && !Number.isInteger(draft.remainingInstallments)) return setError('Remaining instalments must be a whole number.');
-    if (draft.tenureMonths != null && !Number.isInteger(draft.tenureMonths)) return setError('Tenure must be a whole number of months.');
-    if (draft.nextDueDate && draft.startDate && draft.nextDueDate < draft.startDate) return setError('Next due date cannot be before the start date.');
-
-    const saved = saveEmiDraft(draft, editing ?? undefined);
-    commit(editing ? records.map((record) => record.id === editing.id ? saved : record) : [saved, ...records]);
-    setFormOpen(false);
-    setEditing(null);
-  };
-
-  const remove = (record: EmiRecord) => {
-    if (!window.confirm(`Delete EMI “${record.name}”? This removes its saved payment history from your Artha Bench workspace.`)) return;
-    commit(records.filter((item) => item.id !== record.id));
-  };
-
-  const markPaid = (record: EmiRecord) => {
-    if (!record.emiAmount || !record.nextDueDate) return;
-    if (!window.confirm(`Mark ${record.name} payment of ${formatINR(record.emiAmount)} due ${record.nextDueDate} as paid? Principal/interest split is estimated when rate and balance are available.`)) return;
-    const updated = markNextEmiPaid(record);
-    commit(records.map((item) => item.id === record.id ? updated : item));
-  };
-
-  return (
-    <div className="mx-auto max-w-[1500px] space-y-6 px-4 py-7 sm:px-6">
-      <section className="rounded-3xl border border-line bg-surface p-5 shadow-sm sm:p-7">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <div className="text-[10px] font-black uppercase tracking-[0.14em] text-interactive">Personal finance · existing commitments</div>
-            <h1 className="mt-2 text-3xl font-black tracking-tight text-ink sm:text-4xl">EMI Manager</h1>
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-secondary">Organize existing EMIs and understand monthly commitments. This is an educational money-management tool, not lending, underwriting, or loan approval.</p>
-            <p className="mt-2 text-[10px] text-secondary">{auth.user ? 'Records are included in your authenticated user-scoped workspace sync.' : 'Guest records stay on this device until you sign in and sync.'}</p>
-          </div>
-          <button type="button" onClick={openCreate} className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand px-5 py-3 text-sm font-black text-white transition-transform duration-150 hover:-translate-y-0.5 hover:bg-brand-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-interactive"><Plus className="h-4 w-4" /> Add EMI</button>
-        </div>
-      </section>
-
-      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        {[
-          ['Active EMIs', String(active.length), 'User-entered active commitments'],
-          ['Monthly EMI outflow', formatINR(monthlyOutflow), 'From recorded EMI amounts'],
-          ['Next payment due', nextDue?.nextDueDate || 'Not recorded', nextDue ? `${nextDue.name} · ${dueLabel(nextDue.nextDueDate)}` : 'Add a due date to track'],
-          ['Outstanding balance', formatINR(totalOutstanding), 'Sum of recorded outstanding balances'],
-        ].map(([label, value, note]) => <div key={label} className="rounded-2xl border border-line bg-surface p-4 shadow-sm"><p className="text-[9px] font-black uppercase tracking-[0.14em] text-secondary">{label}</p><p className="mt-2 text-xl font-black text-ink">{value}</p><p className="mt-1 text-[10px] leading-4 text-secondary">{note}</p></div>)}
-      </section>
-
-      {records.length === 0 ? (
-        <section className="rounded-3xl border border-dashed border-line-strong bg-surface p-10 text-center">
-          <CalendarClock className="mx-auto h-8 w-8 text-secondary" />
-          <h2 className="mt-4 text-lg font-black text-ink">Add an EMI to track upcoming payments and monthly commitments.</h2>
-          <p className="mx-auto mt-2 max-w-xl text-xs leading-5 text-secondary">You can enter partial information. Calculated principal/interest values appear only when enough fields are available and are clearly labelled as estimates.</p>
-          <button type="button" onClick={openCreate} className="mt-5 rounded-xl bg-brand px-4 py-2.5 text-xs font-black text-white">Add first EMI</button>
-        </section>
-      ) : (
-        <section className="space-y-4">
-          {records.map((record) => {
-            const schedule = buildEmiSchedule(record, 6);
-            return (
-              <article key={record.id} className="rounded-3xl border border-line bg-surface p-5 shadow-sm sm:p-6">
-                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                  <div>
-                    <div className="flex flex-wrap items-center gap-2"><h2 className="text-lg font-black text-ink">{record.name}</h2><span className={`rounded-full border px-2.5 py-1 text-[9px] font-bold ${record.status === 'active' ? 'border-success-fill/25 bg-success-soft text-success' : 'border-line bg-subtle text-secondary'}`}>{record.status === 'active' ? 'Active' : 'Closed'}</span></div>
-                    <p className="mt-1 text-xs text-secondary">{record.lender || 'Lender not recorded'}{record.notes ? ` · ${record.notes}` : ''}</p>
-                  </div>
-                  <div className="flex flex-wrap gap-2"><button type="button" onClick={() => openEdit(record)} className="inline-flex items-center gap-1.5 rounded-xl border border-line px-3 py-2 text-xs font-bold text-ink hover:border-interactive/40"><Pencil className="h-3.5 w-3.5" /> Edit</button><button type="button" onClick={() => remove(record)} className="inline-flex items-center gap-1.5 rounded-xl border border-danger/25 px-3 py-2 text-xs font-bold text-danger hover:bg-danger-soft"><Trash2 className="h-3.5 w-3.5" /> Delete</button></div>
-                </div>
-                <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                  <Metric label="EMI amount" value={record.emiAmount == null ? 'Not recorded' : formatINR(record.emiAmount)} />
-                  <Metric label="Outstanding" value={record.outstandingBalance == null ? 'Not recorded' : formatINR(record.outstandingBalance)} />
-                  <Metric label="Annual interest" value={record.annualInterestRate == null ? 'Not recorded' : `${record.annualInterestRate.toFixed(2)}%`} />
-                  <Metric label="Remaining instalments" value={record.remainingInstallments == null ? 'Not recorded' : String(record.remainingInstallments)} />
-                </div>
-                {record.status === 'active' && record.nextDueDate && <div className="mt-5 flex flex-col gap-3 rounded-2xl border border-line bg-canvas p-4 sm:flex-row sm:items-center sm:justify-between"><div><div className="text-xs font-black text-ink">Next payment · {record.nextDueDate}</div><div className={`mt-1 text-[10px] ${((daysFromToday(record.nextDueDate) ?? 0) < 0) ? 'text-danger' : 'text-secondary'}`}>{dueLabel(record.nextDueDate)}</div></div><button type="button" disabled={!record.emiAmount} onClick={() => markPaid(record)} className="inline-flex items-center justify-center gap-2 rounded-xl border border-success-fill/30 bg-success-soft px-4 py-2.5 text-xs font-black text-success disabled:opacity-40"><CheckCircle2 className="h-4 w-4" /> Mark as paid</button></div>}
-                <div className="mt-5 overflow-x-auto rounded-2xl border border-line">
-                  <table className="w-full min-w-[680px] text-left text-xs"><caption className="sr-only">Upcoming estimated payment schedule for {record.name}</caption><thead className="bg-subtle text-[9px] uppercase tracking-wider text-secondary"><tr><th className="px-3 py-3">Due date</th><th className="px-3 py-3 text-right">EMI</th><th className="px-3 py-3 text-right">Est. principal</th><th className="px-3 py-3 text-right">Est. interest</th><th className="px-3 py-3">Basis</th></tr></thead><tbody className="divide-y divide-line">{schedule.map((row) => <tr key={row.dueDate}><td className="px-3 py-3 font-semibold text-ink">{row.dueDate}</td><td className="px-3 py-3 text-right font-mono text-ink">{row.amount == null ? '—' : formatINR(row.amount)}</td><td className="px-3 py-3 text-right font-mono text-ink">{row.estimatedPrincipal == null ? '—' : formatINR(row.estimatedPrincipal)}</td><td className="px-3 py-3 text-right font-mono text-ink">{row.estimatedInterest == null ? '—' : formatINR(row.estimatedInterest)}</td><td className="px-3 py-3 text-[10px] text-secondary">{row.estimatedInterest == null ? 'Insufficient fields' : 'Estimate from recorded rate/balance'}</td></tr>)}</tbody></table>
-                </div>
-                {record.payments.length > 0 && <div className="mt-4"><h3 className="text-xs font-black text-ink">Recent marked payments</h3><div className="mt-2 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">{record.payments.slice(0, 6).map((payment) => <div key={payment.id} className="rounded-xl border border-line bg-canvas p-3"><div className="text-[10px] font-bold text-ink">{payment.dueDate} · {formatINR(payment.amount)}</div><div className="mt-1 text-[9px] text-secondary">Marked paid {payment.paidAt.slice(0, 10)}{payment.estimatedInterest == null ? '' : ` · estimated interest ${formatINR(payment.estimatedInterest)}`}</div></div>)}</div></div>}
-              </article>
-            );
-          })}
-        </section>
-      )}
-
-      <section className="rounded-2xl border border-warning-fill/25 bg-warning-soft p-4 text-xs leading-5 text-secondary"><strong className="text-ink">Calculation note:</strong> repayment splits are estimates based on user-entered balance, annual rate and EMI amount. Artha Bench is not connected to a lender and does not claim lender-confirmed balances, schedules, approvals or repayment advice.</section>
-
-      {formOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/60 p-4">
-          <form onSubmit={save} className="max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-3xl border border-line bg-surface p-5 shadow-2xl sm:p-6">
-            <div className="flex items-center justify-between"><div><h2 className="text-lg font-black text-ink">{editing ? 'Edit EMI' : 'Add EMI'}</h2><p className="mt-1 text-[10px] text-secondary">Enter only information you know. Blank optional fields remain unknown.</p></div><button type="button" onClick={() => setFormOpen(false)} className="rounded-lg p-2 text-secondary hover:bg-subtle" aria-label="Close EMI form"><X className="h-4 w-4" /></button></div>
-            {error && <div className="mt-4 rounded-xl border border-danger/25 bg-danger-soft p-3 text-xs text-danger">{error}</div>}
-            <div className="mt-5 grid gap-4 sm:grid-cols-2">
-              <Field label="Loan / EMI name *"><input className={inputClass} value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} placeholder="Education loan" /></Field>
-              <Field label="Lender name"><input className={inputClass} value={draft.lender} onChange={(e) => setDraft({ ...draft, lender: e.target.value })} /></Field>
-              <NumberField label="Original loan amount (INR)" value={draft.originalLoanAmount} onChange={(value) => setDraft({ ...draft, originalLoanAmount: value })} />
-              <NumberField label="Outstanding balance (INR)" value={draft.outstandingBalance} onChange={(value) => setDraft({ ...draft, outstandingBalance: value })} />
-              <NumberField label="Annual interest rate (%)" value={draft.annualInterestRate} onChange={(value) => setDraft({ ...draft, annualInterestRate: value })} step="0.01" />
-              <NumberField label="EMI amount (INR)" value={draft.emiAmount} onChange={(value) => setDraft({ ...draft, emiAmount: value })} />
-              <Field label="Start date"><input type="date" className={inputClass} value={draft.startDate} onChange={(e) => setDraft({ ...draft, startDate: e.target.value })} /></Field>
-              <Field label="Next due date"><input type="date" className={inputClass} value={draft.nextDueDate} onChange={(e) => setDraft({ ...draft, nextDueDate: e.target.value })} /></Field>
-              <NumberField label="Tenure (months)" value={draft.tenureMonths} onChange={(value) => setDraft({ ...draft, tenureMonths: value })} step="1" />
-              <NumberField label="Remaining instalments" value={draft.remainingInstallments} onChange={(value) => setDraft({ ...draft, remainingInstallments: value })} step="1" />
-              <Field label="Payment frequency"><select className={inputClass} value={draft.paymentFrequency} onChange={() => setDraft({ ...draft, paymentFrequency: 'monthly' })}><option value="monthly">Monthly</option></select></Field>
-              <Field label="Status"><select className={inputClass} value={draft.status} onChange={(e) => setDraft({ ...draft, status: e.target.value as EmiRecord['status'] })}><option value="active">Active</option><option value="closed">Closed</option></select></Field>
-            </div>
-            <Field label="Optional notes"><textarea rows={3} className={`${inputClass} mt-1`} value={draft.notes} onChange={(e) => setDraft({ ...draft, notes: e.target.value })} placeholder="Avoid bank credentials, card details, UPI PINs or lender passwords." /></Field>
-            <div className="mt-5 flex justify-end gap-2"><button type="button" onClick={() => setFormOpen(false)} className="rounded-xl border border-line px-4 py-2.5 text-xs font-bold text-secondary">Cancel</button><button type="submit" className="inline-flex items-center gap-2 rounded-xl bg-brand px-4 py-2.5 text-xs font-black text-white"><IndianRupee className="h-4 w-4" /> Save EMI</button></div>
-          </form>
-        </div>
-      )}
-    </div>
-  );
-};
-
-const Metric: React.FC<{ label: string; value: string }> = ({ label, value }) => <div className="rounded-xl border border-line bg-canvas p-3"><div className="text-[9px] font-black uppercase tracking-wider text-secondary">{label}</div><div className="mt-1.5 text-sm font-black text-ink">{value}</div></div>;
-const Field: React.FC<React.PropsWithChildren<{ label: string }>> = ({ label, children }) => <label className="block"><span className="mb-1.5 block text-[9px] font-bold uppercase tracking-wider text-secondary">{label}</span>{children}</label>;
-const NumberField: React.FC<{ label: string; value: number | null; onChange: (value: number | null) => void; step?: string }> = ({ label, value, onChange, step = '0.01' }) => <Field label={label}><input type="number" min="0" step={step} className={inputClass} value={value ?? ''} onChange={(e) => onChange(numberOrNull(e.target.value))} /></Field>;
+const Metric=({label,value}:{label:string,value:string})=><div className="rounded-xl border border-line bg-canvas p-3"><div className="text-[9px] font-black uppercase text-secondary">{label}</div><div className="mt-1 text-sm font-black text-ink">{value}</div></div>;
+const Field:React.FC<React.PropsWithChildren<{label:string}>>=({label,children})=><label className="block"><span className="mb-1 block text-[9px] font-bold uppercase text-secondary">{label}</span>{children}</label>;
+const N=({label,value,set,step='0.01'}:{label:string,value:number|null,set:(v:number|null)=>void,step?:string})=><Field label={label}><input type="number" min="0" step={step} className={input} value={value??''} onChange={e=>set(num(e.target.value))}/></Field>;
+const Info:React.FC<React.PropsWithChildren<{title:string}>>=({title,children})=><section className="rounded-3xl border border-line bg-surface p-5"><h2 className="text-sm font-black text-ink">{title}</h2><div className="mt-2 text-xs leading-5 text-secondary">{children}</div></section>;
+function TypeFields({draft,setDraft}:{draft:EmiDraft,setDraft:React.Dispatch<React.SetStateAction<EmiDraft>>}){const d=draft.typeDetails;const text=(key:keyof typeof d,label:string)=><Field label={label}><input className={input} value={String(d[key]??'')} onChange={e=>setDraft({...draft,typeDetails:{...d,[key]:e.target.value}})}/></Field>;const number=(key:keyof typeof d,label:string)=><N label={label} value={typeof d[key]==='number'?d[key] as number:null} set={v=>setDraft({...draft,typeDetails:{...d,[key]:v}})}/>;let fields:React.ReactNode=null;if(draft.loanType==='Home loan')fields=<>{number('propertyValue','Property value (optional)')}<Field label="Rate type"><select className={input} value={d.rateType||''} onChange={e=>setDraft({...draft,typeDetails:{...d,rateType:e.target.value as any}})}><option value="">Not recorded</option><option value="fixed">Fixed</option><option value="floating">Floating</option></select></Field>{text('rateBenchmark','Benchmark (Repo-linked / MCLR / other)')}{text('rateResetDate','Rate reset date/reference')}</>;else if(draft.loanType==='Education loan')fields=<>{text('institutionName','Institution name')}{text('moratoriumEndDate','Moratorium end date')}{text('coBorrowerNote','Co-borrower note (no ID documents)')}</>;else if(draft.loanType==='Vehicle loan'||draft.loanType==='Two-wheeler loan')fields=<>{text('vehicleName','Vehicle type / name')}{text('registrationReference','Registration reference (optional)')}</>;else if(draft.loanType==='Gold loan')fields=<>{number('goldWeight','Gold weight / valuation quantity')}{text('goldValuationReference','Valuation reference')}</>;else if(draft.loanType==='Personal loan'||draft.loanType==='Business loan'||draft.loanType==='Loan against property')fields=<>{text('purpose','Purpose / reference')}</>;else if(['Credit-card EMI','Consumer durable / appliance loan','Buy Now Pay Later / Pay Later'].includes(draft.loanType))fields=<>{text('merchantProduct','Merchant / product')}{number('originalPurchaseAmount','Original purchase amount')}<label className="flex items-center gap-2 text-xs text-secondary"><input type="checkbox" checked={d.zeroCostEmi===true} onChange={e=>setDraft({...draft,typeDetails:{...d,zeroCostEmi:e.target.checked}})}/>Zero-cost EMI (as entered)</label>{number('processingFee','Processing fee')}</>;return fields?<div className="mt-4 grid gap-3 rounded-2xl border border-line bg-canvas p-4 sm:grid-cols-2">{fields}</div>:null;}

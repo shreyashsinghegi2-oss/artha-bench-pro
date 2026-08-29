@@ -1,163 +1,35 @@
 import Decimal from 'decimal.js';
 
 export const EMI_STORAGE_KEY = 'artha_emi_records_v1';
-
+export const EMI_PLANNING_KEY = 'artha_emi_planning_v2';
 export type EmiStatus = 'active' | 'closed';
 export type PaymentFrequency = 'monthly';
+export const EMI_LOAN_TYPES = ['Home loan','Education loan','Vehicle loan','Personal loan','Gold loan','Loan against property','Consumer durable / appliance loan','Two-wheeler loan','Business loan','Credit-card EMI','Buy Now Pay Later / Pay Later','Other'] as const;
+export type EmiLoanType = typeof EMI_LOAN_TYPES[number];
 
-export interface EmiPaymentRecord {
-  id: string;
-  dueDate: string;
-  paidAt: string;
-  amount: number;
-  estimatedPrincipal: number | null;
-  estimatedInterest: number | null;
-}
+export interface EmiPaymentRecord { id:string; dueDate:string; paidAt:string; amount:number; estimatedPrincipal:number|null; estimatedInterest:number|null; linkedExpenseId?:string|null; }
+export interface EmiTypeDetails { propertyValue?:number|null; rateType?:'fixed'|'floating'|''; rateBenchmark?:string; rateResetDate?:string; institutionName?:string; moratoriumEndDate?:string; coBorrowerNote?:string; vehicleName?:string; registrationReference?:string; goldWeight?:number|null; goldValuationReference?:string; purpose?:string; merchantProduct?:string; originalPurchaseAmount?:number|null; zeroCostEmi?:boolean; processingFee?:number|null; }
+export interface EmiRecord { id:string; name:string; lender:string; loanType:EmiLoanType; originalLoanAmount:number|null; outstandingBalance:number|null; annualInterestRate:number|null; emiAmount:number|null; startDate:string; nextDueDate:string; tenureMonths:number|null; remainingInstallments:number|null; paymentFrequency:PaymentFrequency; notes:string; status:EmiStatus; typeDetails:EmiTypeDetails; payments:EmiPaymentRecord[]; createdAt:string; updatedAt:string; }
+export type EmiDraft = Omit<EmiRecord,'id'|'payments'|'createdAt'|'updatedAt'>;
+interface EmiEnvelopeV2 { version:2; records:EmiRecord[]; }
+export interface EmiPlanningPreferences { incomeWindow:3|6|12; manualIncomeOverride:number|null; overrideUpdatedAt:string|null; }
+export const DEFAULT_EMI_PLANNING: EmiPlanningPreferences = { incomeWindow:6, manualIncomeOverride:null, overrideUpdatedAt:null };
 
-export interface EmiRecord {
-  id: string;
-  name: string;
-  lender: string;
-  originalLoanAmount: number | null;
-  outstandingBalance: number | null;
-  annualInterestRate: number | null;
-  emiAmount: number | null;
-  startDate: string;
-  nextDueDate: string;
-  tenureMonths: number | null;
-  remainingInstallments: number | null;
-  paymentFrequency: PaymentFrequency;
-  notes: string;
-  status: EmiStatus;
-  payments: EmiPaymentRecord[];
-  createdAt: string;
-  updatedAt: string;
-}
-
-export type EmiDraft = Omit<EmiRecord, 'id' | 'payments' | 'createdAt' | 'updatedAt'>;
-
-interface EmiEnvelope {
-  version: 1;
-  records: EmiRecord[];
-}
-
-const isBrowser = () => typeof window !== 'undefined' && Boolean(window.localStorage);
-
-function validOptionalNumber(value: unknown): value is number | null {
-  return value === null || (typeof value === 'number' && Number.isFinite(value) && value >= 0);
-}
-
-export function loadEmiRecords(): EmiRecord[] {
-  if (!isBrowser()) return [];
-  try {
-    const raw = localStorage.getItem(EMI_STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw) as Partial<EmiEnvelope>;
-    if (parsed.version !== 1 || !Array.isArray(parsed.records)) return [];
-    return parsed.records.filter((record) =>
-      Boolean(record) && typeof record.id === 'string' && typeof record.name === 'string' &&
-      validOptionalNumber(record.originalLoanAmount) && validOptionalNumber(record.outstandingBalance) &&
-      validOptionalNumber(record.annualInterestRate) && validOptionalNumber(record.emiAmount) &&
-      validOptionalNumber(record.tenureMonths) && validOptionalNumber(record.remainingInstallments) &&
-      Array.isArray(record.payments)
-    );
-  } catch {
-    return [];
-  }
-}
-
-export function saveEmiRecords(records: EmiRecord[]): void {
-  if (!isBrowser()) return;
-  localStorage.setItem(EMI_STORAGE_KEY, JSON.stringify({ version: 1, records } satisfies EmiEnvelope));
-}
-
-export function saveEmiDraft(draft: EmiDraft, existing?: EmiRecord): EmiRecord {
-  const now = new Date().toISOString();
-  return {
-    ...draft,
-    name: draft.name.trim(),
-    lender: draft.lender.trim(),
-    notes: draft.notes.trim(),
-    id: existing?.id ?? crypto.randomUUID(),
-    payments: existing?.payments ?? [],
-    createdAt: existing?.createdAt ?? now,
-    updatedAt: now,
-  };
-}
-
-function addMonth(isoDate: string): string {
-  const source = new Date(`${isoDate}T00:00:00Z`);
-  if (Number.isNaN(source.getTime())) return isoDate;
-  const day = source.getUTCDate();
-  const targetYear = source.getUTCFullYear() + (source.getUTCMonth() === 11 ? 1 : 0);
-  const targetMonth = (source.getUTCMonth() + 1) % 12;
-  const lastDay = new Date(Date.UTC(targetYear, targetMonth + 1, 0)).getUTCDate();
-  return new Date(Date.UTC(targetYear, targetMonth, Math.min(day, lastDay))).toISOString().slice(0, 10);
-}
-
-export function estimateEmiSplit(record: EmiRecord): { principal: number | null; interest: number | null } {
-  if (record.emiAmount == null || record.outstandingBalance == null || record.annualInterestRate == null) return { principal: null, interest: null };
-  const monthlyRate = new Decimal(record.annualInterestRate).div(1200);
-  const interest = new Decimal(record.outstandingBalance).times(monthlyRate);
-  const principal = Decimal.max(0, new Decimal(record.emiAmount).minus(interest));
-  return { principal: principal.toDecimalPlaces(2).toNumber(), interest: interest.toDecimalPlaces(2).toNumber() };
-}
-
-export function markNextEmiPaid(record: EmiRecord): EmiRecord {
-  if (record.status !== 'active' || !record.nextDueDate || record.emiAmount == null || record.emiAmount <= 0) return record;
-  const now = new Date().toISOString();
-  const split = estimateEmiSplit(record);
-  const nextOutstanding = record.outstandingBalance == null || split.principal == null
-    ? record.outstandingBalance
-    : Decimal.max(0, new Decimal(record.outstandingBalance).minus(split.principal)).toDecimalPlaces(2).toNumber();
-  const nextRemaining = record.remainingInstallments == null ? null : Math.max(0, record.remainingInstallments - 1);
-  const closed = nextRemaining === 0 || nextOutstanding === 0;
-  const payment: EmiPaymentRecord = {
-    id: crypto.randomUUID(),
-    dueDate: record.nextDueDate,
-    paidAt: now,
-    amount: record.emiAmount,
-    estimatedPrincipal: split.principal,
-    estimatedInterest: split.interest,
-  };
-  return {
-    ...record,
-    outstandingBalance: nextOutstanding,
-    remainingInstallments: nextRemaining,
-    nextDueDate: closed ? record.nextDueDate : addMonth(record.nextDueDate),
-    status: closed ? 'closed' : record.status,
-    payments: [payment, ...record.payments],
-    updatedAt: now,
-  };
-}
-
-export interface EmiScheduleRow {
-  dueDate: string;
-  amount: number | null;
-  estimatedPrincipal: number | null;
-  estimatedInterest: number | null;
-}
-
-export function buildEmiSchedule(record: EmiRecord, count = 6): EmiScheduleRow[] {
-  if (!record.nextDueDate || record.status !== 'active') return [];
-  const rows: EmiScheduleRow[] = [];
-  let date = record.nextDueDate;
-  let outstanding = record.outstandingBalance;
-  const installments = record.remainingInstallments == null ? count : Math.min(count, record.remainingInstallments);
-  for (let index = 0; index < Math.max(1, installments); index += 1) {
-    const temp = { ...record, outstandingBalance: outstanding };
-    const split = estimateEmiSplit(temp);
-    rows.push({ dueDate: date, amount: record.emiAmount, estimatedPrincipal: split.principal, estimatedInterest: split.interest });
-    if (outstanding != null && split.principal != null) outstanding = Decimal.max(0, new Decimal(outstanding).minus(split.principal)).toDecimalPlaces(2).toNumber();
-    date = addMonth(date);
-  }
-  return rows;
-}
-
-export function daysFromToday(isoDate: string): number | null {
-  const target = new Date(`${isoDate}T00:00:00Z`).getTime();
-  if (!isoDate || Number.isNaN(target)) return null;
-  const today = new Date();
-  const todayUtc = Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate());
-  return Math.ceil((target - todayUtc) / 86_400_000);
-}
+const browserReady=()=>typeof window!=='undefined'&&Boolean(window.localStorage);
+const optNum=(v:unknown):number|null=>typeof v==='number'&&Number.isFinite(v)&&v>=0?v:null;
+function normalizeRecord(value:any):EmiRecord|null{if(!value||typeof value.id!=='string'||typeof value.name!=='string')return null;const loanType=EMI_LOAN_TYPES.includes(value.loanType)?value.loanType:'Other';return{id:value.id,name:String(value.name),lender:String(value.lender||''),loanType,originalLoanAmount:optNum(value.originalLoanAmount),outstandingBalance:optNum(value.outstandingBalance),annualInterestRate:optNum(value.annualInterestRate),emiAmount:optNum(value.emiAmount),startDate:String(value.startDate||''),nextDueDate:String(value.nextDueDate||''),tenureMonths:optNum(value.tenureMonths),remainingInstallments:optNum(value.remainingInstallments),paymentFrequency:'monthly',notes:String(value.notes||''),status:value.status==='closed'?'closed':'active',typeDetails:value.typeDetails&&typeof value.typeDetails==='object'?value.typeDetails:{},payments:Array.isArray(value.payments)?value.payments.filter((p:any)=>p&&typeof p.id==='string'&&typeof p.amount==='number').map((p:any)=>({...p,linkedExpenseId:p.linkedExpenseId??null})):[],createdAt:String(value.createdAt||new Date().toISOString()),updatedAt:String(value.updatedAt||new Date().toISOString())};}
+export function loadEmiRecords():EmiRecord[]{if(!browserReady())return[];try{const raw=localStorage.getItem(EMI_STORAGE_KEY);if(!raw)return[];const parsed=JSON.parse(raw);const records=Array.isArray(parsed?.records)?parsed.records:[];return records.map(normalizeRecord).filter(Boolean) as EmiRecord[];}catch{return[];}}
+export function saveEmiRecords(records:EmiRecord[]):void{if(browserReady())localStorage.setItem(EMI_STORAGE_KEY,JSON.stringify({version:2,records} satisfies EmiEnvelopeV2));}
+export function loadEmiPlanning():EmiPlanningPreferences{if(!browserReady())return DEFAULT_EMI_PLANNING;try{const p=JSON.parse(localStorage.getItem(EMI_PLANNING_KEY)||'{}');return{incomeWindow:p.incomeWindow===3||p.incomeWindow===12?p.incomeWindow:6,manualIncomeOverride:optNum(p.manualIncomeOverride),overrideUpdatedAt:typeof p.overrideUpdatedAt==='string'?p.overrideUpdatedAt:null};}catch{return DEFAULT_EMI_PLANNING;}}
+export function saveEmiPlanning(value:EmiPlanningPreferences):void{if(browserReady())localStorage.setItem(EMI_PLANNING_KEY,JSON.stringify(value));}
+export function saveEmiDraft(draft:EmiDraft,existing?:EmiRecord):EmiRecord{const now=new Date().toISOString();return{...draft,name:draft.name.trim(),lender:draft.lender.trim(),notes:draft.notes.trim(),id:existing?.id??crypto.randomUUID(),payments:existing?.payments??[],createdAt:existing?.createdAt??now,updatedAt:now};}
+function addMonth(date:string):string{const source=new Date(`${date}T00:00:00Z`);if(Number.isNaN(source.getTime()))return date;const day=source.getUTCDate(),nextMonth=source.getUTCMonth()+1;const target=new Date(Date.UTC(source.getUTCFullYear(),nextMonth,1));const last=new Date(Date.UTC(target.getUTCFullYear(),target.getUTCMonth()+1,0)).getUTCDate();target.setUTCDate(Math.min(day,last));return target.toISOString().slice(0,10);}
+export function estimateEmiSplit(record:Pick<EmiRecord,'emiAmount'|'outstandingBalance'|'annualInterestRate'>):{principal:number|null;interest:number|null}{if(record.emiAmount==null||record.outstandingBalance==null||record.annualInterestRate==null)return{principal:null,interest:null};const interest=new Decimal(record.outstandingBalance).times(new Decimal(record.annualInterestRate).div(1200));const principal=Decimal.max(0,new Decimal(record.emiAmount).minus(interest));return{principal:principal.toDecimalPlaces(2).toNumber(),interest:interest.toDecimalPlaces(2).toNumber()};}
+export interface EmiScheduleRow { dueDate:string; amount:number|null; estimatedPrincipal:number|null; estimatedInterest:number|null; remainingBalance:number|null; status:'paid'|'pending'; }
+export function buildEmiSchedule(record:EmiRecord,count=12):EmiScheduleRow[]{if(!record.nextDueDate||record.status!=='active')return[];let date=record.nextDueDate,balance=record.outstandingBalance;const remaining=record.remainingInstallments==null?count:Math.min(count,record.remainingInstallments);const rows:EmiScheduleRow[]=[];for(let i=0;i<Math.max(1,remaining);i++){const split=estimateEmiSplit({...record,outstandingBalance:balance});if(balance!=null&&split.principal!=null)balance=Decimal.max(0,new Decimal(balance).minus(split.principal)).toDecimalPlaces(2).toNumber();rows.push({dueDate:date,amount:record.emiAmount,estimatedPrincipal:split.principal,estimatedInterest:split.interest,remainingBalance:balance,status:'pending'});date=addMonth(date);}return rows;}
+export function markNextEmiPaid(record:EmiRecord):EmiRecord{if(record.status!=='active'||!record.nextDueDate||!record.emiAmount)return record;const split=estimateEmiSplit(record);const nextOutstanding=record.outstandingBalance==null||split.principal==null?record.outstandingBalance:Decimal.max(0,new Decimal(record.outstandingBalance).minus(split.principal)).toDecimalPlaces(2).toNumber();const nextRemaining=record.remainingInstallments==null?null:Math.max(0,record.remainingInstallments-1);const closed=nextRemaining===0||nextOutstanding===0;const payment:EmiPaymentRecord={id:crypto.randomUUID(),dueDate:record.nextDueDate,paidAt:new Date().toISOString(),amount:record.emiAmount,estimatedPrincipal:split.principal,estimatedInterest:split.interest,linkedExpenseId:null};return{...record,outstandingBalance:nextOutstanding,remainingInstallments:nextRemaining,nextDueDate:closed?record.nextDueDate:addMonth(record.nextDueDate),status:closed?'closed':record.status,payments:[payment,...record.payments],updatedAt:new Date().toISOString()};}
+export function setPaymentLinkedExpense(record:EmiRecord,paymentId:string,expenseId:string|null):EmiRecord{return{...record,payments:record.payments.map((p)=>p.id===paymentId?{...p,linkedExpenseId:expenseId}:p),updatedAt:new Date().toISOString()};}
+export interface EmiPlanInput { principal:number; annualRate:number; tenureMonths:number; }
+export interface EmiPlanResult { monthlyEmi:number; totalInterest:number; totalRepayment:number; rows:Array<{month:number;emi:number;principal:number;interest:number;balance:number}>; }
+export function calculateEmiPlan(input:EmiPlanInput):EmiPlanResult|null{if(!Number.isFinite(input.principal)||input.principal<=0||!Number.isFinite(input.annualRate)||input.annualRate<0||!Number.isInteger(input.tenureMonths)||input.tenureMonths<=0)return null;const P=new Decimal(input.principal),n=input.tenureMonths,r=new Decimal(input.annualRate).div(1200);const emi=r.eq(0)?P.div(n):P.times(r).times(new Decimal(1).plus(r).pow(n)).div(new Decimal(1).plus(r).pow(n).minus(1));let balance=P;const rows=[] as EmiPlanResult['rows'];let interestTotal=new Decimal(0);for(let month=1;month<=n;month++){const interest=balance.times(r);const principal=Decimal.min(balance,Decimal.max(0,emi.minus(interest)));balance=Decimal.max(0,balance.minus(principal));interestTotal=interestTotal.plus(interest);rows.push({month,emi:emi.toDecimalPlaces(2).toNumber(),principal:principal.toDecimalPlaces(2).toNumber(),interest:interest.toDecimalPlaces(2).toNumber(),balance:balance.toDecimalPlaces(2).toNumber()});}return{monthlyEmi:emi.toDecimalPlaces(2).toNumber(),totalInterest:interestTotal.toDecimalPlaces(2).toNumber(),totalRepayment:P.plus(interestTotal).toDecimalPlaces(2).toNumber(),rows};}
+export function daysFromToday(date:string):number|null{const target=new Date(`${date}T00:00:00Z`).getTime();if(!date||Number.isNaN(target))return null;const now=new Date();const today=Date.UTC(now.getUTCFullYear(),now.getUTCMonth(),now.getUTCDate());return Math.ceil((target-today)/86400000);}

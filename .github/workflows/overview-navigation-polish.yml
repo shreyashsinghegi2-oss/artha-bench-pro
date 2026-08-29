@@ -79,23 +79,43 @@ jobs:
         run: npm run build
 
       - name: Navigation and interaction assertions
-        shell: bash
+        shell: python
         run: |
-          grep -q "href={href}" src/components/finance/FinanceWorkspaceNavigation.tsx
-          grep -q "pathForDestination('overview')" src/components/Header.tsx
-          grep -q "aria-controls=\"artha-main-app-menu\"" src/components/Header.tsx
-          grep -q "Search Artha Bench modules" src/components/AppSearch.tsx
-          grep -q "BusinessNewsTicker items={news}" src/components/dashboard/DashboardView.tsx
-          grep -q "onClick={() => void loadDashboard()}" src/components/dashboard/DashboardView.tsx
-          grep -q "onNavigate('evaluation-lab')" src/components/dashboard/DashboardView.tsx
-          grep -q "onNavigate('connections')" src/components/dashboard/DashboardView.tsx
-          grep -q "onNavigate('tutor')" src/components/dashboard/DashboardView.tsx
-          grep -q "onNavigate('markets')" src/components/dashboard/DashboardView.tsx
-          grep -q "onNavigate('news')" src/components/dashboard/DashboardView.tsx
-          if grep -q "title=\"Settings & Controls\"" src/components/Header.tsx; then
-            echo "Standalone settings plate still present"
-            exit 1
-          fi
+          from pathlib import Path
+
+          route_text = Path('src/appRoutes.ts').read_text()
+          expected_routes = [
+              "overview: '/finance/overview'",
+              "income: '/finance/income'",
+              "expenses: '/finance/expenses'",
+              "budgeting: '/finance/budgeting'",
+              "'finance-reports': '/finance/reports'",
+              "'emi-manager': '/finance/emi-manager'",
+          ]
+          missing_routes = [item for item in expected_routes if item not in route_text]
+          if missing_routes:
+              raise SystemExit(f'Missing canonical finance routes: {missing_routes}')
+
+          finance_nav = Path('src/components/finance/FinanceWorkspaceNavigation.tsx').read_text()
+          for item in ['href={href}', 'aria-current={active', 'onNavigate(id)']:
+              if item not in finance_nav:
+                  raise SystemExit(f'Finance navigation assertion missing: {item}')
+
+          header = Path('src/components/Header.tsx').read_text()
+          for item in ["pathForDestination('overview')", 'artha-main-app-menu', 'AppSearch', 'FINANCE_NAV_ITEMS']:
+              if item not in header:
+                  raise SystemExit(f'Header assertion missing: {item}')
+          if 'Settings & Controls' in header:
+              raise SystemExit('Standalone Settings & Controls plate still present')
+
+          dashboard = Path('src/components/dashboard/DashboardView.tsx').read_text()
+          for item in ['BusinessNewsTicker items={news}', 'loadDashboard()', "onNavigate('evaluation-lab')", "onNavigate('connections')", "onNavigate('markets')", "onNavigate('news')"]:
+              if item not in dashboard:
+                  raise SystemExit(f'Dashboard action assertion missing: {item}')
+
+          assistant = Path('src/components/dashboard/DashboardAssistant.tsx').read_text()
+          if "onNavigate('tutor')" not in assistant:
+              raise SystemExit('Open full tutor action is not wired')
 
       - name: Commit validated source and remove temporary workflow
         shell: bash

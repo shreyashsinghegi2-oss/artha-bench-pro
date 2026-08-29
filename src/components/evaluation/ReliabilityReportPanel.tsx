@@ -83,7 +83,7 @@ export const ReliabilityRadar: React.FC<{
   primaryLabel?: string;
   secondaryLabel?: string;
 }> = ({ primary, secondary, primaryLabel = 'Response', secondaryLabel = 'Comparison' }) => {
-  const secondaryMap = new Map((secondary || []).map((dimension) => [dimension.id, dimension]));
+  const secondaryMap = new Map<string, EvaluationDimension>((secondary || []).map((dimension) => [dimension.id, dimension]));
   const data = primary.map((dimension) => ({
     dimension: dimension.name,
     primary: clampScore(dimension.rawScore),

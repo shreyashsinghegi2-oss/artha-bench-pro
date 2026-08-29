@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { BookMarked, Calculator, ArrowRight, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { BookMarked, Calculator, AlertCircle } from 'lucide-react';
+import { CalculationResultPanel } from './CalculationResultPanel';
 
 export const ScenariosView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'compound' | 'quick-ratio' | 'cagr' | 'break-even' | 'dti'>('compound');
@@ -215,17 +216,7 @@ export const ScenariosView: React.FC = () => {
         </div>
       )}
 
-      {calcResult && (
-        <div className="bg-surface border border-line rounded-3xl p-6 space-y-4">
-          <h3 className="text-sm font-bold text-ink flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-success" />
-            <span>Deterministic Engine Calculation Output</span>
-          </h3>
-          <pre className="p-4 bg-surface border border-line rounded-2xl text-xs font-mono text-success overflow-x-auto">
-            {JSON.stringify(calcResult, null, 2)}
-          </pre>
-        </div>
-      )}
+      {calcResult && <CalculationResultPanel activeTab={activeTab} result={calcResult} />}
     </div>
   );
 };

@@ -8,6 +8,7 @@ import {
   loadStoredSession,
   persistSession,
   refreshAuthSession,
+  resendSignupConfirmation,
   sendPasswordReset,
   signInWithPassword,
   signOutRemote,
@@ -180,16 +181,33 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
 
   const signIn = async (email: string, password: string, remember: boolean) => {
     if (!configured) throw new Error('Account sign-in is not configured on this deployment yet.');
-    const next = await signInWithPassword(email.trim(), password);
-    const nextProfile = await establishSession(next, remember);
-    if (nextProfile.onboarding_completed) setAuthOpen(false);
+    const normalizedEmail = email.trim();
+    try {
+      const next = await signInWithPassword(normalizedEmail, password);
+      const nextProfile = await establishSession(next, remember);
+      if (nextProfile.onboarding_completed) setAuthOpen(false);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unable to sign in.';
+      if (/email not confirmed/i.test(message)) {
+        try {
+          await resendSignupConfirmation(normalizedEmail);
+          setAuthMessage('Your account exists, but the email address is not verified yet. We sent a fresh confirmation link. Open that email once, then return here to sign in.');
+        } catch {
+          setAuthMessage('Your account exists, but the email address is not verified yet. Open the most recent Supabase confirmation email, verify the address, then return here to sign in.');
+        }
+        setAuthScreen('verify');
+        setAuthOpen(true);
+        return;
+      }
+      throw error;
+    }
   };
 
   const signUp = async (input: { fullName: string; email: string; password: string; country: string; financialDataConsent: boolean }) => {
     if (!configured) throw new Error('Account sign-up is not configured on this deployment yet.');
     const result = await signUpWithPassword({ email: input.email.trim(), password: input.password, fullName: input.fullName, country: input.country, financialDataConsent: input.financialDataConsent });
     if (result.session) { await establishSession(result.session, true); return; }
-    setAuthMessage('Check your email to verify your account, then return here to sign in.');
+    setAuthMessage('Account created. Check your email and verify it once, then return here to sign in.');
     setAuthScreen('verify');
     setAuthOpen(true);
   };

@@ -14,6 +14,9 @@ jobs:
           set -u
           base="https://artha-bench-pro.vercel.app"
           endpoints=(
+            "/__probe"
+            "/__probe-express"
+            "/__probe-routes"
             "/api/health"
             "/api/diagnostics"
             "/api/markets/quote?symbol=SPY&assetType=equity"

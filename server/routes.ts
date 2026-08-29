@@ -21,7 +21,14 @@ import { checkPromptSafety } from './safetyChecker';
 import { executeBatchBenchmark, getBatchRunProgress } from './batchBenchmark';
 import { getAllReportRecords, exportReportsToCSV, saveReportRecord } from './reportStorage';
 import { BENCHMARK_DATASET_V1 } from './data/benchmarks/v1/scenarios';
-import { generateVerificationCode } from './financeEngine';
+import {
+  calculateBreakEven,
+  calculateCAGR,
+  calculateCompoundInterest,
+  calculateDTI,
+  calculateQuickRatio,
+  generateVerificationCode,
+} from './financeEngine';
 import { generateLessonContent, reviewQuizAnswer } from './learningService';
 import { getBusinessNews, explainNewsArticle } from './businessNewsService';
 import { getMarketQuote, searchMarketQuotes, getMarketHistory } from './marketDataService';
@@ -124,6 +131,53 @@ const tutorSchema = z.object({
 const batchRunSchema = z.object({
   scenarioIds: z.array(z.string()).optional(),
   profile: z.enum(['India', 'US', 'Global']).optional(),
+});
+
+const calculatorMoneySchema = z.coerce.number().finite().min(0).max(1_000_000_000_000_000);
+const calculatorPositiveSchema = z.coerce.number().finite().gt(0).max(1_000_000_000_000_000);
+
+const compoundInterestInputSchema = z.object({
+  principal: calculatorMoneySchema,
+  annualRatePercent: z.coerce.number().finite().min(0).max(1_000),
+  years: z.coerce.number().finite().gt(0).max(200),
+  monthlyContribution: calculatorMoneySchema.default(0),
+  compoundingFrequencyPerYear: z.coerce.number().int().min(1).max(365).default(12),
+});
+
+const quickRatioInputSchema = z.object({
+  cash: calculatorMoneySchema,
+  marketableSecurities: calculatorMoneySchema,
+  receivables: calculatorMoneySchema,
+  currentLiabilities: calculatorPositiveSchema,
+});
+
+const cagrInputSchema = z.object({
+  initialValue: calculatorPositiveSchema,
+  finalValue: calculatorPositiveSchema,
+  years: z.coerce.number().finite().gt(0).max(200),
+});
+
+const breakEvenInputSchema = z.object({
+  fixedCosts: calculatorMoneySchema,
+  pricePerUnit: calculatorPositiveSchema,
+  variableCostPerUnit: calculatorMoneySchema,
+}).refine((value) => value.pricePerUnit > value.variableCostPerUnit, {
+  message: 'Price per unit must be greater than variable cost per unit.',
+});
+
+const dtiInputSchema = z.object({
+  monthlyGrossIncome: calculatorPositiveSchema,
+  monthlyDebtPayments: calculatorMoneySchema,
+});
+
+const scenarioAssistantSchema = z.object({
+  scenario: z.enum(['compound', 'quick-ratio', 'cagr', 'break-even', 'dti']),
+  question: z.string().min(3).max(1200),
+  profile: z.enum(['US', 'India', 'Global']).default('US'),
+  currency: z.enum(['USD', 'INR', 'EUR', 'GBP']).default('USD'),
+  companySymbol: z.string().trim().max(20).regex(/^[A-Za-z0-9][A-Za-z0-9.:_-]*$/).optional().or(z.literal('')),
+  useExternalContext: z.boolean().default(true),
+  inputs: z.record(z.string(), z.union([z.number().finite(), z.string().max(120), z.boolean()])),
 });
 
 const dashboardAssistantSchema = z.object({
@@ -311,6 +365,313 @@ async function loadTutorCurrentData(
       'These are the latest available official observations. Release dates differ, so they must not be described as tick-by-tick real-time values.',
   };
 }
+
+type FinanceScenarioKind = z.infer<typeof scenarioAssistantSchema>['scenario'];
+
+function sendDeterministicFinanceResult(
+  res: Response,
+  calculationType: FinanceScenarioKind,
+  result: Record<string, unknown>,
+) {
+  const calculatedAt = new Date().toISOString();
+  const verificationCode = generateVerificationCode(`${calculationType}:${JSON.stringify(result)}`);
+  res.json({
+    ...result,
+    calculationType,
+    engine: 'Decimal.js',
+    precisionPolicy: '20 significant digits; ROUND_HALF_UP for reported values',
+    calculatedAt,
+    verificationCode,
+  });
+}
+
+function calculatorValidationError(res: Response, parsed: { success: false; error: z.ZodError }) {
+  return res.status(400).json({ error: parsed.error.issues[0]?.message || 'Invalid calculator inputs.' });
+}
+
+function requiredScenarioNumber(inputs: Record<string, string | number | boolean>, key: string) {
+  const value = inputs[key];
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    throw new Error(`A valid numeric ${key} input is required.`);
+  }
+  return value;
+}
+
+function recalculateScenario(
+  scenario: FinanceScenarioKind,
+  inputs: Record<string, string | number | boolean>,
+): any {
+  if (scenario === 'compound') {
+    return calculateCompoundInterest(
+      requiredScenarioNumber(inputs, 'principal'),
+      requiredScenarioNumber(inputs, 'annualRatePercent'),
+      requiredScenarioNumber(inputs, 'years'),
+      requiredScenarioNumber(inputs, 'monthlyContribution'),
+      requiredScenarioNumber(inputs, 'compoundingFrequencyPerYear'),
+    );
+  }
+  if (scenario === 'quick-ratio') {
+    return calculateQuickRatio(
+      requiredScenarioNumber(inputs, 'cash'),
+      requiredScenarioNumber(inputs, 'marketableSecurities'),
+      requiredScenarioNumber(inputs, 'receivables'),
+      requiredScenarioNumber(inputs, 'currentLiabilities'),
+    );
+  }
+  if (scenario === 'cagr') {
+    return calculateCAGR(
+      requiredScenarioNumber(inputs, 'initialValue'),
+      requiredScenarioNumber(inputs, 'finalValue'),
+      requiredScenarioNumber(inputs, 'years'),
+    );
+  }
+  if (scenario === 'break-even') {
+    return calculateBreakEven(
+      requiredScenarioNumber(inputs, 'fixedCosts'),
+      requiredScenarioNumber(inputs, 'pricePerUnit'),
+      requiredScenarioNumber(inputs, 'variableCostPerUnit'),
+    );
+  }
+  return calculateDTI(
+    requiredScenarioNumber(inputs, 'monthlyGrossIncome'),
+    requiredScenarioNumber(inputs, 'monthlyDebtPayments'),
+  );
+}
+
+async function loadScenarioExternalContext(
+  profile: 'US' | 'India' | 'Global',
+  companySymbol: string | undefined,
+  enabled: boolean,
+) {
+  if (!enabled) {
+    return {
+      retrievedAt: new Date().toISOString(),
+      economicIndicators: [],
+      company: null,
+      quote: null,
+      sourceLabels: [] as string[],
+      notes: ['External provider context is turned off.'],
+    };
+  }
+
+  const economicTasks: Promise<Awaited<ReturnType<typeof fetchFredOverview>> | Awaited<ReturnType<typeof fetchWorldBankIndiaOverview>>>[] = [];
+  if (profile === 'US' || profile === 'Global') economicTasks.push(fetchFredOverview());
+  if (profile === 'India' || profile === 'Global') economicTasks.push(fetchWorldBankIndiaOverview());
+
+  const economicSettled = await Promise.allSettled(economicTasks);
+  const economicOverviews = economicSettled
+    .filter((item): item is PromiseFulfilledResult<Awaited<ReturnType<typeof fetchFredOverview>> | Awaited<ReturnType<typeof fetchWorldBankIndiaOverview>>> => item.status === 'fulfilled')
+    .map((item) => item.value);
+  const economicIndicators = economicOverviews
+    .flatMap((overview) => overview.indicators)
+    .filter((indicator) => indicator.status === 'connected' && indicator.value !== null)
+    .slice(0, 12)
+    .map((indicator) => ({
+      label: indicator.label,
+      value: indicator.value,
+      unit: indicator.unit,
+      date: indicator.date,
+      sourceName: indicator.sourceName,
+    }));
+
+  let company: Record<string, unknown> | null = null;
+  let quote: Record<string, unknown> | null = null;
+  const sourceLabels = economicOverviews
+    .filter((overview) => overview.status === 'connected')
+    .map((overview) => overview.providerName);
+  const notes: string[] = [];
+
+  const normalizedSymbol = companySymbol?.trim().toUpperCase();
+  if (normalizedSymbol) {
+    const [companyResult, quoteResult] = await Promise.allSettled([
+      fetchFinnhubCompanyIntelligence(normalizedSymbol),
+      getMarketQuote(normalizedSymbol),
+    ]);
+    if (companyResult.status === 'fulfilled' && companyResult.value.status === 'connected') {
+      company = {
+        symbol: normalizedSymbol,
+        profile: companyResult.value.profile,
+        metrics: companyResult.value.metrics,
+        earnings: companyResult.value.earnings.slice(0, 4),
+        recommendations: companyResult.value.recommendations.slice(0, 4),
+        retrievedAt: companyResult.value.retrievedAt,
+      };
+      sourceLabels.push('Finnhub');
+    } else {
+      notes.push(`Company fundamentals were unavailable for ${normalizedSymbol}.`);
+    }
+    if (quoteResult.status === 'fulfilled' && quoteResult.value.quote) {
+      quote = quoteResult.value.quote as unknown as Record<string, unknown>;
+      sourceLabels.push(quoteResult.value.quote.providerName);
+    } else {
+      notes.push(`Market quote context was unavailable for ${normalizedSymbol}.`);
+    }
+  }
+
+  if (economicIndicators.length === 0) {
+    notes.push('No connected official macro observations were available for this request.');
+  }
+
+  return {
+    retrievedAt: new Date().toISOString(),
+    economicIndicators,
+    company,
+    quote,
+    sourceLabels: Array.from(new Set(sourceLabels)),
+    notes,
+  };
+}
+
+function scenarioFallbackSummary(scenario: FinanceScenarioKind, result: Record<string, unknown>, currency: string) {
+  if (scenario === 'compound') return `The verified Decimal.js compound-interest result is a final balance of ${currency} ${result.finalBalance}, including ${currency} ${result.totalInterestEarned} of calculated interest.`;
+  if (scenario === 'quick-ratio') return `The verified Decimal.js quick ratio is ${result.quickRatio}, with the calculator assessment recorded as ${result.assessment}.`;
+  if (scenario === 'cagr') return `The verified Decimal.js CAGR is ${result.cagrPercent}% across the entered ${result.years}-year period.`;
+  if (scenario === 'break-even') return `The verified Decimal.js break-even point is ${result.breakEvenUnits} units, corresponding to ${currency} ${result.breakEvenRevenue} of modeled revenue.`;
+  return `The verified Decimal.js debt-to-income ratio is ${result.dtiPercent}%, with the calculator's educational tier recorded as ${result.healthCategory}.`;
+}
+
+apiRouter.post('/finance/compound-interest', (req: Request, res: Response) => {
+  const parsed = compoundInterestInputSchema.safeParse(req.body);
+  if (parsed.success === false) return calculatorValidationError(res, parsed);
+  try {
+    const value = parsed.data;
+    sendDeterministicFinanceResult(res, 'compound', calculateCompoundInterest(
+      value.principal,
+      value.annualRatePercent,
+      value.years,
+      value.monthlyContribution,
+      value.compoundingFrequencyPerYear,
+    ) as unknown as Record<string, unknown>);
+  } catch (error) {
+    res.status(400).json({ error: error instanceof Error ? error.message : 'Compound-interest calculation failed.' });
+  }
+});
+
+apiRouter.post('/finance/quick-ratio', (req: Request, res: Response) => {
+  const parsed = quickRatioInputSchema.safeParse(req.body);
+  if (parsed.success === false) return calculatorValidationError(res, parsed);
+  try {
+    const value = parsed.data;
+    sendDeterministicFinanceResult(res, 'quick-ratio', calculateQuickRatio(
+      value.cash,
+      value.marketableSecurities,
+      value.receivables,
+      value.currentLiabilities,
+    ) as unknown as Record<string, unknown>);
+  } catch (error) {
+    res.status(400).json({ error: error instanceof Error ? error.message : 'Quick-ratio calculation failed.' });
+  }
+});
+
+apiRouter.post('/finance/cagr', (req: Request, res: Response) => {
+  const parsed = cagrInputSchema.safeParse(req.body);
+  if (parsed.success === false) return calculatorValidationError(res, parsed);
+  try {
+    const value = parsed.data;
+    sendDeterministicFinanceResult(res, 'cagr', calculateCAGR(value.initialValue, value.finalValue, value.years) as unknown as Record<string, unknown>);
+  } catch (error) {
+    res.status(400).json({ error: error instanceof Error ? error.message : 'CAGR calculation failed.' });
+  }
+});
+
+apiRouter.post('/finance/break-even', (req: Request, res: Response) => {
+  const parsed = breakEvenInputSchema.safeParse(req.body);
+  if (parsed.success === false) return calculatorValidationError(res, parsed);
+  try {
+    const value = parsed.data;
+    sendDeterministicFinanceResult(res, 'break-even', calculateBreakEven(value.fixedCosts, value.pricePerUnit, value.variableCostPerUnit) as unknown as Record<string, unknown>);
+  } catch (error) {
+    res.status(400).json({ error: error instanceof Error ? error.message : 'Break-even calculation failed.' });
+  }
+});
+
+apiRouter.post('/finance/dti', (req: Request, res: Response) => {
+  const parsed = dtiInputSchema.safeParse(req.body);
+  if (parsed.success === false) return calculatorValidationError(res, parsed);
+  try {
+    const value = parsed.data;
+    sendDeterministicFinanceResult(res, 'dti', calculateDTI(value.monthlyGrossIncome, value.monthlyDebtPayments) as unknown as Record<string, unknown>);
+  } catch (error) {
+    res.status(400).json({ error: error instanceof Error ? error.message : 'DTI calculation failed.' });
+  }
+});
+
+apiRouter.post('/finance/scenario-assistant', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const parsed = scenarioAssistantSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: parsed.error.issues[0]?.message || 'A valid scenario question and input set are required.' });
+    }
+    const safety = checkPromptSafety(parsed.data.question);
+    if (!safety.safe) return res.status(400).json({ error: safety.reason, safety });
+
+    const deterministicResult = recalculateScenario(parsed.data.scenario, parsed.data.inputs);
+    const externalContext = await loadScenarioExternalContext(
+      parsed.data.profile,
+      parsed.data.companySymbol || undefined,
+      parsed.data.useExternalContext,
+    );
+    const hasVerifiedCurrentData = externalContext.economicIndicators.length > 0 || Boolean(externalContext.company) || Boolean(externalContext.quote);
+    const systemPrompt = `You are ArthaMind Scenario Analyst inside ArthaBench Pro's deterministic Financial Scenario & Calculation Studio.
+
+Rules:
+1. The supplied Decimal.js result is the numeric source of truth. Explain it; never replace, override, or silently recompute it with guessed AI math.
+2. Use the exact entered inputs and deterministic result for scenario-specific calculations and examples.
+3. External provider context is optional enrichment. Use only values supplied in externalContext, preserve dates/provider/freshness, and never fabricate web data.
+4. Never substitute a policy rate, market return, company metric, or lender convention for the user's entered assumption unless the user explicitly asks for a separate comparison.
+5. For company context, do not claim the user's entered values belong to that company unless the supplied provider data proves the same metric and period.
+6. For CAGR, distinguish historical annualized growth from a forecast. For quick ratio, explain that industry norms differ. For DTI, explain that lender thresholds and definitions vary. For break-even, state that costs and price are modeled assumptions. For compound interest, identify contribution timing/compounding assumptions.
+7. Keep independent factual claims separate and keep the answer educational, not a personalized investment, tax, credit, or lending instruction.
+${buildStructuredFinancialAnswerInstructions({
+  audience: 'dashboard',
+  language: 'English',
+  level: 'beginner',
+  detail: 'detailed',
+  hasVerifiedCurrentData,
+})}`;
+    const userPrompt = `Scenario: ${parsed.data.scenario}
+Profile: ${parsed.data.profile}
+Currency: ${parsed.data.currency}
+Question: ${parsed.data.question}
+Entered inputs: ${JSON.stringify(parsed.data.inputs)}
+Verified deterministic Decimal.js result: ${JSON.stringify(deterministicResult)}
+External connected-provider context: ${JSON.stringify(externalContext)}`;
+
+    const demoMode = !process.env.GROQ_API_KEY?.trim();
+    const structuredAnswer = demoMode
+      ? createFallbackStructuredFinancialAnswer(
+          `${parsed.data.scenario} ${parsed.data.question}`,
+          scenarioFallbackSummary(parsed.data.scenario, deterministicResult, parsed.data.currency),
+        )
+      : await callGroqStructuredFinancialAnswer(systemPrompt, userPrompt, {
+          fallbackQuestion: `${parsed.data.scenario} ${parsed.data.question}`,
+        });
+
+    res.json({
+      answer: serializeStructuredFinancialAnswer(structuredAnswer),
+      structuredAnswer,
+      deterministicResult,
+      engine: 'Decimal.js',
+      provider: demoMode ? 'deterministic-fallback' : 'groq',
+      model: demoMode ? null : getGroqModels().tutorModel,
+      groundedAt: externalContext.retrievedAt,
+      sourceLabels: externalContext.sourceLabels,
+      contextNotes: externalContext.notes,
+      suggestedQuestions: [
+        'Explain the formula and each input in simple language.',
+        'Which input changes this result the most?',
+        'Show a conservative and an optimistic variation without changing the original result.',
+        hasVerifiedCurrentData
+          ? 'Compare this scenario with the connected external context without substituting the inputs.'
+          : 'What additional verified data would make this analysis more realistic?',
+      ],
+      disclaimer: 'Educational analysis only. The deterministic calculation is not financial, investment, tax, lending, or legal advice.',
+      requestId: res.getHeader('x-request-id'),
+    });
+  } catch (error) {
+    next(error);
+  }
+});
 
 // 1. Health Endpoint
 apiRouter.get('/health', (req: Request, res: Response) => {

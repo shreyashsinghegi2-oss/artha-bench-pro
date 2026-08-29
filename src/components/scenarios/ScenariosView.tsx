@@ -1,15 +1,30 @@
 import React, { useState } from 'react';
-import { BookMarked, Calculator, AlertCircle } from 'lucide-react';
+import { AlertCircle, BookMarked, Calculator, Globe2, Sparkles } from 'lucide-react';
 import { CalculationResultPanel } from './CalculationResultPanel';
+import { CalculatorTab, ScenarioAssistantPanel, ScenarioCurrency, ScenarioProfile } from './ScenarioAssistantPanel';
+
+const INPUT_CLASS = 'w-full rounded-lg border border-line bg-surface p-2 text-xs text-ink outline-none focus:border-interactive';
+const CURRENCY_SYMBOL: Record<ScenarioCurrency, string> = { USD: '$', INR: '₹', EUR: '€', GBP: '£' };
+const ENDPOINTS: Record<CalculatorTab, string> = {
+  compound: 'compound-interest',
+  'quick-ratio': 'quick-ratio',
+  cagr: 'cagr',
+  'break-even': 'break-even',
+  dti: 'dti',
+};
 
 export const ScenariosView: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'compound' | 'quick-ratio' | 'cagr' | 'break-even' | 'dti'>('compound');
+  const [activeTab, setActiveTab] = useState<CalculatorTab>('compound');
+  const [profile, setProfile] = useState<ScenarioProfile>('US');
+  const [currency, setCurrency] = useState<ScenarioCurrency>('USD');
+  const [companySymbol, setCompanySymbol] = useState('');
+  const [useExternalContext, setUseExternalContext] = useState(true);
 
-  // Calculator Inputs
   const [principal, setPrincipal] = useState(10000);
   const [rate, setRate] = useState(7);
   const [years, setYears] = useState(5);
   const [monthlyContribution, setMonthlyContribution] = useState(200);
+  const [compoundingFrequency, setCompoundingFrequency] = useState(12);
 
   const [cash, setCash] = useState(50000);
   const [securities, setSecurities] = useState(20000);
@@ -27,196 +42,146 @@ export const ScenariosView: React.FC = () => {
   const [monthlyIncome, setMonthlyIncome] = useState(8000);
   const [monthlyDebt, setMonthlyDebt] = useState(2400);
 
-  const [calcResult, setCalcResult] = useState<any>(null);
+  const [calcResult, setCalcResult] = useState<Record<string, unknown> | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const runCalculator = async (endpoint: string, payload: any) => {
+  const inputsFor = (tab = activeTab): Record<string, number> => {
+    if (tab === 'compound') return { principal, annualRatePercent: rate, years, monthlyContribution, compoundingFrequencyPerYear: compoundingFrequency };
+    if (tab === 'quick-ratio') return { cash, marketableSecurities: securities, receivables, currentLiabilities: liabilities };
+    if (tab === 'cagr') return { initialValue, finalValue, years: cagrYears };
+    if (tab === 'break-even') return { fixedCosts, pricePerUnit, variableCostPerUnit: varCostPerUnit };
+    return { monthlyGrossIncome: monthlyIncome, monthlyDebtPayments: monthlyDebt };
+  };
+
+  const switchTab = (tab: CalculatorTab) => {
+    setActiveTab(tab);
+    setCalcResult(null);
+    setError(null);
+  };
+
+  const runCalculator = async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/finance/${endpoint}`, {
+      const res = await fetch(`/api/finance/${ENDPOINTS[activeTab]}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(inputsFor()),
       });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Calculation failed');
-      setCalcResult(data);
-    } catch (err: any) {
-      setError(err.message || 'Validation error');
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Calculation failed.');
+      setCalcResult(data as Record<string, unknown>);
+    } catch (err) {
       setCalcResult(null);
+      setError(err instanceof Error ? err.message : 'Validation error.');
     } finally {
       setLoading(false);
     }
   };
 
+  const symbol = CURRENCY_SYMBOL[currency];
+  const companyContextRelevant = activeTab === 'quick-ratio' || activeTab === 'cagr' || activeTab === 'break-even';
+
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8 space-y-8">
-      <div className="bg-surface border border-line rounded-3xl p-6 sm:p-8 space-y-4">
-        <div className="flex items-center gap-3">
-          <div className="p-3 bg-success-soft border border-success-fill rounded-2xl text-success">
-            <BookMarked className="w-6 h-6" />
+    <div className="mx-auto max-w-7xl space-y-8 px-4 py-8">
+      <div className="space-y-5 rounded-3xl border border-line bg-surface p-6 sm:p-8">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div className="flex items-center gap-3">
+            <div className="rounded-2xl border border-success-fill bg-success-soft p-3 text-success"><BookMarked className="h-6 w-6" /></div>
+            <div>
+              <h1 className="text-2xl font-bold text-ink">Financial Scenario & Calculation Studio</h1>
+              <p className="text-xs text-secondary">Run server-verified Decimal.js calculations, then ask ArthaMind to explain the exact result with optional connected external context.</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-2xl font-bold text-ink">Financial Scenario & Calculation Studio</h1>
-            <p className="text-xs text-secondary">
-              Run deterministic financial calculations verified by the Decimal.js core engine.
-            </p>
+          <div className="flex flex-wrap gap-2 text-[9px] font-black uppercase tracking-wider">
+            <span className="rounded-full border border-success-fill/25 bg-success-soft px-2.5 py-1 text-success">Decimal.js deterministic</span>
+            <span className="rounded-full border border-interactive bg-interactive-soft px-2.5 py-1 text-interactive">ArthaMind analysis</span>
           </div>
         </div>
 
-        {/* Calculator Tabs */}
-        <div className="flex flex-wrap gap-2 pt-2 border-b border-line pb-4">
-          <button
-            onClick={() => { setActiveTab('compound'); setCalcResult(null); setError(null); }}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold ${activeTab === 'compound' ? 'bg-interactive-soft text-interactive' : 'bg-hover text-secondary'}`}
-          >
-            Compound Interest
-          </button>
-          <button
-            onClick={() => { setActiveTab('quick-ratio'); setCalcResult(null); setError(null); }}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold ${activeTab === 'quick-ratio' ? 'bg-interactive-soft text-interactive' : 'bg-hover text-secondary'}`}
-          >
-            Quick Ratio
-          </button>
-          <button
-            onClick={() => { setActiveTab('cagr'); setCalcResult(null); setError(null); }}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold ${activeTab === 'cagr' ? 'bg-interactive-soft text-interactive' : 'bg-hover text-secondary'}`}
-          >
-            CAGR
-          </button>
-          <button
-            onClick={() => { setActiveTab('break-even'); setCalcResult(null); setError(null); }}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold ${activeTab === 'break-even' ? 'bg-interactive-soft text-interactive' : 'bg-hover text-secondary'}`}
-          >
-            Break-Even Point
-          </button>
-          <button
-            onClick={() => { setActiveTab('dti'); setCalcResult(null); setError(null); }}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold ${activeTab === 'dti' ? 'bg-interactive-soft text-interactive' : 'bg-hover text-secondary'}`}
-          >
-            Debt-to-Income (DTI)
-          </button>
+        <div className="grid gap-3 rounded-2xl border border-line bg-canvas p-4 sm:grid-cols-2 lg:grid-cols-4">
+          <label className="text-[11px] text-secondary">Profile / data region
+            <select value={profile} onChange={(event) => setProfile(event.target.value as ScenarioProfile)} className={`${INPUT_CLASS} mt-1`}>
+              <option value="US">United States</option><option value="India">India</option><option value="Global">Global</option>
+            </select>
+          </label>
+          <label className="text-[11px] text-secondary">Display currency
+            <select value={currency} onChange={(event) => setCurrency(event.target.value as ScenarioCurrency)} className={`${INPUT_CLASS} mt-1`}>
+              <option value="USD">USD ($)</option><option value="INR">INR (₹)</option><option value="EUR">EUR (€)</option><option value="GBP">GBP (£)</option>
+            </select>
+          </label>
+          {companyContextRelevant ? <label className="text-[11px] text-secondary">Optional company symbol for connected context
+            <input value={companySymbol} onChange={(event) => setCompanySymbol(event.target.value)} maxLength={20} placeholder="AAPL or RELIANCE.NS" className={`${INPUT_CLASS} mt-1 uppercase`} />
+          </label> : <div className="text-[11px] leading-5 text-secondary"><div className="mb-1 font-bold text-ink">External context</div>Official macro observations can be supplied separately to ArthaMind. They never replace the rate, income, debt, or other inputs you enter.</div>}
+          <label className="flex items-center gap-2 self-end rounded-xl border border-line bg-surface px-3 py-2.5 text-[11px] font-semibold text-secondary">
+            <input type="checkbox" checked={useExternalContext} onChange={(event) => setUseExternalContext(event.target.checked)} className="h-4 w-4 accent-current" />
+            <Globe2 className="h-4 w-4 text-interactive" /> Use connected provider context
+          </label>
         </div>
 
-        {/* Inputs */}
-        <div className="space-y-4 pt-2">
-          {activeTab === 'compound' && (
-            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-              <div>
-                <label className="text-[11px] text-secondary block mb-1">Principal ($)</label>
-                <input type="number" value={principal} onChange={(e) => setPrincipal(Number(e.target.value))} className="w-full bg-surface border border-line rounded-lg p-2 text-xs text-ink" />
-              </div>
-              <div>
-                <label className="text-[11px] text-secondary block mb-1">Annual Interest Rate (%)</label>
-                <input type="number" value={rate} onChange={(e) => setRate(Number(e.target.value))} className="w-full bg-surface border border-line rounded-lg p-2 text-xs text-ink" />
-              </div>
-              <div>
-                <label className="text-[11px] text-secondary block mb-1">Time Horizon (Years)</label>
-                <input type="number" value={years} onChange={(e) => setYears(Number(e.target.value))} className="w-full bg-surface border border-line rounded-lg p-2 text-xs text-ink" />
-              </div>
-              <div>
-                <label className="text-[11px] text-secondary block mb-1">Monthly Deposit ($)</label>
-                <input type="number" value={monthlyContribution} onChange={(e) => setMonthlyContribution(Number(e.target.value))} className="w-full bg-surface border border-line rounded-lg p-2 text-xs text-ink" />
-              </div>
-            </div>
-          )}
+        <div className="flex flex-wrap gap-2 border-b border-line pb-4 pt-1">
+          {([
+            ['compound', 'Compound Interest'],
+            ['quick-ratio', 'Quick Ratio'],
+            ['cagr', 'CAGR'],
+            ['break-even', 'Break-Even Point'],
+            ['dti', 'Debt-to-Income (DTI)'],
+          ] as const).map(([tab, label]) => <button key={tab} type="button" onClick={() => switchTab(tab)} className={`rounded-lg px-3 py-1.5 text-xs font-semibold ${activeTab === tab ? 'bg-interactive-soft text-interactive' : 'bg-hover text-secondary'}`}>{label}</button>)}
+        </div>
 
-          {activeTab === 'quick-ratio' && (
-            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-              <div>
-                <label className="text-[11px] text-secondary block mb-1">Cash ($)</label>
-                <input type="number" value={cash} onChange={(e) => setCash(Number(e.target.value))} className="w-full bg-surface border border-line rounded-lg p-2 text-xs text-ink" />
-              </div>
-              <div>
-                <label className="text-[11px] text-secondary block mb-1">Marketable Securities ($)</label>
-                <input type="number" value={securities} onChange={(e) => setSecurities(Number(e.target.value))} className="w-full bg-surface border border-line rounded-lg p-2 text-xs text-ink" />
-              </div>
-              <div>
-                <label className="text-[11px] text-secondary block mb-1">Receivables ($)</label>
-                <input type="number" value={receivables} onChange={(e) => setReceivables(Number(e.target.value))} className="w-full bg-surface border border-line rounded-lg p-2 text-xs text-ink" />
-              </div>
-              <div>
-                <label className="text-[11px] text-secondary block mb-1">Current Liabilities ($)</label>
-                <input type="number" value={liabilities} onChange={(e) => setLiabilities(Number(e.target.value))} className="w-full bg-surface border border-line rounded-lg p-2 text-xs text-ink" />
-              </div>
-            </div>
-          )}
+        <div className="space-y-4 pt-1">
+          {activeTab === 'compound' && <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+            <NumberField label={`Principal (${symbol})`} value={principal} onChange={setPrincipal} min={0} />
+            <NumberField label="Annual Interest Rate (%)" value={rate} onChange={setRate} min={0} step={0.01} />
+            <NumberField label="Time Horizon (Years)" value={years} onChange={setYears} min={0.01} step={0.25} />
+            <NumberField label={`Monthly Deposit (${symbol})`} value={monthlyContribution} onChange={setMonthlyContribution} min={0} />
+            <label className="text-[11px] text-secondary">Compounding frequency
+              <select value={compoundingFrequency} onChange={(event) => setCompoundingFrequency(Number(event.target.value))} className={`${INPUT_CLASS} mt-1`}><option value={1}>Annual</option><option value={4}>Quarterly</option><option value={12}>Monthly</option><option value={365}>Daily</option></select>
+            </label>
+          </div>}
 
-          {activeTab === 'cagr' && (
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div>
-                <label className="text-[11px] text-secondary block mb-1">Initial Value ($)</label>
-                <input type="number" value={initialValue} onChange={(e) => setInitialValue(Number(e.target.value))} className="w-full bg-surface border border-line rounded-lg p-2 text-xs text-ink" />
-              </div>
-              <div>
-                <label className="text-[11px] text-secondary block mb-1">Final Value ($)</label>
-                <input type="number" value={finalValue} onChange={(e) => setFinalValue(Number(e.target.value))} className="w-full bg-surface border border-line rounded-lg p-2 text-xs text-ink" />
-              </div>
-              <div>
-                <label className="text-[11px] text-secondary block mb-1">Years</label>
-                <input type="number" value={cagrYears} onChange={(e) => setCagrYears(Number(e.target.value))} className="w-full bg-surface border border-line rounded-lg p-2 text-xs text-ink" />
-              </div>
-            </div>
-          )}
+          {activeTab === 'quick-ratio' && <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <NumberField label={`Cash (${symbol})`} value={cash} onChange={setCash} min={0} />
+            <NumberField label={`Marketable Securities (${symbol})`} value={securities} onChange={setSecurities} min={0} />
+            <NumberField label={`Receivables (${symbol})`} value={receivables} onChange={setReceivables} min={0} />
+            <NumberField label={`Current Liabilities (${symbol})`} value={liabilities} onChange={setLiabilities} min={0.01} />
+          </div>}
 
-          {activeTab === 'break-even' && (
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div>
-                <label className="text-[11px] text-secondary block mb-1">Total Fixed Costs ($)</label>
-                <input type="number" value={fixedCosts} onChange={(e) => setFixedCosts(Number(e.target.value))} className="w-full bg-surface border border-line rounded-lg p-2 text-xs text-ink" />
-              </div>
-              <div>
-                <label className="text-[11px] text-secondary block mb-1">Price Per Unit ($)</label>
-                <input type="number" value={pricePerUnit} onChange={(e) => setPricePerUnit(Number(e.target.value))} className="w-full bg-surface border border-line rounded-lg p-2 text-xs text-ink" />
-              </div>
-              <div>
-                <label className="text-[11px] text-secondary block mb-1">Variable Cost Per Unit ($)</label>
-                <input type="number" value={varCostPerUnit} onChange={(e) => setVarCostPerUnit(Number(e.target.value))} className="w-full bg-surface border border-line rounded-lg p-2 text-xs text-ink" />
-              </div>
-            </div>
-          )}
+          {activeTab === 'cagr' && <div className="grid gap-4 sm:grid-cols-3">
+            <NumberField label={`Initial Value (${symbol})`} value={initialValue} onChange={setInitialValue} min={0.01} />
+            <NumberField label={`Final Value (${symbol})`} value={finalValue} onChange={setFinalValue} min={0.01} />
+            <NumberField label="Years" value={cagrYears} onChange={setCagrYears} min={0.01} step={0.25} />
+          </div>}
 
-          {activeTab === 'dti' && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="text-[11px] text-secondary block mb-1">Monthly Gross Income ($)</label>
-                <input type="number" value={monthlyIncome} onChange={(e) => setMonthlyIncome(Number(e.target.value))} className="w-full bg-surface border border-line rounded-lg p-2 text-xs text-ink" />
-              </div>
-              <div>
-                <label className="text-[11px] text-secondary block mb-1">Monthly Debt Payments ($)</label>
-                <input type="number" value={monthlyDebt} onChange={(e) => setMonthlyDebt(Number(e.target.value))} className="w-full bg-surface border border-line rounded-lg p-2 text-xs text-ink" />
-              </div>
-            </div>
-          )}
+          {activeTab === 'break-even' && <div className="grid gap-4 sm:grid-cols-3">
+            <NumberField label={`Total Fixed Costs (${symbol})`} value={fixedCosts} onChange={setFixedCosts} min={0} />
+            <NumberField label={`Price Per Unit (${symbol})`} value={pricePerUnit} onChange={setPricePerUnit} min={0.01} />
+            <NumberField label={`Variable Cost Per Unit (${symbol})`} value={varCostPerUnit} onChange={setVarCostPerUnit} min={0} />
+          </div>}
 
-          <button
-            onClick={() => {
-              if (activeTab === 'compound') runCalculator('compound-interest', { principal, annualRatePercent: rate, years, monthlyContribution });
-              if (activeTab === 'quick-ratio') runCalculator('quick-ratio', { cash, marketableSecurities: securities, receivables, currentLiabilities: liabilities });
-              if (activeTab === 'cagr') runCalculator('cagr', { initialValue, finalValue, years: cagrYears });
-              if (activeTab === 'break-even') runCalculator('break-even', { fixedCosts, pricePerUnit, variableCostPerUnit: varCostPerUnit });
-              if (activeTab === 'dti') runCalculator('dti', { monthlyGrossIncome: monthlyIncome, monthlyDebtPayments: monthlyDebt });
-            }}
-            disabled={loading}
-            className="px-6 py-2 bg-brand hover:bg-brand-hover text-brand-foreground hover:text-white font-bold text-xs rounded-xl flex items-center gap-2 transition-colors focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 focus:ring-offset-canvas"
-          >
-            <Calculator className="w-4 h-4" />
-            <span>Calculate Deterministic Result</span>
+          {activeTab === 'dti' && <div className="grid gap-4 sm:grid-cols-2">
+            <NumberField label={`Monthly Gross Income (${symbol})`} value={monthlyIncome} onChange={setMonthlyIncome} min={0.01} />
+            <NumberField label={`Monthly Debt Payments (${symbol})`} value={monthlyDebt} onChange={setMonthlyDebt} min={0} />
+          </div>}
+
+          <button type="button" onClick={() => void runCalculator()} disabled={loading} className="inline-flex items-center gap-2 rounded-xl bg-brand px-6 py-2.5 text-xs font-bold text-brand-foreground transition-colors hover:bg-brand-hover hover:text-white disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 focus:ring-offset-canvas">
+            <Calculator className="h-4 w-4" /> {loading ? 'Calculating…' : 'Calculate Deterministic Result'}
           </button>
         </div>
       </div>
 
-      {error && (
-        <div className="p-4 bg-danger-soft/80 border border-danger rounded-2xl text-xs text-danger flex items-center gap-2">
-          <AlertCircle className="w-4 h-4 text-danger shrink-0" />
-          <span>Validation Error: {error}</span>
-        </div>
-      )}
+      {error && <div className="flex items-center gap-2 rounded-2xl border border-danger bg-danger-soft/80 p-4 text-xs text-danger"><AlertCircle className="h-4 w-4 shrink-0" /><span>Calculation error: {error}</span></div>}
 
-      {calcResult && <CalculationResultPanel activeTab={activeTab} result={calcResult} />}
+      {calcResult && <>
+        <CalculationResultPanel activeTab={activeTab} result={calcResult} currency={currency} />
+        <div className="flex items-center gap-2 px-1 text-xs font-bold text-interactive"><Sparkles className="h-4 w-4" /> The assistant below is connected to this exact calculation.</div>
+        <ScenarioAssistantPanel key={`${activeTab}-${String(calcResult.verificationCode || '')}`} activeTab={activeTab} inputs={inputsFor()} profile={profile} currency={currency} companySymbol={companyContextRelevant ? companySymbol : undefined} useExternalContext={useExternalContext} />
+      </>}
     </div>
   );
 };
+
+const NumberField: React.FC<{ label: string; value: number; onChange: (value: number) => void; min?: number; step?: number }> = ({ label, value, onChange, min, step }) => (
+  <label className="text-[11px] text-secondary">{label}<input type="number" value={value} min={min} step={step || 1} onChange={(event) => onChange(Number(event.target.value))} className={`${INPUT_CLASS} mt-1`} /></label>
+);

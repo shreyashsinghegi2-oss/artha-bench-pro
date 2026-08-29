@@ -61,9 +61,16 @@ export function calculateQuickRatio(
   receivables: number,
   currentLiabilities: number
 ): QuickRatioResult {
-  if (currentLiabilities <= 0) {
-    throw new Error('Current liabilities must be greater than zero.');
-  }
+  if (![cash, marketableSecurities, receivables, currentLiabilities].every(Number.isFinite)) {
+  throw new Error('Quick-ratio inputs must be finite numbers.');
+}
+if (cash < 0 || marketableSecurities < 0 || receivables < 0) {
+  throw new Error('Quick assets cannot be negative.');
+}
+if (currentLiabilities <= 0) {
+  throw new Error('Current liabilities must be greater than zero.');
+}
+
 
   const dCash = new Decimal(cash);
   const dSecurities = new Decimal(marketableSecurities);
@@ -100,9 +107,13 @@ export function calculateCompoundInterest(
   monthlyContribution = 0,
   compoundingFrequencyPerYear = 12
 ): CompoundInterestResult {
-  if (principal < 0 || annualRatePercent < 0 || years <= 0 || compoundingFrequencyPerYear <= 0) {
-    throw new Error('Invalid input parameters for compound interest calculation.');
-  }
+  if (![principal, annualRatePercent, years, monthlyContribution, compoundingFrequencyPerYear].every(Number.isFinite)) {
+  throw new Error('Compound-interest inputs must be finite numbers.');
+}
+if (principal < 0 || annualRatePercent < 0 || years <= 0 || monthlyContribution < 0 || compoundingFrequencyPerYear <= 0) {
+  throw new Error('Invalid input parameters for compound interest calculation.');
+}
+
 
   const P = new Decimal(principal);
   const r = new Decimal(annualRatePercent).div(100);
@@ -166,16 +177,21 @@ export function calculateCAGR(
   finalValue: number,
   years: number
 ): CAGRResult {
-  if (initialValue <= 0 || years <= 0) {
-    throw new Error('Initial value and years must be greater than zero.');
-  }
+  if (![initialValue, finalValue, years].every(Number.isFinite)) {
+  throw new Error('CAGR inputs must be finite numbers.');
+}
+if (initialValue <= 0 || finalValue <= 0 || years <= 0) {
+  throw new Error('Initial value, final value, and years must be greater than zero.');
+}
+
 
   const initDec = new Decimal(initialValue);
   const finalDec = new Decimal(finalValue);
   const yearsDec = new Decimal(years);
 
   const ratio = finalDec.div(initDec);
-  const cagrDec = new Decimal(Math.pow(ratio.toNumber(), 1 / yearsDec.toNumber())).minus(1).times(100);
+  const exponent = new Decimal(1).div(yearsDec);
+  const cagrDec = ratio.pow(exponent).minus(1).times(100);
   const cagrPercent = cagrDec.toDecimalPlaces(2, Decimal.ROUND_HALF_UP).toNumber();
 
   return {
@@ -194,6 +210,13 @@ export function calculateBreakEven(
   pricePerUnit: number,
   variableCostPerUnit: number
 ): BreakEvenResult {
+  if (![fixedCosts, pricePerUnit, variableCostPerUnit].every(Number.isFinite)) {
+  throw new Error('Break-even inputs must be finite numbers.');
+}
+if (fixedCosts < 0 || pricePerUnit <= 0 || variableCostPerUnit < 0) {
+  throw new Error('Fixed costs and variable costs cannot be negative, and price per unit must be greater than zero.');
+}
+
   const fc = new Decimal(fixedCosts);
   const p = new Decimal(pricePerUnit);
   const vc = new Decimal(variableCostPerUnit);
@@ -223,9 +246,13 @@ export function calculateDTI(
   monthlyGrossIncome: number,
   monthlyDebtPayments: number
 ): DTIResult {
-  if (monthlyGrossIncome <= 0) {
-    throw new Error('Monthly gross income must be greater than zero.');
-  }
+  if (![monthlyGrossIncome, monthlyDebtPayments].every(Number.isFinite)) {
+  throw new Error('DTI inputs must be finite numbers.');
+}
+if (monthlyGrossIncome <= 0 || monthlyDebtPayments < 0) {
+  throw new Error('Monthly gross income must be greater than zero and monthly debt payments cannot be negative.');
+}
+
 
   const inc = new Decimal(monthlyGrossIncome);
   const debt = new Decimal(monthlyDebtPayments);

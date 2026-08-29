@@ -1,0 +1,87 @@
+name: Validate evaluation UX integration
+
+on:
+  push:
+    branches: [evaluation-ux-systematic-results]
+
+permissions:
+  contents: write
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: evaluation-ux-systematic-results
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Replace raw calculator JSON with professional result panel
+        shell: python
+        run: |
+          from pathlib import Path
+          path = Path('src/components/scenarios/ScenariosView.tsx')
+          text = path.read_text()
+          import_line = "import { BookMarked, Calculator, ArrowRight, AlertCircle, CheckCircle2 } from 'lucide-react';\n"
+          if import_line not in text:
+              raise SystemExit('Expected ScenariosView icon import not found')
+          text = text.replace(import_line, "import { BookMarked, Calculator, AlertCircle } from 'lucide-react';\nimport { CalculationResultPanel } from './CalculationResultPanel';\n", 1)
+          old = '''      {calcResult && (
+            <div className="bg-surface border border-line rounded-3xl p-6 space-y-4">
+              <h3 className="text-sm font-bold text-ink flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-success" />
+                <span>Deterministic Engine Calculation Output</span>
+              </h3>
+              <pre className="p-4 bg-surface border border-line rounded-2xl text-xs font-mono text-success overflow-x-auto">
+                {JSON.stringify(calcResult, null, 2)}
+              </pre>
+            </div>
+          )}'''
+          if old not in text:
+              raise SystemExit('Expected raw calculator result block not found')
+          text = text.replace(old, "      {calcResult && <CalculationResultPanel activeTab={activeTab} result={calcResult} />}", 1)
+          path.write_text(text)
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: TypeScript validation
+        run: npm run lint
+
+      - name: Production build
+        run: npm run build
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Evaluation UX assertions
+        shell: bash
+        run: |
+          grep -q "destination: 'quick-check'" src/components/AppSearch.tsx
+          grep -q "destination: 'comparison'" src/components/AppSearch.tsx
+          grep -q "destination: 'scenarios'" src/components/AppSearch.tsx
+          grep -q "destination: 'batch'" src/components/AppSearch.tsx
+          grep -q "destination: 'account'" src/components/AppSearch.tsx
+          ! grep -q "SEARCH_ITEMS.slice" src/components/AppSearch.tsx
+          grep -q "Seven-dimension spider chart" src/components/evaluation/ReliabilityReportPanel.tsx
+          grep -q "Why.*Response" src/components/evaluation/ComparisonResultPanel.tsx
+          grep -q "/api/compare-responses" src/components/comparison/ComparisonView.tsx
+          grep -q "/api/evaluate-response" src/components/evaluation/EvaluationLabView.tsx
+          grep -q "/api/evaluate-response" src/components/quickcheck/QuickCheckView.tsx
+          grep -q "CalculationResultPanel" src/components/scenarios/ScenariosView.tsx
+          ! grep -q "JSON.stringify(calcResult" src/components/scenarios/ScenariosView.tsx
+
+      - name: Commit validated scenario integration and remove temporary workflow
+        shell: bash
+        run: |
+          git config user.name "SHREYASH SINGH"
+          git config user.email "shreyashsinghegi2@gmail.com"
+          git rm .github/workflows/validate-evaluation-ux.yml
+          git add src/components/scenarios/ScenariosView.tsx
+          git commit -m "Finish evaluation UX integration"
+          git push origin HEAD:evaluation-ux-systematic-results

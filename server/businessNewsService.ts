@@ -13,7 +13,7 @@ import {
 
 export async function getBusinessNews(
   query = '',
-  category = 'all',
+  category = 'business',
   region = 'global',
   page = 1
 ) {

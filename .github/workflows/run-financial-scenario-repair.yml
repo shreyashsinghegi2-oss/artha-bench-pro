@@ -24,7 +24,6 @@ jobs:
         shell: python
         run: |
           from pathlib import Path
-          import textwrap
           workflow = Path('.github/workflows/fix-financial-scenario-studio.yml').read_text()
           start_marker = '      - name: Repair calculators and add scenario-aware ArthaMind\n'
           run_marker = '        run: |\n'
@@ -32,7 +31,8 @@ jobs:
           start = workflow.index(start_marker)
           run_start = workflow.index(run_marker, start) + len(run_marker)
           run_end = workflow.index(end_marker, run_start)
-          script = textwrap.dedent(workflow[run_start:run_end])
+          raw_script = workflow[run_start:run_end]
+          script = '\n'.join(line[10:] if line.startswith('          ') else line for line in raw_script.splitlines())
           exec(compile(script, 'financial-scenario-repair.py', 'exec'), {})
       - name: Install dependencies
         run: npm ci

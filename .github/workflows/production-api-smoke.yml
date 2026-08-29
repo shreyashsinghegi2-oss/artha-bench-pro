@@ -1,4 +1,4 @@
-name: Add and validate resend verification UX
+name: Validate immediate Supabase email signup
 
 on:
   push:
@@ -23,37 +23,212 @@ jobs:
           node-version: 22
           cache: npm
 
-      - name: Add visible resend-verification action
+      - name: Connect email signup to Supabase signup function
         shell: python
         run: |
           from pathlib import Path
-          path = Path('src/components/auth/AuthModal.tsx')
+
+          path = Path('src/services/supabaseRest.ts')
           text = path.read_text()
 
-          old = "import { isSocialProviderEnabled } from '../../services/supabaseRest';"
-          new = "import { isSocialProviderEnabled, resendSignupConfirmation } from '../../services/supabaseRest';"
-          if old not in text:
-              raise SystemExit('Auth import pattern missing')
-          text = text.replace(old, new, 1)
+          old_signin = '''export async function signInWithPassword(email: string, password: string): Promise<AuthSession> {
+  const { url } = config();
+  const payload = await requestJSON<any>(`${url}/auth/v1/token?grant_type=password`, {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify({ email, password }),
+  });
+  const session = normalizeSession(payload);
+  if (!session) throw new Error('Sign-in succeeded but no session was returned.');
+  return session;
+}'''
+          new_signin = '''export async function signInWithPassword(email: string, password: string): Promise<AuthSession> {
+  const { url } = config();
+  try {
+    const payload = await requestJSON<any>(`${url}/auth/v1/token?grant_type=password`, {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({ email, password }),
+    });
+    const session = normalizeSession(payload);
+    if (!session) throw new Error('Sign-in succeeded but no session was returned.');
+    return session;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : '';
+    if (!/email not confirmed/i.test(message)) throw error;
 
-          old = "  const [googleAvailable, setGoogleAvailable] = useState<boolean | null>(null);"
-          new = "  const [googleAvailable, setGoogleAvailable] = useState<boolean | null>(null);\n  const [verificationSent, setVerificationSent] = useState(false);"
-          if old not in text:
-              raise SystemExit('Auth state pattern missing')
-          text = text.replace(old, new, 1)
+    const recovered = await requestJSON<any>(`${url}/functions/v1/signup-account`, {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({ mode: 'recover', email, password }),
+    });
+    const session = normalizeSession(recovered?.session);
+    if (!session) throw new Error('Account recovery succeeded but no session was returned.');
+    return session;
+  }
+}'''
+          if old_signin not in text:
+              raise SystemExit('signInWithPassword source pattern missing')
+          text = text.replace(old_signin, new_signin, 1)
 
-          old = "  const submitReset = (event: FormEvent) => {\n    event.preventDefault();\n    if (password.length < 8) return setError('Use at least 8 characters for your new password.');\n    if (password !== confirmPassword) return setError('Passwords do not match.');\n    void run(() => auth.resetPassword(password));\n  };"
-          new = "  const submitReset = (event: FormEvent) => {\n    event.preventDefault();\n    if (password.length < 8) return setError('Use at least 8 characters for your new password.');\n    if (password !== confirmPassword) return setError('Passwords do not match.');\n    void run(() => auth.resetPassword(password));\n  };\n\n  const resendVerification = () => {\n    const normalizedEmail = email.trim();\n    if (!normalizedEmail) {\n      setError('Enter your email on the sign-in screen first, then resend verification.');\n      return;\n    }\n    setVerificationSent(false);\n    void run(async () => {\n      await resendSignupConfirmation(normalizedEmail);\n      setVerificationSent(true);\n    });\n  };"
-          if old not in text:
-              raise SystemExit('Reset handler pattern missing')
-          text = text.replace(old, new, 1)
-
-          old = """            {auth.authScreen === 'verify' && (\n              <div className=\"space-y-5 rounded-2xl border border-line bg-canvas p-6 text-center\">\n                <CheckCircle2 className=\"mx-auto h-12 w-12 text-success\" />\n                <div><h3 className=\"text-lg font-black text-ink\">Check your inbox</h3><p className=\"mt-2 text-sm leading-6 text-secondary\">Use the secure verification link sent by Supabase Auth, then return to Artha Bench and sign in.</p></div>\n                <button type=\"button\" onClick={() => auth.openAuth('login')} className=\"rounded-xl bg-brand px-5 py-3 text-sm font-black text-white\">Return to sign in</button>\n              </div>\n            )}"""
-          new = """            {auth.authScreen === 'verify' && (\n              <div className=\"space-y-5 rounded-2xl border border-line bg-canvas p-6 text-center\">\n                <CheckCircle2 className=\"mx-auto h-12 w-12 text-success\" />\n                <div>\n                  <h3 className=\"text-lg font-black text-ink\">Verify your email once</h3>\n                  <p className=\"mt-2 text-sm leading-6 text-secondary\">Your account is already created. Open the latest Artha Bench / Supabase confirmation email and click the verification link. After verification, the same email and password can sign in normally.</p>\n                </div>\n                {verificationSent && <div className=\"rounded-xl border border-success-fill/30 bg-success-soft px-4 py-3 text-xs font-bold text-success\">A fresh verification email has been sent.</div>}\n                <div className=\"grid gap-2 sm:grid-cols-2\">\n                  <button type=\"button\" disabled={busy || !email.trim()} onClick={resendVerification} className=\"rounded-xl border border-line-strong bg-surface px-5 py-3 text-sm font-black text-ink disabled:cursor-not-allowed disabled:opacity-50\">{busy ? 'Sending…' : 'Resend verification email'}</button>\n                  <button type=\"button\" onClick={() => auth.openAuth('login')} className=\"rounded-xl bg-brand px-5 py-3 text-sm font-black text-white\">I verified it — sign in</button>\n                </div>\n                <p className=\"text-[10px] leading-5 text-secondary\">If the email is not visible, check Spam or Promotions. Verification is required once so another person cannot create an account using your email address.</p>\n              </div>\n            )}"""
-          if old not in text:
-              raise SystemExit('Verify block pattern missing')
-          text = text.replace(old, new, 1)
+          old_signup = '''export async function signUpWithPassword(input: {
+  email: string;
+  password: string;
+  fullName: string;
+  country: string;
+  financialDataConsent: boolean;
+}): Promise<{ session: AuthSession | null; user: AuthUser | null }> {
+  const { url } = config();
+  const redirectTo = browserRedirect('callback');
+  const endpoint = redirectTo ? `${url}/auth/v1/signup?redirect_to=${encodeURIComponent(redirectTo)}` : `${url}/auth/v1/signup`;
+  const payload = await requestJSON<any>(endpoint, {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify({
+      email: input.email,
+      password: input.password,
+      data: {
+        full_name: input.fullName,
+        country: input.country,
+        personal_data_insights_enabled: input.financialDataConsent,
+      },
+    }),
+  });
+  return { session: normalizeSession(payload), user: payload?.user ?? null };
+}'''
+          new_signup = '''export async function signUpWithPassword(input: {
+  email: string;
+  password: string;
+  fullName: string;
+  country: string;
+  financialDataConsent: boolean;
+}): Promise<{ session: AuthSession | null; user: AuthUser | null }> {
+  const { url } = config();
+  const payload = await requestJSON<any>(`${url}/functions/v1/signup-account`, {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify({
+      mode: 'signup',
+      email: input.email,
+      password: input.password,
+      fullName: input.fullName,
+      country: input.country,
+      financialDataConsent: input.financialDataConsent,
+    }),
+  });
+  const session = normalizeSession(payload?.session);
+  return { session, user: session?.user ?? null };
+}'''
+          if old_signup not in text:
+              raise SystemExit('signUpWithPassword source pattern missing')
+          text = text.replace(old_signup, new_signup, 1)
           path.write_text(text)
+
+          edge = Path('supabase/functions/signup-account/index.ts')
+          edge.parent.mkdir(parents=True, exist_ok=True)
+          edge.write_text('''import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { createClient } from "npm:@supabase/supabase-js@2";
+
+const allowedOrigins = new Set([
+  "https://artha-bench-pro.vercel.app",
+  "http://localhost:5173",
+  "http://localhost:3000",
+]);
+
+function cors(origin: string | null) {
+  const allowed = origin && allowedOrigins.has(origin) ? origin : "https://artha-bench-pro.vercel.app";
+  return {
+    "Access-Control-Allow-Origin": allowed,
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Vary": "Origin",
+  };
+}
+
+function json(status: number, body: Record<string, unknown>, origin: string | null) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...cors(origin), "Content-Type": "application/json", "Cache-Control": "no-store" },
+  });
+}
+
+function validEmail(email: string) {
+  return email.length <= 254 && /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email);
+}
+
+Deno.serve(async (req) => {
+  const origin = req.headers.get("Origin");
+  if (req.method === "OPTIONS") return new Response("ok", { headers: cors(origin) });
+  if (req.method !== "POST") return json(405, { error: "Method not allowed" }, origin);
+  if (origin && !allowedOrigins.has(origin)) return json(403, { error: "Origin not allowed" }, origin);
+
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!supabaseUrl || !anonKey || !serviceRoleKey) return json(500, { error: "Authentication service is not configured" }, origin);
+
+  let body: any;
+  try {
+    const raw = await req.text();
+    if (raw.length > 4096) return json(413, { error: "Request too large" }, origin);
+    body = JSON.parse(raw);
+  } catch {
+    return json(400, { error: "Invalid request" }, origin);
+  }
+
+  const mode = body?.mode === "recover" ? "recover" : "signup";
+  const email = String(body?.email || "").trim().toLowerCase();
+  const password = String(body?.password || "");
+  const fullName = String(body?.fullName || "").trim();
+  const country = String(body?.country || "India").trim();
+  const financialDataConsent = body?.financialDataConsent === true;
+
+  if (!validEmail(email)) return json(400, { error: "Enter a valid email address" }, origin);
+  if (password.length < 8 || password.length > 128) return json(400, { error: "Password must be 8–128 characters" }, origin);
+  if (mode === "signup" && (!fullName || fullName.length > 100)) return json(400, { error: "Enter your full name" }, origin);
+  if (mode === "signup" && (!country || country.length > 80)) return json(400, { error: "Enter a valid country or region" }, origin);
+
+  const admin = createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false, autoRefreshToken: false } });
+  const publicClient = createClient(supabaseUrl, anonKey, { auth: { persistSession: false, autoRefreshToken: false } });
+
+  const firstAttempt = await publicClient.auth.signInWithPassword({ email, password });
+  if (!firstAttempt.error && firstAttempt.data.session) return json(200, { session: firstAttempt.data.session, existing: true }, origin);
+
+  if (/email not confirmed/i.test(firstAttempt.error?.message || "")) {
+    const { data: listed, error: listError } = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 });
+    if (!listError) {
+      const user = listed.users.find((candidate) => candidate.email?.toLowerCase() === email);
+      if (user && !user.email_confirmed_at) {
+        const { error: confirmError } = await admin.auth.admin.updateUserById(user.id, { email_confirm: true });
+        if (!confirmError) {
+          const recovered = await publicClient.auth.signInWithPassword({ email, password });
+          if (!recovered.error && recovered.data.session) return json(200, { session: recovered.data.session, recovered: true }, origin);
+        }
+      }
+    }
+    return json(401, { error: "This account could not be recovered. Use Forgot password or contact support." }, origin);
+  }
+
+  if (mode === "recover") return json(401, { error: "Invalid email or password" }, origin);
+
+  const { data: created, error: createError } = await admin.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true,
+    user_metadata: {
+      full_name: fullName,
+      country,
+      personal_data_insights_enabled: financialDataConsent,
+    },
+  });
+  if (createError) return json(409, { error: "An account with this email already exists. Sign in with its password or use Forgot password." }, origin);
+  if (!created.user) return json(500, { error: "Account could not be created" }, origin);
+
+  const signedIn = await publicClient.auth.signInWithPassword({ email, password });
+  if (signedIn.error || !signedIn.data.session) return json(500, { error: "Account created, but automatic sign-in failed. Please sign in once." }, origin);
+  return json(201, { session: signedIn.data.session, created: true }, origin);
+});
+''')
 
       - name: Install dependencies
         run: npm ci
@@ -61,28 +236,65 @@ jobs:
       - name: Production build
         run: npm run build
 
-      - name: Verify requested behavior
+      - name: Integration test immediate signup
+        shell: bash
+        env:
+          SUPABASE_URL: https://agjbvoosukxfvrritgto.supabase.co
+          SUPABASE_KEY: sb_publishable_KOdXB7LW5Ho5hDjsi3GMiw_xdogy5oR
+        run: |
+          EMAIL="arthabench-ci-${GITHUB_RUN_ID}@example.com"
+          PASSWORD="CI-${GITHUB_RUN_ID}-Secure9!"
+          export EMAIL PASSWORD
+          curl --fail-with-body --silent --show-error \
+            -X POST "$SUPABASE_URL/functions/v1/signup-account" \
+            -H "apikey: $SUPABASE_KEY" \
+            -H "Authorization: Bearer $SUPABASE_KEY" \
+            -H "Content-Type: application/json" \
+            -H "Origin: https://artha-bench-pro.vercel.app" \
+            --data "{\"mode\":\"signup\",\"email\":\"$EMAIL\",\"password\":\"$PASSWORD\",\"fullName\":\"CI Auth User\",\"country\":\"India\",\"financialDataConsent\":false}" \
+            > /tmp/signup.json
+          python - <<'PY'
+          import json, os
+          data=json.load(open('/tmp/signup.json'))
+          session=data.get('session') or {}
+          user=session.get('user') or {}
+          assert session.get('access_token'), data
+          assert session.get('refresh_token'), data
+          assert user.get('email') == os.environ['EMAIL'], data
+          assert user.get('email_confirmed_at'), data
+          PY
+          curl --fail-with-body --silent --show-error \
+            -X POST "$SUPABASE_URL/auth/v1/token?grant_type=password" \
+            -H "apikey: $SUPABASE_KEY" \
+            -H "Authorization: Bearer $SUPABASE_KEY" \
+            -H "Content-Type: application/json" \
+            --data "{\"email\":\"$EMAIL\",\"password\":\"$PASSWORD\"}" \
+            > /tmp/login.json
+          python - <<'PY'
+          import json
+          data=json.load(open('/tmp/login.json'))
+          assert data.get('access_token'), data
+          assert data.get('user', {}).get('email_confirmed_at'), data
+          PY
+
+      - name: Verify source behavior
         shell: bash
         run: |
+          grep -q "functions/v1/signup-account" src/services/supabaseRest.ts
+          grep -q "mode: 'recover'" src/services/supabaseRest.ts
+          grep -q "mode: 'signup'" src/services/supabaseRest.ts
           grep -q "<DashboardView onNavigate" src/App.tsx
           if grep -q "PublicFinanceOverview" src/App.tsx; then
             echo "Simplified overview replacement is still active"
             exit 1
           fi
-          grep -q "Resend verification email" src/components/auth/AuthModal.tsx
-          grep -q "resendSignupConfirmation" src/auth/AuthContext.tsx
-          grep -q "auth/v1/resend" src/services/supabaseRest.ts
 
-      - name: Push validated auth UX to main
+      - name: Push validated signup fix to main
         shell: bash
         run: |
           git checkout -- api/index.js || true
           git config user.name "SHREYASH SINGH"
           git config user.email "shreyashsinghegi2@gmail.com"
-          git add src/components/auth/AuthModal.tsx
-          if git diff --cached --quiet; then
-            echo "No source changes to commit."
-            exit 0
-          fi
-          git commit -m "Add resend verification action"
+          git add src/services/supabaseRest.ts supabase/functions/signup-account/index.ts
+          git commit -m "Enable immediate Supabase email signup"
           git push origin HEAD:main

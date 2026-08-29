@@ -17,7 +17,6 @@ import { FinanceAssistantDrawer } from './components/finance/FinanceAssistantDra
 import { Footer } from './components/Footer';
 import { DashboardView } from './components/dashboard/DashboardView';
 import { PersonalFinancialIntelligence } from './components/dashboard/PersonalFinancialIntelligence';
-import { PublicFinanceOverview } from './components/dashboard/PublicFinanceOverview';
 import { LearningView } from './components/learning/LearningView';
 import { NewsView } from './components/news/NewsView';
 import { QuickCheckView } from './components/quickcheck/QuickCheckView';
@@ -114,17 +113,14 @@ export default function App() {
   }, []);
   const goOverview = useCallback(() => goToDestination('overview'), [goToDestination]);
 
-  const dashboard = () => {
-    if (!auth.user) {
-      return <PublicFinanceOverview onSignIn={() => auth.openAuth('login')} onNavigate={navigateWorkspace} />;
-    }
-    return <>
+  const dashboard = () => <>
+    {auth.user && (
       <div className="mx-auto max-w-[1700px] px-4 pt-7 sm:px-6">
         <PersonalFinancialIntelligence onNavigate={(destination) => navigateWorkspace(destination)} />
       </div>
-      <DashboardView onNavigate={(destination) => navigateWorkspace(destination)} />
-    </>;
-  };
+    )}
+    <DashboardView onNavigate={(destination) => navigateWorkspace(destination)} />
+  </>;
 
   const renderActiveView = () => {
     switch (currentDestination) {

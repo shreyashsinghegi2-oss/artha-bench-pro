@@ -45,7 +45,11 @@ function mapCategory(category: string) {
     corporate: 'business', earnings: 'business', macroeconomics: 'business',
     markets: 'business', policy: 'politics', tech: 'technology',
   };
-  if (!normalized || normalized === 'all') return undefined;
+  if (!normalized) return undefined;
+  // This module powers the Business News workspace. Treat the default "all"
+  // request as business rather than letting a general-news feed leak into the
+  // finance dashboard.
+  if (normalized === 'all') return 'business';
   return map[normalized] || normalized;
 }
 

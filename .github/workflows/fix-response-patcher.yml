@@ -1,0 +1,35 @@
+name: Fix response contract patcher
+
+on:
+  push:
+    branches: [artha-response-contract-v4]
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Fix literal serializer replacement
+        shell: python
+        run: |
+          from pathlib import Path
+          path = Path('.github/workflows/apply-artha-response-contract.yml')
+          text = path.read_text()
+          old = "              serializer.strip(),\n              text,\n              count=1,"
+          new = "              lambda _match: serializer.strip(),\n              text,\n              count=1,"
+          if old not in text:
+              raise SystemExit('serializer replacement pattern not found')
+          path.write_text(text.replace(old, new, 1))
+      - name: Commit patcher fix
+        run: |
+          git config user.name "SHREYASH SINGH"
+          git config user.email "shreyashsinghegi2@gmail.com"
+          git add .github/workflows/apply-artha-response-contract.yml
+          git commit -m "Fix response contract patcher literal escaping"
+          git push origin HEAD:artha-response-contract-v4

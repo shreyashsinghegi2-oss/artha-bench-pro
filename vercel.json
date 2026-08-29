@@ -4,15 +4,16 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "functions": {
-    "api/index.ts": {
-      "maxDuration": 60
-    }
+    "api/index.ts": { "maxDuration": 60 },
+    "api/probe.ts": { "maxDuration": 10 },
+    "api/probe-express.ts": { "maxDuration": 10 },
+    "api/probe-routes.ts": { "maxDuration": 10 }
   },
   "rewrites": [
-    {
-      "source": "/api/:path*",
-      "destination": "/api/index"
-    },
+    { "source": "/__probe", "destination": "/api/probe" },
+    { "source": "/__probe-express", "destination": "/api/probe-express" },
+    { "source": "/__probe-routes", "destination": "/api/probe-routes" },
+    { "source": "/api/:path*", "destination": "/api/index" },
     { "source": "/finance/:path*", "destination": "/index.html" },
     { "source": "/workspace/:path*", "destination": "/index.html" },
     { "source": "/auth", "destination": "/index.html" },
@@ -23,9 +24,6 @@
     { "source": "/support", "destination": "/index.html" },
     { "source": "/changelog", "destination": "/index.html" },
     { "source": "/access", "destination": "/index.html" },
-    {
-      "source": "/:path*",
-      "destination": "/index.html"
-    }
+    { "source": "/:path*", "destination": "/index.html" }
   ]
 }

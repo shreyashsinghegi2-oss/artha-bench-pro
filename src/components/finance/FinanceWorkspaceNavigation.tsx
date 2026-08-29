@@ -1,5 +1,6 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { ChevronLeft, ChevronRight, FileBarChart2, Gauge, Landmark, ReceiptText, WalletCards, CalendarClock } from 'lucide-react';
+import React, { MouseEvent, useEffect, useRef, useState } from 'react';
+import { CalendarClock, ChevronLeft, ChevronRight, FileBarChart2, Gauge, Landmark, ReceiptText, WalletCards } from 'lucide-react';
+import { pathForDestination } from '../../appRoutes';
 import { AppNavigationDestination } from '../../navigationTypes';
 
 type Props = {
@@ -21,6 +22,10 @@ const tabs: Array<{
   { id: 'emi-manager', label: 'EMI Manager', description: 'Track existing loan instalments, balances and upcoming due dates.', icon: CalendarClock },
 ];
 
+function isModifiedNavigation(event: MouseEvent<HTMLAnchorElement>) {
+  return event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey;
+}
+
 export const FinanceWorkspaceNavigation: React.FC<Props> = ({ currentDestination, onNavigate }) => {
   const railRef = useRef<HTMLDivElement | null>(null);
   const hoverTimerRef = useRef<number | null>(null);
@@ -30,6 +35,7 @@ export const FinanceWorkspaceNavigation: React.FC<Props> = ({ currentDestination
   const [tooltipId, setTooltipId] = useState<AppNavigationDestination | null>(null);
 
   const activeDestination = currentDestination === 'dashboard' ? 'overview' : currentDestination;
+  const currentPath = typeof window !== 'undefined' ? (window.location.pathname.replace(/\/+$/, '') || '/') : pathForDestination(activeDestination);
 
   const updateOverflow = () => {
     const rail = railRef.current;
@@ -56,10 +62,10 @@ export const FinanceWorkspaceNavigation: React.FC<Props> = ({ currentDestination
   useEffect(() => {
     const rail = railRef.current;
     if (!rail) return;
-    const active = rail.querySelector<HTMLElement>(`[data-finance-tab="${activeDestination}"]`);
+    const active = rail.querySelector<HTMLElement>('[aria-current="page"]');
     active?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'nearest', inline: 'center' });
     window.setTimeout(updateOverflow, 40);
-  }, [activeDestination]);
+  }, [currentPath]);
 
   useEffect(() => () => {
     if (hoverTimerRef.current) window.clearTimeout(hoverTimerRef.current);
@@ -112,29 +118,40 @@ export const FinanceWorkspaceNavigation: React.FC<Props> = ({ currentDestination
             dragStartRef.current = null;
             window.setTimeout(() => { draggedRef.current = false; }, 0);
           }}
+          onPointerCancel={() => {
+            dragStartRef.current = null;
+            draggedRef.current = false;
+          }}
         >
           {tabs.map(({ id, label, description, icon: Icon }) => {
-            const active = activeDestination === id;
+            const href = pathForDestination(id);
+            const active = currentPath === href || (id === 'overview' && activeDestination === 'overview');
             const tooltipVisible = tooltipId === id;
             return (
               <div key={id} className="relative shrink-0">
-                <button
-                  type="button"
+                <a
+                  href={href}
                   data-finance-tab={id}
                   onMouseEnter={() => queueTooltip(id)}
                   onMouseLeave={hideTooltip}
                   onFocus={() => setTooltipId(id)}
                   onBlur={hideTooltip}
-                  onClick={() => {
-                    if (draggedRef.current) return;
+                  onClick={(event) => {
+                    if (draggedRef.current) {
+                      event.preventDefault();
+                      return;
+                    }
+                    if (isModifiedNavigation(event)) return;
+                    event.preventDefault();
                     onNavigate(id);
                   }}
+                  aria-label={`Open ${label}`}
                   aria-current={active ? 'page' : undefined}
-                  className={`group inline-flex h-9 items-center gap-2 rounded-xl border px-3 text-xs font-semibold whitespace-nowrap transition-[background-color,border-color,color,transform] duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-interactive ${active ? 'border-interactive/30 bg-interactive-soft text-interactive' : 'border-transparent bg-transparent text-secondary hover:border-line hover:bg-surface hover:text-ink'}`}
+                  className={`group inline-flex h-9 items-center gap-2 whitespace-nowrap rounded-xl border px-3 text-xs font-semibold transition-[background-color,border-color,color,transform] duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-interactive ${active ? 'border-interactive/30 bg-interactive-soft text-interactive' : 'border-transparent bg-transparent text-secondary hover:border-line hover:bg-surface hover:text-ink'}`}
                 >
                   <Icon className="h-3.5 w-3.5" aria-hidden="true" />
                   {label}
-                </button>
+                </a>
                 {tooltipVisible && <div role="tooltip" className="absolute left-1/2 top-[calc(100%+8px)] z-50 w-60 -translate-x-1/2 rounded-xl border border-line bg-surface px-3 py-2 shadow-xl"><div className="text-[10px] font-black text-ink">{label}</div><div className="mt-1 text-[9px] leading-4 text-secondary">{description}</div></div>}
               </div>
             );

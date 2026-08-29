@@ -121,54 +121,58 @@ export function buildCryptoAssistantFallback(question: string, context: CryptoAs
   const direction = context.absoluteChange > 0 ? 'up' : context.absoluteChange < 0 ? 'down' : 'flat';
   const range = context.high - context.low;
   const bodyToRange = range ? Math.abs(context.absoluteChange) / range * 100 : 0;
-  return `## Selected Data
-- ${context.symbol.replace('USDT', '/USDT')} · ${context.interval} · ${context.candleStatus}
-- ${context.timeUtc} UTC · ${context.timeIst} IST
-- Source: ${context.provider} · Feed: ${context.streamStatus.toUpperCase()}
+  const direct = `${context.symbol.replace('USDT', '/USDT')} is ${direction} by ${context.absoluteChange >= 0 ? '+' : ''}${formattedNumber(context.absoluteChange)} USDT (${context.percentChange >= 0 ? '+' : ''}${context.percentChange.toFixed(2)}%) in the selected ${context.interval} ${context.candleStatus.toLowerCase()} candle.`;
+  return `## Direct answer
+${direct}
 
-## Price Summary
-| Open | ${formattedNumber(context.open)} USDT |
-| Close | ${formattedNumber(context.close)} USDT |
-| High / Low | ${formattedNumber(context.high)} / ${formattedNumber(context.low)} USDT |
-| Candle change | ${context.absoluteChange >= 0 ? '+' : ''}${formattedNumber(context.absoluteChange)} (${context.percentChange >= 0 ? '+' : ''}${context.percentChange.toFixed(2)}%) |
-| Base volume / trades | ${formattedNumber(context.baseVolume, 4)} / ${context.tradeCount.toLocaleString('en-US')} |
+## Assumptions and context
+- Instrument: ${context.symbol.replace('USDT', '/USDT')} · interval: ${context.interval} · candle: ${context.candleStatus}
+- Time: ${context.timeUtc} UTC · ${context.timeIst} IST
+- Source: ${context.provider} · feed status: ${context.streamStatus.toUpperCase()}
+- Question: ${question.trim()}
 
-## What the Data Shows
-- This candle is ${direction}; its body uses ${bodyToRange.toFixed(1)}% of the observed high-low range.
-- Volume and trade count describe activity, not the identity or intent of buyers and sellers.
+## Formula or rule
+Candle change = Close − Open
+Percentage change = (Close − Open) / Open × 100
+Range = High − Low
 
-## Educational Interpretation
-- The question was: ${question.trim()}
-- One candle cannot establish a durable trend. Compare it with several closed candles, volume, volatility, and broader market conditions.
+## Step-by-step calculation or reasoning
+1. Open = ${formattedNumber(context.open)} USDT; Close = ${formattedNumber(context.close)} USDT.
+2. High = ${formattedNumber(context.high)} USDT; Low = ${formattedNumber(context.low)} USDT; Range = ${formattedNumber(range)} USDT.
+3. Absolute change = ${context.absoluteChange >= 0 ? '+' : ''}${formattedNumber(context.absoluteChange)} USDT; Percentage change = ${context.percentChange >= 0 ? '+' : ''}${context.percentChange.toFixed(2)}%.
+4. The candle body uses ${bodyToRange.toFixed(1)}% of the observed high-low range. Volume is ${formattedNumber(context.baseVolume, 4)} base units across ${context.tradeCount.toLocaleString('en-US')} trades.
+5. One candle describes a measured interval; it does not establish a durable trend or identify buyer/seller intent.
 
-## Purchase Decision Framework
-- Research further only if the asset, venue, custody risk, fees, liquidity, and downside limits fit a written plan.
-- Avoid acting when the decision depends on one forming candle, urgency, leverage, borrowed money, or a promised return.
-- ArthaBench does not issue a buy, sell, hold, or target-price instruction.
+## Final result and interpretation
+Final result: the selected candle is ${direction}, with a ${context.percentChange >= 0 ? '+' : ''}${context.percentChange.toFixed(2)}% open-to-close move.
+This is a measured candle observation, not a forecast or a buy/sell/hold signal.
 
-## Scenario Analysis
-- Bullish: follow-through closes above the observed high with consistent participation.
-- Neutral: price remains inside the candle range and evidence stays mixed.
-- Bearish: follow-through closes below the observed low or liquidity weakens.
+## If needed
+- Compare several closed candles, volume, volatility, liquidity, fees, and broader market conditions before drawing a research conclusion.
+- Bullish, neutral, and bearish scenarios should be framed conditionally around follow-through evidence rather than price targets.
 
-## Risk and Limitations
-- USDT may not equal USD exactly; crypto prices differ across venues and forming candles can change before close.
-- Educational research guidance only—not personalized investment advice.`;
+## Limitations and verification
+- ${context.candleStatus === 'Forming' ? 'This candle is still forming and can change before close.' : 'This candle is closed, but later market conditions can differ.'}
+- USDT may not equal USD exactly, and crypto prices can differ across venues.
+- Verify consequential decisions independently; ArthaBench does not issue personalized buy, sell, hold, leverage, or target-price instructions.`;
 }
 
 export async function answerCryptoQuestion(question: string, context: CryptoAssistantContext) {
   const fallback = buildCryptoAssistantFallback(question, context);
   if (!process.env.GROQ_API_KEY?.trim()) return { answer: fallback, provider: 'deterministic' as const, model: null };
 
-  const systemPrompt = `You are ArthaBench Crypto Assistant, an evidence-grounded financial educator.
-Use only the supplied Binance candle context for specific numbers. Return Markdown with exactly these section headings: Selected Data, Price Summary, What the Data Shows, Educational Interpretation, Purchase Decision Framework, Scenario Analysis, Risk and Limitations. Use ## headings, short bullets, and a two-column pipe table under Price Summary. Never provide personalized buy/sell/hold instructions, target prices, guaranteed returns, or certainty. A purchase/avoid request must receive a conditional due-diligence checklist, not an order. Explicitly label forming candles and data freshness. Keep the response under 650 words.`;
+  const systemPrompt = `You are ArthaMind Crypto Assistant, an evidence-grounded financial educator. Use only the supplied Binance candle context for specific numbers. Follow these Markdown headings in this exact order: Direct answer; Assumptions and context; Formula or rule; Step-by-step calculation or reasoning; Final result and interpretation; If needed; Limitations and verification. The Direct answer must be one sentence. Show only formulas supported by the supplied candle data. Keep independent factual claims in separate sentences. Preserve exact Binance source, feed status, candle status, UTC/IST timestamps, OHLC, volume and trade-count values. Never provide personalized buy/sell/hold instructions, target prices, leverage instructions, guaranteed returns, or certainty. A purchase/avoid request receives an educational due-diligence framework, not an order. Explicitly label forming candles and data freshness. Keep the response under 650 words.`;
   try {
     const answer = await callGroqChat(
       systemPrompt,
-      `Question: ${question}\n\nVerified Binance candle context:\n${JSON.stringify(context)}`,
+      `Question: ${question}
+
+Verified Binance candle context:
+${JSON.stringify(context)}`,
       getGroqModels().tutorModel,
     );
-    return { answer: answer.includes('## ') ? answer : fallback, provider: 'groq' as const, model: getGroqModels().tutorModel };
+    const required = ['## Direct answer', '## Assumptions and context', '## Formula or rule', '## Step-by-step calculation or reasoning', '## Final result and interpretation', '## Limitations and verification'];
+    return { answer: required.every((heading) => answer.includes(heading)) ? answer : fallback, provider: 'groq' as const, model: getGroqModels().tutorModel };
   } catch {
     return { answer: fallback, provider: 'deterministic' as const, model: null };
   }

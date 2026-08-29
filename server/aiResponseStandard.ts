@@ -53,7 +53,7 @@ export const structuredFinancialAnswerSchema = z
       .strict(),
     interpretation: z.array(z.string().min(1).max(600)).max(8),
     risks: z.array(z.string().min(1).max(600)).max(8),
-    keyTakeaways: z.array(z.string().min(1).max(500)).min(1).max(8),
+    keyTakeaways: z.array(z.string().min(1).max(500)).max(8),
     sources: z.array(sourceSchema).max(12),
   })
   .strict();
@@ -150,28 +150,50 @@ export function buildStructuredFinancialAnswerInstructions(options: {
   detail?: 'short' | 'detailed';
   hasVerifiedCurrentData: boolean;
 }) {
-  const responseLength = options.detail === 'short' ? '250 to 400' : '450 to 750';
+  const responseLength = options.detail === 'short' ? '220 to 380' : '420 to 750';
   const audienceGuidance =
     options.audience === 'dashboard'
-      ? 'Explain the selected dashboard evidence and show the calculation behind the most important measured change.'
-      : 'Teach the concept from first principles, then demonstrate it with a complete worked calculation.';
+      ? 'Explain the selected dashboard evidence and keep observations, calculations, and interpretation visibly separate.'
+      : 'Teach the user clearly enough for a non-expert to understand while keeping every material claim easy to verify.';
 
   return `
-ARTHA ANSWER STANDARD — REQUIRED OUTPUT BEHAVIOR
+ARTHAMIND FINANCIAL RESPONSE CONTRACT — REQUIRED OUTPUT BEHAVIOR
 ${audienceGuidance}
 
-Content requirements:
-1. Give a direct answer first, without filler.
-2. Provide 3 to 6 ordered steps. Each step must have a short title and a clear explanation.
-3. Always complete the formula object. Use a real formula when the topic is quantitative. If no equation is relevant, write "No calculation is required for this concept" and explain the decision method in whenToUse.
-4. Always complete the worked example. Show inputs, substitution/calculation steps, and a final result.
-5. Verified current or latest-available data may be used only when it appears in the supplied context. If it is not supplied, set dataStatus to "illustrative", leave dataAsOf empty, and explicitly call it an illustrative example. Never invent a current price, rate, date, provider, or source.
-6. Separate observation from interpretation. State important assumptions, limitations, and risks.
-7. Finish with concise key takeaways and source/freshness records. Do not invent source links or citations.
-8. Use plain text inside every JSON field. Do not include Markdown markers, HTML, pipe tables, LaTeX delimiters, or <br> tags.
-9. Use ${options.language || 'English'} at a ${options.level || 'beginner'} learning level. Target ${responseLength} words, while prioritizing correctness.
-10. Current-data context is ${options.hasVerifiedCurrentData ? 'available; use it only with its exact provider/date/freshness label' : 'not available; examples must be labelled illustrative'}.
-11. Remain educational and non-advisory. Never provide personalized buy/sell/hold instructions, target prices, or guaranteed returns.`;
+Response mode:
+- If the user explicitly requests Quick answer, Step-by-step, Detailed, Professional report, or Teach me, honor that mode.
+- Otherwise infer the mode: very simple lookup -> Quick answer; short factual/calculation question -> Step-by-step; conceptual/educational question -> Teach me; complex multi-part question -> Detailed.
+- Mode changes depth and wording only. It never changes mathematical correctness, evidence standards, or the section order below.
+
+Map the JSON fields to these sections in this exact conceptual order:
+A. directAnswer = one sentence in plain language with the key result or conclusion. If a numeric result is supported, include the number and currency/unit here.
+B. Assumptions and context: example.inputs = 2 to 6 short assumptions/context items. Include amount or income, rate/percentage, time/compounding, currency, jurisdiction/regime/year, pre/post-tax basis, or simplifications when relevant. If the prompt is ambiguous, state the default assumption here.
+C. formula = the formula or governing rule. Put the simple formula/rule matching the assumptions first in expression. Add an optional general formula after "General:" only when it adds clarity. Explain every symbol in variables. For tax/policy/legal topics, state the jurisdiction, applicable year/regime, rule, and important conditions instead of inventing an equation.
+D. steps = 2 to 7 ordered calculation/reasoning steps. Each step should contain one main claim, a short explanation, and small readable math where relevant. example.calculation contains concrete substitutions/intermediate arithmetic only; it may be empty for conceptual questions.
+E. example.result = an explicit final result line, preferably beginning "Final result:" for quantitative questions. Include currency/units and sensible rounding. interpretation = a concise explanation of what the result means; distinguish measured facts from interpretation.
+F. keyTakeaways = optional "If needed" variations, edge cases, alternative regimes/compounding frequencies, or a genuinely necessary clarifying question. Return [] when no variation is useful.
+G. risks = 1 to 3 concise limitations and verification notes. State omitted fees, inflation, deductions, taxes, timing, data gaps, or uncertainty where relevant. sources = only supplied/verified sources with exact date/freshness; never fabricate a citation or provider.
+
+Claim and calculation discipline:
+1. Keep independent factual claims in separate sentences so automated evaluators can extract them cleanly.
+2. Never hide the main numeric answer inside a paragraph. Put it in directAnswer and example.result.
+3. Do not omit calculation steps to sound concise. Convert percentages to decimals where relevant, substitute values, show intermediate values, and then compute the result.
+4. Use a real formula only when it applies. If no equation is relevant, set expression to "No calculation is required; Rule: ..." and explain the decision method in whenToUse.
+5. Never invent a current price, market move, interest rate, tax threshold, policy rule, date, provider, or source. Verified current/latest data may be used only when supplied in context.
+6. Current-data context is ${options.hasVerifiedCurrentData ? 'available; use only the exact provider/date/freshness supplied' : 'not verified; do not present current figures or rules as confirmed and label examples illustrative'}.
+
+Risk-sensitive behavior:
+- For specific investments, tax filing/compliance, loan/debt restructuring, credit decisions, insurance coverage, or legal/regulatory interpretation, state assumptions and uncertainty explicitly.
+- Avoid definitive personalized "you should buy/sell/file/refinance" language. Prefer neutral educational framing such as "a common approach is" or "you may want to verify".
+- For consequential decisions, recommend verification with the relevant official source or a suitably qualified professional.
+- Never provide guaranteed returns, approval probabilities, fabricated creditworthiness judgments, or unsupported tax/legal conclusions.
+
+Localization and style:
+- Use the currency, jurisdiction, fiscal-year terminology, and local concepts clearly indicated by the user/context. If you infer them from a strong cue such as INR/NIFTY/401(k), state that assumption.
+- If a local rule is not verified in supplied context, say so instead of guessing.
+- Use ${options.language || 'English'} at a ${options.level || 'beginner'} learning level. Use plain professional English, short sentences, and concise but complete explanations. Target ${responseLength} words unless the explicit user mode reasonably requires less or more.
+- Use plain text inside every JSON field. Do not include Markdown markers, HTML, pipe tables, LaTeX delimiters, or <br> tags.
+- Remain educational and non-advisory. Do not add boilerplate that contradicts the analysis; keep limitations specific and calm.`;
 }
 
 function cleanPlainText(value: string) {
@@ -245,6 +267,14 @@ function firstUsefulParagraph(rawText: string) {
   }
   const paragraph = cleaned.split(/\n\s*\n/).find((item) => item.trim());
   return (paragraph || cleaned || 'A structured financial explanation is available.').slice(0, 2200);
+}
+
+
+function oneSentenceDirectAnswer(rawText: string) {
+  const text = firstUsefulParagraph(rawText).replace(/\s+/g, ' ').trim();
+  const sentence = text.match(/^(.+?[.!?])(?:\s|$)/)?.[1] || text;
+  const normalized = sentence.replace(/[.!?]+$/, '').trim();
+  return `${normalized || 'A structured financial explanation is available'}.`.slice(0, 2200);
 }
 
 export function createFallbackStructuredFinancialAnswer(
@@ -388,7 +418,7 @@ export function createFallbackStructuredFinancialAnswer(
 
   return {
     title: 'Structured Financial Explanation',
-    directAnswer: firstUsefulParagraph(rawText),
+    directAnswer: oneSentenceDirectAnswer(rawText),
     steps: [
       { title: 'Identify the objective', explanation: 'Define exactly what must be explained, calculated, or compared.' },
       { title: 'List verified inputs', explanation: 'Record the amounts, rates, dates, units, and assumptions before calculating.' },
@@ -415,26 +445,39 @@ export function serializeStructuredFinancialAnswer(answer: StructuredFinancialAn
   const lines = [
     `# ${answer.title}`,
     '',
-    '## Direct Answer',
+    '## Direct answer',
     answer.directAnswer,
     '',
-    '## Step-by-Step',
-    ...answer.steps.flatMap((step, index) => [
-      `${index + 1}. ${step.title}: ${step.explanation}`,
-    ]),
+    '## Assumptions and context',
+    ...(answer.example.inputs.length
+      ? answer.example.inputs.map((input) => `- ${input}`)
+      : ['- No additional quantitative assumptions were required beyond the supplied context.']),
+    ...(answer.example.dataAsOf ? [`- Data as of: ${answer.example.dataAsOf}`] : []),
+    `- Data status: ${answer.example.dataStatus.replaceAll('_', ' ')}`,
     '',
-    '## Formula or Method',
+    '## Formula or rule',
     answer.formula.expression,
     ...answer.formula.variables.map((variable) => `- ${variable.symbol}: ${variable.meaning}`),
     answer.formula.whenToUse,
     '',
-    `## ${answer.example.title}`,
-    ...answer.example.inputs.map((input) => `- Input: ${input}`),
-    ...answer.example.calculation.map((item, index) => `${index + 1}. ${item}`),
-    `Result: ${answer.example.result}`,
+    '## Step-by-step calculation or reasoning',
+    ...answer.steps.map((step, index) => `${index + 1}. ${step.title}: ${step.explanation}`),
+    ...(answer.example.calculation.length
+      ? ['', 'Calculation details:', ...answer.example.calculation.map((item, index) => `${index + 1}. ${item}`)]
+      : []),
     '',
-    '## Key Takeaways',
-    ...answer.keyTakeaways.map((item) => `- ${item}`),
+    '## Final result and interpretation',
+    answer.example.result,
+    ...answer.interpretation.map((item) => `- ${item}`),
+    ...(answer.keyTakeaways.length
+      ? ['', '## If needed', ...answer.keyTakeaways.map((item) => `- ${item}`)]
+      : []),
+    '',
+    '## Limitations and verification',
+    ...(answer.risks.length ? answer.risks.map((item) => `- ${item}`) : ['- No additional limitation was identified from the supplied context.']),
+    ...(answer.sources.length
+      ? ['', 'Sources and freshness:', ...answer.sources.map((source) => `- ${source.name}${source.dataDate ? ` · ${source.dataDate}` : ''} · ${source.freshness}`)]
+      : []),
   ];
   return lines.join('\n').trim();
 }

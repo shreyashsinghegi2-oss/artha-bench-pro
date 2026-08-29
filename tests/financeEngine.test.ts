@@ -98,3 +98,19 @@ describe('Financial Calculation Engine (Decimal.js)', () => {
     });
   });
 });
+
+describe('Input hardening', () => {
+  it('rejects negative quick assets and DTI debt payments', () => {
+    expect(() => calculateQuickRatio(-1, 0, 0, 10)).toThrow();
+    expect(() => calculateDTI(5000, -10)).toThrow();
+  });
+
+  it('rejects non-positive CAGR final values', () => {
+    expect(() => calculateCAGR(100, 0, 5)).toThrow();
+  });
+
+  it('keeps CAGR on the Decimal.js path', () => {
+    expect(calculateCAGR(100000, 250000, 5).cagrPercent).toBe(20.11);
+  });
+});
+

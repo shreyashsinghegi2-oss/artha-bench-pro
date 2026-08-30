@@ -1,0 +1,51 @@
+name: Smoke Production Scenario Studio
+
+on:
+  push:
+    branches: [scenario-production-smoke]
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check production calculators and assistant
+        shell: bash
+        run: |
+          set -euo pipefail
+          base='https://artha-bench-pro.vercel.app'
+          post() {
+            path="$1"
+            body="$2"
+            echo "POST $path"
+            response=$(curl --retry 3 --retry-delay 2 --fail-with-body -sS -H 'Content-Type: application/json' -d "$body" "$base$path")
+            echo "$response" | python -m json.tool >/dev/null
+            echo "$response"
+          }
+
+          health=$(curl --retry 3 --retry-delay 2 --fail-with-body -sS "$base/api/health")
+          echo "$health" | grep -q '"status":"ok"'
+
+          compound=$(post /api/finance/compound-interest '{"principal":10000,"annualRatePercent":7,"years":5,"monthlyContribution":200,"compoundingFrequencyPerYear":12}')
+          echo "$compound" | grep -q '"finalBalance"'
+          echo "$compound" | grep -q '"engine":"Decimal.js"'
+
+          quick=$(post /api/finance/quick-ratio '{"cash":50000,"marketableSecurities":20000,"receivables":15000,"currentLiabilities":40000}')
+          echo "$quick" | grep -q '"quickRatio"'
+
+          cagr=$(post /api/finance/cagr '{"initialValue":50000,"finalValue":100000,"years":5}')
+          echo "$cagr" | grep -q '"cagrPercent"'
+
+          breakeven=$(post /api/finance/break-even '{"fixedCosts":120000,"pricePerUnit":100,"variableCostPerUnit":60}')
+          echo "$breakeven" | grep -q '"breakEvenUnits"'
+
+          dti=$(post /api/finance/dti '{"monthlyGrossIncome":8000,"monthlyDebtPayments":2400}')
+          echo "$dti" | grep -q '"dtiPercent"'
+
+          assistant=$(post /api/finance/scenario-assistant '{"scenario":"compound","question":"Explain this verified result and show the calculation clearly.","profile":"US","currency":"USD","companySymbol":"","useExternalContext":true,"inputs":{"principal":10000,"annualRatePercent":7,"years":5,"monthlyContribution":200,"compoundingFrequencyPerYear":12}}')
+          echo "$assistant" | grep -q '"structuredAnswer"'
+          echo "$assistant" | grep -q '"deterministicResult"'
+          echo "$assistant" | grep -q '"engine":"Decimal.js"'
+
+          company_assistant=$(post /api/finance/scenario-assistant '{"scenario":"quick-ratio","question":"Explain this quick ratio and compare it with any connected company context without replacing my inputs.","profile":"US","currency":"USD","companySymbol":"AAPL","useExternalContext":true,"inputs":{"cash":50000,"marketableSecurities":20000,"receivables":15000,"currentLiabilities":40000}}')
+          echo "$company_assistant" | grep -q '"structuredAnswer"'
+          echo "$company_assistant" | grep -q '"sourceLabels"'

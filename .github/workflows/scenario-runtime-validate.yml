@@ -36,3 +36,4 @@ jobs:
           curl -fsS -X POST http://127.0.0.1:3000/api/finance/cagr -H 'content-type: application/json' -d '{"initialValue":50000,"finalValue":100000,"years":5}' | grep -q 'cagrPercent'
           curl -fsS -X POST http://127.0.0.1:3000/api/finance/break-even -H 'content-type: application/json' -d '{"fixedCosts":120000,"pricePerUnit":100,"variableCostPerUnit":60}' | grep -q 'breakEvenUnits'
           curl -fsS -X POST http://127.0.0.1:3000/api/finance/dti -H 'content-type: application/json' -d '{"monthlyGrossIncome":8000,"monthlyDebtPayments":2400}' | grep -q 'dtiPercent'
+          curl -fsS -X POST http://127.0.0.1:3000/api/finance/scenario-assistant -H 'content-type: application/json' -d '{"scenario":"compound","question":"Explain this result","profile":"US","currency":"USD","useExternalContext":false,"inputs":{"principal":10000,"annualRatePercent":7,"years":5,"monthlyContribution":200,"compoundingFrequencyPerYear":12}}' | grep -q 'structuredAnswer'

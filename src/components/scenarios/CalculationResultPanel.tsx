@@ -1,5 +1,5 @@
 import React from 'react';
-import { Calculator, CheckCircle2, Fingerprint, Info } from 'lucide-react';
+import { Calculator, CheckCircle2, Fingerprint, Info, ShieldCheck } from 'lucide-react';
 import type { CalculatorTab, ScenarioCurrency } from './ScenarioAssistantPanel';
 
 const number = (value: number) => new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 }).format(value);
@@ -7,11 +7,17 @@ const money = (value: number, currency: ScenarioCurrency) => new Intl.NumberForm
 
 export const CalculationResultPanel: React.FC<{ activeTab: CalculatorTab; result: Record<string, unknown>; currency: ScenarioCurrency }> = ({ activeTab, result, currency }) => {
   const definition = buildDefinition(activeTab, result, currency);
+  const serverVerified = result.verificationStatus === 'server' || Boolean(result.verificationCode);
   return (
     <section className="space-y-5 rounded-3xl border border-line bg-surface p-6 shadow-sm" aria-label="Deterministic calculation result">
       <div className="flex flex-col gap-3 border-b border-line pb-4 sm:flex-row sm:items-center sm:justify-between">
-        <div><h3 className="flex items-center gap-2 text-sm font-black text-ink"><CheckCircle2 className="h-4 w-4 text-success" /> Deterministic Engine Result</h3><p className="mt-1 text-[10px] text-secondary">Calculated on the server by Decimal.js. The AI assistant receives this result as evidence; it does not generate the calculation.</p></div>
-        <span className="inline-flex items-center gap-1.5 self-start rounded-full border border-success-fill/25 bg-success-soft px-3 py-1 text-[10px] font-black uppercase tracking-wider text-success"><Calculator className="h-3.5 w-3.5" /> Verified calculation</span>
+        <div>
+          <h3 className="flex items-center gap-2 text-sm font-black text-ink"><CheckCircle2 className="h-4 w-4 text-success" /> Deterministic Engine Result</h3>
+          <p className="mt-1 text-[10px] text-secondary">Calculated by Decimal.js. When the API is reachable, Artha Bench verifies the same inputs again on the server and attaches a verification code.</p>
+        </div>
+        <span className={`inline-flex items-center gap-1.5 self-start rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-wider ${serverVerified ? 'border-success-fill/25 bg-success-soft text-success' : 'border-warning-fill/25 bg-warning-soft text-warning'}`}>
+          {serverVerified ? <ShieldCheck className="h-3.5 w-3.5" /> : <Calculator className="h-3.5 w-3.5" />} {serverVerified ? 'Server verified' : 'Local Decimal.js result'}
+        </span>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -25,6 +31,7 @@ export const CalculationResultPanel: React.FC<{ activeTab: CalculatorTab; result
 
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl border border-line bg-canvas px-3.5 py-2.5 text-[10px] text-secondary">
         <span className="font-bold text-ink">Engine: {String(result.engine || 'Decimal.js')}</span>
+        <span className="font-bold text-ink">Verification: {serverVerified ? 'Server + browser' : 'Browser calculation; server pending'}</span>
         {result.verificationCode && <span className="inline-flex items-center gap-1"><Fingerprint className="h-3 w-3" /> {String(result.verificationCode)}</span>}
         {result.calculatedAt && <span>Calculated: {new Date(String(result.calculatedAt)).toLocaleString()}</span>}
       </div>

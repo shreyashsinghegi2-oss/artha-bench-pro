@@ -173,11 +173,20 @@ export const ScenariosView: React.FC = () => {
 
       {error && <div className="flex items-center gap-2 rounded-2xl border border-danger bg-danger-soft/80 p-4 text-xs text-danger"><AlertCircle className="h-4 w-4 shrink-0" /><span>Calculation error: {error}</span></div>}
 
-      {calcResult && <>
-        <CalculationResultPanel activeTab={activeTab} result={calcResult} currency={currency} />
-        <div className="flex items-center gap-2 px-1 text-xs font-bold text-interactive"><Sparkles className="h-4 w-4" /> The assistant below is connected to this exact calculation.</div>
-        <ScenarioAssistantPanel key={`${activeTab}-${String(calcResult.verificationCode || '')}`} activeTab={activeTab} inputs={inputsFor()} profile={profile} currency={currency} companySymbol={companyContextRelevant ? companySymbol : undefined} useExternalContext={useExternalContext} />
-      </>}
+      {calcResult && <CalculationResultPanel activeTab={activeTab} result={calcResult} currency={currency} />}
+
+      <div className="flex items-center gap-2 px-1 text-xs font-bold text-interactive"><Sparkles className="h-4 w-4" /> ArthaMind is available for every calculator and recalculates the current inputs on the server before analysis.</div>
+      <ScenarioAssistantPanel
+        key={activeTab}
+        activeTab={activeTab}
+        inputs={inputsFor()}
+        profile={profile}
+        currency={currency}
+        companySymbol={companyContextRelevant ? companySymbol : undefined}
+        useExternalContext={useExternalContext}
+        hasVerifiedResult={Boolean(calcResult)}
+        onVerifiedResult={setCalcResult}
+      />
     </div>
   );
 };

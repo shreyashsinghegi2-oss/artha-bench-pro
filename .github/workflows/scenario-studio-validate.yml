@@ -1,0 +1,65 @@
+name: Validate Scenario Studio
+
+on:
+  push:
+    branches: [scenario-studio-fix]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: TypeScript
+        run: npm run lint
+      - name: Focused tests
+        run: npx vitest run tests/financeEngine.test.ts tests/scenarioRoutes.test.ts tests/arthaResponseContract.test.ts
+      - name: Production build
+        run: npm run build
+      - name: Start API
+        run: |
+          node dist/server.cjs > /tmp/artha-server.log 2>&1 &
+          echo $! > /tmp/artha-server.pid
+          for i in {1..30}; do
+            if curl -fsS http://127.0.0.1:3000/api/health >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/artha-server.log
+          exit 1
+      - name: Smoke every calculator and assistant
+        shell: bash
+        run: |
+          set -euo pipefail
+          post() {
+            path="$1"
+            body="$2"
+            echo "Testing $path"
+            response=$(curl -fsS -H 'Content-Type: application/json' -d "$body" "http://127.0.0.1:3000$path")
+            echo "$response" | python -m json.tool >/dev/null
+            echo "$response"
+          }
+
+          compound=$(post /api/finance/compound-interest '{"principal":10000,"annualRatePercent":7,"years":5,"monthlyContribution":200,"compoundingFrequencyPerYear":12}')
+          echo "$compound" | grep -q 'finalBalance'
+          echo "$compound" | grep -q 'Decimal.js'
+
+          quick=$(post /api/finance/quick-ratio '{"cash":50000,"marketableSecurities":20000,"receivables":15000,"currentLiabilities":40000}')
+          echo "$quick" | grep -q 'quickRatio'
+
+          cagr=$(post /api/finance/cagr '{"initialValue":50000,"finalValue":100000,"years":5}')
+          echo "$cagr" | grep -q 'cagrPercent'
+
+          breakeven=$(post /api/finance/break-even '{"fixedCosts":120000,"pricePerUnit":100,"variableCostPerUnit":60}')
+          echo "$breakeven" | grep -q 'breakEvenUnits'
+
+          dti=$(post /api/finance/dti '{"monthlyGrossIncome":8000,"monthlyDebtPayments":2400}')
+          echo "$dti" | grep -q 'dtiPercent'
+
+          assistant=$(post /api/finance/scenario-assistant '{"scenario":"compound","question":"Explain this result step by step.","profile":"US","currency":"USD","companySymbol":"","useExternalContext":false,"inputs":{"principal":10000,"annualRatePercent":7,"years":5,"monthlyContribution":200,"compoundingFrequencyPerYear":12}}')
+          echo "$assistant" | grep -q 'structuredAnswer'
+          echo "$assistant" | grep -q 'deterministicResult'
+          echo "$assistant" | grep -q 'Decimal.js'

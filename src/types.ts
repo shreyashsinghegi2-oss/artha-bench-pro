@@ -526,3 +526,13 @@ export interface BatchProgress {
   completedAt?: string;
   error?: string;
 }
+
+export interface StoredEvaluationRecord {
+  verificationCode: string;
+  timestamp: string;
+  query: string;
+  verdict: string;
+  metrics: ReliabilityMetrics;
+  primaryResponse: string;
+  secondaryResponse?: string;
+}

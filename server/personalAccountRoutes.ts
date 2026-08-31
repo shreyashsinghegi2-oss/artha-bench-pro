@@ -376,7 +376,7 @@ personalAccountRouter.post('/personal/decision-replay', async (req: Request, res
       structuredAnswer = demoMode
         ? createFallbackStructuredFinancialAnswer('Decision Replay', 'The deterministic replay is available above, but the live AI explanation provider is not configured. No interpretation has been invented.')
         : await callGroqStructuredFinancialAnswer(
-            `You are ArthaMind Decision Replay, a private counterfactual financial-education assistant. Use the supplied deterministic output exactly. ${buildStructuredFinancialAnswerInstructions({ audience: 'personal finance decision replay', language: 'English', level: 'beginner', detail: 'detailed', hasVerifiedCurrentData: true })}`,
+            `You are ArthaMind Decision Replay, a private counterfactual financial-education assistant. Use the supplied deterministic output exactly. ${buildStructuredFinancialAnswerInstructions({ audience: 'dashboard', language: 'English', level: 'beginner', detail: 'detailed', hasVerifiedCurrentData: true })}`,
             prompt,
             { fallbackQuestion: 'Explain my Decision Replay.' },
           );

@@ -13,6 +13,7 @@ const GROUPS: Group[] = [
     { id: 'budgeting', title: 'Budgeting', description: 'Plans, limits, savings awareness and coaching', icon: Landmark },
     { id: 'finance-reports', title: 'Finance Reports', description: 'Spending, savings, budget and EMI period reports', icon: FileBarChart2 },
     { id: 'emi-manager', title: 'EMI Manager', description: 'Track existing instalments, balances and due dates', icon: CalendarClock },
+    { id: 'decision-replay', title: 'Decision Replay', description: 'Private signed-in what-if lab using your recorded finance data', icon: Sparkles },
   ]},
   { label: 'Markets & Intelligence', items: [
     { id: 'markets', title: 'Market Data', description: 'Company and market intelligence workspace', icon: LineChart }, { id: 'crypto', title: 'Crypto', description: 'Crypto markets, candles and educational analysis', icon: Sparkles }, { id: 'quick-check', title: 'Quick Check', description: 'Rapid financial answer reliability check', icon: ShieldCheck }, { id: 'tutor', title: 'Financial Tutor', description: 'Structured finance learning with AI', icon: BrainCircuit }, { id: 'connections', title: 'AI Connections', description: 'Provider health and model diagnostics', icon: SlidersHorizontal },

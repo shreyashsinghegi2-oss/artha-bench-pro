@@ -8,6 +8,7 @@ export type NavigationDestination =
   | 'income'
   | 'expenses'
   | 'budgeting'
+  | 'decision-replay'
   | 'crypto'
   | 'quick-check'
   | 'tutor'
@@ -519,16 +520,9 @@ export interface BatchProgress {
   completedScenarios: number;
   currentScenarioId?: string;
   results: IndividualBatchResult[];
-  aggregateStats?: AggregateBatchStats;
-  executionDurationMs?: number;
-}
-
-export interface StoredEvaluationRecord {
-  verificationCode: string;
-  timestamp: string;
-  query: string;
-  verdict: string;
-  metrics: ReliabilityMetrics;
-  primaryResponse: string;
-  secondaryResponse?: string;
+  aggregate?: AggregateBatchStats;
+  runId?: string;
+  startedAt?: string;
+  completedAt?: string;
+  error?: string;
 }

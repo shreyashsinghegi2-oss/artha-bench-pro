@@ -44,6 +44,7 @@ const ExpensesView = lazy(() => import('./components/expenses/ExpensesView').the
 const BudgetingView = lazy(() => import('./components/budgeting/BudgetingView').then((module) => ({ default: module.BudgetingView })));
 const FinanceReportsView = lazy(() => import('./components/finance/FinanceReportsView').then((module) => ({ default: module.FinanceReportsView })));
 const EmiManagerView = lazy(() => import('./components/finance/EmiManagerView').then((module) => ({ default: module.EmiManagerView })));
+const DecisionReplayView = lazy(() => import('./components/finance/DecisionReplayView').then((module) => ({ default: module.DecisionReplayView })));
 const CryptoDashboardView = lazy(() => import('./components/crypto/CryptoDashboardView').then((module) => ({ default: module.CryptoDashboardView })));
 const LoadingView = ({ label }: { label: string }) => <div className="mx-auto max-w-[1500px] px-4 py-20 text-center text-sm text-secondary">Loading {label}…</div>;
 const PENDING_RETURN_KEY = 'arthabench_pending_private_return_v1';
@@ -132,6 +133,7 @@ export default function App() {
       case 'budgeting': return <Suspense fallback={<LoadingView label="Budgeting Workspace" />}><BudgetingView /></Suspense>;
       case 'finance-reports': return <Suspense fallback={<LoadingView label="Finance Reports" />}><FinanceReportsView onNavigate={navigateWorkspace} /></Suspense>;
       case 'emi-manager': return <Suspense fallback={<LoadingView label="EMI Manager" />}><EmiManagerView onNavigate={navigateWorkspace} /></Suspense>;
+      case 'decision-replay': return <Suspense fallback={<LoadingView label="Decision Replay" />}><DecisionReplayView /></Suspense>;
       case 'crypto': return <Suspense fallback={<LoadingView label="Crypto Dashboard" />}><CryptoDashboardView /></Suspense>;
       case 'markets': return <Suspense fallback={<LoadingView label="Company Intelligence Dashboard" />}><MarketView /></Suspense>;
       case 'economy': return <Suspense fallback={<LoadingView label="Economic Dashboard" />}><EconomicDashboardView /></Suspense>;

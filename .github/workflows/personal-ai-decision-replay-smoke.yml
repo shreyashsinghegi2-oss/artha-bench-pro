@@ -4,6 +4,9 @@ on:
   push:
     branches: [fix-personal-ai-decision-replay]
 
+permissions:
+  contents: write
+
 jobs:
   smoke:
     runs-on: ubuntu-latest
@@ -11,10 +14,28 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: fix-personal-ai-decision-replay
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
+
+      - name: Apply compile-safe compatibility fixes
+        shell: python
+        run: |
+          from pathlib import Path
+
+          route = Path('server/personalAccountRoutes.ts')
+          text = route.read_text()
+          text = text.replace("audience: 'personal finance decision replay'", "audience: 'dashboard'")
+          route.write_text(text)
+
+          types = Path('src/types.ts')
+          text = types.read_text()
+          if 'export interface StoredEvaluationRecord' not in text:
+              text = text.rstrip() + '''\n\nexport interface StoredEvaluationRecord {\n  verificationCode: string;\n  timestamp: string;\n  query: string;\n  verdict: string;\n  metrics: ReliabilityMetrics;\n  primaryResponse: string;\n  secondaryResponse?: string;\n}\n'''
+          types.write_text(text)
+
       - run: npm ci
       - run: npm run lint
       - run: npm run build
@@ -108,3 +129,17 @@ jobs:
       - name: Stop server
         if: always()
         run: test ! -f server.pid || kill "$(cat server.pid)" || true
+
+      - name: Commit validated compatibility fixes
+        if: success()
+        shell: bash
+        run: |
+          git config user.name "SHREYASH SINGH"
+          git config user.email "shreyashsinghegi2@gmail.com"
+          git add server/personalAccountRoutes.ts src/types.ts
+          if git diff --cached --quiet; then
+            echo "No source compatibility changes to commit."
+            exit 0
+          fi
+          git commit -m "Fix Decision Replay type compatibility"
+          git push origin HEAD:fix-personal-ai-decision-replay

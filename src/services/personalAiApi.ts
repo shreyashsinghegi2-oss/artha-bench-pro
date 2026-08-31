@@ -29,12 +29,14 @@ export async function askPersonalizedDashboardAssistant(params: {
         selectedRange: params.snapshot.selectedRange,
         selectedCountry: params.snapshot.selectedCountry,
         quotes: params.snapshot.quotes,
+        marketHistory: params.snapshot.marketHistory,
         economicIndicators: params.snapshot.economicIndicators,
+        providerHealth: params.snapshot.providerHealth,
         latestEvaluation: params.snapshot.latestEvaluation,
       },
     }),
   });
   const payload = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(payload?.error || 'Personalized ArthaMind request failed.');
+  if (!response.ok) throw new Error(payload?.error || `Personalized ArthaMind request failed (${response.status}).`);
   return payload as PersonalizedDashboardAssistantResponse;
 }

@@ -12,5 +12,5 @@ export const FINANCE_DESTINATIONS: readonly AppNavigationDestination[] = [
 ] as const;
 
 export function isFinanceDestination(destination: AppNavigationDestination): boolean {
-  return destination === 'dashboard' || FINANCE_DESTINATIONS.includes(destination);
+  return destination === 'dashboard' || destination === 'decision-replay' || FINANCE_DESTINATIONS.includes(destination);
 }

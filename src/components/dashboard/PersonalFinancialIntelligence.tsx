@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { ArrowRight, BookOpen, CircleDollarSign, PiggyBank, Target, WalletCards, Eye } from 'lucide-react';
+import { ArrowRight, BookOpen, CircleDollarSign, PiggyBank, Target, WalletCards, Eye, Sparkles } from 'lucide-react';
 import { useAuth } from '../../auth/AuthContext';
 import { NavigationDestination } from '../../types';
 import { getMarketWatchlist, getOverallProgressPercentage } from '../../services/learningStorage';
@@ -52,9 +52,14 @@ export const PersonalFinancialIntelligence: React.FC<Props> = ({ onNavigate }) =
           <h2 id="my-financial-intelligence-title" className="mt-1 text-xl font-black text-ink">Welcome back, {firstName}</h2>
           <p className="mt-1 text-[11px] text-secondary">Private account snapshot · {snapshot.month} · only recorded data is shown.</p>
         </div>
-        <button type="button" onClick={() => onNavigate('account')} className="inline-flex items-center gap-2 rounded-xl border border-line bg-canvas px-3 py-2 text-xs font-bold text-ink hover:border-interactive/40">
-          Data & privacy <ArrowRight className="h-3.5 w-3.5" />
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button type="button" onClick={() => onNavigate('decision-replay')} className="inline-flex items-center gap-2 rounded-xl border border-interactive/30 bg-interactive-soft px-3 py-2 text-xs font-black text-interactive hover:border-interactive/50">
+            <Sparkles className="h-3.5 w-3.5" /> Decision Replay
+          </button>
+          <button type="button" onClick={() => onNavigate('account')} className="inline-flex items-center gap-2 rounded-xl border border-line bg-canvas px-3 py-2 text-xs font-bold text-ink hover:border-interactive/40">
+            Data & privacy <ArrowRight className="h-3.5 w-3.5" />
+          </button>
+        </div>
       </div>
 
       <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-6">
@@ -66,10 +71,9 @@ export const PersonalFinancialIntelligence: React.FC<Props> = ({ onNavigate }) =
         <Summary icon={Eye} label="Watchlist" value={snapshot.watchlist.length ? `${snapshot.watchlist.length} shown` : 'Empty'} note={snapshot.watchlist.length ? snapshot.watchlist.join(' · ') : 'Add companies or assets to monitor'} onClick={() => onNavigate('markets')} />
       </div>
 
-      <div className="mt-4 flex flex-wrap items-center gap-2 rounded-2xl border border-line bg-canvas px-4 py-3 text-[10px] text-secondary">
-        <PiggyBank className="h-4 w-4 text-brand" />
-        <span className="font-semibold text-ink">ArthaMind prompt:</span>
-        <span>Ask about your {new Date(`${snapshot.month}-01`).toLocaleDateString('en-IN', { month: 'long' })} budget after enabling the relevant AI Data Context.</span>
+      <div className="mt-4 flex flex-col gap-3 rounded-2xl border border-line bg-canvas px-4 py-3 text-[10px] text-secondary sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-2"><PiggyBank className="h-4 w-4 text-brand" /><span><span className="font-semibold text-ink">ArthaMind prompt:</span> Ask about your {new Date(`${snapshot.month}-01`).toLocaleDateString('en-IN', { month: 'long' })} budget after enabling the relevant AI Data Context.</span></div>
+        <button type="button" onClick={() => onNavigate('decision-replay')} className="inline-flex shrink-0 items-center gap-1.5 font-black text-interactive">Replay a what-if <ArrowRight className="h-3.5 w-3.5" /></button>
       </div>
     </section>
   );

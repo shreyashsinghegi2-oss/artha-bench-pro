@@ -29,6 +29,7 @@ export interface MarketDataAttribution {
   state: MarketDataState;
   delayNotice?: string;
   staleAfter?: string;
+  reason?: string;
 }
 
 // Compatibility alias for finance/EMI provider contracts that already use this name.

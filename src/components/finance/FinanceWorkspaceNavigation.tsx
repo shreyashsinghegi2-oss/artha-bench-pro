@@ -1,5 +1,5 @@
 import React, { MouseEvent, useEffect, useRef, useState } from 'react';
-import { CalendarClock, ChevronLeft, ChevronRight, FileBarChart2, Gauge, Landmark, ReceiptText, WalletCards } from 'lucide-react';
+import { CalendarClock, ChevronLeft, ChevronRight, FileBarChart2, Gauge, Landmark, ReceiptText, Sparkles, WalletCards } from 'lucide-react';
 import { pathForDestination } from '../../appRoutes';
 import { AppNavigationDestination } from '../../navigationTypes';
 
@@ -20,6 +20,7 @@ const tabs: Array<{
   { id: 'budgeting', label: 'Budgeting', description: 'Compare planned category limits with recorded spending.', icon: Landmark },
   { id: 'finance-reports', label: 'Reports', description: 'Understand spending, savings, budgets and period changes.', icon: FileBarChart2 },
   { id: 'emi-manager', label: 'EMI Manager', description: 'Track existing loan instalments, balances and upcoming due dates.', icon: CalendarClock },
+  { id: 'decision-replay', label: 'Decision Replay', description: 'Test temporary what-if assumptions against your recorded baseline without changing saved records.', icon: Sparkles },
 ];
 
 function isModifiedNavigation(event: MouseEvent<HTMLAnchorElement>) {
@@ -100,6 +101,7 @@ export const FinanceWorkspaceNavigation: React.FC<Props> = ({ currentDestination
           }}
           onPointerDown={(event) => {
             if (event.pointerType !== 'mouse') return;
+            if ((event.target as HTMLElement).closest('a,button')) return;
             const rail = railRef.current;
             if (!rail) return;
             dragStartRef.current = { x: event.clientX, left: rail.scrollLeft };

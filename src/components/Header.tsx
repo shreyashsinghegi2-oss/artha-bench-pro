@@ -1,11 +1,12 @@
 import React, { MouseEvent, useEffect, useRef, useState } from 'react';
-import { Menu, Moon, Sun, User, X } from 'lucide-react';
+import { Crown, Menu, Moon, Sun, User, X } from 'lucide-react';
 import { pathForDestination } from '../appRoutes';
 import { AppNavigationDestination } from '../navigationTypes';
 import { AllFeaturesMenu } from './AllFeaturesMenu';
 import { AppSearch } from './AppSearch';
 import { ArthaBenchLogo } from './branding/ArthaBenchLogo';
 import { useAuth } from '../auth/AuthContext';
+import { ProPreviewModal } from './account/ProPreviewModal';
 
 interface HeaderProps {
   currentDestination: AppNavigationDestination;
@@ -21,6 +22,7 @@ const FINANCE_NAV_ITEMS: NavItem[] = [
   { id: 'budgeting', label: 'Budgeting' },
   { id: 'finance-reports', label: 'Reports' },
   { id: 'emi-manager', label: 'EMI Manager' },
+  { id: 'decision-replay', label: 'Decision Replay' },
 ];
 const PRIMARY_NAV_ITEMS: NavItem[] = [
   { id: 'overview', label: 'Overview' }, { id: 'income', label: 'Income' }, { id: 'expenses', label: 'Expenses' }, { id: 'budgeting', label: 'Budgeting' },
@@ -44,6 +46,7 @@ export const Header: React.FC<HeaderProps> = ({ currentDestination, onNavigate }
   const auth = useAuth();
   const menuRootRef = useRef<HTMLDivElement | null>(null);
   const [appMenuOpen, setAppMenuOpen] = useState(false);
+  const [proPreviewOpen, setProPreviewOpen] = useState(false);
   const [isGroqHealthy, setIsGroqHealthy] = useState<boolean | null>(null);
   const [theme, setTheme] = useState<ThemeMode>(() => {
     if (typeof window === 'undefined') return 'light';
@@ -107,108 +110,129 @@ export const Header: React.FC<HeaderProps> = ({ currentDestination, onNavigate }
   };
 
   return (
-    <header className="sticky top-0 z-50 border-b border-line bg-surface px-4 py-3">
-      <div className="mx-auto flex max-w-[1700px] items-center gap-3">
-        <a
-          href={pathForDestination('overview')}
-          onClick={(event) => handleLinkClick(event, 'overview')}
-          className="group shrink-0 rounded-2xl text-left focus:outline-none focus:ring-2 focus:ring-interactive focus:ring-offset-2 focus:ring-offset-canvas"
-          aria-label="Open Artha Bench overview"
-        >
-          <ArthaBenchLogo />
-        </a>
-
-        <div className="hidden w-[clamp(220px,22vw,340px)] shrink-0 md:block">
-          <AppSearch onNavigate={handleNavClick} />
-        </div>
-
-        <nav className="hidden min-w-0 flex-1 items-center gap-1 overflow-x-auto rounded-2xl border border-line bg-surface p-1.5 scrollbar-thin 2xl:flex" aria-label="Primary application navigation">
-          {ALL_NAV_ITEMS.map((item) => (
-            <a
-              key={item.id}
-              href={pathForDestination(item.id)}
-              onClick={(event) => handleLinkClick(event, item.id)}
-              aria-current={isActive(item.id) ? 'page' : undefined}
-              className={`whitespace-nowrap rounded-xl px-3 py-1.5 text-xs font-semibold transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-interactive ${isActive(item.id) ? 'bg-interactive-soft text-interactive shadow-sm' : 'text-secondary hover:bg-subtle/60 hover:text-ink'}`}
-            >
-              {item.label}
-            </a>
-          ))}
-        </nav>
-
-        <div className="ml-auto flex shrink-0 items-center gap-2">
+    <>
+      <header className="sticky top-0 z-50 border-b border-line bg-surface px-4 py-3">
+        <div className="mx-auto flex max-w-[1700px] items-center gap-3">
           <a
-            href={pathForDestination('connections')}
-            onClick={(event) => handleLinkClick(event, 'connections')}
-            className={`hidden items-center gap-2 rounded-xl border px-3 py-1.5 text-xs font-semibold transition-all sm:flex ${isGroqHealthy ? 'border-success-fill/30 bg-success-fill/10 text-success hover:bg-success-fill/20' : 'border-warning-fill/30 bg-warning-fill/10 text-warning hover:bg-warning-fill/20'}`}
-            title="Open provider diagnostics"
+            href={pathForDestination('overview')}
+            onClick={(event) => handleLinkClick(event, 'overview')}
+            className="group shrink-0 rounded-2xl text-left focus:outline-none focus:ring-2 focus:ring-interactive focus:ring-offset-2 focus:ring-offset-canvas"
+            aria-label="Open Artha Bench overview"
           >
-            <span className={`h-2 w-2 rounded-full ${isGroqHealthy ? 'bg-success-fill' : 'bg-warning-fill'}`} aria-hidden="true" />
-            <span>{isGroqHealthy === null ? 'Checking…' : isGroqHealthy ? 'AI Live' : 'AI Unavailable'}</span>
+            <ArthaBenchLogo />
           </a>
 
-          <button type="button" onClick={() => setTheme(isDarkMode ? 'light' : 'dark')} className="flex items-center gap-2 rounded-xl border border-line bg-surface p-2 text-secondary transition-all hover:border-interactive/50 hover:text-ink xl:px-3" title={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'} aria-label={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'} aria-pressed={isDarkMode}>
-            {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}<span className="hidden text-xs font-semibold xl:inline">{isDarkMode ? 'Light' : 'Night'}</span>
-          </button>
+          <div className="hidden w-[clamp(220px,22vw,340px)] shrink-0 md:block">
+            <AppSearch onNavigate={handleNavClick} />
+          </div>
 
-          <AllFeaturesMenu currentDestination={currentDestination} onNavigate={handleNavClick} isDarkMode={isDarkMode} onToggleTheme={() => setTheme(isDarkMode ? 'light' : 'dark')} />
+          <nav className="hidden min-w-0 flex-1 items-center gap-1 overflow-x-auto rounded-2xl border border-line bg-surface p-1.5 scrollbar-thin 2xl:flex" aria-label="Primary application navigation">
+            {ALL_NAV_ITEMS.map((item) => (
+              <a
+                key={item.id}
+                href={pathForDestination(item.id)}
+                onClick={(event) => handleLinkClick(event, item.id)}
+                aria-current={isActive(item.id) ? 'page' : undefined}
+                className={`whitespace-nowrap rounded-xl px-3 py-1.5 text-xs font-semibold transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-interactive ${isActive(item.id) ? 'bg-interactive-soft text-interactive shadow-sm' : 'text-secondary hover:bg-subtle/60 hover:text-ink'}`}
+              >
+                {item.label}
+              </a>
+            ))}
+          </nav>
 
-          <button type="button" onClick={openAccount} className={`relative rounded-xl border bg-surface p-2 text-secondary transition-all hover:text-ink ${currentDestination === 'account' && auth.user ? 'border-interactive text-ink' : 'border-line hover:border-interactive/50'}`} title={auth.user ? `Account: ${auth.user.email ?? 'signed in'}` : 'Sign in to your private workspace'} aria-label={auth.user ? 'Open account workspace' : 'Sign in to Artha Bench Pro'}>
-            <User className="h-4 w-4" />{auth.user && <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full border-2 border-surface bg-success-fill" aria-label="Signed in" />}
-          </button>
-
-          <div ref={menuRootRef} className="relative">
-            <button
-              type="button"
-              onClick={() => setAppMenuOpen((open) => !open)}
-              className="rounded-xl border border-line bg-surface p-2 text-secondary transition hover:border-interactive/50 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-interactive"
-              aria-label={appMenuOpen ? 'Close application menu' : 'Open application menu'}
-              aria-expanded={appMenuOpen}
-              aria-controls="artha-main-app-menu"
+          <div className="ml-auto flex shrink-0 items-center gap-2">
+            <a
+              href={pathForDestination('connections')}
+              onClick={(event) => handleLinkClick(event, 'connections')}
+              className={`hidden items-center gap-2 rounded-xl border px-3 py-1.5 text-xs font-semibold transition-all sm:flex ${isGroqHealthy ? 'border-success-fill/30 bg-success-fill/10 text-success hover:bg-success-fill/20' : 'border-warning-fill/30 bg-warning-fill/10 text-warning hover:bg-warning-fill/20'}`}
+              title="Open provider diagnostics"
             >
-              {appMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              <span className={`h-2 w-2 rounded-full ${isGroqHealthy ? 'bg-success-fill' : 'bg-warning-fill'}`} aria-hidden="true" />
+              <span>{isGroqHealthy === null ? 'Checking…' : isGroqHealthy ? 'AI Live' : 'AI Unavailable'}</span>
+            </a>
+
+            {auth.user && (
+              <button
+                type="button"
+                onClick={() => setProPreviewOpen(true)}
+                className="hidden min-h-9 items-center gap-1.5 rounded-xl border border-interactive/30 bg-interactive-soft px-3 py-1.5 text-xs font-black text-interactive transition hover:border-interactive/50 hover:bg-interactive-soft/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-interactive sm:inline-flex"
+                aria-haspopup="dialog"
+                aria-expanded={proPreviewOpen}
+              >
+                <Crown className="h-3.5 w-3.5" /> Go Pro
+              </button>
+            )}
+
+            <button type="button" onClick={() => setTheme(isDarkMode ? 'light' : 'dark')} className="flex items-center gap-2 rounded-xl border border-line bg-surface p-2 text-secondary transition-all hover:border-interactive/50 hover:text-ink xl:px-3" title={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'} aria-label={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'} aria-pressed={isDarkMode}>
+              {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}<span className="hidden text-xs font-semibold xl:inline">{isDarkMode ? 'Light' : 'Night'}</span>
             </button>
 
-            {appMenuOpen && (
-              <div id="artha-main-app-menu" className="absolute right-0 top-[calc(100%+10px)] z-[90] max-h-[min(680px,75vh)] w-[min(430px,calc(100vw-2rem))] overflow-y-auto rounded-2xl border border-line bg-surface p-3 shadow-2xl" role="navigation" aria-label="Application menu">
-                <div className="px-2 pb-2 text-[10px] font-black uppercase tracking-[0.13em] text-secondary">Finance workspace</div>
-                <div className="grid grid-cols-2 gap-1.5">
-                  {FINANCE_NAV_ITEMS.map((item) => (
-                    <a
-                      key={item.id}
-                      href={pathForDestination(item.id)}
-                      onClick={(event) => handleLinkClick(event, item.id)}
-                      aria-current={isActive(item.id) ? 'page' : undefined}
-                      className={`rounded-xl border px-3 py-2.5 text-xs font-bold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-interactive ${isActive(item.id) ? 'border-interactive/30 bg-interactive-soft text-interactive' : 'border-transparent bg-canvas text-ink hover:border-line hover:bg-subtle'}`}
-                    >
-                      {item.label}
-                    </a>
-                  ))}
-                </div>
+            <AllFeaturesMenu currentDestination={currentDestination} onNavigate={handleNavClick} isDarkMode={isDarkMode} onToggleTheme={() => setTheme(isDarkMode ? 'light' : 'dark')} />
 
-                <div className="mt-4 border-t border-line px-2 pb-2 pt-4 text-[10px] font-black uppercase tracking-[0.13em] text-secondary">Research & tools</div>
-                <div className="grid grid-cols-2 gap-1.5">
-                  {RESEARCH_MENU_ITEMS.map((item) => (
-                    <a
-                      key={item.id}
-                      href={pathForDestination(item.id)}
-                      onClick={(event) => handleLinkClick(event, item.id)}
-                      aria-current={isActive(item.id) ? 'page' : undefined}
-                      className={`rounded-xl px-3 py-2 text-xs font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-interactive ${isActive(item.id) ? 'bg-interactive-soft text-interactive' : 'text-secondary hover:bg-subtle hover:text-ink'}`}
-                    >
-                      {item.label}
-                    </a>
-                  ))}
+            <button type="button" onClick={openAccount} className={`relative rounded-xl border bg-surface p-2 text-secondary transition-all hover:text-ink ${currentDestination === 'account' && auth.user ? 'border-interactive text-ink' : 'border-line hover:border-interactive/50'}`} title={auth.user ? `Account: ${auth.user.email ?? 'signed in'}` : 'Sign in to your private workspace'} aria-label={auth.user ? 'Open account workspace' : 'Sign in to Artha Bench Pro'}>
+              <User className="h-4 w-4" />{auth.user && <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full border-2 border-surface bg-success-fill" aria-label="Signed in" />}
+            </button>
+
+            <div ref={menuRootRef} className="relative">
+              <button
+                type="button"
+                onClick={() => setAppMenuOpen((open) => !open)}
+                className="rounded-xl border border-line bg-surface p-2 text-secondary transition hover:border-interactive/50 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-interactive"
+                aria-label={appMenuOpen ? 'Close application menu' : 'Open application menu'}
+                aria-expanded={appMenuOpen}
+                aria-controls="artha-main-app-menu"
+              >
+                {appMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              </button>
+
+              {appMenuOpen && (
+                <div id="artha-main-app-menu" className="absolute right-0 top-[calc(100%+10px)] z-[90] max-h-[min(680px,75vh)] w-[min(430px,calc(100vw-2rem))] overflow-y-auto rounded-2xl border border-line bg-surface p-3 shadow-2xl" role="navigation" aria-label="Application menu">
+                  <div className="px-2 pb-2 text-[10px] font-black uppercase tracking-[0.13em] text-secondary">Finance workspace</div>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {FINANCE_NAV_ITEMS.map((item) => (
+                      <a
+                        key={item.id}
+                        href={pathForDestination(item.id)}
+                        onClick={(event) => handleLinkClick(event, item.id)}
+                        aria-current={isActive(item.id) ? 'page' : undefined}
+                        className={`rounded-xl border px-3 py-2.5 text-xs font-bold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-interactive ${isActive(item.id) ? 'border-interactive/30 bg-interactive-soft text-interactive' : 'border-transparent bg-canvas text-ink hover:border-line hover:bg-subtle'}`}
+                      >
+                        {item.label}
+                      </a>
+                    ))}
+                  </div>
+
+                  {auth.user && (
+                    <button type="button" onClick={() => { setAppMenuOpen(false); setProPreviewOpen(true); }} className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-interactive/30 bg-interactive-soft px-3 py-2.5 text-xs font-black text-interactive focus-visible:outline focus-visible:outline-2 focus-visible:outline-interactive">
+                      <Crown className="h-3.5 w-3.5" /> Explore Artha Bench Pro
+                    </button>
+                  )}
+
+                  <div className="mt-4 border-t border-line px-2 pb-2 pt-4 text-[10px] font-black uppercase tracking-[0.13em] text-secondary">Research & tools</div>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {RESEARCH_MENU_ITEMS.map((item) => (
+                      <a
+                        key={item.id}
+                        href={pathForDestination(item.id)}
+                        onClick={(event) => handleLinkClick(event, item.id)}
+                        aria-current={isActive(item.id) ? 'page' : undefined}
+                        className={`rounded-xl px-3 py-2 text-xs font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-interactive ${isActive(item.id) ? 'bg-interactive-soft text-interactive' : 'text-secondary hover:bg-subtle hover:text-ink'}`}
+                      >
+                        {item.label}
+                      </a>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
-      </div>
 
-      <div className="mx-auto mt-3 max-w-[1700px] md:hidden">
-        <AppSearch onNavigate={handleNavClick} />
-      </div>
-    </header>
+        <div className="mx-auto mt-3 max-w-[1700px] md:hidden">
+          <AppSearch onNavigate={handleNavClick} />
+        </div>
+      </header>
+      {auth.user && <ProPreviewModal open={proPreviewOpen} onClose={() => setProPreviewOpen(false)} />}
+    </>
   );
 };

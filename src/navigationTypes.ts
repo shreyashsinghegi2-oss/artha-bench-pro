@@ -9,8 +9,9 @@ export const FINANCE_DESTINATIONS: readonly AppNavigationDestination[] = [
   'budgeting',
   'finance-reports',
   'emi-manager',
+  'decision-replay',
 ] as const;
 
 export function isFinanceDestination(destination: AppNavigationDestination): boolean {
-  return destination === 'dashboard' || destination === 'decision-replay' || FINANCE_DESTINATIONS.includes(destination);
+  return destination === 'dashboard' || FINANCE_DESTINATIONS.includes(destination);
 }

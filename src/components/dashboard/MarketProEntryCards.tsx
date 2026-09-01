@@ -1,0 +1,13 @@
+import React from 'react';
+import { Bell, Crown, DollarSign, Timer } from 'lucide-react';
+import { AppNavigationDestination } from '../../navigationTypes';
+
+type Props={onNavigate:(destination:AppNavigationDestination)=>void};
+const cards:Array<{id:AppNavigationDestination;title:string;body:string;icon:React.ComponentType<{className?:string}>;badge:string}>=[
+ {id:'intraday-markets',title:'Intraday Market Lab',body:'Inspect provider-supported intraday observations and paper-learning scenarios without order execution.',icon:Timer,badge:'Data entitlement aware'},
+ {id:'forex-markets',title:'Forex Intelligence',body:'Review supported currency pairs, reference conversions, charts and source limitations.',icon:DollarSign,badge:'Educational FX'},
+ {id:'market-alerts',title:'Market Alerts',body:'Create user-defined informational price, movement and data-quality conditions.',icon:Bell,badge:'In-app monitoring'},
+ {id:'go-pro',title:'ArthaMind Pro',body:'Compare Free and Pro capabilities with transparent provider, billing and rollout requirements.',icon:Crown,badge:'Honest access map'},
+];
+
+export const MarketProEntryCards:React.FC<Props>=({onNavigate})=><section className="mx-auto max-w-[1700px] px-4 pt-6 sm:px-6" aria-labelledby="market-pro-entry-title"><div className="mb-3 flex items-end justify-between gap-3"><div><div className="text-[9px] font-black uppercase tracking-[.15em] text-interactive">ArthaMind Pro Market Intelligence</div><h2 id="market-pro-entry-title" className="mt-1 text-lg font-black text-ink">Explore dedicated market workspaces</h2></div></div><div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">{cards.map(({id,title,body,icon:Icon,badge})=><button key={id} type="button" onClick={()=>onNavigate(id)} className="group rounded-2xl border border-line bg-surface p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-interactive/30 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-interactive"><div className="flex items-start justify-between gap-3"><div className="flex h-9 w-9 items-center justify-center rounded-xl border border-interactive/20 bg-interactive-soft text-interactive"><Icon className="h-4 w-4"/></div><span className="rounded-full border border-line bg-canvas px-2 py-1 text-[8px] font-black uppercase tracking-wider text-secondary">{badge}</span></div><h3 className="mt-3 text-sm font-black text-ink">{title}</h3><p className="mt-1 text-[10px] leading-5 text-secondary">{body}</p><div className="mt-3 text-[9px] font-black text-interactive">Explore →</div></button>)}</div></section>;

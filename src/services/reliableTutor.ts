@@ -1,4 +1,4 @@
-import type { TutorPreferences } from '../types';
+import type { StructuredFinancialAnswer, TutorPreferences } from '../types';
 
 export type ReliableTutorResponse = {
   answer: string;
@@ -50,7 +50,7 @@ function collectFacts(value: unknown, path = '', output: string[] = []): string[
   return output;
 }
 
-function groundedFallback(question: string, visibleData?: unknown): string {
+export function buildGroundedFallbackAnswer(question: string, visibleData?: unknown): string {
   if (UNSAFE_TRADING.test(question)) {
     return 'I can explain the visible market data, source timestamps, chart ranges, volatility and risk concepts, but I cannot provide personalised buy/sell instructions, entries, exits, targets, stop-loss levels, leverage guidance or guaranteed-return claims.';
   }
@@ -69,14 +69,59 @@ function groundedFallback(question: string, visibleData?: unknown): string {
     evidenceBlock,
     '',
     'Interpretation',
-    'Use the values above as observations, not predictions. Check the provider timestamp and freshness label before relying on any price, rate or chart movement. A missing value is unavailable rather than zero.',
+    'Use the values above as observations, not predictions. Check source timestamps and freshness labels before relying on time-sensitive values. A missing value is unavailable rather than zero.',
     '',
     'Limitations',
-    '- No new market fact, forecast, bid/ask value, indicator, news item or company fundamental has been invented in fallback mode.',
-    '- This response is educational and does not provide personalised trading or investment instructions.',
+    '- No new market fact, forecast, bid/ask value, indicator, news item, personal record or company fundamental has been invented in fallback mode.',
+    '- This response is educational and does not provide personalised trading, investment, tax, legal, lending or credit instructions.',
     '',
     `Question received: ${question}`,
   ].join('\n');
+}
+
+export function buildFallbackStructuredAnswer(input: {
+  title: string;
+  question: string;
+  answer: string;
+  sourceLabels?: string[];
+  dataAsOf?: string;
+}): StructuredFinancialAnswer {
+  const sources = (input.sourceLabels || []).filter(Boolean).slice(0, 8);
+  return {
+    title: input.title,
+    directAnswer: input.answer,
+    steps: [
+      { title: 'Evidence boundary', explanation: 'This fallback uses only the visible data supplied by the current page. It does not fetch or invent additional facts.' },
+      { title: 'Review freshness', explanation: 'Check timestamps, provider labels, selected periods and missing-data states before interpreting the visible values.' },
+    ],
+    formula: {
+      expression: 'Not applicable',
+      variables: [],
+      whenToUse: 'No new formula is introduced by the grounded fallback unless a deterministic calculation is already visible on the page.',
+    },
+    example: {
+      title: 'Visible page evidence only',
+      dataStatus: 'latest_available',
+      dataAsOf: input.dataAsOf || new Date().toISOString(),
+      inputs: [`Question: ${input.question}`],
+      calculation: ['No hidden or model-generated numerical calculation was substituted.'],
+      result: 'The explanation is restricted to supplied page evidence.',
+    },
+    interpretation: ['Provider/model fallback mode is active. Treat observations as descriptive, not predictive.'],
+    risks: [
+      'External AI generation is unavailable or did not return a usable response.',
+      'Missing values remain unavailable rather than being inferred as zero.',
+    ],
+    keyTakeaways: [
+      'The assistant remains responsive without inventing unsupported evidence.',
+      'Retry later for a full external-model explanation if desired.',
+    ],
+    sources: sources.map((name) => ({
+      name,
+      dataDate: input.dataAsOf || new Date().toISOString(),
+      freshness: 'Visible page context / grounded fallback',
+    })),
+  };
 }
 
 export async function askReliableTutor(
@@ -123,7 +168,7 @@ export async function askReliableTutor(
   }
 
   return {
-    answer: groundedFallback(question, options.visibleData),
+    answer: buildGroundedFallbackAnswer(question, options.visibleData),
     suggestedFollowUps: [
       'Explain the source timestamp and freshness.',
       'Summarise the visible range without predicting the next move.',

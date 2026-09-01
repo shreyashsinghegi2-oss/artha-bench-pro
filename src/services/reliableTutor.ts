@@ -88,7 +88,7 @@ export async function askReliableTutor(
   } = {},
 ): Promise<ReliableTutorResponse> {
   const controller = new AbortController();
-  const timeout = window.setTimeout(() => controller.abort(), 18_000);
+  const timeout = setTimeout(() => controller.abort(), 18_000);
   try {
     const response = await fetch('/api/tutor', {
       method: 'POST',
@@ -119,7 +119,7 @@ export async function askReliableTutor(
   } catch {
     // Grounded fallback below intentionally keeps the assistant responsive.
   } finally {
-    window.clearTimeout(timeout);
+    clearTimeout(timeout);
   }
 
   return {

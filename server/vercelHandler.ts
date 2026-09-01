@@ -5,6 +5,7 @@ import { apiRouter } from './routes';
 import { personalAccountRouter } from './personalAccountRoutes';
 import { evaluationComparisonRouter } from './evaluationComparisonRoutes';
 import { indiaMarketRouter } from './indiaMarketRoutes';
+import { marketAiRouter } from './marketAiRoutes';
 
 const app = express();
 app.disable('x-powered-by');
@@ -13,6 +14,7 @@ app.use('/api', apiRouter);
 app.use('/api', personalAccountRouter);
 app.use('/api', evaluationComparisonRouter);
 app.use('/api', indiaMarketRouter);
+app.use('/api', marketAiRouter);
 
 export default function handler(req: Request, res: Response) {
   return app(req, res);

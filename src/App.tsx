@@ -40,7 +40,7 @@ const ForexIntelligenceView=lazy(()=>import('./components/market/MarketIntegrity
 const USMarketExplorerView=lazy(()=>import('./components/market/MarketProViews').then((module)=>({default:module.USMarketExplorerView})));
 const MarketWatchlistView=lazy(()=>import('./components/market/MarketProViews').then((module)=>({default:module.MarketWatchlistView})));
 const MarketAlertsView=lazy(()=>import('./components/market/MarketProViews').then((module)=>({default:module.MarketAlertsView})));
-const MarketsLearningLabView=lazy(()=>import('./components/market/MarketProViews').then((module)=>({default:module.MarketsLearningLabView})));
+const MarketsLearningLabView=lazy(()=>import('./components/market/MarketsLearningLabV2').then((module)=>({default:module.MarketsLearningLabView})));
 const GoProView=lazy(()=>import('./components/account/GoProView').then((module)=>({default:module.GoProView})));
 const IncomeWorkspaceView=lazy(()=>import('./components/income/IncomeWorkspaceView').then((module)=>({default:module.IncomeWorkspaceView})));
 const ExpensesView=lazy(()=>import('./components/expenses/ExpensesView').then((module)=>({default:module.ExpensesView})));

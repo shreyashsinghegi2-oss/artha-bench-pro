@@ -18,6 +18,13 @@ const financePaths: Partial<Record<AppNavigationDestination, string>> = {
   'decision-replay': '/finance/decision-replay',
   'financial-twin': '/finance/ripple-twin',
   'india-markets': '/finance/markets/india',
+  'intraday-markets': '/finance/markets/intraday',
+  'forex-markets': '/finance/markets/forex',
+  'us-markets': '/finance/markets/us',
+  'market-watchlist': '/finance/markets/watchlist',
+  'market-alerts': '/finance/markets/alerts',
+  'markets-learn': '/finance/markets/learn',
+  'go-pro': '/go-pro',
 };
 
 const workspacePaths: Partial<Record<AppNavigationDestination, string>> = {
@@ -57,7 +64,16 @@ const pathToWorkspace = new Map<string, AppNavigationDestination>([
 const pathToPublic = new Map<string, PublicPageId>(Object.entries(publicPaths).map(([page, path]) => [path, page as PublicPageId]));
 
 export const PRIVATE_FINANCE_DESTINATIONS = new Set<AppNavigationDestination>([
-  'financial-health', 'income', 'expenses', 'budgeting', 'finance-reports', 'emi-manager', 'decision-replay', 'financial-twin',
+  'financial-health',
+  'income',
+  'expenses',
+  'budgeting',
+  'finance-reports',
+  'emi-manager',
+  'decision-replay',
+  'financial-twin',
+  'market-watchlist',
+  'market-alerts',
 ]);
 
 export function pathForDestination(destination: AppNavigationDestination): string {

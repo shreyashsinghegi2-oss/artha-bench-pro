@@ -1,93 +1,34 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { BrainCircuit, CheckCircle2, Crown, FileDown, LineChart, LockKeyhole, ShieldCheck, Sparkles, X } from 'lucide-react';
 
-type Props = {
-  open: boolean;
-  onClose: () => void;
-};
+type Props = { open: boolean; onClose: () => void; };
+type Feature = { icon: React.ComponentType<{ className?: string }>; name: string; description: string; badge: 'Pro preview' | 'Planned'; details: string };
 
-const features = [
-  { icon: BrainCircuit, name: 'Advanced ArthaMind Intelligence Briefs', description: 'Deeper, workspace-grounded financial analysis with evidence and explicit data limitations.', badge: 'Pro preview' },
-  { icon: LineChart, name: 'Multi-period trend analysis', description: 'Compare recorded income and spending across longer periods with clearer driver analysis.', badge: 'Planned' },
-  { icon: ShieldCheck, name: 'Advanced budget pressure diagnostics', description: 'Review configured budgets, recorded utilization and evidence-backed pressure signals.', badge: 'Pro preview' },
-  { icon: LockKeyhole, name: 'EMI and commitment stress analysis', description: 'Examine recurring obligations against recorded cash-flow context without affordability claims.', badge: 'Pro preview' },
-  { icon: Sparkles, name: 'Extended Decision Replay', description: 'Preview longer-horizon and scenario-comparison workflows while preserving deterministic calculations.', badge: 'Planned' },
-  { icon: FileDown, name: 'Exportable intelligence reports', description: 'Create professional, traceable finance-workspace reports with evidence and limitation sections.', badge: 'Planned' },
-  { icon: CheckCircle2, name: 'Advanced reliability trace', description: 'Expose more calculation, evidence, freshness and interpretation details for professional review.', badge: 'Pro preview' },
+const features: Feature[] = [
+  { icon: BrainCircuit, name:'Advanced ArthaMind Intelligence Briefs', description:'Deeper, workspace-grounded financial analysis with evidence and explicit data limitations.', badge:'Pro preview', details:'Module-aware Finance Intelligence already uses authorized workspace context where available. Pro packaging and entitlement are not activated in this build.' },
+  { icon: LineChart, name:'Multi-period trend analysis', description:'Compare recorded income and spending across longer periods with clearer driver analysis.', badge:'Planned', details:'Longer-period packaged analytics are a roadmap capability. Existing period analysis remains available under current access.' },
+  { icon: ShieldCheck, name:'Advanced budget pressure diagnostics', description:'Review configured budgets, recorded utilization and evidence-backed pressure signals.', badge:'Pro preview', details:'Budget pressure intelligence is available in current finance experiences; future Pro packaging would add deeper retained comparisons without removing current tools.' },
+  { icon: LockKeyhole, name:'EMI and commitment stress analysis', description:'Examine recurring obligations against recorded cash-flow context without affordability claims.', badge:'Pro preview', details:'EMI Intelligence, the planning indicator, scenario lab and grounded advisor remain planning tools—not lending, underwriting or approval services.' },
+  { icon: Sparkles, name:'Extended Decision Replay & Ripple Twin', description:'Compare cross-module temporary assumptions while preserving deterministic calculations.', badge:'Pro preview', details:'Decision Replay and Financial Ripple Twin never autosave assumptions. Any future premium packaging must preserve the deterministic calculation and no-autosave boundary.' },
+  { icon: FileDown, name:'Exportable intelligence reports', description:'Create professional, traceable finance-workspace reports with evidence and limitation sections.', badge:'Planned', details:'Export packaging is not enabled as a paid capability yet. Existing reports remain unchanged.' },
+  { icon: CheckCircle2, name:'Advanced reliability trace', description:'Expose more calculation, evidence, freshness and interpretation details for professional review.', badge:'Pro preview', details:'Current evidence/source/freshness disclosures remain available. Premium entitlement is not being asserted.' },
 ];
 
 export const ProPreviewModal: React.FC<Props> = ({ open, onClose }) => {
-  const closeRef = useRef<HTMLButtonElement | null>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose();
-    };
-    document.addEventListener('keydown', onKeyDown);
-    window.setTimeout(() => closeRef.current?.focus(), 0);
-    return () => {
-      document.removeEventListener('keydown', onKeyDown);
-      document.body.style.overflow = previousOverflow;
-    };
-  }, [open, onClose]);
-
-  if (!open) return null;
-
-  return (
-    <div
-      className="fixed inset-0 z-[140] flex items-end justify-center bg-slate-950/55 p-0 backdrop-blur-sm sm:items-center sm:p-5"
-      onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}
-    >
-      <section
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="pro-preview-title"
-        aria-describedby="pro-preview-description"
-        className="max-h-[94vh] w-full max-w-5xl overflow-y-auto rounded-t-3xl border border-line bg-surface shadow-2xl sm:rounded-3xl"
-      >
-        <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-line bg-surface/95 px-5 py-5 backdrop-blur sm:px-7">
-          <div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-interactive/25 bg-interactive-soft px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-interactive">
-              <Crown className="h-3.5 w-3.5" /> Signed-in Pro preview
-            </div>
-            <h2 id="pro-preview-title" className="mt-3 text-2xl font-black tracking-tight text-ink sm:text-3xl">Artha Bench Pro — Advanced Financial Intelligence</h2>
-            <p id="pro-preview-description" className="mt-2 max-w-3xl text-sm leading-6 text-secondary">Explore advanced analysis, deeper reliability tools and professional finance-workspace capabilities.</p>
-          </div>
-          <button ref={closeRef} type="button" onClick={onClose} className="shrink-0 rounded-xl border border-line p-2 text-secondary transition hover:border-interactive/40 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-interactive" aria-label="Close Pro preview">
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-
-        <div className="space-y-6 p-5 sm:p-7">
-          <div className="rounded-2xl border border-line bg-canvas p-4 text-xs leading-5 text-secondary">
-            <strong className="text-ink">Preview only.</strong> Feature availability depends on your plan and rollout status. This preview does not change your current access, request payment information, or claim that an upgrade has been completed.
-          </div>
-
-          <div className="grid gap-3 md:grid-cols-2">
-            {features.map(({ icon: Icon, name, description, badge }) => (
-              <article key={name} className="rounded-2xl border border-line bg-canvas p-4 sm:p-5">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-interactive/20 bg-interactive-soft text-interactive"><Icon className="h-4 w-4" /></div>
-                  <span className="rounded-full border border-line bg-surface px-2.5 py-1 text-[9px] font-black uppercase tracking-wider text-secondary">{badge}</span>
-                </div>
-                <h3 className="mt-4 text-sm font-black text-ink">{name}</h3>
-                <p className="mt-1 text-[11px] leading-5 text-secondary">{description}</p>
-              </article>
-            ))}
-          </div>
-
-          <div className="flex flex-col gap-3 rounded-2xl border border-interactive/20 bg-interactive-soft p-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <div className="text-xs font-black text-ink">Current access remains unchanged</div>
-              <p className="mt-1 text-[10px] leading-5 text-secondary">Existing free and currently available features stay available exactly as they are unless a real server-side entitlement system is introduced later.</p>
-            </div>
-            <button type="button" onClick={onClose} className="inline-flex min-h-10 shrink-0 items-center justify-center rounded-xl border border-interactive/30 bg-surface px-4 py-2 text-xs font-black text-interactive focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-interactive">Continue with current access</button>
-          </div>
-        </div>
-      </section>
+  const closeRef=useRef<HTMLButtonElement|null>(null);
+  const [selected,setSelected]=useState<Feature|null>(null);
+  const [accessState,setAccessState]=useState<'idle'|'unavailable'>('idle');
+  useEffect(()=>{if(!open)return;const previousOverflow=document.body.style.overflow;document.body.style.overflow='hidden';const onKeyDown=(event:KeyboardEvent)=>{if(event.key==='Escape')onClose();};document.addEventListener('keydown',onKeyDown);window.setTimeout(()=>closeRef.current?.focus(),0);return()=>{document.removeEventListener('keydown',onKeyDown);document.body.style.overflow=previousOverflow;};},[open,onClose]);
+  useEffect(()=>{if(!open){setSelected(null);setAccessState('idle');}},[open]);
+  if(!open)return null;
+  return <div className="fixed inset-0 z-[140] flex items-end justify-center bg-slate-950/55 p-0 backdrop-blur-sm sm:items-center sm:p-5" onMouseDown={(event)=>{if(event.target===event.currentTarget)onClose();}}><section role="dialog" aria-modal="true" aria-labelledby="pro-preview-title" aria-describedby="pro-preview-description" className="max-h-[94vh] w-full max-w-5xl overflow-y-auto rounded-t-3xl border border-line bg-surface shadow-2xl sm:rounded-3xl">
+    <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-line bg-surface/95 px-5 py-5 backdrop-blur sm:px-7"><div><div className="inline-flex items-center gap-2 rounded-full border border-interactive/25 bg-interactive-soft px-3 py-1 text-[10px] font-black uppercase tracking-[.14em] text-interactive"><Crown className="h-3.5 w-3.5"/> Signed-in Pro preview</div><h2 id="pro-preview-title" className="mt-3 text-2xl font-black tracking-tight text-ink sm:text-3xl">Artha Bench Pro — Advanced Financial Intelligence</h2><p id="pro-preview-description" className="mt-2 max-w-3xl text-sm leading-6 text-secondary">Explore advanced analysis, deeper reliability tools and professional finance-workspace capabilities.</p></div><button ref={closeRef} type="button" onClick={onClose} className="shrink-0 rounded-xl border border-line p-2 text-secondary transition hover:border-interactive/40 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-interactive" aria-label="Close Pro preview"><X className="h-4 w-4"/></button></div>
+    <div className="space-y-6 p-5 sm:p-7">
+      <div className="rounded-2xl border border-line bg-canvas p-4 text-xs leading-5 text-secondary"><strong className="text-ink">Preview only.</strong> Feature availability depends on your plan and rollout status. This preview does not change your current access. Payments and subscription checkout are not enabled in this build, and no payment information is requested.</div>
+      <div className="grid gap-3 md:grid-cols-2">{features.map((feature)=>{const Icon=feature.icon;return <button key={feature.name} type="button" onClick={()=>setSelected(feature)} className="rounded-2xl border border-line bg-canvas p-4 text-left transition hover:border-interactive/35 hover:bg-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-interactive sm:p-5"><div className="flex items-start justify-between gap-3"><div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-interactive/20 bg-interactive-soft text-interactive"><Icon className="h-4 w-4"/></div><span className="rounded-full border border-line bg-surface px-2.5 py-1 text-[9px] font-black uppercase tracking-wider text-secondary">{feature.badge}</span></div><h3 className="mt-4 text-sm font-black text-ink">{feature.name}</h3><p className="mt-1 text-[11px] leading-5 text-secondary">{feature.description}</p><span className="mt-3 inline-block text-[10px] font-black text-interactive">Learn more</span></button>;})}</div>
+      {selected&&<div className="rounded-2xl border border-interactive/20 bg-interactive-soft p-4"><div className="flex items-start justify-between gap-3"><div><div className="text-[9px] font-black uppercase tracking-wider text-interactive">Feature details</div><div className="mt-1 text-sm font-black text-ink">{selected.name}</div><p className="mt-2 text-[10px] leading-5 text-secondary">{selected.details}</p></div><button onClick={()=>setSelected(null)} className="rounded-lg p-1 text-secondary" aria-label="Close feature details"><X className="h-4 w-4"/></button></div></div>}
+      <div className="grid gap-3 sm:grid-cols-2"><div className="rounded-2xl border border-line bg-canvas p-4"><div className="text-xs font-black text-ink">Free / current access</div><p className="mt-2 text-[10px] leading-5 text-secondary">Current features stay available exactly as they are unless a real server-side entitlement system is introduced later.</p><button type="button" onClick={onClose} className="mt-3 inline-flex min-h-10 items-center justify-center rounded-xl border border-line bg-surface px-4 py-2 text-xs font-black text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-interactive">Continue with Free / current access</button></div><div className="rounded-2xl border border-interactive/20 bg-interactive-soft p-4"><div className="text-xs font-black text-ink">Pro access</div><p className="mt-2 text-[10px] leading-5 text-secondary">A payment or request-access backend is not configured, so Artha Bench cannot submit or confirm an upgrade from this build.</p><button type="button" onClick={()=>setAccessState('unavailable')} className="mt-3 inline-flex min-h-10 items-center justify-center rounded-xl bg-brand px-4 py-2 text-xs font-black text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-interactive">Request Pro access</button>{accessState==='unavailable'&&<div role="status" className="mt-3 rounded-xl border border-warning-fill/25 bg-warning-soft p-3 text-[10px] leading-4 text-secondary"><strong className="text-warning">Request not submitted.</strong> No access-request backend is configured. Nothing was stored or sent.</div>}</div></div>
+      <details className="rounded-2xl border border-line bg-canvas p-4 text-[10px] leading-5 text-secondary"><summary className="cursor-pointer font-black text-ink">Pro FAQ & product boundary</summary><p className="mt-2">Artha Bench does not offer brokerage, lending, investment execution, or personalised financial advice. Pro packaging cannot change those boundaries.</p></details>
     </div>
-  );
+  </section></div>;
 };

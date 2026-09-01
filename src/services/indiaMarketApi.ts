@@ -27,6 +27,9 @@ export type IndiaMarketStatus = {
   rateLimitState: 'ok' | 'limited';
   cache: { ttlSeconds: number; staleThresholdMinutes: number };
   status: 'Connected' | 'Partial coverage' | 'Unavailable' | 'No key configured';
+  intradayLicensed: boolean;
+  intradayConfigured: boolean;
+  intradayProvider: string;
   checkedAt: string;
 };
 

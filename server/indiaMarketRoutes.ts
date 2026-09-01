@@ -60,8 +60,12 @@ indiaMarketRouter.get('/markets/india/history', async (req, res, next) => {
 });
 
 indiaMarketRouter.get('/markets/india/status', (_req, res) => {
+  const intradayProvider = process.env.INDIA_INTRADAY_PROVIDER?.trim() || '';
   return res.json({
     ...getIndiaMarketStatus(),
+    intradayLicensed: process.env.INDIA_INTRADAY_LICENSED?.trim().toLowerCase() === 'true',
+    intradayConfigured: Boolean(intradayProvider && process.env.INDIA_INTRADAY_API_KEY?.trim()),
+    intradayProvider: intradayProvider || 'Not configured',
     checkedAt: new Date().toISOString(),
     requestId: res.getHeader('x-request-id') ?? null,
   });

@@ -18,6 +18,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
+import { formatMarketAxis, marketMovementColor } from '../../lib/charts/marketChartTheme';
 
 const CHART_COLORS = [
   'var(--chart-primary)',
@@ -44,12 +45,14 @@ const RELIABILITY_ARCHITECTURE = [
   { name: 'Injection defense', value: 10 },
 ];
 
-function formatCurrency(value: number) {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 2,
-  }).format(value);
+function formatCurrency(value: number, currency = 'USD') {
+  try {
+    return new Intl.NumberFormat(currency === 'INR' ? 'en-IN' : 'en-US', {
+      style: 'currency', currency, maximumFractionDigits: 2,
+    }).format(value);
+  } catch {
+    return `${currency} ${value.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+  }
 }
 
 function formatCompact(value: number) {
@@ -71,16 +74,22 @@ function formatDate(value: string) {
 
 export function MarketPerformanceChart({
   data,
+  currency = 'USD',
+  rangeReturn = null,
 }: {
   data: Array<{ date: string; price: number; volume?: number }>;
+  currency?: string;
+  rangeReturn?: number | null;
 }) {
+  const movementColor = marketMovementColor(rangeReturn);
+  const gradientId = `dashboardPriceGradient-${movementColor.replace('#', '')}`;
   return (
     <ResponsiveContainer width="100%" height="100%">
       <ComposedChart data={data} margin={{ top: 10, right: 5, bottom: 0, left: 0 }}>
         <defs>
-          <linearGradient id="dashboardPriceGradient" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="var(--chart-primary)" stopOpacity={0.18} />
-            <stop offset="95%" stopColor="var(--chart-primary)" stopOpacity={0} />
+          <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="5%" stopColor={movementColor} stopOpacity={0.16} />
+            <stop offset="95%" stopColor={movementColor} stopOpacity={0} />
           </linearGradient>
         </defs>
         <CartesianGrid stroke="var(--chart-grid)" strokeDasharray="3 3" vertical={false} />
@@ -96,8 +105,8 @@ export function MarketPerformanceChart({
           domain={['auto', 'auto']}
           tick={{ fill: 'var(--text-secondary)', fontSize: 9 }}
           stroke="var(--border-subtle)"
-          width={54}
-          tickFormatter={(value) => `$${Number(value).toFixed(0)}`}
+          width={62}
+          tickFormatter={(value) => formatMarketAxis(Number(value), currency)}
         />
         <YAxis yAxisId="volume" orientation="right" hide domain={[0, 'dataMax']} />
         <Tooltip
@@ -105,7 +114,7 @@ export function MarketPerformanceChart({
           formatter={(value, name) =>
             name === 'Volume'
               ? [formatCompact(Number(value)), 'Volume']
-              : [formatCurrency(Number(value)), 'Price']
+              : [formatCurrency(Number(value), currency), 'Price']
           }
           contentStyle={{
             background: 'var(--chart-tooltip)',
@@ -120,7 +129,7 @@ export function MarketPerformanceChart({
           dataKey="volume"
           name="Volume"
           fill="var(--chart-comparison)"
-          opacity={0.16}
+          opacity={0.14}
           radius={[3, 3, 0, 0]}
         />
         <Area
@@ -128,11 +137,11 @@ export function MarketPerformanceChart({
           type="monotone"
           dataKey="price"
           name="Price"
-          stroke="var(--chart-primary)"
+          stroke={movementColor}
           strokeWidth={2.5}
-          fill="url(#dashboardPriceGradient)"
+          fill={`url(#${gradientId})`}
           dot={false}
-          activeDot={{ r: 5, fill: 'var(--chart-primary)', stroke: 'var(--bg-surface)', strokeWidth: 2 }}
+          activeDot={{ r: 5, fill: movementColor, stroke: 'var(--bg-surface)', strokeWidth: 2 }}
         />
       </ComposedChart>
     </ResponsiveContainer>

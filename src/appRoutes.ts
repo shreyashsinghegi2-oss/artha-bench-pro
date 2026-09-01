@@ -16,6 +16,8 @@ const financePaths: Partial<Record<AppNavigationDestination, string>> = {
   'finance-reports': '/finance/reports',
   'emi-manager': '/finance/emi-manager',
   'decision-replay': '/finance/decision-replay',
+  'financial-twin': '/finance/ripple-twin',
+  'india-markets': '/finance/markets/india',
 };
 
 const workspacePaths: Partial<Record<AppNavigationDestination, string>> = {
@@ -55,7 +57,7 @@ const pathToWorkspace = new Map<string, AppNavigationDestination>([
 const pathToPublic = new Map<string, PublicPageId>(Object.entries(publicPaths).map(([page, path]) => [path, page as PublicPageId]));
 
 export const PRIVATE_FINANCE_DESTINATIONS = new Set<AppNavigationDestination>([
-  'financial-health', 'income', 'expenses', 'budgeting', 'finance-reports', 'emi-manager', 'decision-replay',
+  'financial-health', 'income', 'expenses', 'budgeting', 'finance-reports', 'emi-manager', 'decision-replay', 'financial-twin',
 ]);
 
 export function pathForDestination(destination: AppNavigationDestination): string {
@@ -64,6 +66,7 @@ export function pathForDestination(destination: AppNavigationDestination): strin
 
 export function destinationForPath(path: string): AppNavigationDestination | null {
   const normalized = path.replace(/\/+$/, '') || '/';
+  if (normalized.startsWith('/finance/markets/india/')) return 'india-markets';
   return pathToWorkspace.get(normalized) ?? null;
 }
 
@@ -80,6 +83,7 @@ export function readAppLocation(): AppLocation {
   }
   const publicPage = pathToPublic.get(normalized);
   if (publicPage) return { kind: 'public', page: publicPage };
+  if (normalized.startsWith('/finance/markets/india/')) return { kind: 'workspace', destination: 'india-markets' };
   const destination = pathToWorkspace.get(normalized);
   if (destination) return { kind: 'workspace', destination };
   if (window.location.hash === '#workspace') return { kind: 'workspace', destination: 'overview' };

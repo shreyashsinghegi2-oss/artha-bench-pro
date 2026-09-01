@@ -1,34 +1,24 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { AppNavigationDestination } from '../../navigationTypes';
+import { buildEmiIntelligenceSnapshot } from '../../services/emiIntelligence';
 import { EMI_RECORDS_CHANGED_EVENT, EmiRecord, loadEmiRecords, saveEmiRecords } from '../../services/emiStorage';
+import { EmiPlanningOverview } from './EmiPlanningOverview';
 import { EmiIntelligencePanel } from './EmiIntelligencePanel';
+import { EmiCentreAdvancedPanel } from './EmiCentreAdvancedPanel';
+import { EmiPrivacyPanel } from './EmiPrivacyPanel';
 import { EmiManagerView } from './EmiManagerView';
+import { EmbeddedFinanceAdvisor } from './EmbeddedFinanceAdvisor';
 
 type Props = { onNavigate: (destination: AppNavigationDestination) => void };
 
 export const EmiManagerIntelligenceView: React.FC<Props> = ({ onNavigate }) => {
   const [records, setRecords] = useState<EmiRecord[]>(loadEmiRecords);
   const [managerVersion, setManagerVersion] = useState(0);
-
-  useEffect(() => {
-    const refresh = () => setRecords(loadEmiRecords());
-    window.addEventListener(EMI_RECORDS_CHANGED_EVENT, refresh);
-    return () => window.removeEventListener(EMI_RECORDS_CHANGED_EVENT, refresh);
-  }, []);
-
-  const importRecords = (incoming: EmiRecord[]) => {
-    const current = loadEmiRecords();
-    saveEmiRecords([...incoming, ...current]);
-    setRecords(loadEmiRecords());
-    setManagerVersion((value) => value + 1);
-  };
-
-  return (
-    <>
-      <div className="mx-auto max-w-[1500px] px-4 pt-7 sm:px-6">
-        <EmiIntelligencePanel records={records} onNavigate={onNavigate} onImportRecords={importRecords} />
-      </div>
-      <EmiManagerView key={managerVersion} onNavigate={onNavigate} />
-    </>
-  );
+  const refresh = () => setRecords(loadEmiRecords());
+  useEffect(() => { window.addEventListener(EMI_RECORDS_CHANGED_EVENT, refresh); return () => window.removeEventListener(EMI_RECORDS_CHANGED_EVENT, refresh); }, []);
+  const importRecords = (incoming: EmiRecord[]) => { const current=loadEmiRecords();saveEmiRecords([...incoming,...current]);refresh();setManagerVersion((value)=>value+1); };
+  const recordsChanged=()=>{refresh();setManagerVersion((value)=>value+1);};
+  const intelligence=useMemo(()=>buildEmiIntelligenceSnapshot(records),[records]);
+  const advisorEvidence=useMemo<Record<string,unknown>>(()=>({calculatedAt:intelligence.calculatedAt,activeCommitments:intelligence.activeCount,monthlyCommitmentINR:intelligence.activeMonthlyCommitment,nextRecordedDueDate:intelligence.nextRecordedDueDate,upcoming30INR:intelligence.upcoming30,upcoming60INR:intelligence.upcoming60,upcoming90INR:intelligence.upcoming90,commitmentToIncomePercent:intelligence.commitmentToIncomePercent,commitmentToNetCashFlowPercent:intelligence.commitmentToNetCashFlowPercent,recordedMonthlyIncomeINR:intelligence.monthlyIncome,recordedNetCashFlowINR:intelligence.recordedNetCashFlow,averageRemainingTenureMonths:intelligence.averageRemainingTenureMonths,scheduleCompletenessPercent:intelligence.scheduleCompletenessPercent,emiHealthIndicator:intelligence.composite,emiHealthStatus:intelligence.compositeStatus,dimensions:intelligence.dimensions,upcomingTimeline:intelligence.upcomingTimeline.slice(0,24),mixByLender:intelligence.mixByLender,mixByCategory:intelligence.mixByCategory,records:records.map((record)=>({id:record.id,name:record.name,lender:record.lender||'Not recorded',loanType:record.loanType,status:record.status,emiAmount:record.emiAmount,outstandingBalance:record.outstandingBalance,annualInterestRate:record.annualInterestRate,nextDueDate:record.nextDueDate||null,remainingInstallments:record.remainingInstallments,confirmedPaymentCount:record.payments.length,updatedAt:record.updatedAt,source:'workspace record'})),boundary:'EMI intelligence is planning and record-analysis support only. Ratios are not lender affordability, creditworthiness, eligibility, approval or repayment predictions. A due date alone does not prove an overdue or paid state.'}),[intelligence,records]);
+  return <><div className="mx-auto max-w-[1500px] space-y-6 px-4 pt-7 sm:px-6"><EmiPlanningOverview records={records} onNavigate={onNavigate}/><EmiIntelligencePanel records={records} onNavigate={onNavigate} onImportRecords={importRecords}/><EmiCentreAdvancedPanel records={records} onRecordsChanged={recordsChanged} onNavigate={onNavigate}/><EmbeddedFinanceAdvisor module="emi-manager" title="EMI & Commitment Advisor" description="ArthaMind analyzes your recorded commitments, due-date calendar, cash-flow context, data quality and EMI Health dimensions. It can explain what deserves review and which temporary scenarios are useful to test, without acting as a lender or making a repayment decision for you." questions={['Analyze all my recorded EMIs and tell me what is useful to review.','Which upcoming commitments create the most calendar pressure?','How are my recorded EMIs affecting current cash-flow context?','Which EMI fields or payment records are missing and need verification?','Which safe scenario should I test in Decision Replay to understand my commitments better?']} responseSections={['Commitment snapshot','Upcoming obligations','Cash-flow context','EMI Health evidence','Items to verify','Scenarios worth testing','Data limitations']} evidence={advisorEvidence} evidenceNote="Uses the same recorded EMI records and deterministic EMI Intelligence calculations shown on this page. Payment status is treated as unknown unless a payment is explicitly recorded; the advisor cannot infer lender eligibility or recommend a loan/refinance decision." /><EmiPrivacyPanel/></div><EmiManagerView key={managerVersion} onNavigate={onNavigate}/></>;
 };

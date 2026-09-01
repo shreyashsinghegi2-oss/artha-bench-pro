@@ -1,14 +1,5 @@
 import React, { lazy, Suspense, useCallback, useEffect, useState } from 'react';
-import {
-  AppLocation,
-  destinationForPath,
-  pathForDestination,
-  PRIVATE_FINANCE_DESTINATIONS,
-  pushAuth,
-  pushDestination,
-  pushLanding,
-  readAppLocation,
-} from './appRoutes';
+import { AppLocation,destinationForPath,pathForDestination,PRIVATE_FINANCE_DESTINATIONS,pushAuth,pushDestination,pushLanding,readAppLocation } from './appRoutes';
 import { AppNavigationDestination, isFinanceDestination } from './navigationTypes';
 import { Header } from './components/Header';
 import { Navigation } from './components/Navigation';
@@ -17,6 +8,8 @@ import { FinanceAssistantDrawer } from './components/finance/FinanceAssistantDra
 import { Footer } from './components/Footer';
 import { DashboardView } from './components/dashboard/DashboardView';
 import { PersonalFinancialIntelligence } from './components/dashboard/PersonalFinancialIntelligence';
+import { IndiaMarketExplorerPreview } from './components/dashboard/IndiaMarketExplorerPreview';
+import { USMarketIdentityStrip } from './components/dashboard/USMarketIdentityStrip';
 import { LearningView } from './components/learning/LearningView';
 import { NewsView } from './components/news/NewsView';
 import { QuickCheckView } from './components/quickcheck/QuickCheckView';
@@ -37,152 +30,36 @@ import { FirstTimeOnboardingGate } from './components/onboarding/FirstTimeOnboar
 import { PublicInfoPage } from './components/public/PublicInfoPage';
 import { useAuth } from './auth/AuthContext';
 
-const EconomicDashboardView = lazy(() => import('./components/economy/EconomicDashboardView').then((module) => ({ default: module.EconomicDashboardView })));
-const MarketView = lazy(() => import('./components/market/MarketView').then((module) => ({ default: module.MarketView })));
-const IncomeWorkspaceView = lazy(() => import('./components/income/IncomeWorkspaceView').then((module) => ({ default: module.IncomeWorkspaceView })));
-const ExpensesView = lazy(() => import('./components/expenses/ExpensesView').then((module) => ({ default: module.ExpensesView })));
-const BudgetingView = lazy(() => import('./components/budgeting/BudgetingView').then((module) => ({ default: module.BudgetingView })));
-const FinancialHealthView = lazy(() => import('./components/finance/FinancialHealthView').then((module) => ({ default: module.FinancialHealthView })));
-const FinanceReportsIntelligenceView = lazy(() => import('./components/finance/FinanceReportsIntelligenceView').then((module) => ({ default: module.FinanceReportsIntelligenceView })));
-const EmiManagerIntelligenceView = lazy(() => import('./components/finance/EmiManagerIntelligenceView').then((module) => ({ default: module.EmiManagerIntelligenceView })));
-const DecisionReplayView = lazy(() => import('./components/finance/DecisionReplayView').then((module) => ({ default: module.DecisionReplayView })));
-const CryptoDashboardView = lazy(() => import('./components/crypto/CryptoDashboardView').then((module) => ({ default: module.CryptoDashboardView })));
-const LoadingView = ({ label }: { label: string }) => <div className="mx-auto max-w-[1500px] px-4 py-20 text-center text-sm text-secondary">Loading {label}…</div>;
-const PENDING_RETURN_KEY = 'arthabench_pending_private_return_v1';
+const EconomicDashboardView=lazy(()=>import('./components/economy/EconomicDashboardView').then((module)=>({default:module.EconomicDashboardView})));
+const MarketView=lazy(()=>import('./components/market/MarketView').then((module)=>({default:module.MarketView})));
+const IndiaMarketExplorerView=lazy(()=>import('./components/market/IndiaMarketExplorerView').then((module)=>({default:module.IndiaMarketExplorerView})));
+const IncomeWorkspaceView=lazy(()=>import('./components/income/IncomeWorkspaceView').then((module)=>({default:module.IncomeWorkspaceView})));
+const ExpensesView=lazy(()=>import('./components/expenses/ExpensesView').then((module)=>({default:module.ExpensesView})));
+const BudgetingView=lazy(()=>import('./components/budgeting/BudgetingView').then((module)=>({default:module.BudgetingView})));
+const FinancialHealthAdvisorView=lazy(()=>import('./components/finance/FinancialHealthAdvisorView').then((module)=>({default:module.FinancialHealthAdvisorView})));
+const FinancialRippleTwinView=lazy(()=>import('./components/finance/FinancialRippleTwinView').then((module)=>({default:module.FinancialRippleTwinView})));
+const FinanceReportsIntelligenceView=lazy(()=>import('./components/finance/FinanceReportsIntelligenceView').then((module)=>({default:module.FinanceReportsIntelligenceView})));
+const EmiManagerIntelligenceView=lazy(()=>import('./components/finance/EmiManagerIntelligenceView').then((module)=>({default:module.EmiManagerIntelligenceView})));
+const DecisionReplayView=lazy(()=>import('./components/finance/DecisionReplayView').then((module)=>({default:module.DecisionReplayView})));
+const CryptoDashboardView=lazy(()=>import('./components/crypto/CryptoDashboardView').then((module)=>({default:module.CryptoDashboardView})));
+const LoadingView=({label}:{label:string})=><div className="mx-auto max-w-[1500px] px-4 py-20 text-center text-sm text-secondary">Loading {label}…</div>;
+const PENDING_RETURN_KEY='arthabench_pending_private_return_v1';
 
-export default function App() {
-  const auth = useAuth();
-  const [location, setLocation] = useState<AppLocation>(() => readAppLocation());
-  const currentDestination = location.kind === 'workspace' ? location.destination : 'overview';
-
-  const syncFromLocation = useCallback(() => setLocation(readAppLocation()), []);
-  useEffect(() => {
-    window.addEventListener('popstate', syncFromLocation);
-    window.addEventListener('hashchange', syncFromLocation);
-    if (window.location.hash === '#workspace') {
-      pushDestination('overview', true);
-      setLocation({ kind: 'workspace', destination: 'overview' });
-    }
-    return () => {
-      window.removeEventListener('popstate', syncFromLocation);
-      window.removeEventListener('hashchange', syncFromLocation);
-    };
-  }, [syncFromLocation]);
-
-  const goToDestination = useCallback((destination: AppNavigationDestination, replace = false) => {
-    pushDestination(destination, replace);
-    setLocation({ kind: 'workspace', destination });
-    window.scrollTo({ top: 0, behavior: 'auto' });
-  }, []);
-
-  const requestPrivateDestination = useCallback((destination: AppNavigationDestination) => {
-    const returnTo = pathForDestination(destination);
-    window.sessionStorage.setItem(PENDING_RETURN_KEY, returnTo);
-    pushAuth(returnTo);
-    setLocation({ kind: 'auth', returnTo });
-    window.scrollTo({ top: 0, behavior: 'auto' });
-  }, []);
-
-  const navigateWorkspace = useCallback((destination: AppNavigationDestination = 'overview') => {
-    if (!auth.user && PRIVATE_FINANCE_DESTINATIONS.has(destination)) {
-      return requestPrivateDestination(destination);
-    }
-    goToDestination(destination);
-  }, [auth.user, goToDestination, requestPrivateDestination]);
-
-  useEffect(() => {
-    if (auth.loading) return;
-    if (!auth.user && location.kind === 'workspace' && PRIVATE_FINANCE_DESTINATIONS.has(location.destination)) {
-      const returnTo = pathForDestination(location.destination);
-      window.sessionStorage.setItem(PENDING_RETURN_KEY, returnTo);
-      pushAuth(returnTo, true);
-      setLocation({ kind: 'auth', returnTo });
-      return;
-    }
-    if (!auth.user) return;
-    const pending = window.sessionStorage.getItem(PENDING_RETURN_KEY);
-    const returnTo = location.kind === 'auth' ? location.returnTo : pending;
-    if (!returnTo) return;
-    const destination = destinationForPath(returnTo);
-    window.sessionStorage.removeItem(PENDING_RETURN_KEY);
-    if (destination) goToDestination(destination, true);
-  }, [auth.loading, auth.user, goToDestination, location]);
-
-  const goHome = useCallback(() => {
-    pushLanding();
-    setLocation({ kind: 'landing' });
-    window.scrollTo({ top: 0, behavior: 'auto' });
-  }, []);
-  const goOverview = useCallback(() => goToDestination('overview'), [goToDestination]);
-
-  const dashboard = () => <>
-    {auth.user && (
-      <div className="mx-auto max-w-[1700px] px-4 pt-7 sm:px-6">
-        <PersonalFinancialIntelligence onNavigate={(destination) => navigateWorkspace(destination)} />
-      </div>
-    )}
-    <DashboardView onNavigate={(destination) => navigateWorkspace(destination)} />
-  </>;
-
-  const renderActiveView = () => {
-    switch (currentDestination) {
-      case 'overview':
-      case 'dashboard': return dashboard();
-      case 'learning': return <LearningView />;
-      case 'financial-health': return <Suspense fallback={<LoadingView label="Financial Health Intelligence" />}><FinancialHealthView onNavigate={navigateWorkspace} /></Suspense>;
-      case 'income': return <Suspense fallback={<LoadingView label="Income Workspace" />}><IncomeWorkspaceView /></Suspense>;
-      case 'expenses': return <Suspense fallback={<LoadingView label="Expenses Workspace" />}><ExpensesView /></Suspense>;
-      case 'budgeting': return <Suspense fallback={<LoadingView label="Budgeting Workspace" />}><BudgetingView /></Suspense>;
-      case 'finance-reports': return <Suspense fallback={<LoadingView label="Finance Reports" />}><FinanceReportsIntelligenceView onNavigate={navigateWorkspace} /></Suspense>;
-      case 'emi-manager': return <Suspense fallback={<LoadingView label="EMI Intelligence" />}><EmiManagerIntelligenceView onNavigate={navigateWorkspace} /></Suspense>;
-      case 'decision-replay': return <Suspense fallback={<LoadingView label="Decision Replay" />}><DecisionReplayView /></Suspense>;
-      case 'crypto': return <Suspense fallback={<LoadingView label="Crypto Dashboard" />}><CryptoDashboardView /></Suspense>;
-      case 'markets': return <Suspense fallback={<LoadingView label="Company Intelligence Dashboard" />}><MarketView /></Suspense>;
-      case 'economy': return <Suspense fallback={<LoadingView label="Economic Dashboard" />}><EconomicDashboardView /></Suspense>;
-      case 'news': return <NewsView />;
-      case 'quick-check': return <QuickCheckView />;
-      case 'tutor': return <TutorView />;
-      case 'evaluation-lab': return <EvaluationLabView />;
-      case 'comparison': return <ComparisonView />;
-      case 'scenarios': return <ScenariosView />;
-      case 'batch': return <BatchBenchmarkView />;
-      case 'reports': return <ReportsView />;
-      case 'methodology': return <MethodologyView />;
-      case 'connections': return <ConnectionsView />;
-      case 'settings': return <SettingsView />;
-      case 'account': return <AccountView />;
-      default: return dashboard();
-    }
-  };
-
-  if (auth.loading) {
-    return <div className="flex min-h-screen items-center justify-center bg-canvas text-ink"><div className="rounded-2xl border border-line bg-surface px-6 py-5 text-sm font-semibold text-secondary shadow-sm">Restoring your Artha Bench workspace…</div></div>;
-  }
-
-  if (!auth.user && location.kind === 'workspace' && PRIVATE_FINANCE_DESTINATIONS.has(location.destination)) {
-    const returnTo = pathForDestination(location.destination);
-    return <><AuthGateView returnTo={returnTo} onCancel={goOverview} onEmail={() => auth.openAuth('login')} /><AuthModal /></>;
-  }
-  if (location.kind === 'landing') {
-    return <><ArthaMindLandingPage signedIn={Boolean(auth.user)} onEnter={(destination) => navigateWorkspace(destination ?? 'overview')} onSignIn={() => auth.openAuth('login')} /><AuthModal /><FirstTimeOnboardingGate onNavigate={navigateWorkspace} /></>;
-  }
-  if (location.kind === 'public') {
-    return <><PublicInfoPage page={location.page} onHome={goHome} onWorkspace={goOverview} /><AuthModal /><FirstTimeOnboardingGate onNavigate={navigateWorkspace} /></>;
-  }
-  if (location.kind === 'auth') {
-    return <><AuthGateView returnTo={location.returnTo} onCancel={goOverview} onEmail={() => auth.openAuth('login')} /><AuthModal /><FirstTimeOnboardingGate onNavigate={navigateWorkspace} /></>;
-  }
-
-  const financeWorkspace = isFinanceDestination(currentDestination);
-  return <div className="flex min-h-screen flex-col bg-canvas font-sans text-ink selection:bg-interactive selection:text-white">
-    <Header currentDestination={currentDestination} onNavigate={navigateWorkspace} />
-    {financeWorkspace
-      ? <FinanceWorkspaceNavigation currentDestination={currentDestination} onNavigate={navigateWorkspace} />
-      : <Navigation currentDestination={currentDestination} onNavigate={navigateWorkspace} />}
-    <main className="flex-1">{renderActiveView()}</main>
-    <Footer />
-    <AuthModal />
-    {auth.user && financeWorkspace && <FinanceAssistantDrawer module={currentDestination} onManageContext={() => navigateWorkspace('account')} />}
-    <FirstTimeOnboardingGate onNavigate={navigateWorkspace} />
-  </div>;
+export default function App(){
+ const auth=useAuth();const[location,setLocation]=useState<AppLocation>(()=>readAppLocation());const currentDestination=location.kind==='workspace'?location.destination:'overview';
+ const syncFromLocation=useCallback(()=>setLocation(readAppLocation()),[]);
+ useEffect(()=>{window.addEventListener('popstate',syncFromLocation);window.addEventListener('hashchange',syncFromLocation);if(window.location.hash==='#workspace'){pushDestination('overview',true);setLocation({kind:'workspace',destination:'overview'});}return()=>{window.removeEventListener('popstate',syncFromLocation);window.removeEventListener('hashchange',syncFromLocation);};},[syncFromLocation]);
+ const goToDestination=useCallback((destination:AppNavigationDestination,replace=false)=>{pushDestination(destination,replace);setLocation({kind:'workspace',destination});window.scrollTo({top:0,behavior:'auto'});},[]);
+ const requestPrivateDestination=useCallback((destination:AppNavigationDestination)=>{const returnTo=pathForDestination(destination);window.sessionStorage.setItem(PENDING_RETURN_KEY,returnTo);pushAuth(returnTo);setLocation({kind:'auth',returnTo});window.scrollTo({top:0,behavior:'auto'});},[]);
+ const navigateWorkspace=useCallback((destination:AppNavigationDestination='overview')=>{if(!auth.user&&PRIVATE_FINANCE_DESTINATIONS.has(destination))return requestPrivateDestination(destination);goToDestination(destination);},[auth.user,goToDestination,requestPrivateDestination]);
+ useEffect(()=>{if(auth.loading)return;if(!auth.user&&location.kind==='workspace'&&PRIVATE_FINANCE_DESTINATIONS.has(location.destination)){const returnTo=pathForDestination(location.destination);window.sessionStorage.setItem(PENDING_RETURN_KEY,returnTo);pushAuth(returnTo,true);setLocation({kind:'auth',returnTo});return;}if(!auth.user)return;const pending=window.sessionStorage.getItem(PENDING_RETURN_KEY);const returnTo=location.kind==='auth'?location.returnTo:pending;if(!returnTo)return;const destination=destinationForPath(returnTo);window.sessionStorage.removeItem(PENDING_RETURN_KEY);if(destination)goToDestination(destination,true);},[auth.loading,auth.user,goToDestination,location]);
+ const goHome=useCallback(()=>{pushLanding();setLocation({kind:'landing'});window.scrollTo({top:0,behavior:'auto'});},[]);const goOverview=useCallback(()=>goToDestination('overview'),[goToDestination]);
+ const dashboard=()=><>{auth.user&&<div className="mx-auto max-w-[1700px] px-4 pt-7 sm:px-6"><PersonalFinancialIntelligence onNavigate={navigateWorkspace}/></div>}<IndiaMarketExplorerPreview onNavigate={navigateWorkspace}/><USMarketIdentityStrip/><DashboardView onNavigate={(destination)=>navigateWorkspace(destination)}/></>;
+ const renderActiveView=()=>{switch(currentDestination){case'overview':case'dashboard':return dashboard();case'learning':return <LearningView/>;case'financial-health':return <Suspense fallback={<LoadingView label="Financial Health Intelligence"/>}><FinancialHealthAdvisorView onNavigate={navigateWorkspace}/></Suspense>;case'financial-twin':return <Suspense fallback={<LoadingView label="Financial Ripple Twin"/>}><FinancialRippleTwinView onNavigate={navigateWorkspace}/></Suspense>;case'income':return <Suspense fallback={<LoadingView label="Income Workspace"/>}><IncomeWorkspaceView/></Suspense>;case'expenses':return <Suspense fallback={<LoadingView label="Expenses Workspace"/>}><ExpensesView/></Suspense>;case'budgeting':return <Suspense fallback={<LoadingView label="Budgeting Workspace"/>}><BudgetingView/></Suspense>;case'finance-reports':return <Suspense fallback={<LoadingView label="Finance Reports"/>}><FinanceReportsIntelligenceView onNavigate={navigateWorkspace}/></Suspense>;case'emi-manager':return <Suspense fallback={<LoadingView label="EMI Intelligence"/>}><EmiManagerIntelligenceView onNavigate={navigateWorkspace}/></Suspense>;case'decision-replay':return <Suspense fallback={<LoadingView label="Decision Replay"/>}><DecisionReplayView/></Suspense>;case'india-markets':return <Suspense fallback={<LoadingView label="India Market Explorer"/>}><IndiaMarketExplorerView/></Suspense>;case'crypto':return <Suspense fallback={<LoadingView label="Crypto Dashboard"/>}><CryptoDashboardView/></Suspense>;case'markets':return <Suspense fallback={<LoadingView label="Company Intelligence Dashboard"/>}><MarketView/></Suspense>;case'economy':return <Suspense fallback={<LoadingView label="Economic Dashboard"/>}><EconomicDashboardView/></Suspense>;case'news':return <NewsView/>;case'quick-check':return <QuickCheckView/>;case'tutor':return <TutorView/>;case'evaluation-lab':return <EvaluationLabView/>;case'comparison':return <ComparisonView/>;case'scenarios':return <ScenariosView/>;case'batch':return <BatchBenchmarkView/>;case'reports':return <ReportsView/>;case'methodology':return <MethodologyView/>;case'connections':return <ConnectionsView/>;case'settings':return <SettingsView/>;case'account':return <AccountView/>;default:return dashboard();}};
+ if(auth.loading)return <div className="flex min-h-screen items-center justify-center bg-canvas text-ink"><div className="rounded-2xl border border-line bg-surface px-6 py-5 text-sm font-semibold text-secondary shadow-sm">Restoring your Artha Bench workspace…</div></div>;
+ if(!auth.user&&location.kind==='workspace'&&PRIVATE_FINANCE_DESTINATIONS.has(location.destination)){const returnTo=pathForDestination(location.destination);return <><AuthGateView returnTo={returnTo} onCancel={goOverview} onEmail={()=>auth.openAuth('login')}/><AuthModal/></>;}
+ if(location.kind==='landing')return <><ArthaMindLandingPage signedIn={Boolean(auth.user)} onEnter={(destination)=>navigateWorkspace(destination??'overview')} onSignIn={()=>auth.openAuth('login')}/><AuthModal/><FirstTimeOnboardingGate onNavigate={navigateWorkspace}/></>;
+ if(location.kind==='public')return <><PublicInfoPage page={location.page} onHome={goHome} onWorkspace={goOverview}/><AuthModal/><FirstTimeOnboardingGate onNavigate={navigateWorkspace}/></>;
+ if(location.kind==='auth')return <><AuthGateView returnTo={location.returnTo} onCancel={goOverview} onEmail={()=>auth.openAuth('login')}/><AuthModal/><FirstTimeOnboardingGate onNavigate={navigateWorkspace}/></>;
+ const financeWorkspace=isFinanceDestination(currentDestination);return <div className="flex min-h-screen flex-col bg-canvas font-sans text-ink selection:bg-interactive selection:text-white"><Header currentDestination={currentDestination} onNavigate={navigateWorkspace}/>{financeWorkspace?<FinanceWorkspaceNavigation currentDestination={currentDestination} onNavigate={navigateWorkspace}/>:<Navigation currentDestination={currentDestination} onNavigate={navigateWorkspace}/>}<main className="flex-1">{renderActiveView()}</main><Footer/><AuthModal/>{auth.user&&financeWorkspace&&<FinanceAssistantDrawer module={currentDestination} onManageContext={()=>navigateWorkspace('account')}/>}<FirstTimeOnboardingGate onNavigate={navigateWorkspace}/></div>;
 }

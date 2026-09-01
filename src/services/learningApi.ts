@@ -15,6 +15,7 @@ import {
   TutorPreferences,
   VerificationReport,
 } from '../types';
+import { askReliableTutor } from './reliableTutor';
 
 async function fetchJSON<T>(url: string, options?: RequestInit): Promise<T> {
   const res = await fetch(url, {
@@ -262,29 +263,12 @@ export async function askTutorAI(
   history: Array<{ role: 'user' | 'assistant'; content: string }> = [],
   context: TutorPreferences = DEFAULT_TUTOR_PREFERENCES,
 ) {
-  try {
-    const res = await fetchJSON<{
-      answer?: string;
-      response?: string;
-      structuredAnswer?: StructuredFinancialAnswer;
-      suggestedFollowUps: string[];
-      mathProof?: string;
-    }>('/api/tutor', {
-      method: 'POST',
-      body: JSON.stringify({ userPrompt: question, message: question, history, context }),
-    });
-    return {
-      answer: res.answer || res.response || 'AI response unavailable.',
-      structuredAnswer: res.structuredAnswer,
-      suggestedFollowUps: res.suggestedFollowUps || [],
-      mathProof: res.mathProof,
-    };
-  } catch {
-    return {
-      answer: 'ArthaMind could not reach the configured AI provider. Please retry after provider connectivity is restored.',
-      suggestedFollowUps: [],
-    };
-  }
+  const response = await askReliableTutor(question, { history, context, visibleData: { question, context } });
+  return {
+    answer: response.answer,
+    suggestedFollowUps: response.suggestedFollowUps,
+    fallbackMode: response.fallbackMode,
+  };
 }
 
 export async function runQuickCheck(query: string) {

@@ -1,7 +1,10 @@
 import React, { useMemo } from 'react';
-import { ArrowRight, BookOpen, CircleDollarSign, PiggyBank, Target, WalletCards, Eye, Sparkles } from 'lucide-react';
+import { ArrowRight, BookOpen, CalendarClock, CircleDollarSign, HeartPulse, PiggyBank, Target, WalletCards, Eye, Sparkles } from 'lucide-react';
 import { useAuth } from '../../auth/AuthContext';
-import { NavigationDestination } from '../../types';
+import { AppNavigationDestination } from '../../navigationTypes';
+import { buildFinancialHealthSnapshot } from '../../services/financialHealth';
+import { buildEmiIntelligenceSnapshot } from '../../services/emiIntelligence';
+import { loadEmiRecords } from '../../services/emiStorage';
 import { getMarketWatchlist, getOverallProgressPercentage } from '../../services/learningStorage';
 import {
   currentMonthKey,
@@ -13,7 +16,7 @@ import {
   totalExpenses,
 } from '../../services/personalFinanceStorage';
 
-interface Props { onNavigate: (destination: NavigationDestination) => void; }
+interface Props { onNavigate: (destination: AppNavigationDestination) => void; }
 
 export const PersonalFinancialIntelligence: React.FC<Props> = ({ onNavigate }) => {
   const auth = useAuth();
@@ -28,6 +31,8 @@ export const PersonalFinancialIntelligence: React.FC<Props> = ({ onNavigate }) =
     const usage = planned > 0 ? (expenseTotal / planned) * 100 : null;
     const budgetStatus = usage == null ? 'No monthly budget' : usage > 100 ? 'Over budget' : usage >= 80 ? 'Near limit' : 'On track';
     const recurring = expenses.filter((item) => item.recurring).slice(0, 3);
+    const health = buildFinancialHealthSnapshot(6);
+    const emi = buildEmiIntelligenceSnapshot(loadEmiRecords());
     return {
       month,
       income,
@@ -38,6 +43,8 @@ export const PersonalFinancialIntelligence: React.FC<Props> = ({ onNavigate }) =
       recurring,
       learningProgress: getOverallProgressPercentage(),
       watchlist: getMarketWatchlist().slice(0, 4),
+      health,
+      emi,
     };
   }, [auth.user]);
 
@@ -53,6 +60,9 @@ export const PersonalFinancialIntelligence: React.FC<Props> = ({ onNavigate }) =
           <p className="mt-1 text-[11px] text-secondary">Private account snapshot · {snapshot.month} · only recorded data is shown.</p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <button type="button" onClick={() => onNavigate('financial-health')} className="inline-flex items-center gap-2 rounded-xl border border-line bg-canvas px-3 py-2 text-xs font-black text-ink hover:border-interactive/40">
+            <HeartPulse className="h-3.5 w-3.5" /> Financial Health
+          </button>
           <button type="button" onClick={() => onNavigate('decision-replay')} className="inline-flex items-center gap-2 rounded-xl border border-interactive/30 bg-interactive-soft px-3 py-2 text-xs font-black text-interactive hover:border-interactive/50">
             <Sparkles className="h-3.5 w-3.5" /> Decision Replay
           </button>
@@ -69,6 +79,15 @@ export const PersonalFinancialIntelligence: React.FC<Props> = ({ onNavigate }) =
         <Summary icon={Target} label="Savings goal" value={auth.profile?.financial_goal ? 'Goal configured' : 'Not set'} note={auth.profile?.financial_goal || 'Add an optional goal in Account'} onClick={() => onNavigate('account')} />
         <Summary icon={BookOpen} label="Learning progress" value={`${snapshot.learningProgress}%`} note="Recorded lesson completion" onClick={() => onNavigate('learning')} />
         <Summary icon={Eye} label="Watchlist" value={snapshot.watchlist.length ? `${snapshot.watchlist.length} shown` : 'Empty'} note={snapshot.watchlist.length ? snapshot.watchlist.join(' · ') : 'Add companies or assets to monitor'} onClick={() => onNavigate('markets')} />
+      </div>
+
+      <div className="mt-4 grid gap-3 md:grid-cols-2">
+        <button type="button" onClick={() => onNavigate('financial-health')} className="rounded-2xl border border-line bg-canvas p-4 text-left transition hover:border-interactive/35 hover:bg-subtle">
+          <div className="flex items-start justify-between gap-3"><div><div className="flex items-center gap-2 text-[9px] font-black uppercase tracking-wider text-secondary"><HeartPulse className="h-4 w-4 text-interactive" /> Financial Health Profile</div><div className="mt-2 text-base font-black text-ink">{snapshot.health.composite == null ? 'Data needed' : `${snapshot.health.composite}/100 · ${snapshot.health.compositeStatus}`}</div><div className="mt-1 text-[9px] leading-4 text-secondary">Explainable personal financial health indicator from recorded workspace data · not a credit score.</div></div><ArrowRight className="h-4 w-4 text-interactive" /></div>
+        </button>
+        <button type="button" onClick={() => onNavigate('emi-manager')} className="rounded-2xl border border-line bg-canvas p-4 text-left transition hover:border-interactive/35 hover:bg-subtle">
+          <div className="flex items-start justify-between gap-3"><div><div className="flex items-center gap-2 text-[9px] font-black uppercase tracking-wider text-secondary"><CalendarClock className="h-4 w-4 text-interactive" /> Commitment Intelligence</div><div className="mt-2 text-base font-black text-ink">{snapshot.emi.activeCount ? `${formatINR(snapshot.emi.activeMonthlyCommitment)} / month` : 'No active EMI recorded'}</div><div className="mt-1 text-[9px] leading-4 text-secondary">{snapshot.emi.commitmentToIncomePercent == null ? 'Add recorded income for commitment-to-income context.' : `${snapshot.emi.commitmentToIncomePercent}% of recorded monthly income · internal descriptive ratio only.`}</div></div><ArrowRight className="h-4 w-4 text-interactive" /></div>
+        </button>
       </div>
 
       <div className="mt-4 flex flex-col gap-3 rounded-2xl border border-line bg-canvas px-4 py-3 text-[10px] text-secondary sm:flex-row sm:items-center sm:justify-between">

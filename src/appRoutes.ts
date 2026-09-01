@@ -83,6 +83,7 @@ export function pathForDestination(destination: AppNavigationDestination): strin
 export function destinationForPath(path: string): AppNavigationDestination | null {
   const normalized = path.replace(/\/+$/, '') || '/';
   if (normalized.startsWith('/finance/markets/india/')) return 'india-markets';
+  if (normalized.startsWith('/finance/markets/learn/')) return 'markets-learn';
   return pathToWorkspace.get(normalized) ?? null;
 }
 
@@ -100,6 +101,7 @@ export function readAppLocation(): AppLocation {
   const publicPage = pathToPublic.get(normalized);
   if (publicPage) return { kind: 'public', page: publicPage };
   if (normalized.startsWith('/finance/markets/india/')) return { kind: 'workspace', destination: 'india-markets' };
+  if (normalized.startsWith('/finance/markets/learn/')) return { kind: 'workspace', destination: 'markets-learn' };
   const destination = pathToWorkspace.get(normalized);
   if (destination) return { kind: 'workspace', destination };
   if (window.location.hash === '#workspace') return { kind: 'workspace', destination: 'overview' };

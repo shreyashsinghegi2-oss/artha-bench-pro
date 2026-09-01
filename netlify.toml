@@ -5,6 +5,16 @@
 [build.environment]
   NODE_VERSION = "22"
 
+# Free no-key market reference fallback for the public Netlify frontend.
+# The browser calls this same-origin path only when the primary /api market route
+# is unavailable. Yahoo values remain explicitly labelled experimental/reference.
+[[redirects]]
+  from = "/free-market/yahoo/*"
+  to = "https://query1.finance.yahoo.com/v8/finance/chart/:splat"
+  status = 200
+  force = true
+  headers = { User-Agent = "Mozilla/5.0 (compatible; ArthaBenchPro/2.0)", Accept = "application/json" }
+
 # Keep the latest Netlify frontend connected to the already-running backend
 # while private provider secrets are migrated from Vercel.
 [[redirects]]
@@ -19,4 +29,4 @@
   to = "/index.html"
   status = 200
 
-# Deployment trigger: 2026-08-28
+# Deployment trigger: 2026-09-01

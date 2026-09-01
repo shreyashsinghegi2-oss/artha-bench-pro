@@ -1,0 +1,45 @@
+name: Netlify Production Publish
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    if: github.head_ref == 'codex/netlify-production-publish'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout current main-based release candidate
+        uses: actions/checkout@v4
+
+      - name: Use Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify production build
+        run: npm run build
+
+      - name: Publish current build to Netlify production
+        env:
+          NETLIFY_AUTH_TOKEN_PRIMARY: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_AUTH_TOKEN_ALT: ${{ secrets.NETLIFY_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          TOKEN="${NETLIFY_AUTH_TOKEN_PRIMARY:-${NETLIFY_AUTH_TOKEN_ALT:-}}"
+          if [ -z "$TOKEN" ]; then
+            echo "::error::No existing NETLIFY_AUTH_TOKEN or NETLIFY_TOKEN repository secret is configured."
+            exit 1
+          fi
+          echo "::add-mask::$TOKEN"
+          export NETLIFY_AUTH_TOKEN="$TOKEN"
+          npx -y netlify-cli@latest deploy --prod --build --site 082076c6-1cae-459a-b628-31b29fc6dabf --message "Publish Artha Bench market reliability release 71c62e85845d"

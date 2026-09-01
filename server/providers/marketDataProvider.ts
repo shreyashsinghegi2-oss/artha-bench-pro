@@ -1,10 +1,11 @@
 /**
  * Production market-data adapter.
  *
- * Policy:
- * - Yahoo Finance is the no-key primary source by default.
- * - Twelve Data can be used as a configured fallback when an API key exists.
- * - Provider failures return an unavailable/error state; they never manufacture prices.
+ * Free-mode policy:
+ * - Indian NSE/BSE symbols always use the Yahoo Finance experimental/reference adapter first.
+ * - Yahoo requires no API key and is the default provider for the student/prototype build.
+ * - Twelve Data remains optional for non-Indian symbols when configured.
+ * - Provider failures never manufacture prices or missing changes.
  */
 
 import { z } from 'zod';
@@ -25,13 +26,13 @@ type ProviderStatus =
   | 'rate_limited'
   | 'error';
 
+type NamedMarketProvider = 'yahoo' | 'twelvedata';
+
 export interface MarketQuoteProviderResult {
   quote: NormalizedMarketQuote;
   status: ProviderStatus;
   message?: string;
 }
-
-type NamedMarketProvider = 'yahoo' | 'twelvedata';
 
 const quoteResponseSchema = z.object({
   symbol: z.string().optional(),
@@ -77,10 +78,10 @@ export interface NormalizedTwelveDataSymbol {
 
 function getConfiguration() {
   return {
-    provider: (process.env.MARKET_DATA_PROVIDER || 'hybrid').trim().toLowerCase(),
+    provider: (process.env.MARKET_DATA_PROVIDER || 'yahoo').trim().toLowerCase(),
     primaryProvider: (process.env.MARKET_DATA_PRIMARY_PROVIDER || 'yahoo').trim().toLowerCase(),
     fallbackProvider: (process.env.MARKET_DATA_FALLBACK_PROVIDER || 'twelvedata').trim().toLowerCase(),
-    apiKey: process.env.MARKET_DATA_API_KEY?.trim() || '',
+    apiKey: process.env.MARKET_DATA_API_KEY?.trim() || process.env.TWELVE_DATA_API_KEY?.trim() || '',
     baseUrl: process.env.MARKET_DATA_BASE_URL?.trim() || DEFAULT_TWELVE_DATA_QUOTE_URL,
   };
 }
@@ -89,8 +90,18 @@ type MarketProviderConfiguration = ReturnType<typeof getConfiguration>;
 
 function safeSymbol(symbol: string) {
   const normalized = symbol.trim().toUpperCase();
-  if (!/^[A-Z0-9][A-Z0-9.:/_-]{0,24}$/.test(normalized)) throw new Error('Invalid market symbol.');
+  if (!/^[A-Z0-9^][A-Z0-9.^:=/_-]{0,32}$/.test(normalized)) throw new Error('Invalid market symbol.');
   return normalized;
+}
+
+function isIndianSymbol(symbol: string) {
+  const normalized = symbol.trim().toUpperCase();
+  return /\.(NS|BO)$/.test(normalized)
+    || /:(NSE|BSE)$/.test(normalized)
+    || /^(NSE|BSE):/.test(normalized)
+    || normalized === '^NSEI'
+    || normalized === '^NSEBANK'
+    || normalized === '^BSESN';
 }
 
 export function normalizeTwelveDataSymbol(symbol: string): NormalizedTwelveDataSymbol {
@@ -115,12 +126,12 @@ export function normalizeTwelveDataSymbol(symbol: string): NormalizedTwelveDataS
 
 function normalizeProviderName(provider: string): NamedMarketProvider | null {
   if (isYahooFinanceProvider(provider)) return 'yahoo';
-  if (provider === 'twelvedata' || provider === 'twelve-data') return 'twelvedata';
+  if (provider === 'twelvedata' || provider === 'twelve-data' || provider === 'twelve_data') return 'twelvedata';
   return null;
 }
 
 function providerLabel(provider: NamedMarketProvider) {
-  return provider === 'yahoo' ? 'Yahoo Finance' : 'Twelve Data';
+  return provider === 'yahoo' ? 'Yahoo Finance · experimental/reference' : 'Twelve Data';
 }
 
 function toNumber(value: unknown): number | null {
@@ -175,10 +186,12 @@ async function fetchTwelveDataQuote(symbol: string, assetType: string, configura
   if (!parsed.success) throw new Error('Twelve Data returned an invalid quote response.');
   const data = parsed.data;
   const price = toNumber(data.close) ?? toNumber(data.price);
-  if (price === null) throw new Error('Twelve Data returned no usable price.');
+  if (price === null || price < 0) throw new Error('Twelve Data returned no usable price.');
   const previousClose = toNumber(data.previous_close);
-  const change = toNumber(data.change) ?? (previousClose === null ? 0 : price - previousClose);
-  const changePercent = toNumber(data.percent_change) ?? (previousClose ? change / previousClose * 100 : 0);
+  const explicitChange = toNumber(data.change);
+  const change = explicitChange ?? (previousClose === null ? null : price - previousClose);
+  const explicitPercent = toNumber(data.percent_change);
+  const changePercent = explicitPercent ?? (previousClose && change !== null ? change / previousClose * 100 : null);
   const responseExchange = data.exchange ? INDIA_EXCHANGE_ALIASES[data.exchange.toUpperCase()] || null : null;
   const indiaExchange = normalized.exchange || responseExchange;
   const responseBase = data.symbol ? normalizeTwelveDataSymbol(data.symbol).baseSymbol : normalized.baseSymbol;
@@ -207,24 +220,31 @@ async function fetchTwelveDataQuote(symbol: string, assetType: string, configura
 async function fetchRealQuote(provider: NamedMarketProvider, symbol: string, assetType: string, configuration: MarketProviderConfiguration): Promise<MarketQuoteProviderResult> {
   if (provider === 'twelvedata') return fetchTwelveDataQuote(symbol, assetType, configuration);
   const result = await fetchYahooFinanceQuote(symbol, assetType);
-  if (result.status !== 'connected' || result.quote.freshness === 'demo' || !Number.isFinite(result.quote.price)) {
+  if (result.status !== 'connected' || result.quote.freshness === 'demo' || !Number.isFinite(result.quote.price) || result.quote.price < 0) {
     throw new Error(result.message || 'Yahoo Finance quote is unavailable.');
   }
   return result;
 }
 
-export async function fetchQuoteFromProvider(symbol: string, assetType = 'equity'): Promise<MarketQuoteProviderResult> {
-  const configuration = getConfiguration();
+function providerOrder(symbol: string, configuration: MarketProviderConfiguration): NamedMarketProvider[] {
+  // India free-mode: use the existing Yahoo .NS/.BO/:NSE/:BSE mapping directly.
+  // This intentionally ignores a global Twelve Data selection for Indian symbols because
+  // the free Twelve Data entitlement does not guarantee broad NSE/BSE coverage.
+  if (isIndianSymbol(symbol)) return ['yahoo'];
+
   const configured = normalizeProviderName(configuration.provider);
   const providers: NamedMarketProvider[] = configuration.provider === 'hybrid'
     ? [normalizeProviderName(configuration.primaryProvider) || 'yahoo', normalizeProviderName(configuration.fallbackProvider) || 'twelvedata']
     : configured
-      ? [configured, ...(configured === 'yahoo' ? [] : ['yahoo' as const])]
+      ? [configured, ...(configured === 'yahoo' ? [] : ['yahoo'])]
       : ['yahoo'];
+  return [...new Set(providers)];
+}
 
-  const unique = [...new Set(providers)];
+export async function fetchQuoteFromProvider(symbol: string, assetType = 'equity'): Promise<MarketQuoteProviderResult> {
+  const configuration = getConfiguration();
   const failures: string[] = [];
-  for (const provider of unique) {
+  for (const provider of providerOrder(symbol, configuration)) {
     if (provider === 'twelvedata' && !configuration.apiKey) {
       failures.push('Twelve Data not configured');
       continue;
@@ -274,9 +294,20 @@ async function fetchTwelveDataHistory(symbol: string, range: string, configurati
     if (!parsed.success) return [];
     return parsed.data.values.flatMap((value): MarketHistoryPoint[] => {
       const close = toNumber(value.close);
-      if (close === null) return [];
-      const open = toNumber(value.open), high = toNumber(value.high), low = toNumber(value.low), volume = toNumber(value.volume);
-      return [{ date: value.datetime, price: close, ...(open === null ? {} : { open }), ...(high === null ? {} : { high }), ...(low === null ? {} : { low }), close, ...(volume === null ? {} : { volume }) }];
+      if (close === null || close < 0) return [];
+      const open = toNumber(value.open);
+      const high = toNumber(value.high);
+      const low = toNumber(value.low);
+      const volume = toNumber(value.volume);
+      return [{
+        date: value.datetime,
+        price: close,
+        ...(open === null ? {} : { open }),
+        ...(high === null ? {} : { high }),
+        ...(low === null ? {} : { low }),
+        close,
+        ...(volume === null ? {} : { volume }),
+      }];
     });
   } catch {
     return [];
@@ -285,13 +316,7 @@ async function fetchTwelveDataHistory(symbol: string, range: string, configurati
 
 export async function fetchHistoryFromProvider(symbol: string, range = '1m'): Promise<MarketHistoryPoint[]> {
   const configuration = getConfiguration();
-  const configured = normalizeProviderName(configuration.provider);
-  const providers: NamedMarketProvider[] = configuration.provider === 'hybrid'
-    ? [normalizeProviderName(configuration.primaryProvider) || 'yahoo', normalizeProviderName(configuration.fallbackProvider) || 'twelvedata']
-    : configured
-      ? [configured, ...(configured === 'yahoo' ? [] : ['yahoo' as const])]
-      : ['yahoo'];
-  for (const provider of [...new Set(providers)]) {
+  for (const provider of providerOrder(symbol, configuration)) {
     const points = provider === 'yahoo'
       ? await fetchYahooFinanceHistory(symbol, range)
       : await fetchTwelveDataHistory(symbol, range, configuration);
@@ -316,12 +341,12 @@ export async function checkMarketProviderDiagnostic(): Promise<ProviderDiagnosti
   } catch (error) {
     return {
       id: 'market-data',
-      name: 'Market Data',
-      role: 'Market quotes and history',
-      status: 'error',
+      name: 'Yahoo Finance · experimental/reference',
+      role: 'Free market quotes and history',
+      status: 'provider_unavailable',
       lastChecked: new Date().toISOString(),
       latencyMs: Date.now() - startedAt,
-      message: error instanceof Error ? error.message : 'Market data is unavailable.',
+      message: error instanceof Error ? error.message : 'Free market provider is unavailable.',
     };
   }
 }

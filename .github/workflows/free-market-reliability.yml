@@ -19,6 +19,8 @@ jobs:
         with:
           node-version: 22
           cache: npm
+      - name: Install dependencies
+        run: npm ci
       - name: Market and assistant reliability tests
         run: npx vitest run tests/freeMarketReliability.test.ts tests/aiAssistantResilience.test.ts
       - name: Production build

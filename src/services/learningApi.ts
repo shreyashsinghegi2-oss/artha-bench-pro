@@ -15,6 +15,8 @@ import {
   TutorPreferences,
   VerificationReport,
 } from '../types';
+import { askReliableTutor } from './reliableTutor';
+import { fetchFreeYahooHistory, fetchFreeYahooQuote } from './freeYahooFallback';
 
 async function fetchJSON<T>(url: string, options?: RequestInit): Promise<T> {
   const res = await fetch(url, {
@@ -143,13 +145,22 @@ export async function explainNewsArticleAI(article: NormalizedNewsItem) {
 }
 
 export async function fetchMarketQuote(symbol: string, assetType = 'equity') {
-  const result = await fetchJSON<{ quote: NormalizedMarketQuote; status: string; message?: string }>(
-    `/api/markets/quote?symbol=${encodeURIComponent(symbol)}&assetType=${assetType}`,
-  );
-  if (result.status !== 'connected' || result.quote?.freshness === 'demo') {
-    throw new Error(result.message || 'Market quote is unavailable from a real provider.');
+  try {
+    const result = await fetchJSON<{ quote: NormalizedMarketQuote; status: string; message?: string }>(
+      `/api/markets/quote?symbol=${encodeURIComponent(symbol)}&assetType=${assetType}`,
+    );
+    if (result.status === 'connected' && result.quote?.freshness !== 'demo') return result;
+  } catch {
+    // Public Netlify fallback below keeps the free/student build usable while
+    // Vercel is unavailable or has not yet received the latest backend route.
   }
-  return result;
+
+  const quote = await fetchFreeYahooQuote(symbol, assetType);
+  return {
+    quote,
+    status: 'connected',
+    message: 'Yahoo Finance experimental/reference fallback loaded through the Netlify proxy.',
+  };
 }
 
 export async function fetchIndiaMarketTicker(): Promise<IndiaMarketTickerResponse> {
@@ -161,9 +172,31 @@ export async function fetchTickerQuote(symbol: string): Promise<NormalizedMarket
   return result.quote;
 }
 
+async function fetchQuoteFallbackInChunks(symbols: string[]) {
+  const output: NormalizedMarketQuote[] = [];
+  for (let index = 0; index < symbols.length; index += 4) {
+    const chunk = symbols.slice(index, index + 4);
+    const settled = await Promise.allSettled(chunk.map((symbol) => fetchTickerQuote(symbol)));
+    output.push(...settled.flatMap((result) => result.status === 'fulfilled' ? [result.value] : []));
+  }
+  return output;
+}
+
 export async function fetchMarketOverview(symbols = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA', 'NVDA', 'SPY', 'QQQ']): Promise<NormalizedMarketQuote[]> {
-  const settled = await Promise.allSettled(symbols.map((symbol) => fetchTickerQuote(symbol)));
-  return settled.flatMap((result) => result.status === 'fulfilled' ? [result.value] : []);
+  const bounded = [...new Set(symbols.map((symbol) => symbol.trim()).filter(Boolean))].slice(0, 20);
+  if (!bounded.length) return [];
+  try {
+    const response = await fetchJSON<{
+      results: Array<{ status: 'available' | 'unavailable'; quote: NormalizedMarketQuote | null }>;
+    }>(`/api/markets/batch?symbols=${encodeURIComponent(bounded.join(','))}`);
+    const available = (response.results || []).flatMap((row) => row.status === 'available' && row.quote ? [row.quote] : []);
+    const loaded = new Set(available.map((quote) => quote.symbol.toUpperCase()));
+    const missing = bounded.filter((symbol) => !loaded.has(symbol.toUpperCase()));
+    if (!missing.length) return available;
+    return [...available, ...await fetchQuoteFallbackInChunks(missing)];
+  } catch {
+    return fetchQuoteFallbackInChunks(bounded);
+  }
 }
 
 export async function calculateFinancialMetrics(inputs: {
@@ -193,7 +226,13 @@ export async function searchMarketSymbols(query: string, assetType = 'all') {
 }
 
 export async function fetchMarketHistory(symbol: string, range = '1m') {
-  return fetchJSON<{ points: MarketHistoryPoint[] }>(`/api/markets/history?symbol=${encodeURIComponent(symbol)}&range=${range}`);
+  try {
+    const response = await fetchJSON<{ points: MarketHistoryPoint[] }>(`/api/markets/history?symbol=${encodeURIComponent(symbol)}&range=${range}`);
+    if (response.points?.length) return response;
+  } catch {
+    // Netlify Yahoo reference fallback below.
+  }
+  return { points: await fetchFreeYahooHistory(symbol, range) };
 }
 
 export async function askDashboardAssistant(params: {
@@ -262,29 +301,12 @@ export async function askTutorAI(
   history: Array<{ role: 'user' | 'assistant'; content: string }> = [],
   context: TutorPreferences = DEFAULT_TUTOR_PREFERENCES,
 ) {
-  try {
-    const res = await fetchJSON<{
-      answer?: string;
-      response?: string;
-      structuredAnswer?: StructuredFinancialAnswer;
-      suggestedFollowUps: string[];
-      mathProof?: string;
-    }>('/api/tutor', {
-      method: 'POST',
-      body: JSON.stringify({ userPrompt: question, message: question, history, context }),
-    });
-    return {
-      answer: res.answer || res.response || 'AI response unavailable.',
-      structuredAnswer: res.structuredAnswer,
-      suggestedFollowUps: res.suggestedFollowUps || [],
-      mathProof: res.mathProof,
-    };
-  } catch {
-    return {
-      answer: 'ArthaMind could not reach the configured AI provider. Please retry after provider connectivity is restored.',
-      suggestedFollowUps: [],
-    };
-  }
+  const response = await askReliableTutor(question, { history, context, visibleData: { question, context } });
+  return {
+    answer: response.answer,
+    suggestedFollowUps: response.suggestedFollowUps,
+    fallbackMode: response.fallbackMode,
+  };
 }
 
 export async function runQuickCheck(query: string) {

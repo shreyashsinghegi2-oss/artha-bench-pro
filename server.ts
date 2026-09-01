@@ -5,6 +5,7 @@ import { createServer as createViteServer } from 'vite';
 import { apiRouter } from './server/routes';
 import { personalAccountRouter } from './server/personalAccountRoutes';
 import { evaluationComparisonRouter } from './server/evaluationComparisonRoutes';
+import { freeMarketRouter } from './server/freeMarketRoutes';
 
 dotenv.config();
 
@@ -16,10 +17,10 @@ async function startServer() {
 
   app.use(express.json({ limit: '2mb' }));
 
-  // Mount existing unified APIs plus additive personalized account and evaluation APIs.
   app.use('/api', apiRouter);
   app.use('/api', personalAccountRouter);
   app.use('/api', evaluationComparisonRouter);
+  app.use('/api', freeMarketRouter);
 
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({ server: { middlewareMode: true }, appType: 'spa' });

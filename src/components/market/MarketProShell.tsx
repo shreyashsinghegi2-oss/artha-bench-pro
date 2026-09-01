@@ -1,5 +1,5 @@
 import React,{useMemo,useState}from'react';
-import{BarChart3,Bell,Crown,DollarSign,GraduationCap,Landmark,RefreshCw,Send,ShieldCheck,Sparkles,Star,Timer}from'lucide-react';
+import{BarChart3,Bell,Crown,DollarSign,GraduationCap,RefreshCw,Send,ShieldCheck,Sparkles,Star,Timer}from'lucide-react';
 import{AppNavigationDestination}from'../../navigationTypes';
 import{pathForDestination}from'../../appRoutes';
 import{askReliableTutor}from'../../services/reliableTutor';
@@ -7,7 +7,7 @@ import{buildMarketExplainerPrompt,isUnsafeTradingAdviceRequest,marketDataState,M
 import type{NormalizedMarketQuote}from'../../types';
 
 export const MARKET_PRO_DESTINATIONS:Array<{id:AppNavigationDestination;label:string;icon:React.ComponentType<{className?:string}>}>=[
- {id:'india-markets',label:'India',icon:Landmark},{id:'intraday-markets',label:'Intraday',icon:Timer},{id:'forex-markets',label:'Forex',icon:DollarSign},{id:'us-markets',label:'US',icon:BarChart3},{id:'market-watchlist',label:'Watchlist',icon:Star},{id:'market-alerts',label:'Alerts',icon:Bell},{id:'markets-learn',label:'Learn',icon:GraduationCap},{id:'go-pro',label:'ArthaMind Pro',icon:Crown},
+ {id:'intraday-markets',label:'Intraday',icon:Timer},{id:'forex-markets',label:'Forex',icon:DollarSign},{id:'us-markets',label:'US',icon:BarChart3},{id:'market-watchlist',label:'Watchlist',icon:Star},{id:'market-alerts',label:'Alerts',icon:Bell},{id:'markets-learn',label:'Learn',icon:GraduationCap},{id:'go-pro',label:'ArthaMind Pro',icon:Crown},
 ];
 
 export const MarketProNavigation:React.FC<{current:AppNavigationDestination;onNavigate:(destination:AppNavigationDestination)=>void}>=({current,onNavigate})=><nav aria-label="ArthaMind Pro market navigation" className="sticky top-[65px] z-30 border-b border-line bg-canvas/95 px-4 py-2 backdrop-blur sm:px-6"><div className="mx-auto flex max-w-[1600px] gap-1.5 overflow-x-auto scrollbar-thin">{MARKET_PRO_DESTINATIONS.map(({id,label,icon:Icon})=><a key={id} href={pathForDestination(id)} onClick={event=>{if(event.button!==0||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey)return;event.preventDefault();onNavigate(id);}} aria-current={current===id?'page':undefined} className={`inline-flex shrink-0 items-center gap-2 rounded-xl border px-3 py-2 text-xs font-bold focus-visible:outline focus-visible:outline-2 focus-visible:outline-interactive ${current===id?'border-interactive/30 bg-interactive-soft text-interactive':'border-transparent text-secondary hover:border-line hover:bg-surface hover:text-ink'}`}><Icon className="h-3.5 w-3.5"/>{label}</a>)}</div></nav>;

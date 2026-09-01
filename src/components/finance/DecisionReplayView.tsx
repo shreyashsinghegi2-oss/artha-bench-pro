@@ -3,6 +3,7 @@ import { ArrowRight, BrainCircuit, Calculator, ChevronDown, CircleAlert, Databas
 import { useAuth } from '../../auth/AuthContext';
 import { pathForDestination } from '../../appRoutes';
 import { DecisionReplayChanges, DecisionReplayHorizon, DecisionReplayResponse, runDecisionReplay } from '../../services/decisionReplayApi';
+import { consumeEmiReplayIntent } from '../../services/emiIntelligence';
 import { StructuredFinancialAnswerView } from '../ai/StructuredFinancialAnswer';
 
 const ZERO_CHANGES: DecisionReplayChanges = {
@@ -73,9 +74,22 @@ export const DecisionReplayView: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [validation, setValidation] = useState<ValidationState>({});
   const [announcement, setAnnouncement] = useState('');
+  const [handoffNotice, setHandoffNotice] = useState<string | null>(null);
 
   const changed = useMemo(() => Object.values(changes).some((value) => value !== 0), [changes]);
   const summaryLines = useMemo(() => scenarioLines(changes), [changes]);
+
+  useEffect(() => {
+    const intent = consumeEmiReplayIntent();
+    if (!intent) return;
+    setHorizonMonths(intent.horizonMonths);
+    setChanges(intent.changes);
+    setResponse(null);
+    setError(null);
+    setValidation({});
+    setHandoffNotice(`${intent.label} has been loaded as temporary scenario inputs. Review the assumptions below, then run the deterministic replay when you are ready.`);
+    setAnnouncement('Temporary EMI scenario inputs loaded. No EMI record or saved finance data was changed.');
+  }, []);
 
   useEffect(() => {
     if (!response?.replay) return;
@@ -124,6 +138,7 @@ export const DecisionReplayView: React.FC = () => {
     setResponse(null);
     setError(null);
     setValidation({});
+    setHandoffNotice(null);
   };
 
   const reset = () => {
@@ -131,6 +146,7 @@ export const DecisionReplayView: React.FC = () => {
     setResponse(null);
     setError(null);
     setValidation({});
+    setHandoffNotice(null);
   };
 
   const replay = response?.replay;
@@ -139,6 +155,7 @@ export const DecisionReplayView: React.FC = () => {
 
   return <div className="mx-auto max-w-[1500px] space-y-6 px-4 py-7 sm:px-6">
     <div className="sr-only" aria-live="polite" aria-atomic="true">{announcement}</div>
+    {handoffNotice && <div role="status" className="rounded-2xl border border-interactive/25 bg-interactive-soft p-4 text-[10px] leading-5 text-secondary"><strong className="text-ink">Temporary EMI scenario loaded.</strong> {handoffNotice} No EMI record or saved finance data has been changed.</div>}
 
     <section className="overflow-hidden rounded-3xl border border-line bg-surface shadow-sm">
       <div className="grid gap-0 lg:grid-cols-[1.15fr_.85fr]">

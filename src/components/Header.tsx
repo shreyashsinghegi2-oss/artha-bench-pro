@@ -17,6 +17,7 @@ interface NavItem { id: AppNavigationDestination; label: string; }
 
 const FINANCE_NAV_ITEMS: NavItem[] = [
   { id: 'overview', label: 'Overview' },
+  { id: 'financial-health', label: 'Financial Health' },
   { id: 'income', label: 'Income' },
   { id: 'expenses', label: 'Expenses' },
   { id: 'budgeting', label: 'Budgeting' },

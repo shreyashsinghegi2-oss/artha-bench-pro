@@ -42,8 +42,9 @@ const MarketView = lazy(() => import('./components/market/MarketView').then((mod
 const IncomeWorkspaceView = lazy(() => import('./components/income/IncomeWorkspaceView').then((module) => ({ default: module.IncomeWorkspaceView })));
 const ExpensesView = lazy(() => import('./components/expenses/ExpensesView').then((module) => ({ default: module.ExpensesView })));
 const BudgetingView = lazy(() => import('./components/budgeting/BudgetingView').then((module) => ({ default: module.BudgetingView })));
-const FinanceReportsView = lazy(() => import('./components/finance/FinanceReportsView').then((module) => ({ default: module.FinanceReportsView })));
-const EmiManagerView = lazy(() => import('./components/finance/EmiManagerView').then((module) => ({ default: module.EmiManagerView })));
+const FinancialHealthView = lazy(() => import('./components/finance/FinancialHealthView').then((module) => ({ default: module.FinancialHealthView })));
+const FinanceReportsIntelligenceView = lazy(() => import('./components/finance/FinanceReportsIntelligenceView').then((module) => ({ default: module.FinanceReportsIntelligenceView })));
+const EmiManagerIntelligenceView = lazy(() => import('./components/finance/EmiManagerIntelligenceView').then((module) => ({ default: module.EmiManagerIntelligenceView })));
 const DecisionReplayView = lazy(() => import('./components/finance/DecisionReplayView').then((module) => ({ default: module.DecisionReplayView })));
 const CryptoDashboardView = lazy(() => import('./components/crypto/CryptoDashboardView').then((module) => ({ default: module.CryptoDashboardView })));
 const LoadingView = ({ label }: { label: string }) => <div className="mx-auto max-w-[1500px] px-4 py-20 text-center text-sm text-secondary">Loading {label}…</div>;
@@ -128,11 +129,12 @@ export default function App() {
       case 'overview':
       case 'dashboard': return dashboard();
       case 'learning': return <LearningView />;
+      case 'financial-health': return <Suspense fallback={<LoadingView label="Financial Health Intelligence" />}><FinancialHealthView onNavigate={navigateWorkspace} /></Suspense>;
       case 'income': return <Suspense fallback={<LoadingView label="Income Workspace" />}><IncomeWorkspaceView /></Suspense>;
       case 'expenses': return <Suspense fallback={<LoadingView label="Expenses Workspace" />}><ExpensesView /></Suspense>;
       case 'budgeting': return <Suspense fallback={<LoadingView label="Budgeting Workspace" />}><BudgetingView /></Suspense>;
-      case 'finance-reports': return <Suspense fallback={<LoadingView label="Finance Reports" />}><FinanceReportsView onNavigate={navigateWorkspace} /></Suspense>;
-      case 'emi-manager': return <Suspense fallback={<LoadingView label="EMI Manager" />}><EmiManagerView onNavigate={navigateWorkspace} /></Suspense>;
+      case 'finance-reports': return <Suspense fallback={<LoadingView label="Finance Reports" />}><FinanceReportsIntelligenceView onNavigate={navigateWorkspace} /></Suspense>;
+      case 'emi-manager': return <Suspense fallback={<LoadingView label="EMI Intelligence" />}><EmiManagerIntelligenceView onNavigate={navigateWorkspace} /></Suspense>;
       case 'decision-replay': return <Suspense fallback={<LoadingView label="Decision Replay" />}><DecisionReplayView /></Suspense>;
       case 'crypto': return <Suspense fallback={<LoadingView label="Crypto Dashboard" />}><CryptoDashboardView /></Suspense>;
       case 'markets': return <Suspense fallback={<LoadingView label="Company Intelligence Dashboard" />}><MarketView /></Suspense>;

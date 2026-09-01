@@ -1,9 +1,10 @@
 import { NavigationDestination } from './types';
 
-export type AppNavigationDestination = NavigationDestination | 'finance-reports' | 'emi-manager';
+export type AppNavigationDestination = NavigationDestination | 'finance-reports' | 'emi-manager' | 'financial-health';
 
 export const FINANCE_DESTINATIONS: readonly AppNavigationDestination[] = [
   'overview',
+  'financial-health',
   'income',
   'expenses',
   'budgeting',

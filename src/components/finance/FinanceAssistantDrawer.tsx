@@ -31,6 +31,13 @@ const experts: Partial<Record<AppNavigationDestination, ExpertConfig>> = {
     questions: ['What changed in my finances this period?', 'What are the biggest recorded drivers?', 'Which workspace items need review?'],
     sections: ['Executive signal', 'What changed', 'Key drivers', 'Watchlist', 'Suggested next review inside Artha Bench', 'Evidence used', 'Data limitations'],
   },
+  'financial-health': {
+    name: 'Health Analyst',
+    purpose: 'Explain recorded financial-health evidence across cash flow, savings targets, budgets, commitments, spending stability, income consistency and data completeness without acting as a credit scorer.',
+    questions: ['What does my Financial Health Profile show?', 'Which health dimensions need more recorded data?', 'What financial-health evidence should I review?'],
+    sections: ['Overall signal', 'Strongest dimensions', 'Dimensions needing review', 'What changed in the selected period', 'Important data gaps', 'What to review in the workspace', 'Evidence used', 'Limits of this insight'],
+    note: 'Financial Health scores on the page are deterministic product calculations. This AI must explain evidence and limitations only; it must not invent, override or relabel those scores as credit, CIBIL, eligibility or lender scores.',
+  },
   income: {
     name: 'Income Analyst',
     purpose: 'Analyze recorded income consistency, source mix, changes and relationship to recorded outflow.',
@@ -57,9 +64,10 @@ const experts: Partial<Record<AppNavigationDestination, ExpertConfig>> = {
   },
   'emi-manager': {
     name: 'Commitment Analyst',
-    purpose: 'Analyze recorded EMI and recurring commitments in the context of recorded income and cash flow.',
+    purpose: 'Analyze recorded EMI and recurring commitments in the context of recorded income, cash flow, calendar readiness and data quality.',
     questions: ['How are recurring commitments affecting my recorded cash flow?', 'Which recorded commitments are upcoming?', 'What commitment data should I review?'],
-    sections: ['Commitment snapshot', 'Upcoming obligations', 'Income-to-commitment context', 'Cash-flow pressure indicators', 'Review items', 'Evidence used', 'Data limitations'],
+    sections: ['Commitment snapshot', 'Upcoming recorded obligations', 'Monthly cash-flow context', 'Commitment load and coverage indicators', 'Calendar or data-quality gaps', 'Scenario options to test in Decision Replay', 'Evidence used', 'Limits and exclusions'],
+    note: 'Commitment ratios are internal descriptive workspace indicators only. Do not present them as lender affordability, creditworthiness, eligibility or approval decisions.',
   },
   'decision-replay': {
     name: 'Scenario Interpreter',
@@ -137,8 +145,10 @@ export const FinanceAssistantDrawer: React.FC<Props> = ({ module, onManageContex
       snapshot.expenses = { count: rows.length, totalINR: rows.reduce((sum, row) => new Decimal(sum).plus(row.amount).toNumber(), 0), categories };
     }
     if (prefs.budgets) snapshot.budgets = loadBudgets().filter((row) => monthKeys.includes(row.month)).map((row) => ({ month: row.month, name: row.name, categories: row.categories.map((category) => ({ category: category.category, plannedAmount: category.plannedAmount, warningThreshold: category.warningThreshold })) }));
-    if (prefs.emis) snapshot.emis = loadEmiRecords().map((row) => ({ name: row.name, status: row.status, emiAmount: row.emiAmount, outstandingBalance: row.outstandingBalance, nextDueDate: row.nextDueDate, remainingInstallments: row.remainingInstallments }));
+    if (prefs.emis) snapshot.emis = loadEmiRecords().map((row) => ({ name: row.name, lender: row.lender || null, loanType: row.loanType, status: row.status, emiAmount: row.emiAmount, outstandingBalance: row.outstandingBalance, nextDueDate: row.nextDueDate, remainingInstallments: row.remainingInstallments, paymentCount: row.payments.length }));
     if (prefs.goals) snapshot.goals = auth.profile?.financial_goal ? [auth.profile.financial_goal] : [];
+    if (module === 'financial-health') snapshot.healthIndicatorBoundary = 'The page computes Financial Health Indicator dimensions deterministically. This AI snapshot contains evidence only, not authority to invent or override page scores.';
+    if (module === 'emi-manager') snapshot.commitmentIndicatorBoundary = 'Any commitment ratio is descriptive workspace context only, never lender affordability, creditworthiness or eligibility.';
     return snapshot;
   };
 
@@ -175,7 +185,9 @@ export const FinanceAssistantDrawer: React.FC<Props> = ({ module, onManageContex
     const snapshot = buildSnapshot();
     const dataCompleteness = completeness();
     const replayBoundary = module === 'decision-replay' ? 'The generic finance snapshot does NOT contain a completed Decision Replay result. Do not claim to interpret a replay from this snapshot. Direct the user to the dedicated “Explain with ArthaMind” control after a replay when exact replay calculations are required.' : '';
-    const prompt = `You are ArthaMind Finance Intelligence Mode — ${expert.name} — inside the ${module} finance module. Purpose: ${expert.purpose} Use ONLY the authorized JSON snapshot below. Do not behave like a generic finance tutor. Learning/Tutorial mode is separate and must remain separate. Analyze recorded data, deterministic values, patterns, trade-offs, anomalies and data limitations only when supported. Never invent balances, transactions, income, bills, goals, market data or missing facts. Never provide investment/trading advice, tax/legal advice, lending approval, affordability approval, refinancing instructions, guarantees or predictions. Clearly distinguish facts, deterministic calculations, temporary assumptions and AI interpretation. If evidence is insufficient, say exactly: “ArthaMind cannot form a reliable trend insight yet because the selected period contains limited recorded data. Add or categorize more records to improve the analysis.” Start the answer with exactly one status line: STATUS: Stable, STATUS: Watch, STATUS: Review, or STATUS: Data needed. Use Stable only for a supported descriptive stable state; Watch only for an observed trend/threshold worth monitoring; Review only for a verified pressure, overdue record or exceeded threshold; Data needed when records are insufficient. Then use these exact section headings in order when relevant: ${expert.sections.join(' | ')}. Include visible evidence from the snapshot and a data-limitations section. Selected period: ${periodLabel}. Enabled categories: ${enabledCategories.join(', ')}. Data completeness: ${dataCompleteness} (record coverage only, not an accuracy score). ${replayBoundary} Question: ${next.slice(0, 350)}. Authorized snapshot: ${JSON.stringify(snapshot)}`.slice(0, 5000);
+    const healthBoundary = module === 'financial-health' ? 'Do not create, estimate or override a Financial Health Indicator score. The page calculation layer is the numerical source of truth. Never call this a credit score, CIBIL score, lender score, affordability score or eligibility score.' : '';
+    const emiBoundary = module === 'emi-manager' ? 'Never infer overdue payment, repayment performance, creditworthiness, affordability or lender eligibility from a due date alone. If payment status is absent, say “Payment status not recorded.”' : '';
+    const prompt = `You are ArthaMind Finance Intelligence Mode — ${expert.name} — inside the ${module} finance module. Purpose: ${expert.purpose} Use ONLY the authorized JSON snapshot below. Do not behave like a generic finance tutor. Learning/Tutorial mode is separate and must remain separate. Analyze recorded data, deterministic values, patterns, trade-offs, anomalies and data limitations only when supported. Never invent balances, transactions, income, bills, goals, market data, credit scores, lender offers or missing facts. Never provide investment/trading advice, tax/legal advice, lending approval, affordability approval, refinancing instructions, guarantees or predictions. Clearly distinguish facts, deterministic calculations, temporary assumptions and AI interpretation. If evidence is insufficient, say exactly: “ArthaMind cannot form a reliable trend insight yet because the selected period contains limited recorded data. Add or categorize more records to improve the analysis.” Start the answer with exactly one status line: STATUS: Stable, STATUS: Watch, STATUS: Review, or STATUS: Data needed. Use Stable only for a supported descriptive stable state; Watch only for an observed trend/threshold worth monitoring; Review only for a verified pressure or exceeded configured threshold; Data needed when records are insufficient. Then use these exact section headings in order when relevant: ${expert.sections.join(' | ')}. Include visible evidence from the snapshot and a data-limitations section. Selected period: ${periodLabel}. Enabled categories: ${enabledCategories.join(', ')}. Data completeness: ${dataCompleteness} (record coverage only, not an accuracy score). ${replayBoundary} ${healthBoundary} ${emiBoundary} Question: ${next.slice(0, 350)}. Authorized snapshot: ${JSON.stringify(snapshot)}`.slice(0, 5200);
     const userMessage: Message = { id: crypto.randomUUID(), role: 'user', text: next, at: new Date().toISOString() };
     setMessages((rows) => [...rows, userMessage]); setQuestion(''); setBusy(true); setFeedbackSaved(false);
     try {

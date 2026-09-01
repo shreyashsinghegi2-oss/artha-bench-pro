@@ -9,6 +9,7 @@ export type AppLocation =
 
 const financePaths: Partial<Record<AppNavigationDestination, string>> = {
   overview: '/finance/overview',
+  'financial-health': '/finance/health',
   income: '/finance/income',
   expenses: '/finance/expenses',
   budgeting: '/finance/budgeting',
@@ -54,7 +55,7 @@ const pathToWorkspace = new Map<string, AppNavigationDestination>([
 const pathToPublic = new Map<string, PublicPageId>(Object.entries(publicPaths).map(([page, path]) => [path, page as PublicPageId]));
 
 export const PRIVATE_FINANCE_DESTINATIONS = new Set<AppNavigationDestination>([
-  'income', 'expenses', 'budgeting', 'finance-reports', 'emi-manager', 'decision-replay',
+  'financial-health', 'income', 'expenses', 'budgeting', 'finance-reports', 'emi-manager', 'decision-replay',
 ]);
 
 export function pathForDestination(destination: AppNavigationDestination): string {

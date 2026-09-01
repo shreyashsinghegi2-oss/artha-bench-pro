@@ -42,6 +42,7 @@ const MarketView = lazy(() => import('./components/market/MarketView').then((mod
 const IncomeWorkspaceView = lazy(() => import('./components/income/IncomeWorkspaceView').then((module) => ({ default: module.IncomeWorkspaceView })));
 const ExpensesView = lazy(() => import('./components/expenses/ExpensesView').then((module) => ({ default: module.ExpensesView })));
 const BudgetingView = lazy(() => import('./components/budgeting/BudgetingView').then((module) => ({ default: module.BudgetingView })));
+const FinancialHealthView = lazy(() => import('./components/finance/FinancialHealthView').then((module) => ({ default: module.FinancialHealthView })));
 const FinanceReportsView = lazy(() => import('./components/finance/FinanceReportsView').then((module) => ({ default: module.FinanceReportsView })));
 const EmiManagerView = lazy(() => import('./components/finance/EmiManagerView').then((module) => ({ default: module.EmiManagerView })));
 const DecisionReplayView = lazy(() => import('./components/finance/DecisionReplayView').then((module) => ({ default: module.DecisionReplayView })));
@@ -128,6 +129,7 @@ export default function App() {
       case 'overview':
       case 'dashboard': return dashboard();
       case 'learning': return <LearningView />;
+      case 'financial-health': return <Suspense fallback={<LoadingView label="Financial Health Intelligence" />}><FinancialHealthView onNavigate={navigateWorkspace} /></Suspense>;
       case 'income': return <Suspense fallback={<LoadingView label="Income Workspace" />}><IncomeWorkspaceView /></Suspense>;
       case 'expenses': return <Suspense fallback={<LoadingView label="Expenses Workspace" />}><ExpensesView /></Suspense>;
       case 'budgeting': return <Suspense fallback={<LoadingView label="Budgeting Workspace" />}><BudgetingView /></Suspense>;

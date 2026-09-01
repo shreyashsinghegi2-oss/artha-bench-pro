@@ -1,5 +1,5 @@
 import React, { MouseEvent, useEffect, useRef, useState } from 'react';
-import { CalendarClock, ChevronLeft, ChevronRight, FileBarChart2, Gauge, Landmark, ReceiptText, Sparkles, WalletCards } from 'lucide-react';
+import { CalendarClock, ChevronLeft, ChevronRight, FileBarChart2, Gauge, HeartPulse, Landmark, ReceiptText, Sparkles, WalletCards } from 'lucide-react';
 import { pathForDestination } from '../../appRoutes';
 import { AppNavigationDestination } from '../../navigationTypes';
 
@@ -15,6 +15,7 @@ const tabs: Array<{
   icon: React.ComponentType<{ className?: string }>;
 }> = [
   { id: 'overview', label: 'Overview', description: 'Your financial intelligence overview and current workspace signals.', icon: Gauge },
+  { id: 'financial-health', label: 'Financial Health', description: 'Explainable personal financial health indicators based only on recorded workspace data.', icon: HeartPulse },
   { id: 'income', label: 'Income', description: 'Review income sources, recurring amounts and tax context.', icon: WalletCards },
   { id: 'expenses', label: 'Expenses', description: 'Review spending by category and transaction.', icon: ReceiptText },
   { id: 'budgeting', label: 'Budgeting', description: 'Compare planned category limits with recorded spending.', icon: Landmark },

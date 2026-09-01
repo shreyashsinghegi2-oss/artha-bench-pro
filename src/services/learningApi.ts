@@ -163,8 +163,17 @@ export async function fetchTickerQuote(symbol: string): Promise<NormalizedMarket
 }
 
 export async function fetchMarketOverview(symbols = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA', 'NVDA', 'SPY', 'QQQ']): Promise<NormalizedMarketQuote[]> {
-  const settled = await Promise.allSettled(symbols.map((symbol) => fetchTickerQuote(symbol)));
-  return settled.flatMap((result) => result.status === 'fulfilled' ? [result.value] : []);
+  const bounded = [...new Set(symbols.map((symbol) => symbol.trim()).filter(Boolean))].slice(0, 20);
+  if (!bounded.length) return [];
+  try {
+    const response = await fetchJSON<{
+      results: Array<{ status: 'available' | 'unavailable'; quote: NormalizedMarketQuote | null }>;
+    }>(`/api/markets/batch?symbols=${encodeURIComponent(bounded.join(','))}`);
+    return (response.results || []).flatMap((row) => row.status === 'available' && row.quote ? [row.quote] : []);
+  } catch {
+    const settled = await Promise.allSettled(bounded.map((symbol) => fetchTickerQuote(symbol)));
+    return settled.flatMap((result) => result.status === 'fulfilled' ? [result.value] : []);
+  }
 }
 
 export async function calculateFinancialMetrics(inputs: {

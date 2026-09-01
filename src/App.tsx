@@ -43,7 +43,7 @@ const IncomeWorkspaceView = lazy(() => import('./components/income/IncomeWorkspa
 const ExpensesView = lazy(() => import('./components/expenses/ExpensesView').then((module) => ({ default: module.ExpensesView })));
 const BudgetingView = lazy(() => import('./components/budgeting/BudgetingView').then((module) => ({ default: module.BudgetingView })));
 const FinancialHealthView = lazy(() => import('./components/finance/FinancialHealthView').then((module) => ({ default: module.FinancialHealthView })));
-const FinanceReportsView = lazy(() => import('./components/finance/FinanceReportsView').then((module) => ({ default: module.FinanceReportsView })));
+const FinanceReportsIntelligenceView = lazy(() => import('./components/finance/FinanceReportsIntelligenceView').then((module) => ({ default: module.FinanceReportsIntelligenceView })));
 const EmiManagerIntelligenceView = lazy(() => import('./components/finance/EmiManagerIntelligenceView').then((module) => ({ default: module.EmiManagerIntelligenceView })));
 const DecisionReplayView = lazy(() => import('./components/finance/DecisionReplayView').then((module) => ({ default: module.DecisionReplayView })));
 const CryptoDashboardView = lazy(() => import('./components/crypto/CryptoDashboardView').then((module) => ({ default: module.CryptoDashboardView })));
@@ -133,7 +133,7 @@ export default function App() {
       case 'income': return <Suspense fallback={<LoadingView label="Income Workspace" />}><IncomeWorkspaceView /></Suspense>;
       case 'expenses': return <Suspense fallback={<LoadingView label="Expenses Workspace" />}><ExpensesView /></Suspense>;
       case 'budgeting': return <Suspense fallback={<LoadingView label="Budgeting Workspace" />}><BudgetingView /></Suspense>;
-      case 'finance-reports': return <Suspense fallback={<LoadingView label="Finance Reports" />}><FinanceReportsView onNavigate={navigateWorkspace} /></Suspense>;
+      case 'finance-reports': return <Suspense fallback={<LoadingView label="Finance Reports" />}><FinanceReportsIntelligenceView onNavigate={navigateWorkspace} /></Suspense>;
       case 'emi-manager': return <Suspense fallback={<LoadingView label="EMI Intelligence" />}><EmiManagerIntelligenceView onNavigate={navigateWorkspace} /></Suspense>;
       case 'decision-replay': return <Suspense fallback={<LoadingView label="Decision Replay" />}><DecisionReplayView /></Suspense>;
       case 'crypto': return <Suspense fallback={<LoadingView label="Crypto Dashboard" />}><CryptoDashboardView /></Suspense>;

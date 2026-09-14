@@ -2,6 +2,7 @@ import type { Request, Response } from 'express';
 import express from 'express';
 
 import { apiRouter } from './routes';
+import { aiRouter } from './aiRoutes';
 import { personalAccountRouter } from './personalAccountRoutes';
 import { evaluationComparisonRouter } from './evaluationComparisonRoutes';
 import { freeMarketRouter } from './freeMarketRoutes';
@@ -10,14 +11,11 @@ import { handleNvidiaTutor } from './nvidiaService';
 const app = express();
 app.disable('x-powered-by');
 app.use(express.json({ limit: '2mb' }));
-
-// Dedicated NVIDIA route keeps the existing Groq/evaluation stack untouched.
 app.post('/api/nvidia-tutor', handleNvidiaTutor);
+app.use('/api', aiRouter);
 app.use('/api', apiRouter);
 app.use('/api', personalAccountRouter);
 app.use('/api', evaluationComparisonRouter);
 app.use('/api', freeMarketRouter);
 
-export default function handler(req: Request, res: Response) {
-  return app(req, res);
-}
+export default function handler(req: Request, res: Response) { return app(req, res); }

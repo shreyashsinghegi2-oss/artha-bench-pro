@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { runAiGateway } from './aiGateway';
-import { calculateEMI, calculateEmergencyFund, calculateBudget503020, calculateSavingsTarget } from './financeEngine';
+import { calculateEMI, calculateEmergencyFund, calculateBudget503020, calculateSavingsTarget } from './financialCalculations';
 
 export const aiRouter = Router();
 
@@ -21,28 +21,24 @@ const requestSchema = z.object({
   }).optional(),
 });
 
-const number = z.coerce.number().finite();
 const calcSchema = z.object({
   kind: z.enum(['emi', 'emergency-fund', 'budget-503020', 'savings-target']),
-  principal: number.optional(),
-  annualRatePercent: number.optional(),
-  years: number.optional(),
-  monthlyIncome: number.optional(),
-  monthlyExpenses: number.optional(),
-  targetAmount: number.optional(),
-  months: number.optional(),
+  principal: z.coerce.number().finite().optional(),
+  annualRatePercent: z.coerce.number().finite().optional(),
+  years: z.coerce.number().finite().optional(),
+  monthlyIncome: z.coerce.number().finite().optional(),
+  monthlyExpenses: z.coerce.number().finite().optional(),
+  targetAmount: z.coerce.number().finite().optional(),
+  months: z.coerce.number().finite().optional(),
 });
 
-function logEvent(event: Record<string, unknown>) {
-  console.info(JSON.stringify({ scope: 'artha-ai', ...event }));
-}
+function logEvent(event: Record<string, unknown>) { console.info(JSON.stringify({ scope: 'artha-ai', ...event })); }
 
 aiRouter.post('/ai/chat', async (req: Request, res: Response) => {
   const parsed = requestSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.issues[0]?.message || 'Invalid AI request.' });
-  const started = Date.now();
   const result = await runAiGateway({ prompt: parsed.data.prompt, requestedModel: parsed.data.model, task: parsed.data.task, history: parsed.data.history, context: parsed.data.context });
-  logEvent({ requestId: result.requestId, provider: result.provider, model: result.model, fallbackUsed: result.fallbackUsed, latencyMs: Date.now() - started, status: result.ok ? 'ok' : 'fallback' });
+  logEvent({ requestId: result.requestId, provider: result.provider, model: result.model, fallbackUsed: result.fallbackUsed, latencyMs: result.latencyMs, status: result.ok ? 'ok' : 'fallback' });
   return res.status(result.ok ? 200 : 503).json({ ...result, error: result.ok ? undefined : 'The selected AI model is temporarily unavailable. A safe fallback is being shown.' });
 });
 
@@ -59,7 +55,5 @@ aiRouter.post('/ai/calculate', async (req: Request, res: Response) => {
       case 'savings-target': calculation = calculateSavingsTarget(input.targetAmount!, input.months!); break;
     }
     return res.json({ calculation, engine: 'Decimal.js', verificationStatus: 'verified', calculatedAt: new Date().toISOString() });
-  } catch (error) {
-    return res.status(400).json({ error: error instanceof Error ? error.message : 'Calculation could not be completed.' });
-  }
+  } catch (error) { return res.status(400).json({ error: error instanceof Error ? error.message : 'Calculation could not be completed.' }); }
 });

@@ -1,3 +1,4 @@
+@import './motionEnhancements.css';
 /* ADDITIVE ENHANCEMENT: Existing animation untouched */
 :root{scroll-behavior:smooth}
 /* ADDITIVE ENHANCEMENT: Existing animation untouched — ambient depth only */

@@ -23,24 +23,23 @@ const requestSchema = z.object({
 
 const calcSchema = z.object({
   kind: z.enum(['emi', 'emergency-fund', 'budget-503020', 'savings-target']),
-  principal: z.coerce.number().finite().optional(),
-  annualRatePercent: z.coerce.number().finite().optional(),
-  years: z.coerce.number().finite().optional(),
-  monthlyIncome: z.coerce.number().finite().optional(),
-  monthlyExpenses: z.coerce.number().finite().optional(),
-  targetAmount: z.coerce.number().finite().optional(),
-  months: z.coerce.number().finite().optional(),
+  principal: z.coerce.number().finite().optional(), annualRatePercent: z.coerce.number().finite().optional(), years: z.coerce.number().finite().optional(),
+  monthlyIncome: z.coerce.number().finite().optional(), monthlyExpenses: z.coerce.number().finite().optional(), targetAmount: z.coerce.number().finite().optional(), months: z.coerce.number().finite().optional(),
 });
 
 function logEvent(event: Record<string, unknown>) { console.info(JSON.stringify({ scope: 'artha-ai', ...event })); }
 
-aiRouter.post('/ai/chat', async (req: Request, res: Response) => {
-  const parsed = requestSchema.safeParse(req.body);
+async function handleCentralChat(req: Request, res: Response) {
+  const parsed = requestSchema.safeParse({ ...req.body, prompt: req.body?.prompt || req.body?.userPrompt || req.body?.message || req.body?.query });
   if (!parsed.success) return res.status(400).json({ error: parsed.error.issues[0]?.message || 'Invalid AI request.' });
   const result = await runAiGateway({ prompt: parsed.data.prompt, requestedModel: parsed.data.model, task: parsed.data.task, history: parsed.data.history, context: parsed.data.context });
   logEvent({ requestId: result.requestId, provider: result.provider, model: result.model, fallbackUsed: result.fallbackUsed, latencyMs: result.latencyMs, status: result.ok ? 'ok' : 'fallback' });
-  return res.status(result.ok ? 200 : 503).json({ ...result, error: result.ok ? undefined : 'The selected AI model is temporarily unavailable. A safe fallback is being shown.' });
-});
+  return res.status(200).json({ ...result, error: result.ok ? undefined : 'The selected AI model is temporarily unavailable. A safe fallback is being shown.' });
+}
+
+aiRouter.post('/ai/chat', handleCentralChat);
+aiRouter.post('/ai/tutor', handleCentralChat);
+aiRouter.post('/tutor', handleCentralChat);
 
 aiRouter.post('/ai/calculate', async (req: Request, res: Response) => {
   const parsed = calcSchema.safeParse(req.body);

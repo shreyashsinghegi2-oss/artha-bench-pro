@@ -1,0 +1,43 @@
+/* ADDITIVE ENHANCEMENT: Existing animation untouched */
+:root{scroll-behavior:smooth}
+/* ADDITIVE ENHANCEMENT: Existing animation untouched — ambient depth only */
+.landing-shell{position:relative;isolation:isolate}
+.landing-shell:before{content:"";position:fixed;inset:0;pointer-events:none;z-index:60;opacity:.018;background-image:repeating-radial-gradient(circle at 0 0,rgba(255,255,255,.8) 0,rgba(255,255,255,.8) .55px,transparent .8px,transparent 3px);background-size:9px 9px;animation:landing-grain-drift 18s steps(8,end) infinite}
+.landing-mood-hero:after{content:"";position:absolute;inset:-18% -8%;pointer-events:none;z-index:0;background:radial-gradient(circle at 58% 48%,rgba(45,212,191,.085),transparent 28%),radial-gradient(circle at 82% 28%,rgba(99,102,241,.06),transparent 25%);opacity:.7;animation:landing-ambient-breathe 12s ease-in-out infinite}
+.landing-mood-hero>*{position:relative;z-index:1}
+/* ADDITIVE ENHANCEMENT: Existing animation untouched — premium card edge lighting */
+.landing-feature-card,.hero-mockup,.hero-chart-wrap,.hero-ai-panel,.hero-watchlist,.hero-mockup-footer,.research-node,.research-secondary-note,.trust-card{position:relative}
+.landing-feature-card:before,.hero-mockup:before,.hero-chart-wrap:before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;opacity:0;background:linear-gradient(120deg,rgba(255,255,255,.14),transparent 28%,transparent 72%,rgba(45,212,191,.08));transition:opacity 220ms ease}
+.landing-feature-card:hover:before,.landing-feature-card:focus-visible:before,.hero-mockup:hover:before,.hero-chart-wrap:hover:before{opacity:1}
+/* ADDITIVE ENHANCEMENT: Existing button animation untouched — micro interaction layer */
+.landing-button:hover{filter:brightness(1.025)}
+.landing-button:active{transform:translateY(0) scale(.98)!important;box-shadow:none}
+.landing-button:focus-visible{box-shadow:0 0 0 3px rgba(20,184,166,.16),0 8px 20px rgba(15,23,42,.08)}
+.landing-button svg{transition:transform 180ms ease}
+.landing-button:hover svg{transform:translateX(2px)}
+/* ADDITIVE ENHANCEMENT: Existing hero tilt/entrance animation untouched — only reflection */
+.hero-mockup:after{content:"";position:absolute;inset:1px;border-radius:21px;pointer-events:none;z-index:8;background:radial-gradient(circle at 50% 0%,rgba(255,255,255,.09),transparent 23%),linear-gradient(105deg,transparent 18%,rgba(255,255,255,.035) 42%,transparent 64%);mix-blend-mode:screen;opacity:.45;transition:opacity 220ms ease,background-position 220ms ease}
+.hero-mockup:hover:after{opacity:.62}
+/* ADDITIVE ENHANCEMENT: Chart details only; current chart/data/animation untouched */
+.hero-range-group button{transition:background-color 180ms ease,color 180ms ease,box-shadow 180ms ease}
+.hero-range-group button.active{box-shadow:inset 0 0 0 1px rgba(45,212,191,.12),0 0 12px rgba(45,212,191,.06)}
+.hero-chart-wrap{transition:opacity 180ms ease,filter 180ms ease}
+.hero-chart-wrap:focus-within{filter:brightness(1.025)}
+.hero-current-line{filter:drop-shadow(0 0 3px rgba(94,234,212,.35))}
+/* ADDITIVE ENHANCEMENT: Evidence pulse once after existing mockup enters viewport */
+.hero-mockup-stage.is-visible .hero-status:first-child:after{content:"";position:absolute;left:8px;right:8px;bottom:0;height:1px;background:rgba(45,212,191,.22);transform-origin:left;animation:evidence-status-pulse 900ms ease-out 700ms 1 both}
+.hero-status{position:relative}
+/* ADDITIVE ENHANCEMENT: Existing ticker playback untouched */
+.artha-ticker-track>div{transition:background-color 180ms ease,border-color 180ms ease,transform 180ms ease}
+.artha-ticker-track>div:hover,.artha-ticker-track>div:focus-visible{background:rgba(20,184,166,.055);border-color:rgba(15,118,110,.18);transform:translateY(-1px);outline:none}
+.artha-ticker-track>div:focus-visible{box-shadow:0 0 0 2px rgba(15,118,110,.16)}
+/* ADDITIVE ENHANCEMENT: Existing feature-card interaction preserved; edge polish only */
+.landing-feature-card:hover,.landing-feature-card:focus-visible{background-image:linear-gradient(rgba(255,255,255,.22),rgba(255,255,255,.22))}
+/* ADDITIVE ENHANCEMENT: Existing navigation links preserved */
+.landing-link[aria-current="true"]:after{right:0;height:2px}
+.landing-link[aria-current="true"]{color:#0F766E}
+@keyframes landing-grain-drift{0%{background-position:0 0}25%{background-position:11px -7px}50%{background-position:-8px 9px}75%{background-position:6px 13px}100%{background-position:0 0}}
+@keyframes landing-ambient-breathe{0%,100%{opacity:.5;transform:scale(1)}50%{opacity:.8;transform:scale(1.015)}}
+@keyframes evidence-status-pulse{0%{opacity:0;transform:scaleX(.2)}35%{opacity:.75;transform:scaleX(1)}100%{opacity:0;transform:scaleX(1)}}
+@media(max-width:767px),(hover:none){.landing-shell:before{display:none}.landing-mood-hero:after{animation:none}.landing-button:hover svg{transform:none}.artha-ticker-track>div:hover{transform:none}}
+@media(prefers-reduced-motion:reduce){.landing-shell:before,.landing-mood-hero:after{animation:none}.landing-button,.landing-button svg,.landing-feature-card:before,.hero-mockup:after,.hero-range-group button,.hero-chart-wrap,.artha-ticker-track>div{transition:none}.landing-button:hover,.landing-button:active{transform:none!important}.landing-button:hover svg{transform:none}.hero-mockup:after{opacity:.25}.hero-mockup-stage.is-visible .hero-status:first-child:after{animation:none;opacity:0}.artha-ticker-track>div:hover,.artha-ticker-track>div:focus-visible{transform:none}}

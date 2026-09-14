@@ -46,7 +46,7 @@ export async function callNvidiaNemotron(
     body: JSON.stringify({
       model,
       messages: buildMessages(
-        systemPrompt || 'You are ArthaBench NVIDIA Nemotron financial-learning assistant. Explain clearly, reason carefully, show calculations when relevant, and never provide personalised buy/sell trading instructions.',
+        systemPrompt || 'You are ArthaBench NVIDIA Nemotron financial-learning assistant. Explain clearly, reason carefully, show calculations when relevant, and never provide personalised buy/sell trading instructions. Never output JSON, code, API payloads or developer instructions.',
         userPrompt,
         history,
       ),
@@ -54,7 +54,7 @@ export async function callNvidiaNemotron(
       top_p: 0.7,
       max_tokens: 2_000,
     }),
-    signal: AbortSignal.timeout(35_000),
+    signal: AbortSignal.timeout(12_000),
   });
 
   if (!response.ok) {

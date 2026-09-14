@@ -296,27 +296,36 @@ const DEFAULT_TUTOR_PREFERENCES: TutorPreferences = {
   useOfficialSources: true,
 };
 
-async function askNvidiaTutorAI(
-  question: string,
-  history: Array<{ role: 'user' | 'assistant'; content: string }>,
-) {
-  const response = await fetchJSON<{ answer: string; provider: string; model: string; fallbackMode: boolean }>('/api/nvidia-tutor', {
-    method: 'POST',
-    body: JSON.stringify({ userPrompt: question, history }),
-  });
-  return response;
-}
+export type TutorModelId = 'artha' | 'nemotron';
+
+export const TUTOR_MODELS: Array<{ id: TutorModelId; label: string; description: string }> = [
+  {
+    id: 'artha',
+    label: 'ArthaBench Smart',
+    description: 'ArthaBench AI with verification and grounded fallback',
+  },
+  {
+    id: 'nemotron',
+    label: 'NVIDIA Nemotron 3 Ultra',
+    description: 'NVIDIA NIM hosted model',
+  },
+];
 
 export async function askTutorAI(
   question: string,
   history: Array<{ role: 'user' | 'assistant'; content: string }> = [],
   context: TutorPreferences = DEFAULT_TUTOR_PREFERENCES,
+  model: TutorModelId = 'artha',
 ) {
-  // Explicit NVIDIA test mode: type "NVIDIA: your question" in the Tutor.
-  // Existing Groq behavior remains unchanged for every other question.
-  const nvidiaMatch = question.match(/^\s*nvidia\s*:\s*(.+)$/is);
-  if (nvidiaMatch?.[1]?.trim()) {
-    const response = await askNvidiaTutorAI(nvidiaMatch[1].trim(), history);
+  if (model === 'nemotron') {
+    const response = await fetchJSON<{ answer: string; provider: string; model: string; fallbackMode: boolean }>('/api/nvidia-tutor', {
+      method: 'POST',
+      body: JSON.stringify({
+        userPrompt: question,
+        history,
+        model: 'nvidia/nemotron-3-ultra-550b-a55b',
+      }),
+    });
     return {
       answer: response.answer,
       suggestedFollowUps: [],
@@ -331,7 +340,8 @@ export async function askTutorAI(
     answer: response.answer,
     suggestedFollowUps: response.suggestedFollowUps,
     fallbackMode: response.fallbackMode,
-    provider: 'Existing ArthaBench AI stack',
+    provider: 'ArthaBench Smart',
+    model: 'ArthaBench Smart',
   };
 }
 

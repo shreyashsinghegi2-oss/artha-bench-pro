@@ -8,7 +8,7 @@ export interface TutorMessage { id:string; sender:'user'|'tutor'; text:string; t
 export interface SavedTutorConversation { id:string; title:string; updatedAt:string; messages:TutorMessage[]; }
 export type LearningTrackId='personal-finance'|'stock-market'|'trading-risk'|'crypto-web3'|'business-entrepreneurship'|'business-analyst'|'financial-analyst'|'earning-skills';
 export type LearnerLevel='beginner'|'intermediate'|'advanced';
-export type LearningLanguage='english'|'hindi'|'hinglish';
+export type LearningLanguage='english'|'hindi'|'hinglish'|'marathi'|'gujarati'|'bengali'|'tamil'|'telugu'|'kannada'|'malayalam'|'punjabi'|'urdu'|'odia'|'assamese'|'spanish'|'french'|'german'|'arabic'|'portuguese';
 export type LearningMode='explain'|'step-by-step'|'socratic'|'worked-example'|'quiz'|'revision'|'flashcards'|'compare';
 export interface LessonKnowledgeCheck { id:string; question:string; options:string[]; correctIndex:number; explanation:string; }
 export interface Lesson { id:string; trackId:LearningTrackId; moduleId:string; title:string; objective:string; explanationSeed:string; keyConcepts:string[]; examplePrompt:string; practiceActivity:string; knowledgeCheck:LessonKnowledgeCheck; riskAndLimitationNotes:string[]; estimatedMinutes:number; prerequisites:string[]; requiresCurrentSources?:boolean; }
@@ -34,8 +34,8 @@ export interface StructuredFinancialAnswer { title:string; directAnswer:string; 
 export type TutorCountry='US'|'India'|'Global';
 export type TutorCurrency='USD'|'INR'|'EUR'|'GBP';
 export type TutorActivity='lesson'|'quiz'|'calculation'|'scenario'|'flashcards'|'revision'|'mock-test';
-export type TutorQuizType='mcq'|'mixed';
-export interface TutorPreferences { country:TutorCountry; currency:TutorCurrency; language:LearningLanguage; level:LearnerLevel; mode:'explain'|'quiz'|'calc'; detail:'short'|'detailed'; useOfficialSources:boolean; highContrast?:boolean; reducedMotion?:boolean; learningGoal?:string; learningStyle?:'visual'|'practical'|'reading'|'socratic'; activityType?:TutorActivity; quizType?:TutorQuizType; quizLength?:5|10|20|50; adaptiveDifficulty?:boolean; sessionLength?:15|30|45|60; learnerProfile?:string; }
+export type TutorQuizType='mcq'|'mixed'|'true-false'|'fill-blank'|'short-answer'|'scenario'|'calculation';
+export interface TutorPreferences { country:TutorCountry; currency:TutorCurrency; language:LearningLanguage; level:LearnerLevel; mode:'explain'|'quiz'|'calc'|'revision'|'flashcards'; detail:'short'|'standard'|'detailed'; useOfficialSources:boolean; highContrast?:boolean; reducedMotion?:boolean; learningGoal?:string; learningStyle?:'visual'|'practical'|'reading'|'socratic'|'example-first'|'step-by-step'|'challenge-based'|'deep-dive'; activityType?:TutorActivity; quizType?:TutorQuizType; quizLength?:5|10|20|50; adaptiveDifficulty?:boolean; sessionLength?:2|5|10|15|20|30|45|60; learnerProfile?:string; }
 export interface QuizQuestion { id:string; topic:string; difficulty:'beginner'|'intermediate'|'advanced'; question:string; options:string[]; correctAnswer:number; explanation:string; formula?:string; source?:string; tags:string[]; }
 export interface QuizSession { id:string; questions:QuizQuestion[]; currentIndex:number; answers:Record<string,number>; score:number; startedAt:string; completedAt?:string; }
 export interface DashboardAssistantResponse { answer:string; structuredAnswer:StructuredFinancialAnswer; provider:'groq'|'demo'; model:string|null; groundedAt:string; sourceLabels:string[]; suggestedQuestions:string[]; disclaimer:string; requestId:string; }

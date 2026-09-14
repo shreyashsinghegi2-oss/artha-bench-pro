@@ -6,18 +6,19 @@ import { apiRouter } from './server/routes';
 import { personalAccountRouter } from './server/personalAccountRoutes';
 import { evaluationComparisonRouter } from './server/evaluationComparisonRoutes';
 import { freeMarketRouter } from './server/freeMarketRoutes';
+import { aiRouter } from './server/aiRoutes';
 import { handleNvidiaTutor } from './server/nvidiaService';
 
 dotenv.config();
-
 const __dirname = process.cwd();
 
 async function startServer() {
   const app = express();
   const PORT = Number(process.env.PORT) || 3000;
-
+  app.disable('x-powered-by');
   app.use(express.json({ limit: '2mb' }));
   app.post('/api/nvidia-tutor', handleNvidiaTutor);
+  app.use('/api', aiRouter);
   app.use('/api', apiRouter);
   app.use('/api', personalAccountRouter);
   app.use('/api', evaluationComparisonRouter);
@@ -31,10 +32,6 @@ async function startServer() {
     app.use(express.static(distPath));
     app.get('*', (req, res) => { res.sendFile(path.join(distPath, 'index.html')); });
   }
-
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`ArthaBench Pro server running on http://0.0.0.0:${PORT}`);
-  });
+  app.listen(PORT, '0.0.0.0', () => console.log(`ArthaBench Pro server running on http://0.0.0.0:${PORT}`));
 }
-
 startServer();

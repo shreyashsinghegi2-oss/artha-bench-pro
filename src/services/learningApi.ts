@@ -296,16 +296,42 @@ const DEFAULT_TUTOR_PREFERENCES: TutorPreferences = {
   useOfficialSources: true,
 };
 
+async function askNvidiaTutorAI(
+  question: string,
+  history: Array<{ role: 'user' | 'assistant'; content: string }>,
+) {
+  const response = await fetchJSON<{ answer: string; provider: string; model: string; fallbackMode: boolean }>('/api/nvidia-tutor', {
+    method: 'POST',
+    body: JSON.stringify({ userPrompt: question, history }),
+  });
+  return response;
+}
+
 export async function askTutorAI(
   question: string,
   history: Array<{ role: 'user' | 'assistant'; content: string }> = [],
   context: TutorPreferences = DEFAULT_TUTOR_PREFERENCES,
 ) {
+  // Explicit NVIDIA test mode: type "NVIDIA: your question" in the Tutor.
+  // Existing Groq behavior remains unchanged for every other question.
+  const nvidiaMatch = question.match(/^\s*nvidia\s*:\s*(.+)$/is);
+  if (nvidiaMatch?.[1]?.trim()) {
+    const response = await askNvidiaTutorAI(nvidiaMatch[1].trim(), history);
+    return {
+      answer: response.answer,
+      suggestedFollowUps: [],
+      fallbackMode: false,
+      provider: response.provider,
+      model: response.model,
+    };
+  }
+
   const response = await askReliableTutor(question, { history, context, visibleData: { question, context } });
   return {
     answer: response.answer,
     suggestedFollowUps: response.suggestedFollowUps,
     fallbackMode: response.fallbackMode,
+    provider: 'Existing ArthaBench AI stack',
   };
 }
 

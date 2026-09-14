@@ -6,6 +6,7 @@ import { apiRouter } from './server/routes';
 import { personalAccountRouter } from './server/personalAccountRoutes';
 import { evaluationComparisonRouter } from './server/evaluationComparisonRoutes';
 import { freeMarketRouter } from './server/freeMarketRoutes';
+import { handleNvidiaTutor } from './server/nvidiaService';
 
 dotenv.config();
 
@@ -16,7 +17,7 @@ async function startServer() {
   const PORT = Number(process.env.PORT) || 3000;
 
   app.use(express.json({ limit: '2mb' }));
-
+  app.post('/api/nvidia-tutor', handleNvidiaTutor);
   app.use('/api', apiRouter);
   app.use('/api', personalAccountRouter);
   app.use('/api', evaluationComparisonRouter);

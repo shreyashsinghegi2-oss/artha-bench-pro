@@ -2,6 +2,7 @@ import React, { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import { AppLocation,destinationForPath,pathForDestination,PRIVATE_FINANCE_DESTINATIONS,pushAuth,pushDestination,pushLanding,readAppLocation } from './appRoutes';
 import { AppNavigationDestination, isFinanceDestination, isMarketProDestination } from './navigationTypes';
 import { Header } from './components/Header';
+import { ArthaPilot } from './components/ArthaPilot';
 import { Navigation } from './components/Navigation';
 import { FinanceWorkspaceNavigation } from './components/finance/FinanceWorkspaceNavigation';
 import { FinanceAssistantDrawer } from './components/finance/FinanceAssistantDrawer';
@@ -53,7 +54,7 @@ const LoadingView=({label}:{label:string})=><div className="mx-auto max-w-[1500p
 const PENDING_RETURN_KEY='arthabench_pending_private_return_v1';
 
 export default function App(){
- const auth=useAuth();const[location,setLocation]=useState<AppLocation>(()=>readAppLocation());const currentDestination=location.kind==='workspace'?location.destination:'overview';
+ const auth=useAuth();const[location,setLocation]=useState<AppLocation>(()=>readAppLocation());const[arthaPilotOpen,setArthaPilotOpen]=useState(false);const currentDestination=location.kind==='workspace'?location.destination:'overview';
  const syncFromLocation=useCallback(()=>setLocation(readAppLocation()),[]);
  useEffect(()=>{window.addEventListener('popstate',syncFromLocation);window.addEventListener('hashchange',syncFromLocation);if(window.location.hash==='#workspace'){pushDestination('overview',true);setLocation({kind:'workspace',destination:'overview'});}return()=>{window.removeEventListener('popstate',syncFromLocation);window.removeEventListener('hashchange',syncFromLocation);};},[syncFromLocation]);
  const goToDestination=useCallback((destination:AppNavigationDestination,replace=false)=>{pushDestination(destination,replace);setLocation({kind:'workspace',destination});window.scrollTo({top:0,behavior:'auto'});},[]);
@@ -68,5 +69,5 @@ export default function App(){
  if(location.kind==='landing')return <><ArthaMindLandingPage signedIn={Boolean(auth.user)} onEnter={(destination)=>navigateWorkspace(destination??'overview')} onSignIn={()=>auth.openAuth('login')}/><AuthModal/><FirstTimeOnboardingGate onNavigate={navigateWorkspace}/></>;
  if(location.kind==='public')return <><PublicInfoPage page={location.page} onHome={goHome} onWorkspace={goOverview}/><AuthModal/><FirstTimeOnboardingGate onNavigate={navigateWorkspace}/></>;
  if(location.kind==='auth')return <><AuthGateView returnTo={location.returnTo} onCancel={goOverview} onEmail={()=>auth.openAuth('login')}/><AuthModal/><FirstTimeOnboardingGate onNavigate={navigateWorkspace}/></>;
- const financeWorkspace=isFinanceDestination(currentDestination);const marketProWorkspace=isMarketProDestination(currentDestination);return <div className="flex min-h-screen flex-col bg-canvas font-sans text-ink selection:bg-interactive selection:text-white"><Header currentDestination={currentDestination} onNavigate={navigateWorkspace}/>{marketProWorkspace?<MarketProNavigation current={currentDestination} onNavigate={navigateWorkspace}/>:financeWorkspace?<FinanceWorkspaceNavigation currentDestination={currentDestination} onNavigate={navigateWorkspace}/>:<Navigation currentDestination={currentDestination} onNavigate={navigateWorkspace}/>}<main className="flex-1">{renderActiveView()}</main><Footer/><AuthModal/>{auth.user&&financeWorkspace&&<FinanceAssistantDrawer module={currentDestination} onManageContext={()=>navigateWorkspace('account')}/>}<FirstTimeOnboardingGate onNavigate={navigateWorkspace}/></div>;
+ const financeWorkspace=isFinanceDestination(currentDestination);const marketProWorkspace=isMarketProDestination(currentDestination);return <div className="flex min-h-screen flex-col bg-canvas font-sans text-ink selection:bg-interactive selection:text-white"><Header currentDestination={currentDestination} onNavigate={navigateWorkspace} onOpenArthaPilot={()=>setArthaPilotOpen(true)}/>{marketProWorkspace?<MarketProNavigation current={currentDestination} onNavigate={navigateWorkspace}/>:financeWorkspace?<FinanceWorkspaceNavigation currentDestination={currentDestination} onNavigate={navigateWorkspace}/>:<Navigation currentDestination={currentDestination} onNavigate={navigateWorkspace}/>}<main className="flex-1">{renderActiveView()}</main><Footer/><AuthModal/>{auth.user&&financeWorkspace&&<FinanceAssistantDrawer module={currentDestination} onManageContext={()=>navigateWorkspace('account')}/>}<FirstTimeOnboardingGate onNavigate={navigateWorkspace}/><ArthaPilot open={arthaPilotOpen} onClose={()=>setArthaPilotOpen(false)} onNavigate={navigateWorkspace}/></div>;
 }

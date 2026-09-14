@@ -5,10 +5,14 @@ import { apiRouter } from './routes';
 import { personalAccountRouter } from './personalAccountRoutes';
 import { evaluationComparisonRouter } from './evaluationComparisonRoutes';
 import { freeMarketRouter } from './freeMarketRoutes';
+import { handleNvidiaTutor } from './nvidiaService';
 
 const app = express();
 app.disable('x-powered-by');
 app.use(express.json({ limit: '2mb' }));
+
+// Dedicated NVIDIA route keeps the existing Groq/evaluation stack untouched.
+app.post('/api/nvidia-tutor', handleNvidiaTutor);
 app.use('/api', apiRouter);
 app.use('/api', personalAccountRouter);
 app.use('/api', evaluationComparisonRouter);

@@ -5,7 +5,17 @@ import { explainNewsArticleAI } from '../../services/learningApi';
 import { StructuredFinancialAnswerView } from '../ai/StructuredFinancialAnswer';
 
 interface NewsCardProps { article: NormalizedNewsItem; }
-const proxyImage = (article: NormalizedNewsItem) => article.imageUrl || (article.sourceUrl ? `/api/news/image?url=${encodeURIComponent(article.sourceUrl)}` : '');
+const isPublisherImage = (value?: string | null) => {
+  if (!value) return false;
+  try {
+    const host = new URL(value).hostname.toLowerCase();
+    return !/(^|\.)google(?:\.com|\.co\.in|usercontent\.com|\.co\.uk|\.co\.jp)$/.test(host)
+      && !/(^|\.)gstatic\.com$/.test(host)
+      && !/(^|\.)googleusercontent\.com$/.test(host);
+  } catch { return false; }
+};
+const proxyPublisherPage = (sourceUrl?: string | null) => sourceUrl ? `/api/news/image?url=${encodeURIComponent(sourceUrl)}` : '';
+const proxyImage = (article: NormalizedNewsItem) => isPublisherImage(article.imageUrl) ? article.imageUrl! : proxyPublisherPage(article.sourceUrl);
 
 export const NewsCard: React.FC<NewsCardProps> = ({ article }) => {
   const [isExplaining, setIsExplaining] = useState(false);
@@ -15,12 +25,13 @@ export const NewsCard: React.FC<NewsCardProps> = ({ article }) => {
   const category = (article.category || '').toLowerCase();
   const categorySurface = useMemo(() => category.includes('macro') || category.includes('economy') ? 'bg-interactive-soft text-interactive' : category.includes('corporate') || category.includes('earning') ? 'bg-success-soft text-success' : category.includes('policy') || category.includes('bank') || category.includes('rate') ? 'bg-premium-soft text-premium' : 'bg-subtle text-interactive', [category]);
   const handleExplain = async () => { if (explanation) { setExplanation(null); return; } setIsExplaining(true); try { setExplanation(await explainNewsArticleAI(article)); } finally { setIsExplaining(false); } };
-  const handleImageError = () => { if (imageSrc !== `/api/news/image?url=${encodeURIComponent(article.sourceUrl || '')}` && article.sourceUrl) { setImageSrc(`/api/news/image?url=${encodeURIComponent(article.sourceUrl)}`); return; } setImageFailed(true); };
+  const fallback = proxyPublisherPage(article.sourceUrl);
+  const handleImageError = () => { if (fallback && imageSrc !== fallback) { setImageSrc(fallback); return; } setImageFailed(true); };
 
   return <div className="bg-surface border border-line hover:border-interactive/40 rounded-3xl p-5 shadow-sm space-y-4 flex flex-col justify-between overflow-hidden transition-all">
     <div>
       <div className="relative w-full h-40 rounded-2xl overflow-hidden mb-3 bg-canvas">
-        {imageSrc && !imageFailed ? <img src={imageSrc} alt={article.title} referrerPolicy="no-referrer" onError={handleImageError} className="w-full h-full object-cover transition-transform duration-500"/> : <div className={`w-full h-full ${categorySurface} flex items-center justify-center`}><Newspaper className="w-12 h-12 opacity-55" aria-hidden="true"/></div>}
+        {imageSrc && !imageFailed ? <img src={imageSrc} alt={article.title} onError={handleImageError} className="w-full h-full object-cover transition-transform duration-500"/> : <div className={`w-full h-full ${categorySurface} flex items-center justify-center`}><Newspaper className="w-12 h-12 opacity-55" aria-hidden="true"/></div>}
         <span className="absolute bottom-2 left-2 font-bold text-[10px] text-success bg-success-soft border border-success-fill/25 px-2 py-0.5 rounded-full uppercase tracking-wider">{article.category || 'Financial Intelligence'}</span>
       </div>
       <div className="flex items-center justify-between gap-2 text-xs text-secondary mb-2"><span className="font-semibold text-interactive bg-interactive/15 border border-interactive/30 px-2 py-0.5 rounded-full text-[10px]">{article.sourceName}</span><div className="flex items-center gap-1.5 text-secondary text-[11px]"><Clock className="w-3 h-3"/><span>{article.publishedAt ? new Date(article.publishedAt).toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' }) : 'Recent'}</span></div></div>

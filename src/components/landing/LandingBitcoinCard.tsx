@@ -5,6 +5,7 @@ import { getCryptoKlines, getCryptoMarkets } from '../../services/cryptoApi';
 import type { CryptoCandle, CryptoInterval, CryptoKlinesResponse, CryptoQuote } from '../crypto/cryptoTypes';
 
 type Props = { onOpenCrypto: () => void };
+type HoverCandle = CryptoCandle & { x: number; y: number };
 const TIMEFRAMES: Array<{ label: string; interval: CryptoInterval }> = [
   { label: '1H', interval: '1h' },
   { label: '4H', interval: '4h' },
@@ -20,6 +21,8 @@ export const LandingBitcoinCard: React.FC<Props> = ({ onOpenCrypto }) => {
   const [retrievedAt, setRetrievedAt] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [stale, setStale] = useState(false);
+  const [hoverCandle, setHoverCandle] = useState<HoverCandle | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const candleSeriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
@@ -43,8 +46,12 @@ export const LandingBitcoinCard: React.FC<Props> = ({ onOpenCrypto }) => {
         setQuote(btc);
         setRetrievedAt(candleResponse.retrievedAt || markets.retrievedAt);
         setError(false);
+        setStale(false);
       } catch {
-        if (active && candlesRef.current.length === 0) setError(true);
+        if (active) {
+          if (candlesRef.current.length === 0) setError(true);
+          else setStale(true);
+        }
       } finally {
         if (active) setLoading(false);
         controller.abort();
@@ -80,16 +87,25 @@ export const LandingBitcoinCard: React.FC<Props> = ({ onOpenCrypto }) => {
       handleScroll: { mouseWheel: false, pressedMouseMove: true, horzTouchDrag: true, vertTouchDrag: false },
       handleScale: { mouseWheel: true, pinch: true, axisPressedMouseMove: { time: true, price: true } },
     } as any);
-    const candleSeries = chart.addSeries(CandlestickSeries, {
-      upColor: '#16A34A', downColor: '#DC2626', wickUpColor: '#16A34A', wickDownColor: '#DC2626', borderVisible: false,
-    });
+    const candleSeries = chart.addSeries(CandlestickSeries, { upColor: '#16A34A', downColor: '#DC2626', wickUpColor: '#16A34A', wickDownColor: '#DC2626', borderVisible: false });
     const volumeSeries = chart.addSeries(HistogramSeries, { priceFormat: { type: 'volume' }, priceScaleId: 'volume' });
     volumeSeries.priceScale().applyOptions({ scaleMargins: { top: 0.80, bottom: 0 } });
+    const unsubscribe = () => setHoverCandle(null);
+    chart.subscribeCrosshairMove((param) => {
+      if (!param.time || !param.point) { unsubscribe(); return; }
+      const data = param.seriesData.get(candleSeries) as { open?: number; high?: number; low?: number; close?: number } | undefined;
+      if (!data || data.open == null || data.high == null || data.low == null || data.close == null) { unsubscribe(); return; }
+      const timeSeconds = typeof param.time === 'number' ? param.time : 0;
+      const source = candlesRef.current.find((candle) => Math.floor(candle.openTime / 1000) === timeSeconds);
+      if (!source) { unsubscribe(); return; }
+      setHoverCandle({ ...source, x: param.point.x, y: param.point.y });
+    });
     chartRef.current = chart;
     candleSeriesRef.current = candleSeries;
     volumeSeriesRef.current = volumeSeries;
     if (reduceMotion) chart.applyOptions({ kineticScroll: { mouse: false, touch: false } } as any);
     return () => {
+      chart.unsubscribeCrosshairMove(() => undefined);
       chart.remove();
       chartRef.current = null;
       candleSeriesRef.current = null;
@@ -98,6 +114,7 @@ export const LandingBitcoinCard: React.FC<Props> = ({ onOpenCrypto }) => {
   }, []);
 
   useEffect(() => {
+    if (!containerRef.current) return;
     const chart = chartRef.current;
     const candleSeries = candleSeriesRef.current;
     const volumeSeries = volumeSeriesRef.current;
@@ -124,12 +141,12 @@ export const LandingBitcoinCard: React.FC<Props> = ({ onOpenCrypto }) => {
       </div>
       <div className="mt-3 flex flex-wrap items-end justify-between gap-3">
         <div><div className="text-lg font-black tabular-nums text-white">{quote ? price(quote.price) : latest ? price(latest.close) : '—'}</div><div className={`mt-1 text-[9px] font-bold ${changePositive ? 'text-emerald-300' : 'text-rose-300'}`}>{quote ? `${changePositive ? '+' : ''}${quote.change.toFixed(2)} · ${changePositive ? '+' : ''}${quote.changePercent.toFixed(2)}%` : 'Provider change unavailable'}</div></div>
-        <div className="text-right text-[8px] leading-4 text-slate-400"><div className="inline-flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-emerald-300" />Provider-backed · updating while visible</div><div>{retrievedAt ? formatTime(retrievedAt) : 'Timestamp unavailable'}</div></div>
+        <div className="text-right text-[8px] leading-4 text-slate-400"><div className="inline-flex items-center gap-1"><span className={`h-1.5 w-1.5 rounded-full ${stale ? 'bg-amber-300' : 'bg-emerald-300'}`} />{stale ? 'Stale · last successful provider data' : 'Polled provider data · refreshes every 15s while visible'}</div><div>{retrievedAt ? formatTime(retrievedAt) : 'Timestamp unavailable'}</div></div>
       </div>
       <div className="mt-3 overflow-hidden rounded-xl border border-white/10 bg-[#0b1220]">
-        {loading && !candles.length ? <div className="flex h-56 items-center justify-center text-[10px] text-slate-400">Loading provider OHLC data…</div> : error && !candles.length ? <div className="flex h-56 flex-col items-center justify-center px-6 text-center text-[10px] text-slate-400"><span className="font-bold text-slate-200">BTC chart unavailable from current provider</span><span className="mt-1">No synthetic candles are shown.</span></div> : <div ref={containerRef} className="h-56 w-full" role="img" aria-label="Provider-backed Bitcoin candlestick chart with volume and crosshair hover details" />}
+        {loading && !candles.length ? <div className="flex h-56 items-center justify-center text-[10px] text-slate-400">Loading provider OHLC data…</div> : error && !candles.length ? <div className="flex h-56 flex-col items-center justify-center px-6 text-center text-[10px] text-slate-400"><span className="font-bold text-slate-200">BTC chart unavailable from current provider</span><span className="mt-1">No synthetic candles are shown.</span></div> : <div ref={containerRef} className="relative h-56 w-full" role="img" aria-label="Provider-backed Bitcoin candlestick chart with OHLC tooltip and volume" >{hoverCandle && <div className="pointer-events-none absolute z-10 max-w-[180px] rounded-lg border border-white/10 bg-slate-900/95 p-2 text-[8px] text-slate-200 shadow-xl" style={{ left: Math.max(8, Math.min(hoverCandle.x + 10, 210)), top: Math.max(8, Math.min(hoverCandle.y + 10, 155)) }}><div className="mb-1 font-black text-teal-200">Provider OHLC</div><div className="grid grid-cols-2 gap-x-3 gap-y-1"><span>Open <b>{price(hoverCandle.open)}</b></span><span>High <b>{price(hoverCandle.high)}</b></span><span>Low <b>{price(hoverCandle.low)}</b></span><span>Close <b>{price(hoverCandle.close)}</b></span><span>Volume <b>{hoverCandle.volume.toLocaleString('en-US')}</b></span></div></div>}</div>}
       </div>
-      <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-[8px] text-slate-500"><span>Same candlestick market visualization · OHLC + volume · Educational / market context only</span><span className="inline-flex items-center gap-1"><Clock3 className="h-3 w-3" aria-hidden="true" />{retrievedAt ? `Updated ${formatTime(retrievedAt)}` : 'Update time unavailable'}</span></div>
+      <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-[8px] text-slate-500"><span>Same provider OHLC candles · 1H / 4H / 1D · Educational / market context only</span><span className="inline-flex items-center gap-1"><Clock3 className="h-3 w-3" aria-hidden="true" />{retrievedAt ? `Updated ${formatTime(retrievedAt)}` : 'Update time unavailable'}</span></div>
       <button type="button" onClick={onOpenCrypto} className="mt-3 w-full rounded-lg border border-teal-400/20 bg-teal-400/[.06] px-3 py-2 text-[9px] font-bold text-teal-200 transition hover:bg-teal-400/[.1] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-300">Open full Crypto workspace</button>
     </section>
   );

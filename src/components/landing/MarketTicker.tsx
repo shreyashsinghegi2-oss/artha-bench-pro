@@ -8,8 +8,7 @@ export const MarketTicker: React.FC = () => {
   const [newsMount, setNewsMount] = useState<HTMLElement | null>(null);
 
   useEffect(() => {
-    const host = document.querySelector('[data-artha-market-context-host]');
-    const section = host?.closest('section');
+    const section = document.querySelector('.landing-mood-market');
     const capabilities = document.getElementById('capabilities');
     if (!section || !capabilities || !section.parentElement) return;
 

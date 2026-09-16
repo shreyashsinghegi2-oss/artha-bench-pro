@@ -109,6 +109,14 @@ export function readAppLocation(): AppLocation {
 export function pushDestination(destination: AppNavigationDestination, replace = false): void {
   const url = pathForDestination(destination);
   window.history[replace ? 'replaceState' : 'pushState']({ destination }, '', url);
+
+  // Navigation is SPA-based, so the browser does not get a new document load
+  // on which to perform its normal top-of-page behavior. Reset once on the
+  // next frame, after React has rendered the destination, so a stale restored
+  // scroll position or legacy #workspace entry cannot win the race.
+  window.requestAnimationFrame(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  });
 }
 
 export function pushAuth(returnTo: string, replace = false): void {

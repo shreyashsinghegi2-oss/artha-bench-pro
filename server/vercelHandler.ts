@@ -7,10 +7,12 @@ import { personalAccountRouter } from './personalAccountRoutes';
 import { evaluationComparisonRouter } from './evaluationComparisonRoutes';
 import { freeMarketRouter } from './freeMarketRoutes';
 import { handleNvidiaTutor } from './nvidiaService';
+import { handleNewsImage } from './newsImageProxy';
 
 const app = express();
 app.disable('x-powered-by');
 app.use(express.json({ limit: '2mb' }));
+app.get('/api/news/image', handleNewsImage);
 app.post('/api/nvidia-tutor', handleNvidiaTutor);
 app.use('/api', aiRouter);
 app.use('/api', apiRouter);

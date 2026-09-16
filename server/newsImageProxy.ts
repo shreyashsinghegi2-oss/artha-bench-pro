@@ -16,28 +16,35 @@ function decodeHtml(value: string) {
   return value.replace(/&amp;/gi, '&').replace(/&quot;/gi, '"').replace(/&#39;|&apos;/gi, "'").replace(/&lt;/gi, '<').replace(/&gt;/gi, '>');
 }
 
-function extractMetaImage(html: string) {
+function extractMetaImage(html: string, pageUrl: URL) {
   const tags = html.match(/<meta\b[^>]*>/gi) || [];
   const wanted = new Set(['og:image', 'og:image:secure_url', 'twitter:image', 'twitter:image:src']);
   for (const tag of tags) {
     const property = decodeHtml(tag.match(/\b(?:property|name)\s*=\s*["']([^"']+)["']/i)?.[1] || '').toLowerCase();
     if (!wanted.has(property)) continue;
     const content = decodeHtml(tag.match(/\bcontent\s*=\s*["']([^"']+)["']/i)?.[1] || '').trim();
-    if (content) return content;
+    if (content) {
+      try { return new URL(content, pageUrl).toString(); } catch { /* continue */ }
+    }
   }
   const imageSrc = html.match(/<link\b[^>]*\brel\s*=\s*["'][^"']*image_src[^"']*["'][^>]*\bhref\s*=\s*["']([^"']+)["']/i)
     || html.match(/<link\b[^>]*\bhref\s*=\s*["']([^"']+)["'][^>]*\brel\s*=\s*["'][^"']*image_src[^"']*["']/i);
-  return decodeHtml(imageSrc?.[1] || '').trim();
+  if (imageSrc?.[1]) {
+    try { return new URL(decodeHtml(imageSrc[1]), pageUrl).toString(); } catch { /* ignore */ }
+  }
+  return '';
 }
 
-async function fetchResource(url: URL, accept = 'image/avif,image/webp,image/apng,image/svg+xml,image/*,text/html;q=0.8,*/*;q=0.5') {
+async function fetchResource(url: URL, accept = 'image/avif,image/webp,image/apng,image/svg+xml,image/*,text/html;q=0.8,*/*;q=0.5', referer?: URL | null) {
+  const headers: Record<string, string> = {
+    'User-Agent': 'Mozilla/5.0 (compatible; ArthaBenchPro/1.0; +https://artha-bench-pro.vercel.app)',
+    Accept: accept,
+  };
+  if (referer) headers.Referer = referer.toString();
   return fetch(url, {
     redirect: 'follow',
-    headers: {
-      'User-Agent': 'Mozilla/5.0 (compatible; ArthaBenchPro/1.0; +https://artha-bench-pro.vercel.app)',
-      Accept: accept,
-    },
-    signal: AbortSignal.timeout(7_000),
+    headers,
+    signal: AbortSignal.timeout(5_000),
   });
 }
 
@@ -50,9 +57,9 @@ export async function resolvePublisherImage(sourceUrl: string) {
     const contentType = response.headers.get('content-type') || '';
     if (contentType.startsWith('image/')) return response.url;
     const html = await response.text();
-    const candidate = allowedUrl(extractMetaImage(html));
+    const candidate = allowedUrl(extractMetaImage(html, source));
     if (!candidate) return null;
-    const imageResponse = await fetchResource(candidate);
+    const imageResponse = await fetchResource(candidate, undefined, source);
     if (!imageResponse.ok || !(imageResponse.headers.get('content-type') || '').startsWith('image/')) return null;
     return candidate.toString();
   } catch {
@@ -62,17 +69,19 @@ export async function resolvePublisherImage(sourceUrl: string) {
 
 export async function handleNewsImage(req: Request, res: Response) {
   const raw = typeof req.query.url === 'string' ? req.query.url : '';
+  const rawSource = typeof req.query.source === 'string' ? req.query.source : '';
   const source = allowedUrl(raw);
+  const referer = rawSource ? allowedUrl(rawSource) : null;
   if (!source) return res.status(400).json({ error: 'Invalid news image URL.' });
   try {
-    let response = await fetchResource(source);
-    if (!response.ok) return res.status(404).json({ error: 'News resource unavailable.' });
+    let response = await fetchResource(source, undefined, referer);
+    if (!response.ok) return res.status(404).json({ error: 'News image resource unavailable.' });
     let contentType = response.headers.get('content-type') || '';
     if (!contentType.startsWith('image/')) {
       const html = await response.text();
-      const imageUrl = allowedUrl(extractMetaImage(html));
+      const imageUrl = allowedUrl(extractMetaImage(html, source));
       if (!imageUrl) return res.status(404).json({ error: 'Publisher did not expose a usable article image.' });
-      response = await fetchResource(imageUrl);
+      response = await fetchResource(imageUrl, undefined, referer || source);
       if (!response.ok) return res.status(404).json({ error: 'Publisher image unavailable.' });
       contentType = response.headers.get('content-type') || '';
     }

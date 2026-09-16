@@ -8,6 +8,7 @@ import { evaluationComparisonRouter } from './server/evaluationComparisonRoutes'
 import { freeMarketRouter } from './server/freeMarketRoutes';
 import { aiRouter } from './server/aiRoutes';
 import { handleNvidiaTutor } from './server/nvidiaService';
+import { handleNewsImage } from './server/newsImageProxy';
 
 dotenv.config();
 const __dirname = process.cwd();
@@ -17,6 +18,7 @@ async function startServer() {
   const PORT = Number(process.env.PORT) || 3000;
   app.disable('x-powered-by');
   app.use(express.json({ limit: '2mb' }));
+  app.get('/api/news/image', handleNewsImage);
   app.post('/api/nvidia-tutor', handleNvidiaTutor);
   app.use('/api', aiRouter);
   app.use('/api', apiRouter);

@@ -11,13 +11,124 @@ import {
   serializeStructuredFinancialAnswer,
 } from './aiResponseStandard';
 
+function decodeXml(value: string) {
+  return value
+    .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1')
+    .replace(/&amp;/gi, '&')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;|&apos;/gi, "'")
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .trim();
+}
+
+function stripHtml(value: string) {
+  return decodeXml(value).replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+function extractTag(block: string, tag: string) {
+  const match = block.match(new RegExp(`<${tag}(?:\\s[^>]*)?>([\\s\\S]*?)</${tag}>`, 'i'));
+  return match ? decodeXml(match[1]) : '';
+}
+
+function extractAttribute(block: string, tag: string, attribute: string) {
+  const match = block.match(new RegExp(`<${tag}\\b[^>]*\\b${attribute}=["']([^"']+)["'][^>]*>`, 'i'));
+  return match ? decodeXml(match[1]) : '';
+}
+
+function safeHttpUrl(value: string) {
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:' || url.protocol === 'http:' ? url.toString() : '';
+  } catch {
+    return '';
+  }
+}
+
+async function fetchRssFeed(feedUrl: string, sourceName: string, category = 'Business'): Promise<NormalizedNewsItem[]> {
+  try {
+    const response = await fetch(feedUrl, {
+      headers: {
+        Accept: 'application/rss+xml, application/xml, text/xml;q=0.9, */*;q=0.5',
+        'User-Agent': 'ArthaBench-Pro/2.0',
+      },
+      signal: AbortSignal.timeout(5_000),
+    });
+    if (!response.ok) return [];
+    const xml = await response.text();
+    const blocks = xml.match(/<item\b[\s\S]*?<\/item>/gi) || [];
+    const retrievedAt = new Date().toISOString();
+
+    return blocks.slice(0, 12).flatMap((block, index) => {
+      const title = stripHtml(extractTag(block, 'title'));
+      const url = safeHttpUrl(extractTag(block, 'link'));
+      const publishedAt = extractTag(block, 'pubDate');
+      const description = stripHtml(extractTag(block, 'description'));
+      const imageUrl =
+        safeHttpUrl(extractAttribute(block, 'media:content', 'url')) ||
+        safeHttpUrl(extractAttribute(block, 'media:thumbnail', 'url')) ||
+        safeHttpUrl(extractAttribute(block, 'enclosure', 'url'));
+      if (!title || !url) return [];
+      const timestamp = Date.parse(publishedAt);
+      return [{
+        id: `rss-${sourceName.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${timestamp || retrievedAt}-${index}`,
+        title,
+        summary: description || 'Open the original publisher article for the full report.',
+        sourceName,
+        sourceUrl: url,
+        publishedAt: Number.isFinite(timestamp) ? new Date(timestamp).toISOString() : null,
+        retrievedAt,
+        category,
+        region: 'global',
+        imageUrl: imageUrl || null,
+      }];
+    });
+  } catch {
+    return [];
+  }
+}
+
+async function fetchPublicNewsFallback(category = 'business'): Promise<NormalizedNewsItem[]> {
+  const feeds = [
+    ['https://finance.yahoo.com/rss/topstories', 'Yahoo Finance'],
+    ['https://www.cnbc.com/id/100003114/device/rss/rss.html', 'CNBC'],
+  ] as const;
+  const results = await Promise.all(feeds.map(([url, source]) => fetchRssFeed(url, source, category)));
+  const seen = new Set<string>();
+  return results
+    .flat()
+    .filter((item) => {
+      const key = `${item.title.toLowerCase()}|${item.sourceUrl.toLowerCase()}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .sort((a, b) => (Date.parse(b.publishedAt || '') || 0) - (Date.parse(a.publishedAt || '') || 0))
+    .slice(0, 10);
+}
+
 export async function getBusinessNews(
   query = '',
   category = 'business',
   region = 'global',
-  page = 1
+  page = 1,
 ) {
-  return fetchNewsFromProvider(query, category, region, page);
+  const providerResult = await fetchNewsFromProvider(query, category, region, page);
+  if (providerResult.items.length) return providerResult;
+
+  const fallbackItems = await fetchPublicNewsFallback(category);
+  if (fallbackItems.length) {
+    return {
+      items: fallbackItems,
+      status: 'connected' as const,
+      providerName: `${providerResult.providerName} + public RSS fallback`,
+      message: providerResult.message
+        ? `${providerResult.message} Public RSS fallback supplied ${fallbackItems.length} headlines.`
+        : `Public RSS fallback supplied ${fallbackItems.length} headlines.`,
+    };
+  }
+
+  return providerResult;
 }
 
 export async function explainNewsArticle(article: {

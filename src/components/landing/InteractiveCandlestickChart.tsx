@@ -4,7 +4,7 @@ import { CryptoCandle } from '../crypto/cryptoTypes';
 
 interface Props { candles: CryptoCandle[]; onResetReady?: (reset: () => void) => void; }
 
-const visibleBarsForWidth = (width: number) => width < 640 ? 40 : width < 1024 ? 58 : 80;
+const getDefaultVisibleBars = (width: number) => width >= 1024 ? 80 : width >= 640 ? 60 : 42;
 
 export const InteractiveCandlestickChart: React.FC<Props> = ({ candles, onResetReady }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -13,41 +13,49 @@ export const InteractiveCandlestickChart: React.FC<Props> = ({ candles, onResetR
   const priceLineRef = useRef<ReturnType<ISeriesApi<'Candlestick'>['createPriceLine']> | null>(null);
   const hasInitialViewRef = useRef(false);
 
-  const applyMediumView = () => {
+  const applyDefaultMediumView = () => {
     const chart = chartRef.current;
     const container = containerRef.current;
-    if (!chart || !container || !candles.length) return;
+    const series = seriesRef.current;
+    if (!chart || !container || !series || !candles.length) return;
+
     const width = container.clientWidth || 1024;
-    const count = Math.min(candles.length, visibleBarsForWidth(width));
-    const rightPadding = Math.max(6, Math.min(10, Math.round(count * 0.1)));
-    chart.timeScale().setVisibleLogicalRange({
-      from: Math.max(0, candles.length - count),
-      to: candles.length - 1 + rightPadding,
+    const visibleBars = Math.min(getDefaultVisibleBars(width), candles.length);
+    const from = Math.max(0, candles.length - visibleBars);
+    const to = candles.length - 1;
+
+    chart.timeScale().setVisibleLogicalRange({ from, to });
+    series.priceScale().applyOptions({
+      autoScale: true,
+      scaleMargins: { top: 0.12, bottom: 0.12 },
     });
   };
 
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
+
     const chart = createChart(container, {
       autoSize: true,
       height: 540,
       layout: { background: { type: ColorType.Solid, color: '#050505' }, textColor: '#d1d5db' },
       grid: { vertLines: { color: '#141414' }, horzLines: { color: '#141414' } },
       crosshair: { mode: CrosshairMode.Normal, vertLine: { color: '#737373', labelBackgroundColor: '#171717' }, horzLine: { color: '#737373', labelBackgroundColor: '#171717' } },
-      rightPriceScale: { borderColor: '#2a2a2a', textColor: '#e5e7eb', autoScale: true, scaleMargins: { top: 0.10, bottom: 0.10 } },
+      rightPriceScale: { borderColor: '#2a2a2a', textColor: '#e5e7eb', autoScale: true, scaleMargins: { top: 0.12, bottom: 0.12 } },
       timeScale: {
         timeVisible: true,
         secondsVisible: false,
-        rightOffset: 7,
-        barSpacing: 5,
-        minBarSpacing: 2,
+        rightOffset: 4,
+        barSpacing: 7,
+        minBarSpacing: 3,
         borderColor: '#2a2a2a',
         rightBarStaysOnScroll: true,
+        fixLeftEdge: false,
+        fixRightEdge: false,
         lockVisibleTimeRangeOnResize: true,
       },
       handleScroll: {
-        mouseWheel: false,
+        mouseWheel: true,
         pressedMouseMove: true,
         horzTouchDrag: true,
         vertTouchDrag: false,
@@ -59,30 +67,57 @@ export const InteractiveCandlestickChart: React.FC<Props> = ({ candles, onResetR
         axisDoubleClickReset: true,
       },
     });
+
     const series = chart.addSeries(CandlestickSeries, {
       upColor: '#22c55e', downColor: '#ef4444', wickUpColor: '#22c55e', wickDownColor: '#ef4444', borderUpColor: '#22c55e', borderDownColor: '#ef4444', borderVisible: false, priceLineVisible: false, lastValueVisible: true,
     });
-    chartRef.current = chart; seriesRef.current = series; hasInitialViewRef.current = false;
-    onResetReady?.(() => applyMediumView());
+
+    chartRef.current = chart;
+    seriesRef.current = series;
+    hasInitialViewRef.current = false;
+    onResetReady?.(() => applyDefaultMediumView());
+
     const resizeObserver = new ResizeObserver(() => {
-      if (container.isConnected) chart.applyOptions({ width: container.clientWidth || 0 });
+      if (container.isConnected) {
+        chart.applyOptions({ width: container.clientWidth || 0 });
+      }
     });
     resizeObserver.observe(container);
-    return () => { resizeObserver.disconnect(); priceLineRef.current = null; chart.remove(); chartRef.current = null; seriesRef.current = null; };
+
+    return () => {
+      resizeObserver.disconnect();
+      priceLineRef.current = null;
+      chart.remove();
+      chartRef.current = null;
+      seriesRef.current = null;
+    };
   }, [onResetReady]);
 
   useEffect(() => {
-    const chart = chartRef.current; const series = seriesRef.current;
+    const chart = chartRef.current;
+    const series = seriesRef.current;
     if (!chart || !series || !candles.length) return;
-    series.setData(candles.map((candle) => ({ time: Math.floor(candle.openTime / 1000) as Time, open: candle.open, high: candle.high, low: candle.low, close: candle.close })));
+
+    series.setData(candles.map((candle) => ({
+      time: Math.floor(candle.openTime / 1000) as Time,
+      open: candle.open,
+      high: candle.high,
+      low: candle.low,
+      close: candle.close,
+    })));
+
     const latest = candles[candles.length - 1];
     if (latest) {
       if (priceLineRef.current) series.removePriceLine(priceLineRef.current);
       priceLineRef.current = series.createPriceLine({ price: latest.close, color: '#22c55e', lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: 'LIVE' });
     }
-    // Establish the medium default once per historical dataset. Live updates must
-    // not call fitContent/setVisibleLogicalRange again so user zoom/pan is preserved.
-    if (!hasInitialViewRef.current) { applyMediumView(); hasInitialViewRef.current = true; }
+
+    // Apply the default range only once after the historical dataset first loads.
+    // Subsequent live OHLC updates preserve the user's zoom and pan.
+    if (!hasInitialViewRef.current) {
+      applyDefaultMediumView();
+      hasInitialViewRef.current = true;
+    }
   }, [candles]);
 
   return <div className="relative h-[300px] w-full sm:h-[420px] lg:h-[540px]" aria-label="Interactive crypto candlestick chart">

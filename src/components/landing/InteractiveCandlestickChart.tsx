@@ -19,7 +19,11 @@ export const InteractiveCandlestickChart: React.FC<Props> = ({ candles, onResetR
     if (!chart || !container || !candles.length) return;
     const width = container.clientWidth || 1024;
     const count = Math.min(candles.length, visibleBarsForWidth(width));
-    chart.timeScale().setVisibleLogicalRange({ from: Math.max(0, candles.length - count), to: candles.length + 5 });
+    const rightPadding = Math.max(6, Math.min(10, Math.round(count * 0.1)));
+    chart.timeScale().setVisibleLogicalRange({
+      from: Math.max(0, candles.length - count),
+      to: candles.length - 1 + rightPadding,
+    });
   };
 
   useEffect(() => {
@@ -32,16 +36,37 @@ export const InteractiveCandlestickChart: React.FC<Props> = ({ candles, onResetR
       grid: { vertLines: { color: '#141414' }, horzLines: { color: '#141414' } },
       crosshair: { mode: CrosshairMode.Normal, vertLine: { color: '#737373', labelBackgroundColor: '#171717' }, horzLine: { color: '#737373', labelBackgroundColor: '#171717' } },
       rightPriceScale: { borderColor: '#2a2a2a', textColor: '#e5e7eb', autoScale: true, scaleMargins: { top: 0.10, bottom: 0.10 } },
-      timeScale: { timeVisible: true, secondsVisible: false, rightOffset: 5, barSpacing: 6.5, minBarSpacing: 2.5, borderColor: '#2a2a2a', rightBarStaysOnScroll: false },
-      handleScroll: { mouseWheel: false, pressedMouseMove: true, horzTouchDrag: true, vertTouchDrag: false },
-      handleScale: { mouseWheel: true, pinch: true, axisPressedMouseMove: { time: true, price: true }, axisDoubleClickReset: true },
+      timeScale: {
+        timeVisible: true,
+        secondsVisible: false,
+        rightOffset: 7,
+        barSpacing: 5,
+        minBarSpacing: 2,
+        borderColor: '#2a2a2a',
+        rightBarStaysOnScroll: true,
+        lockVisibleTimeRangeOnResize: true,
+      },
+      handleScroll: {
+        mouseWheel: false,
+        pressedMouseMove: true,
+        horzTouchDrag: true,
+        vertTouchDrag: false,
+      },
+      handleScale: {
+        mouseWheel: true,
+        pinch: true,
+        axisPressedMouseMove: { time: true, price: true },
+        axisDoubleClickReset: true,
+      },
     });
     const series = chart.addSeries(CandlestickSeries, {
       upColor: '#22c55e', downColor: '#ef4444', wickUpColor: '#22c55e', wickDownColor: '#ef4444', borderUpColor: '#22c55e', borderDownColor: '#ef4444', borderVisible: false, priceLineVisible: false, lastValueVisible: true,
     });
     chartRef.current = chart; seriesRef.current = series; hasInitialViewRef.current = false;
     onResetReady?.(() => applyMediumView());
-    const resizeObserver = new ResizeObserver(() => { if (container.isConnected) chart.applyOptions({ width: container.clientWidth || 0 }); });
+    const resizeObserver = new ResizeObserver(() => {
+      if (container.isConnected) chart.applyOptions({ width: container.clientWidth || 0 });
+    });
     resizeObserver.observe(container);
     return () => { resizeObserver.disconnect(); priceLineRef.current = null; chart.remove(); chartRef.current = null; seriesRef.current = null; };
   }, [onResetReady]);
@@ -55,6 +80,8 @@ export const InteractiveCandlestickChart: React.FC<Props> = ({ candles, onResetR
       if (priceLineRef.current) series.removePriceLine(priceLineRef.current);
       priceLineRef.current = series.createPriceLine({ price: latest.close, color: '#22c55e', lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: 'LIVE' });
     }
+    // Establish the medium default once per historical dataset. Live updates must
+    // not call fitContent/setVisibleLogicalRange again so user zoom/pan is preserved.
     if (!hasInitialViewRef.current) { applyMediumView(); hasInitialViewRef.current = true; }
   }, [candles]);
 

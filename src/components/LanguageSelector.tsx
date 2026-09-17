@@ -24,24 +24,35 @@ export const SUPPORTED_LANGUAGES = [
   ['ja', '日本語'],
 ] as const;
 
+type GoogleTranslateElementConstructor = new (
+  options: { pageLanguage: string; includedLanguages: string; autoDisplay: boolean },
+  element: HTMLElement,
+) => unknown;
+
 declare global {
   interface Window {
-    google?: any;
+    google?: {
+      translate?: {
+        TranslateElement?: GoogleTranslateElementConstructor;
+      };
+    };
     arthaGoogleTranslateInit?: () => void;
   }
 }
 
-const STORAGE_KEY = 'artha-bench-global-language';
-
 function setEnglishCookie() {
   document.cookie = 'googtrans=/en/en;path=/;max-age=31536000';
+}
+
+function setGoogleLanguageCookie(code: string) {
+  document.cookie = `googtrans=/en/${code};path=/;max-age=31536000`;
 }
 
 function applyGoogleLanguage(code: string) {
   const select = document.querySelector<HTMLSelectElement>('.goog-te-combo');
   if (!select) return false;
 
-  select.value = code === 'en' ? 'en' : code;
+  select.value = code;
   select.dispatchEvent(new Event('change', { bubbles: true }));
   return true;
 }
@@ -60,16 +71,49 @@ function hideGoogleChrome() {
   document.body.style.marginTop = '0px';
 }
 
+function ensureGoogleTranslateWidget() {
+  const TranslateElement = window.google?.translate?.TranslateElement;
+  if (!TranslateElement) return false;
+
+  let host = document.querySelector<HTMLElement>('.artha-google-widget');
+  if (!host) {
+    host = document.createElement('div');
+    host.className = 'artha-google-widget';
+    host.style.position = 'fixed';
+    host.style.left = '-10000px';
+    host.style.top = '-10000px';
+    host.style.width = '1px';
+    host.style.height = '1px';
+    host.style.overflow = 'hidden';
+    host.setAttribute('aria-hidden', 'true');
+    document.body.appendChild(host);
+  }
+
+  if (!host.dataset.initialized) {
+    new TranslateElement(
+      {
+        pageLanguage: 'en',
+        includedLanguages: SUPPORTED_LANGUAGES.map(([code]) => code)
+          .filter((code) => code !== 'en')
+          .join(','),
+        autoDisplay: false,
+      },
+      host,
+    );
+    host.dataset.initialized = 'true';
+  }
+
+  return true;
+}
+
 export const LanguageSelector: React.FC<{ compact?: boolean }> = ({ compact = false }) => {
-  // Every fresh website visit starts in English. The selected language is intentionally
-  // session-only so a refresh/new visit never unexpectedly opens in another language.
+  // Landing language is intentionally ephemeral: every fresh load starts in English.
   const [language, setLanguage] = useState('en');
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    // Clear the old persisted language and force the initial page language to English.
-    window.localStorage.removeItem(STORAGE_KEY);
+    window.localStorage.removeItem('artha-bench-global-language');
     setEnglishCookie();
     document.documentElement.lang = 'en';
 
@@ -88,31 +132,8 @@ export const LanguageSelector: React.FC<{ compact?: boolean }> = ({ compact = fa
     document.head.appendChild(style);
 
     const init = () => {
-      if (!window.google?.translate?.TranslateElement || document.querySelector('.artha-google-widget')) {
-        hideGoogleChrome();
-        return;
-      }
-
-      const host = document.createElement('div');
-      host.className = 'artha-google-widget';
-      host.style.display = 'none';
-      host.setAttribute('aria-hidden', 'true');
-      document.body.appendChild(host);
-
-      new window.google.translate.TranslateElement(
-        {
-          pageLanguage: 'en',
-          includedLanguages: SUPPORTED_LANGUAGES.map(([code]) => code)
-            .filter((code) => code !== 'en')
-            .join(','),
-          autoDisplay: false,
-        },
-        host,
-      );
-
-      window.setTimeout(hideGoogleChrome, 50);
-      window.setTimeout(hideGoogleChrome, 500);
-      window.setTimeout(hideGoogleChrome, 1500);
+      ensureGoogleTranslateWidget();
+      hideGoogleChrome();
     };
 
     window.arthaGoogleTranslateInit = init;
@@ -130,8 +151,9 @@ export const LanguageSelector: React.FC<{ compact?: boolean }> = ({ compact = fa
 
     const timer = window.setInterval(() => {
       init();
-      hideGoogleChrome();
-      if (window.google?.translate?.TranslateElement) window.clearInterval(timer);
+      if (document.querySelector<HTMLSelectElement>('.goog-te-combo')) {
+        window.clearInterval(timer);
+      }
     }, 300);
 
     return () => {
@@ -144,16 +166,19 @@ export const LanguageSelector: React.FC<{ compact?: boolean }> = ({ compact = fa
   const change = (code: string) => {
     setLanguage(code);
     document.documentElement.lang = code;
-    applyGoogleLanguage(code);
-    hideGoogleChrome();
-    window.setTimeout(() => {
-      applyGoogleLanguage(code);
-      hideGoogleChrome();
-    }, 400);
-    window.setTimeout(() => {
-      applyGoogleLanguage(code);
-      hideGoogleChrome();
-    }, 1200);
+    setGoogleLanguageCookie(code);
+    ensureGoogleTranslateWidget();
+
+    // Google Translate can load its hidden select asynchronously. Retry briefly so
+    // choosing a language always applies even when the user selects immediately.
+    const attempts = [0, 200, 500, 900, 1500, 2200];
+    attempts.forEach((delay) => {
+      window.setTimeout(() => {
+        ensureGoogleTranslateWidget();
+        applyGoogleLanguage(code);
+        hideGoogleChrome();
+      }, delay);
+    });
   };
 
   const currentName = SUPPORTED_LANGUAGES.find(([code]) => code === language)?.[1] || 'English';

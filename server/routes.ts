@@ -1014,8 +1014,16 @@ apiRouter.get('/news', async (req: Request, res: Response, next: NextFunction) =
       (region as string) || 'global',
       Number(page) || 1
     );
+    const updatedAt = (providerResult.items || [])
+      .map((item) => item.retrievedAt || item.publishedAt || '')
+      .filter(Boolean)
+      .sort()
+      .at(-1) || null;
     res.json({
       status: providerResult.status || 'ok',
+      mode: providerResult.mode || 'live',
+      providerName: providerResult.providerName,
+      updatedAt,
       items: providerResult.items || [],
       message: providerResult.message,
     });

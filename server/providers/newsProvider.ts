@@ -3,6 +3,8 @@ import { z } from 'zod';
 import type { NormalizedNewsItem, ProviderDiagnostic } from '../../src/types';
 
 const DEFAULT_NEWSDATA_URL = 'https://newsdata.io/api/1/latest';
+const DEFAULT_MARKET_NEWSDATA_URL = 'https://newsdata.io/api/1/market';
+const DEFAULT_CRYPTO_NEWSDATA_URL = 'https://newsdata.io/api/1/crypto';
 const CACHE_TTL_MS = 45_000;
 const REQUEST_TIMEOUT_MS = 4_500;
 const MAX_ITEMS = 10;
@@ -36,6 +38,7 @@ export interface NewsProviderResult {
   message?: string;
   providerName: string;
   nextPage?: string;
+  mode?: 'live' | 'cached' | 'fallback';
 }
 
 function mapCategory(category: string) {
@@ -101,25 +104,29 @@ function buildQuery(query: string, category: string, region: string) {
   return parts.join(' ');
 }
 
-async function fetchNewsData(query: string, category: string, region: string, page: number | string): Promise<NewsProviderResult> {
+async function fetchNewsData(query: string, category: string, region: string, page: number | string, endpointUrl = getConfiguration().baseUrl, providerName = 'NewsData.io'): Promise<NewsProviderResult> {
   const { apiKey, baseUrl } = getConfiguration();
   if (!apiKey) {
     return {
       items: [],
       status: 'not_configured',
-      providerName: 'NewsData.io',
-      message: 'NewsData.io is not connected. Add BUSINESS_NEWS_API_KEY to the production environment.',
+      providerName,
+      message: `${providerName} is not connected. Add BUSINESS_NEWS_API_KEY to the production environment.`
     };
   }
 
-  const url = new URL(baseUrl);
+  const url = new URL(endpointUrl || baseUrl);
   if (url.protocol !== 'https:') throw new Error('News provider URL must use HTTPS.');
   url.searchParams.set('apikey', apiKey);
   url.searchParams.set('language', 'en');
   const normalizedCategory = category.trim().toLowerCase();
   const builtQuery = buildQuery(query, category, region);
   if (builtQuery) url.searchParams.set('q', builtQuery);
-  if (normalizedCategory !== 'all') url.searchParams.set('category', mapCategory(category));
+  if (normalizedCategory !== 'all' && providerName === 'NewsData.io') url.searchParams.set('category', mapCategory(category));
+  if (normalizedCategory === 'all' && providerName === 'NewsData.io' && url.pathname.endsWith('/latest')) {
+    url.searchParams.set('category', 'business,technology');
+    url.searchParams.set('q', builtQuery || '(business OR finance OR markets OR economy OR companies OR stocks OR crypto OR technology OR AI OR central bank)');
+  }
   url.searchParams.set('image', '1');
   url.searchParams.set('removeduplicate', '1');
   url.searchParams.set('size', String(MAX_ITEMS));
@@ -136,17 +143,17 @@ async function fetchNewsData(query: string, category: string, region: string, pa
 
   if (!response.ok) {
     if (response.status === 401 || response.status === 403) {
-      return { items: [], status: 'invalid_credentials', providerName: 'NewsData.io', message: `NewsData.io rejected the API key (HTTP ${response.status}).` };
+      return { items: [], status: 'invalid_credentials', providerName, message: `${providerName} rejected the API key (HTTP ${response.status}).` };
     }
     if (response.status === 429) {
-      return { items: [], status: 'rate_limited', providerName: 'NewsData.io', message: 'NewsData.io rate limit reached. Cached results will continue to be served when available.' };
+      return { items: [], status: 'rate_limited', providerName, message: `${providerName} rate limit reached. Cached results will continue to be served when available.` };
     }
-    throw new Error(`NewsData.io request failed with HTTP ${response.status}.`);
+    throw new Error(`${providerName} request failed with HTTP ${response.status}.`);
   }
 
   const parsed = newsDataResponseSchema.safeParse(await response.json());
   if (!parsed.success || parsed.data.status.toLowerCase() !== 'success') {
-    return { items: [], status: 'invalid_response', providerName: 'NewsData.io', message: 'NewsData.io returned an unexpected response.' };
+    return { items: [], status: 'invalid_response', providerName, message: `${providerName} returned an unexpected response.` };
   }
 
   const retrievedAt = new Date().toISOString();
@@ -172,9 +179,10 @@ async function fetchNewsData(query: string, category: string, region: string, pa
   return {
     items,
     status: 'connected',
-    providerName: 'NewsData.io',
+    providerName,
     nextPage: parsed.data.nextPage || undefined,
-    message: `${items.length} current NewsData.io headlines loaded directly from the provider.`,
+    mode: 'live',
+    message: `${items.length} current ${providerName} headlines loaded directly from the provider.`
   };
 }
 
@@ -198,9 +206,24 @@ export async function fetchNewsFromProvider(query = '', category = 'all', region
   const result = await getCachedOrFetch(key, () => fetchNewsData(query, category, region, page));
   if (!result.items.length) {
     const stale = cache.get(key)?.result;
-    if (stale?.items.length) return { ...stale, message: 'Serving the most recent cached NewsData.io feed.' };
+    if (stale?.items.length) return { ...stale, mode: 'cached', message: `Serving the most recent cached ${stale.providerName} feed.` };
   }
   return result;
+}
+
+export async function fetchSecondaryNewsProviders(query = '', category = 'all', region = 'global', page: number | string = 1): Promise<NewsProviderResult> {
+  const candidates = [
+    { url: DEFAULT_MARKET_NEWSDATA_URL, name: 'NewsData.io Market' },
+    { url: DEFAULT_CRYPTO_NEWSDATA_URL, name: 'NewsData.io Crypto' },
+  ];
+  for (const candidate of candidates) {
+    const key = JSON.stringify({ secondary: candidate.name, query: query.trim(), category: category.trim().toLowerCase(), region: region.trim().toLowerCase(), page });
+    const result = await getCachedOrFetch(key, () => fetchNewsData(query || '(markets OR finance OR stocks OR economy OR companies OR crypto OR technology)', category, region, page, candidate.url, candidate.name));
+    if (result.items.length) return { ...result, mode: 'live', message: `${result.items.length} current ${candidate.name} headlines loaded as the secondary provider.` };
+    const stale = cache.get(key)?.result;
+    if (stale?.items.length) return { ...stale, mode: 'cached', message: `Serving the most recent cached ${candidate.name} feed.` };
+  }
+  return { items: [], status: 'error', providerName: 'Secondary NewsData.io feeds', message: 'Secondary market and crypto feeds returned no valid articles.' };
 }
 
 export async function checkNewsProviderDiagnostic(): Promise<ProviderDiagnostic> {

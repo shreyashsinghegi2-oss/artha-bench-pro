@@ -107,11 +107,6 @@ async function fetchPublicNewsFallback(category = 'business'): Promise<Normalize
     .slice(0, 10);
 }
 
-function isBusinessRelatedNews(item: NormalizedNewsItem) {
-  const text = `${item.category || ''} ${item.title || ''} ${item.summary || ''}`.toLowerCase();
-  return /business|finance|financial|market|markets|company|companies|corporate|earnings|revenue|profit|loss|merger|acquisition|ipo|stock|stocks|economy|economic|inflation|interest rate|central bank|banking|bank|trade|retail|oil|commodity|commodities|startup|investment|investing|funding|venture|technology|tech|manufactur|supply chain|consumer|real estate|housing|energy|currency|forex|bond|bonds|tariff|export|import|gdp|jobs|employment|layoff|regulation|regulatory/i.test(text);
-}
-
 export async function getBusinessNews(
   query = '',
   category = 'business',
@@ -119,30 +114,23 @@ export async function getBusinessNews(
   page = 1,
 ) {
   const providerResult = await fetchNewsFromProvider(query, category, region, page);
-  const providerBusinessItems = providerResult.items.filter(isBusinessRelatedNews);
+  if (providerResult.items.length) return providerResult;
 
-  if (providerBusinessItems.length) {
-    return { ...providerResult, items: providerBusinessItems.slice(0, 10) };
-  }
-
-  const fallbackItems = (await fetchPublicNewsFallback(category)).filter(isBusinessRelatedNews);
+  const fallbackItems = await fetchPublicNewsFallback(category);
   if (fallbackItems.length) {
     return {
       items: fallbackItems,
       status: 'connected' as const,
       providerName: `${providerResult.providerName} + public RSS fallback`,
       message: providerResult.message
-        ? `${providerResult.message} Business-only public RSS fallback supplied ${fallbackItems.length} headlines.`
-        : `Business-only public RSS fallback supplied ${fallbackItems.length} headlines.`,
+        ? `${providerResult.message} Public RSS fallback supplied ${fallbackItems.length} headlines.`
+        : `Public RSS fallback supplied ${fallbackItems.length} headlines.`,
     };
   }
 
-  return {
-    ...providerResult,
-    items: [],
-    message: providerResult.message || 'No business-related headlines are currently available.',
-  };
+  return providerResult;
 }
+
 export async function explainNewsArticle(article: {
   articleId: string;
   title: string;

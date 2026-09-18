@@ -87,10 +87,12 @@ const timeLabel = (v: string) => {
   return d.toLocaleDateString([], { day: '2-digit', month: 'short', year: 'numeric' });
 };
 
-const feedLabel = (mode: NewsFeedMode | undefined) => {
-  if (mode === 'cached') return 'Cached headlines';
-  if (mode === 'fallback') return 'Fallback headlines';
-  return 'Live';
+const feedLabel = (mode: NewsFeedMode | undefined, updatedAt?: string | null) => {
+  const updated = updatedAt ? new Date(updatedAt) : null;
+  const stamp = updated && !Number.isNaN(updated.getTime()) ? updated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+  if (mode === 'cached') return `Cached headlines${stamp ? ` · ${stamp}` : ''}`;
+  if (mode === 'fallback') return `Fallback headlines${stamp ? ` · ${stamp}` : ''}`;
+  return `Live${stamp ? ` · ${stamp}` : ''}`;
 };
 
 const feedBadgeClass = (mode: NewsFeedMode | undefined) => {
@@ -206,7 +208,7 @@ export const BusinessNewsTicker = ({ articles }: { articles: BusinessBriefArticl
         <span className="text-[10px] font-black text-slate-400" aria-hidden="true">•</span>
         <span className="max-w-[420px] truncate text-[12px] font-black text-white">{a.title}</span>
         <span className="whitespace-nowrap text-[9px] font-bold text-slate-300">{timeLabel(a.publishedAt)}</span>
-        <span className={`whitespace-nowrap rounded-full border px-2 py-0.5 text-[8px] font-black uppercase tracking-[.08em] ${feedBadgeClass(a.feedMode)}`}>{feedLabel(a.feedMode)}</span>
+        <span className={`whitespace-nowrap rounded-full border px-2 py-0.5 text-[8px] font-black uppercase tracking-[.08em] ${feedBadgeClass(a.feedMode)}`}>{feedLabel(a.feedMode, a.feedUpdatedAt)}</span>
       </ArticleLink>
     ));
 
@@ -313,7 +315,7 @@ export const BusinessBrief = ({
                   </div>
                   <div className="absolute inset-x-0 bottom-0 p-5 sm:p-7">
                     <div className="mb-2 flex flex-wrap items-center gap-2 text-[9px] font-black uppercase tracking-[.12em]">
-                      <span className={`rounded-full border px-2 py-0.5 ${feedBadgeClass(featured.feedMode)}`}>{feedLabel(featured.feedMode)}</span>
+                      <span className={`rounded-full border px-2 py-0.5 ${feedBadgeClass(featured.feedMode)}`}>{feedLabel(featured.feedMode, featured.feedUpdatedAt)}</span>
                       <span className="text-white/70">{timeLabel(featured.publishedAt)}</span>
                     </div>
                     <h3 className="max-w-4xl text-2xl font-black leading-[1.05] tracking-[-.025em] text-white sm:text-3xl lg:text-[2.25rem]">{featured.title}</h3>

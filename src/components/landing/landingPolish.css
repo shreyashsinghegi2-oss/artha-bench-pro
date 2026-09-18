@@ -25,3 +25,22 @@
  .landing-shell:after{content:"";position:fixed;inset:auto -10% -18% -10%;height:42vh;pointer-events:none;z-index:-1;background:radial-gradient(ellipse at center,rgba(37,99,235,.08),transparent 65%)}
  @media(max-width:767px){.landing-shell main#top:before{background:radial-gradient(520px 360px at 8% 4%,rgba(37,99,235,.10),transparent 70%),radial-gradient(520px 360px at 92% 22%,rgba(20,184,166,.07),transparent 70%),linear-gradient(180deg,#0A1220,#070B12 58%,#0A101B)}.landing-shell #business-brief>div{padding-top:64px;padding-bottom:64px}.landing-shell .landing-feature-card{padding:18px!important}.landing-shell>header .landing-button{min-height:44px}}
  @media(prefers-reduced-motion:reduce){.landing-shell:before,.landing-shell:after{animation:none}}
+
+/* Light presentation surface for the capabilities, trust, and closing offer sections. */
+.landing-shell #capabilities,.landing-shell #trust,.landing-shell>footer{background:#FFFFFF!important;color:#172033!important}
+.landing-shell #capabilities h2,.landing-shell #trust h2,.landing-shell #trust .text-sm.font-black,.landing-shell #capabilities .font-black{color:#172033!important}
+.landing-shell #capabilities p,.landing-shell #trust p{color:#475569!important}
+.landing-shell #capabilities .landing-mood-reliability,.landing-shell #capabilities .landing-mood-learning,.landing-shell #capabilities .landing-mood-markets,.landing-shell #capabilities .landing-mood-finance,.landing-shell #capabilities .landing-mood-reports,.landing-shell #trust{background:#FFFFFF!important;border-color:#E2E8F0!important}
+.landing-shell #capabilities .landing-feature-card,.landing-shell #capabilities .trust-card,.landing-shell #trust .rounded-2xl{background:#FFFFFF!important;border-color:#E2E8F0!important;color:#172033!important;box-shadow:0 8px 24px rgba(15,23,42,.07)}
+.landing-shell #capabilities .landing-feature-card p,.landing-shell #trust .rounded-2xl p{color:#475569!important}
+.landing-shell #capabilities .landing-feature-card .rounded-xl.bg-slate-50{background:#F8FAFC!important;border-color:#E2E8F0!important}
+.landing-shell #capabilities .preview-compare,.landing-shell #capabilities .preview-context,.landing-shell #capabilities .preview-checks{background:#F8FAFC!important;border-color:#E2E8F0!important;color:#334155!important}
+.landing-shell #capabilities .preview-progress{color:#64748B!important}
+.landing-shell #capabilities .text-slate-600,.landing-shell #trust .text-slate-600{color:#475569!important}
+.landing-shell #capabilities .text-slate-500,.landing-shell #trust .text-slate-500{color:#64748B!important}
+.landing-shell #trust .text-\\[\\#0F766E\\]{color:#0F766E!important}
+.landing-shell>footer{border-top:1px solid #E2E8F0!important}
+.landing-shell>footer a{color:#475569!important}
+.landing-shell>footer a:hover,.landing-shell>footer a:focus-visible{color:#0F766E!important}
+.landing-shell>footer .text-white{color:#172033!important}
+.landing-shell>footer .text-slate-400{color:#64748B!important}

@@ -89,10 +89,17 @@ async function fetchRssFeed(feedUrl: string, sourceName: string, category = 'Bus
 }
 
 async function fetchPublicNewsFallback(category = 'business'): Promise<NormalizedNewsItem[]> {
-  const feeds = [
-    ['https://finance.yahoo.com/rss/topstories', 'Yahoo Finance'],
-    ['https://www.cnbc.com/id/100003114/device/rss/rss.html', 'CNBC'],
-  ] as const;
+  const feeds = category.trim().toLowerCase() === 'all'
+    ? [
+        ['https://feeds.bbci.co.uk/news/rss.xml', 'BBC News'],
+        ['https://feeds.bbci.co.uk/news/technology/rss.xml', 'BBC Technology'],
+        ['https://finance.yahoo.com/rss/topstories', 'Yahoo Finance'],
+        ['https://www.cnbc.com/id/100003114/device/rss/rss.html', 'CNBC'],
+      ] as const
+    : [
+        ['https://finance.yahoo.com/rss/topstories', 'Yahoo Finance'],
+        ['https://www.cnbc.com/id/100003114/device/rss/rss.html', 'CNBC'],
+      ] as const;
   const results = await Promise.all(feeds.map(([url, source]) => fetchRssFeed(url, source, category)));
   const seen = new Set<string>();
   return results

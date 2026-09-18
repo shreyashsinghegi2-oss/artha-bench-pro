@@ -83,7 +83,7 @@
 .landing-shell #business-brief .featured-story-media .absolute.left-5,.landing-shell #business-brief .featured-story-media .absolute.inset-x-0{z-index:1}
 .landing-shell #business-brief .featured-story-media .absolute.inset-x-0{position:absolute}
 .landing-shell #business-brief .business-news-ticker-viewport{overflow:hidden}
-.landing-shell #business-brief .business-news-ticker-track{will-change:transform}
+.landing-shell #business-brief .business-news-ticker-track{will-change:transform;display:flex;width:max-content;min-width:max-content}.landing-shell #business-brief .ticker-group{display:flex;flex-shrink:0;align-items:center}
 .landing-shell #business-brief [aria-label="Latest business headlines"]{background:#111C2E!important;border-top:1px solid rgba(148,163,184,.18)!important;border-bottom:1px solid rgba(148,163,184,.18)!important;box-shadow:none!important}
 .landing-shell #business-brief [aria-label="Latest business headlines"] .bg-\\[\\#0b1220\\]{background:#101827!important}
 .landing-shell #business-brief [aria-label="Latest business headlines"] .text-white{color:#E2E8F0!important}
@@ -98,7 +98,7 @@
 @media(prefers-reduced-motion:reduce){.landing-shell #business-brief .business-news-ticker-track{animation:none!important}.landing-shell #business-brief .group.block{transition:none!important}.landing-shell #business-brief .group.block:hover{transform:none!important}}
 
 .landing-shell #business-brief .group.block:hover img{transform:none!important}
-.landing-shell #business-brief .grid > .group.block:first-child{overflow:visible!important}
+.landing-shell #business-brief .grid > .group.block:first-child{overflow:hidden!important}
 .landing-shell #business-brief .grid > .group.block:first-child .featured-story-media{border-radius:26px;}
 
 

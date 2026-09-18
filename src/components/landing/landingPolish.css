@@ -461,3 +461,61 @@
     animation-play-state:running!important;
   }
 }
+
+/* Credibility-first financial newsroom palette — replaces multicolor headline treatment. */
+.landing-shell #business-brief [aria-label="Latest international business and market headlines"]{
+  background:linear-gradient(90deg,#071522 0%,#0A1B2B 42%,#0B2030 70%,#071522 100%)!important;
+  border-top-color:rgba(96,165,250,.28)!important;
+  border-bottom-color:rgba(20,184,166,.22)!important;
+  box-shadow:0 8px 30px rgba(2,8,23,.36),inset 0 1px 0 rgba(255,255,255,.05),inset 0 -1px 0 rgba(20,184,166,.08)!important;
+}
+.landing-shell #business-brief [aria-label="Latest international business and market headlines"]::before{
+  background:linear-gradient(180deg,#60A5FA 0%,#2DD4BF 55%,#14B8A6 100%)!important;
+  box-shadow:0 0 16px rgba(45,212,191,.28)!important;
+}
+.landing-shell #business-brief [aria-label="Latest international business and market headlines"]>div:first-child{
+  background:linear-gradient(180deg,#12283D 0%,#0B1D2E 100%)!important;
+  border-right-color:rgba(96,165,250,.24)!important;
+  box-shadow:8px 0 24px rgba(2,8,23,.24)!important;
+  color:#F8FAFC!important;
+}
+.landing-shell #business-brief [aria-label="Latest international business and market headlines"]>div:first-child::after{
+  color:#93C5FD!important;
+  border-color:rgba(96,165,250,.30)!important;
+  background:rgba(96,165,250,.07)!important;
+}
+.landing-shell #business-brief [aria-label="Latest international business and market headlines"]>div:first-child .h-2{
+  background:#F59E0B!important;
+  box-shadow:0 0 0 4px rgba(245,158,11,.09),0 0 14px rgba(245,158,11,.58)!important;
+}
+.landing-shell #business-brief [aria-label="Latest international business and market headlines"] .business-news-ticker-viewport{
+  background:linear-gradient(90deg,rgba(30,64,175,.08),transparent 16%,transparent 84%,rgba(13,148,136,.07))!important;
+}
+.landing-shell #business-brief [aria-label="Latest international business and market headlines"] .business-news-ticker-item{
+  border-right-color:rgba(148,163,184,.16)!important;
+}
+.landing-shell #business-brief [aria-label="Latest international business and market headlines"] .business-news-ticker-item>span:first-child,
+.landing-shell #business-brief [aria-label="Latest international business and market headlines"] .business-news-ticker-item:nth-child(3n+1)>span:first-child,
+.landing-shell #business-brief [aria-label="Latest international business and market headlines"] .business-news-ticker-item:nth-child(3n+2)>span:first-child,
+.landing-shell #business-brief [aria-label="Latest international business and market headlines"] .business-news-ticker-item:nth-child(3n)>span:first-child{
+  background:none!important;
+  -webkit-background-clip:initial!important;
+  background-clip:initial!important;
+  color:#5EEAD4!important;
+  text-shadow:0 0 12px rgba(45,212,191,.10)!important;
+}
+.landing-shell #business-brief [aria-label="Latest international business and market headlines"] .business-news-ticker-item>span:nth-child(2){
+  color:#64748B!important;
+  text-shadow:none!important;
+}
+.landing-shell #business-brief [aria-label="Latest international business and market headlines"] .business-news-ticker-item>span:last-child,
+.landing-shell #business-brief [aria-label="Latest international business and market headlines"] .business-news-ticker-item:nth-child(3n+1)>span:last-child,
+.landing-shell #business-brief [aria-label="Latest international business and market headlines"] .business-news-ticker-item:nth-child(3n+2)>span:last-child,
+.landing-shell #business-brief [aria-label="Latest international business and market headlines"] .business-news-ticker-item:nth-child(3n)>span:last-child{
+  color:#E2E8F0!important;
+  text-shadow:0 1px 14px rgba(96,165,250,.08)!important;
+}
+.landing-shell #business-brief [aria-label="Latest international business and market headlines"] .business-news-ticker-item:hover,
+.landing-shell #business-brief [aria-label="Latest international business and market headlines"] .business-news-ticker-item:focus-visible{
+  background:rgba(96,165,250,.055)!important;
+}

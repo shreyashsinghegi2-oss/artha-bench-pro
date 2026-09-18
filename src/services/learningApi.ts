@@ -75,9 +75,20 @@ export async function reviewQuizAnswerAI(params: { lessonId: string; question: s
   return fetchJSON<{ review: string; isCorrect: boolean }>('/api/learning/quiz/review', { method: 'POST', body: JSON.stringify(params) });
 }
 
-export async function fetchBusinessNews(category?: string): Promise<NormalizedNewsItem[]> {
-  const queryParams = new URLSearchParams(); if (category && category !== 'all') queryParams.set('category', category);
-  try { const res = await fetchJSON<any>(`/api/news?${queryParams.toString()}`); if (Array.isArray(res?.items)) return res.items; if (res?.items && Array.isArray(res.items.items)) return res.items.items; if (Array.isArray(res)) return res; return []; } catch { return []; }
+export async function fetchBusinessNews(query = '', category = 'all', region = 'global'): Promise<NormalizedNewsItem[]> {
+  const queryParams = new URLSearchParams();
+  if (query.trim()) queryParams.set('q', query.trim());
+  if (category.trim()) queryParams.set('category', category.trim());
+  if (region.trim()) queryParams.set('region', region.trim());
+  try {
+    const res = await fetchJSON<any>(`/api/news?${queryParams.toString()}`);
+    if (Array.isArray(res?.items)) return res.items;
+    if (res?.items && Array.isArray(res.items.items)) return res.items.items;
+    if (Array.isArray(res)) return res;
+    return [];
+  } catch {
+    return [];
+  }
 }
 
 export async function explainNewsArticleAI(article: NormalizedNewsItem) {

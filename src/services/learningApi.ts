@@ -88,6 +88,7 @@ export async function fetchBusinessNewsFeed(query = '', category = 'all', region
   if (query.trim()) queryParams.set('query', query.trim());
   if (category.trim()) queryParams.set('category', category.trim());
   if (region.trim()) queryParams.set('region', region.trim());
+  queryParams.set('surface', 'landing-news');
   try {
     const res = await fetchJSON<any>(`/api/news?${queryParams.toString()}`);
     const items = Array.isArray(res?.items) ? res.items : (res?.items && Array.isArray(res.items.items) ? res.items.items : Array.isArray(res) ? res : []);

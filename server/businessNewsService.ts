@@ -88,9 +88,10 @@ async function fetchRssFeed(feedUrl: string, sourceName: string, category = 'Bus
   }
 }
 
-async function fetchPublicNewsFallback(category = 'business'): Promise<NormalizedNewsItem[]> {
+async function fetchPublicNewsFallback(category = 'business', surface = 'default'): Promise<NormalizedNewsItem[]> {
   const feeds = category.trim().toLowerCase() === 'all'
     ? [
+        ...(surface === 'landing-news' ? [] : [['https://feeds.bbci.co.uk/news/rss.xml', 'BBC News'] as const]),
         ['https://finance.yahoo.com/rss/topstories', 'Yahoo Finance'],
         ['https://www.cnbc.com/id/100003114/device/rss/rss.html', 'CNBC'],
         ['https://feeds.bbci.co.uk/news/technology/rss.xml', 'BBC Technology'],
@@ -118,9 +119,26 @@ export async function getBusinessNews(
   category = 'business',
   region = 'global',
   page = 1,
+  surface = 'default',
 ) {
   const providerResult = await fetchNewsFromProvider(query, category, region, page);
   if (providerResult.items.length && providerResult.mode !== 'cached') return providerResult;
+
+  if (surface !== 'landing-news') {
+    const fallbackItems = await fetchPublicNewsFallback(category, surface);
+    if (fallbackItems.length) {
+      return {
+        items: fallbackItems,
+        status: 'connected' as const,
+        mode: 'fallback' as const,
+        providerName: `${providerResult.providerName} + public RSS fallback`,
+        message: providerResult.message
+          ? `${providerResult.message} Public RSS fallback supplied ${fallbackItems.length} headlines.`
+          : `Public RSS fallback supplied ${fallbackItems.length} headlines.`,
+      };
+    }
+    return providerResult;
+  }
 
   const secondaryResult = await fetchSecondaryNewsProviders(query, category, region, page);
   if (secondaryResult.items.length) {

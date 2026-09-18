@@ -125,6 +125,7 @@ export async function getBusinessNews(
   if (providerResult.items.length && providerResult.mode !== 'cached') return providerResult;
 
   if (surface !== 'landing-news') {
+    if (providerResult.items.length) return providerResult;
     const fallbackItems = await fetchPublicNewsFallback(category, surface);
     if (fallbackItems.length) {
       return {

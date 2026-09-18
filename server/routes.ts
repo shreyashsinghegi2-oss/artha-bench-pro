@@ -1007,12 +1007,13 @@ apiRouter.get('/news/image', handleNewsImage);
 
 apiRouter.get('/news', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { query, category, region, page } = req.query;
+    const { query, category, region, page, surface } = req.query;
     const providerResult = await getBusinessNews(
       (query as string) || '',
       (category as string) || 'all',
       (region as string) || 'global',
-      Number(page) || 1
+      Number(page) || 1,
+      (surface as string) || 'default'
     );
     const updatedAt = (providerResult.items || [])
       .map((item) => item.retrievedAt || item.publishedAt || '')

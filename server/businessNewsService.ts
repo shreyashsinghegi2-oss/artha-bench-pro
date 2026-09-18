@@ -120,7 +120,7 @@ export async function getBusinessNews(
   page = 1,
 ) {
   const providerResult = await fetchNewsFromProvider(query, category, region, page);
-  if (providerResult.items.length) return providerResult;
+  if (providerResult.items.length && providerResult.mode !== 'cached') return providerResult;
 
   const secondaryResult = await fetchSecondaryNewsProviders(query, category, region, page);
   if (secondaryResult.items.length) {
@@ -132,6 +132,8 @@ export async function getBusinessNews(
         : secondaryResult.message,
     };
   }
+
+  if (providerResult.items.length) return { ...providerResult, mode: 'cached' as const };
 
   const fallbackItems = await fetchPublicNewsFallback(category);
   if (fallbackItems.length) {

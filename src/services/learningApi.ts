@@ -75,20 +75,36 @@ export async function reviewQuizAnswerAI(params: { lessonId: string; question: s
   return fetchJSON<{ review: string; isCorrect: boolean }>('/api/learning/quiz/review', { method: 'POST', body: JSON.stringify(params) });
 }
 
-export async function fetchBusinessNews(query = '', category = 'all', region = 'global'): Promise<NormalizedNewsItem[]> {
+export interface BusinessNewsFeedResponse {
+  items: NormalizedNewsItem[];
+  mode: 'live' | 'cached' | 'fallback';
+  providerName?: string;
+  updatedAt?: string | null;
+  message?: string;
+}
+
+export async function fetchBusinessNewsFeed(query = '', category = 'all', region = 'global'): Promise<BusinessNewsFeedResponse> {
   const queryParams = new URLSearchParams();
   if (query.trim()) queryParams.set('query', query.trim());
   if (category.trim()) queryParams.set('category', category.trim());
   if (region.trim()) queryParams.set('region', region.trim());
   try {
     const res = await fetchJSON<any>(`/api/news?${queryParams.toString()}`);
-    if (Array.isArray(res?.items)) return res.items;
-    if (res?.items && Array.isArray(res.items.items)) return res.items.items;
-    if (Array.isArray(res)) return res;
-    return [];
+    const items = Array.isArray(res?.items) ? res.items : (res?.items && Array.isArray(res.items.items) ? res.items.items : Array.isArray(res) ? res : []);
+    return {
+      items,
+      mode: res?.mode === 'cached' || res?.mode === 'fallback' ? res.mode : 'live',
+      providerName: typeof res?.providerName === 'string' ? res.providerName : undefined,
+      updatedAt: typeof res?.updatedAt === 'string' ? res.updatedAt : null,
+      message: typeof res?.message === 'string' ? res.message : undefined,
+    };
   } catch {
-    return [];
+    return { items: [], mode: 'fallback', message: 'News feed request failed.' };
   }
+}
+
+export async function fetchBusinessNews(query = '', category = 'all', region = 'global'): Promise<NormalizedNewsItem[]> {
+  return (await fetchBusinessNewsFeed(query, category, region)).items;
 }
 
 export async function explainNewsArticleAI(article: NormalizedNewsItem) {

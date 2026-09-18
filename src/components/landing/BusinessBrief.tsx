@@ -79,6 +79,7 @@ const hasValidImage = (v: string | null | undefined) => {
 const timeLabel = (v: string) => {
   const d = new Date(v);
   if (!v || Number.isNaN(d.getTime())) return 'Time unavailable';
+  if (/^\\d{4}-\\d{2}-\\d{2}$/.test(v)) return d.toLocaleDateString([], { day: '2-digit', month: 'short', year: 'numeric' });
   const m = Math.max(0, Math.floor((Date.now() - d.getTime()) / 60000));
   if (m < 1) return 'Just now';
   if (m < 60) return `${m} min ago`;

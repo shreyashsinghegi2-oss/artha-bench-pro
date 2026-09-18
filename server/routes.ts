@@ -31,6 +31,7 @@ import {
 } from './financeEngine';
 import { generateLessonContent, reviewQuizAnswer } from './learningService';
 import { getBusinessNews, explainNewsArticle } from './businessNewsService';
+import { handleNewsImage } from './newsImageProxy';
 import { getMarketQuote, searchMarketQuotes, getMarketHistory } from './marketDataService';
 import { getIndiaMarketTicker } from './indiaMarketTickerService';
 import { checkNewsProviderDiagnostic } from './providers/newsProvider';
@@ -1002,6 +1003,8 @@ apiRouter.post('/learning/quiz/review', async (req: Request, res: Response, next
 });
 
 // 7. Business News Routes
+apiRouter.get('/news/image', handleNewsImage);
+
 apiRouter.get('/news', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { query, category, region, page } = req.query;

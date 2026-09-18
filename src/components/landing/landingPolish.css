@@ -619,7 +619,7 @@
   width:max-content!important;
   min-width:max-content!important;
   align-items:center!important;
-  animation:artha-live-news-ticker 84s linear infinite!important;
+  animation:none!important;
   animation-play-state:running!important;
   will-change:transform!important;
 }

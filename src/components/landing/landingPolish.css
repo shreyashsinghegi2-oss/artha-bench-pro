@@ -180,3 +180,23 @@
     animation-duration:20s!important;
   }
 }
+
+
+/* Minimal crypto chart presentation fix — chart area and CTA only. */
+.landing-shell section[aria-label$="live candlestick preview"] .crypto-chart-surface{
+  background:#050505!important;
+  color:#FFFFFF!important;
+  border-color:#1f1f1f!important;
+}
+.landing-shell section[aria-label$="live candlestick preview"] .crypto-chart-surface *{
+  color:#FFFFFF;
+}
+.landing-shell section[aria-label$="live candlestick preview"] .crypto-dashboard-cta{
+  color:#FFFFFF!important;
+  background:#0F766E!important;
+  border-color:#2DD4BF!important;
+}
+.landing-shell section[aria-label$="live candlestick preview"] .crypto-dashboard-cta:hover{
+  background:#115E59!important;
+  border-color:#5EEAD4!important;
+}

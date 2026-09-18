@@ -285,3 +285,146 @@
   background:#115E59!important;
   border-color:#5EEAD4!important;
 }
+
+/* Premium international Live News banner — ticker presentation only. */
+.landing-shell #business-brief [aria-label="Latest international business and market headlines"]{
+  position:relative!important;
+  isolation:isolate!important;
+  min-height:52px!important;
+  height:52px!important;
+  margin-top:6px!important;
+  margin-bottom:6px!important;
+  border:1px solid rgba(45,212,191,.28)!important;
+  border-left:0!important;
+  border-right:0!important;
+  background:linear-gradient(90deg,#07131D 0%,#0B1724 48%,#07131D 100%)!important;
+  box-shadow:0 8px 30px rgba(2,8,23,.34),inset 0 1px 0 rgba(255,255,255,.045),inset 0 -1px 0 rgba(20,184,166,.10)!important;
+}
+.landing-shell #business-brief [aria-label="Latest international business and market headlines"]::before{
+  content:"";
+  position:absolute;
+  left:0;
+  top:-1px;
+  bottom:-1px;
+  width:3px;
+  background:linear-gradient(180deg,#FB923C 0%,#14B8A6 52%,#60A5FA 100%);
+  box-shadow:0 0 18px rgba(20,184,166,.32);
+  z-index:12;
+  pointer-events:none;
+}
+.landing-shell #business-brief [aria-label="Latest international business and market headlines"]>div:first-child{
+  position:relative!important;
+  height:52px!important;
+  min-height:52px!important;
+  min-width:142px!important;
+  justify-content:center!important;
+  gap:9px!important;
+  padding:0 18px!important;
+  background:linear-gradient(180deg,#111F31 0%,#0B1523 100%)!important;
+  border-right:1px solid rgba(45,212,191,.22)!important;
+  box-shadow:8px 0 24px rgba(2,8,23,.22)!important;
+  color:#FFFFFF!important;
+  font-size:11px!important;
+  font-weight:1000!important;
+  letter-spacing:.18em!important;
+  text-shadow:0 1px 12px rgba(255,255,255,.14)!important;
+}
+.landing-shell #business-brief [aria-label="Latest international business and market headlines"]>div:first-child::after{
+  content:"24H";
+  margin-left:2px;
+  padding:3px 5px;
+  border:1px solid rgba(45,212,191,.30);
+  border-radius:5px;
+  color:#5EEAD4;
+  background:rgba(20,184,166,.08);
+  font-size:8px;
+  line-height:1;
+  font-weight:900;
+  letter-spacing:.10em;
+}
+.landing-shell #business-brief [aria-label="Latest international business and market headlines"]>div:first-child .h-2{
+  width:8px!important;
+  height:8px!important;
+  flex:0 0 8px!important;
+  background:#FB923C!important;
+  box-shadow:0 0 0 4px rgba(251,146,60,.10),0 0 16px rgba(251,146,60,.80)!important;
+}
+.landing-shell #business-brief [aria-label="Latest international business and market headlines"] .business-news-ticker-viewport{
+  min-height:52px!important;
+  height:52px!important;
+  background:linear-gradient(90deg,rgba(20,184,166,.035),transparent 14%,transparent 86%,rgba(20,184,166,.035))!important;
+}
+.landing-shell #business-brief [aria-label="Latest international business and market headlines"] .business-news-ticker-item{
+  height:52px!important;
+  min-height:52px!important;
+  padding-left:24px!important;
+  padding-right:24px!important;
+  gap:11px!important;
+  border-right:1px solid rgba(148,163,184,.16)!important;
+  transition:background-color 160ms ease-out!important;
+}
+.landing-shell #business-brief [aria-label="Latest international business and market headlines"] .business-news-ticker-item:hover,
+.landing-shell #business-brief [aria-label="Latest international business and market headlines"] .business-news-ticker-item:focus-visible{
+  background:rgba(20,184,166,.07)!important;
+}
+.landing-shell #business-brief [aria-label="Latest international business and market headlines"] .business-news-ticker-item>span:first-child{
+  color:#67E8F9!important;
+  font-size:10px!important;
+  font-weight:1000!important;
+  letter-spacing:.16em!important;
+  text-shadow:0 0 12px rgba(103,232,249,.12)!important;
+}
+.landing-shell #business-brief [aria-label="Latest international business and market headlines"] .business-news-ticker-item>span:nth-child(2){
+  color:#FB923C!important;
+  font-size:13px!important;
+  font-weight:1000!important;
+  text-shadow:0 0 10px rgba(251,146,60,.24)!important;
+}
+.landing-shell #business-brief [aria-label="Latest international business and market headlines"] .business-news-ticker-item>span:last-child{
+  max-width:600px!important;
+  font-size:14px!important;
+  line-height:1.15!important;
+  font-weight:950!important;
+  letter-spacing:-.008em!important;
+  color:#FFFFFF!important;
+  text-shadow:0 1px 16px rgba(255,255,255,.10)!important;
+}
+@media(max-width:640px){
+  .landing-shell #business-brief [aria-label="Latest international business and market headlines"]{
+    min-height:46px!important;
+    height:46px!important;
+  }
+  .landing-shell #business-brief [aria-label="Latest international business and market headlines"]>div:first-child,
+  .landing-shell #business-brief [aria-label="Latest international business and market headlines"] .business-news-ticker-viewport,
+  .landing-shell #business-brief [aria-label="Latest international business and market headlines"] .business-news-ticker-item{
+    height:46px!important;
+    min-height:46px!important;
+  }
+  .landing-shell #business-brief [aria-label="Latest international business and market headlines"]>div:first-child{
+    min-width:112px!important;
+    padding:0 10px!important;
+    font-size:9px!important;
+    letter-spacing:.13em!important;
+  }
+  .landing-shell #business-brief [aria-label="Latest international business and market headlines"]>div:first-child::after{
+    display:none;
+  }
+  .landing-shell #business-brief [aria-label="Latest international business and market headlines"] .business-news-ticker-item{
+    padding-left:15px!important;
+    padding-right:15px!important;
+    gap:8px!important;
+  }
+  .landing-shell #business-brief [aria-label="Latest international business and market headlines"] .business-news-ticker-item>span:first-child{
+    font-size:9px!important;
+  }
+  .landing-shell #business-brief [aria-label="Latest international business and market headlines"] .business-news-ticker-item>span:last-child{
+    max-width:330px!important;
+    font-size:11px!important;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  .landing-shell #business-brief [aria-label="Latest international business and market headlines"] .business-news-ticker-track{
+    animation-duration:90s!important;
+    animation-play-state:running!important;
+  }
+}

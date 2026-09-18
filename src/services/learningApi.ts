@@ -77,7 +77,7 @@ export async function reviewQuizAnswerAI(params: { lessonId: string; question: s
 
 export async function fetchBusinessNews(query = '', category = 'all', region = 'global'): Promise<NormalizedNewsItem[]> {
   const queryParams = new URLSearchParams();
-  if (query.trim()) queryParams.set('q', query.trim());
+  if (query.trim()) queryParams.set('query', query.trim());
   if (category.trim()) queryParams.set('category', category.trim());
   if (region.trim()) queryParams.set('region', region.trim());
   try {

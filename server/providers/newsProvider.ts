@@ -95,7 +95,7 @@ function getConfiguration() {
 function buildQuery(query: string, category: string, region: string) {
   const parts: string[] = [];
   if (query.trim()) parts.push(query.trim());
-  else parts.push(categoryQuery(category));
+  else if (category.trim().toLowerCase() !== 'all') parts.push(categoryQuery(category));
   const regionPart = regionQuery(region);
   if (regionPart) parts.push(regionPart);
   return parts.join(' ');
@@ -116,8 +116,10 @@ async function fetchNewsData(query: string, category: string, region: string, pa
   if (url.protocol !== 'https:') throw new Error('News provider URL must use HTTPS.');
   url.searchParams.set('apikey', apiKey);
   url.searchParams.set('language', 'en');
-  url.searchParams.set('q', buildQuery(query, category, region));
-  url.searchParams.set('category', mapCategory(category));
+  const normalizedCategory = category.trim().toLowerCase();
+  const builtQuery = buildQuery(query, category, region);
+  if (builtQuery) url.searchParams.set('q', builtQuery);
+  if (normalizedCategory !== 'all') url.searchParams.set('category', mapCategory(category));
   url.searchParams.set('image', '1');
   url.searchParams.set('removeduplicate', '1');
   url.searchParams.set('size', String(MAX_ITEMS));

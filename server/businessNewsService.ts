@@ -3,7 +3,7 @@
  */
 
 import { NormalizedNewsItem, StructuredFinancialAnswer } from '../src/types';
-import { fetchNewsFromProvider, fetchSecondaryNewsProviders } from './providers/newsProvider';
+import { fetchNewsFromProvider } from './providers/newsProvider';
 import { callGroqStructuredFinancialAnswer } from './groqService';
 import {
   buildStructuredFinancialAnswerInstructions,
@@ -88,13 +88,13 @@ async function fetchRssFeed(feedUrl: string, sourceName: string, category = 'Bus
   }
 }
 
-async function fetchPublicNewsFallback(category = 'business', surface = 'default'): Promise<NormalizedNewsItem[]> {
+async function fetchPublicNewsFallback(category = 'business'): Promise<NormalizedNewsItem[]> {
   const feeds = category.trim().toLowerCase() === 'all'
     ? [
-        ...(surface === 'landing-news' ? [] : [['https://feeds.bbci.co.uk/news/rss.xml', 'BBC News'] as const]),
+        ['https://feeds.bbci.co.uk/news/rss.xml', 'BBC News'],
+        ['https://feeds.bbci.co.uk/news/technology/rss.xml', 'BBC Technology'],
         ['https://finance.yahoo.com/rss/topstories', 'Yahoo Finance'],
         ['https://www.cnbc.com/id/100003114/device/rss/rss.html', 'CNBC'],
-        ['https://feeds.bbci.co.uk/news/technology/rss.xml', 'BBC Technology'],
       ] as const
     : [
         ['https://finance.yahoo.com/rss/topstories', 'Yahoo Finance'],
@@ -119,51 +119,19 @@ export async function getBusinessNews(
   category = 'business',
   region = 'global',
   page = 1,
-  surface = 'default',
 ) {
   const providerResult = await fetchNewsFromProvider(query, category, region, page);
-  if (providerResult.items.length && providerResult.mode !== 'cached') return providerResult;
-
-  if (surface !== 'landing-news') {
-    if (providerResult.items.length) return providerResult;
-    const fallbackItems = await fetchPublicNewsFallback(category, surface);
-    if (fallbackItems.length) {
-      return {
-        items: fallbackItems,
-        status: 'connected' as const,
-        mode: 'fallback' as const,
-        providerName: `${providerResult.providerName} + public RSS fallback`,
-        message: providerResult.message
-          ? `${providerResult.message} Public RSS fallback supplied ${fallbackItems.length} headlines.`
-          : `Public RSS fallback supplied ${fallbackItems.length} headlines.`,
-      };
-    }
-    return providerResult;
-  }
-
-  const secondaryResult = await fetchSecondaryNewsProviders(query, category, region, page);
-  if (secondaryResult.items.length) {
-    return {
-      ...secondaryResult,
-      mode: secondaryResult.mode || 'live',
-      message: providerResult.message
-        ? `${providerResult.message} Primary feed failed or returned no valid articles; ${secondaryResult.message || 'secondary feed supplied current headlines.'}`
-        : secondaryResult.message,
-    };
-  }
-
-  if (providerResult.items.length) return { ...providerResult, mode: 'cached' as const };
+  if (providerResult.items.length) return providerResult;
 
   const fallbackItems = await fetchPublicNewsFallback(category);
   if (fallbackItems.length) {
     return {
       items: fallbackItems,
       status: 'connected' as const,
-      mode: 'fallback' as const,
-      providerName: `${providerResult.providerName} + secondary feeds + public RSS fallback`,
+      providerName: `${providerResult.providerName} + public RSS fallback`,
       message: providerResult.message
-        ? `${providerResult.message} Secondary feeds returned no valid articles. Public RSS fallback supplied ${fallbackItems.length} relevant headlines.`
-        : `Public RSS fallback supplied ${fallbackItems.length} relevant headlines.`,
+        ? `${providerResult.message} Public RSS fallback supplied ${fallbackItems.length} headlines.`
+        : `Public RSS fallback supplied ${fallbackItems.length} headlines.`,
     };
   }
 

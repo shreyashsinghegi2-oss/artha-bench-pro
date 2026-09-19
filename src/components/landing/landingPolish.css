@@ -731,25 +731,25 @@
   line-height:1!important;
   font-weight:800!important;
 }
-.landing-shell #business-brief .live-news-ticker .live-news-item:nth-child(3n+1) .live-news-headline{color:#0F766E!important}
-.landing-shell #business-brief .live-news-ticker .live-news-item:nth-child(3n+2) .live-news-headline{color:#1D4ED8!important}
-.landing-shell #business-brief .live-news-ticker .live-news-item:nth-child(3n) .live-news-headline{color:#7C3AED!important}
+.landing-shell #business-brief .live-news-ticker .live-news-item:nth-child(3n+1) .live-news-headline{color:#0F172A!important}
+.landing-shell #business-brief .live-news-ticker .live-news-item:nth-child(3n+2) .live-news-headline{color:#0F172A!important}
+.landing-shell #business-brief .live-news-ticker .live-news-item:nth-child(3n) .live-news-headline{color:#0F172A!important}
 .landing-shell #business-brief .live-news-ticker .live-news-source{
   font-size:12px!important;
   line-height:1!important;
   font-weight:950!important;
   letter-spacing:.035em!important;
 }
-.landing-shell #business-brief .live-news-ticker .live-news-source-default{color:#0F766E!important}
-.landing-shell #business-brief .live-news-ticker .live-news-source-cnbc{color:#DC2626!important}
-.landing-shell #business-brief .live-news-ticker .live-news-source-bbc{color:#7C3AED!important}
-.landing-shell #business-brief .live-news-ticker .live-news-source-yahoo{color:#7E22CE!important}
-.landing-shell #business-brief .live-news-ticker .live-news-source-reuters{color:#2563EB!important}
-.landing-shell #business-brief .live-news-ticker .live-news-source-bloomberg{color:#EA580C!important}
-.landing-shell #business-brief .live-news-ticker .live-news-source-marketwatch{color:#15803D!important}
+.landing-shell #business-brief .live-news-ticker .live-news-source-default{color:#475569!important}
+.landing-shell #business-brief .live-news-ticker .live-news-source-cnbc{color:#475569!important}
+.landing-shell #business-brief .live-news-ticker .live-news-source-bbc{color:#475569!important}
+.landing-shell #business-brief .live-news-ticker .live-news-source-yahoo{color:#475569!important}
+.landing-shell #business-brief .live-news-ticker .live-news-source-reuters{color:#475569!important}
+.landing-shell #business-brief .live-news-ticker .live-news-source-bloomberg{color:#475569!important}
+.landing-shell #business-brief .live-news-ticker .live-news-source-marketwatch{color:#475569!important}
 .landing-shell #business-brief .live-news-ticker .live-news-separator{color:#94A3B8!important}
 .landing-shell #business-brief .live-news-ticker .live-news-label-title{color:#0F172A!important;font-weight:900!important}
-.landing-shell #business-brief .live-news-ticker .live-news-label-24h{color:#16A34A!important;font-weight:900!important}
+.landing-shell #business-brief .live-news-ticker .live-news-label-24h{display:inline-flex!important;align-items:center!important;background:#DBEAFE!important;color:#1E3A8A!important;border:1px solid #BFDBFE!important;border-radius:999px!important;padding:2px 5px!important;font-weight:900!important}
 .landing-shell #business-brief .live-news-ticker .live-dot{background:#16A34A!important}
 @media(max-width:640px){
   .landing-shell #business-brief .live-news-ticker,

@@ -48,58 +48,28 @@ const IndiaMarketPulse: React.FC = () => {
         { length: Math.ceil(symbols.length / 20) },
         (_, index) => symbols.slice(index * 20, index * 20 + 20)
       );
-      const received = (
-        await Promise.all(chunks.map((chunk) => fetchMarketOverview(chunk)))
-      ).flat();
 
-      let valid = received.filter(
+      // The server's existing batch endpoint deliberately limits provider concurrency.
+      // Fetch those batches sequentially so the landing page does not create a burst
+      // of parallel provider requests and trigger rate limits/timeouts.
+      const received: NormalizedMarketQuote[] = [];
+      for (const chunk of chunks) {
+        const batch = await fetchMarketOverview(chunk);
+        received.push(...batch);
+      }
+
+      const valid = received.filter(
         (quote) =>
           quote &&
           quote.freshness !== "demo" &&
           quote.freshness !== "stale" &&
           quote.currency === "INR" &&
           Number.isFinite(Number(quote.price)) &&
-          quote.changePercent != null &&
-          Number.isFinite(Number(quote.changePercent)) &&
           quote.change != null &&
-          Number.isFinite(Number(quote.change))
+          Number.isFinite(Number(quote.change)) &&
+          quote.changePercent != null &&
+          Number.isFinite(Number(quote.changePercent))
       );
-
-      // Direct fallback through the same existing market quote API/provider used by the dashboard.
-      // Accept every non-demo INR quote that has a usable price, rupee change and percentage.
-      const fallbackResults = await Promise.all(
-        symbols.map(async (symbol) => {
-          try {
-            const result = await fetchMarketQuote(symbol, "equity");
-            const quote = result.quote;
-            if (
-              result.status === "connected" &&
-              quote &&
-              quote.freshness !== "demo" &&
-              quote.currency === "INR" &&
-              Number.isFinite(Number(quote.price)) &&
-              quote.change != null &&
-              Number.isFinite(Number(quote.change)) &&
-              quote.changePercent != null &&
-              Number.isFinite(Number(quote.changePercent))
-            ) {
-              return quote;
-            }
-          } catch {}
-          return null;
-        })
-      );
-
-      const mergedBySymbol = new Map(
-        valid.map((quote) => [normalizeSymbol(String(quote.symbol)), quote])
-      );
-      fallbackResults.forEach((quote) => {
-        if (quote) {
-          const key = normalizeSymbol(String(quote.symbol));
-          if (!mergedBySymbol.has(key)) mergedBySymbol.set(key, quote);
-        }
-      });
-      valid = Array.from(mergedBySymbol.values());
 
       setQuotes(valid);
       setUpdatedAt(new Date().toISOString());

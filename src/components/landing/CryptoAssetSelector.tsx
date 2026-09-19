@@ -57,9 +57,9 @@ export const CryptoAssetSelector: React.FC<Props> = ({
             key={item}
             type="button"
             role="tab"
-            aria-selected={interval === item}
+            aria-selected={interval === item} aria-pressed={interval === item}
             onClick={() => onIntervalChange(item)}
-            className={`shrink-0 rounded-lg px-2.5 py-2 text-[10px] font-black transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 ${interval === item ? 'bg-white text-black' : 'border border-white/10 bg-white/5 text-white/55 hover:text-white'}`}
+            className={`shrink-0 min-h-[36px] rounded-lg border px-3 py-2 text-[13px] font-semibold leading-none transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB] focus-visible:ring-offset-2 focus-visible:ring-offset-white ${interval === item ? 'border-[#1E3A5F] bg-[#1E3A5F] text-white hover:bg-[#16324F] hover:text-white' : 'border-[#CBD5E1] bg-white text-[#334155] hover:border-[#1D4ED8] hover:bg-[#EFF6FF] hover:text-[#1D4ED8]'}`}
             aria-label={`${INTERVAL_LABELS[item]} timeframe for ${cryptoDisplayName(symbol)}`}
           >
             {INTERVAL_LABELS[item]}
@@ -70,7 +70,7 @@ export const CryptoAssetSelector: React.FC<Props> = ({
     <button
       type="button"
       onClick={onReset}
-      className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-[10px] font-black text-white/65 hover:border-white/25 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+      className="inline-flex min-h-[36px] shrink-0 items-center justify-center gap-1.5 rounded-lg border border-[#CBD5E1] bg-white px-3 py-2 text-[13px] font-semibold leading-none text-[#1E3A5F] hover:border-[#1D4ED8] hover:bg-[#EFF6FF] hover:text-[#1D4ED8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB] focus-visible:ring-offset-2 focus-visible:ring-offset-white"
       aria-label="Reset crypto chart view"
     >
       <RotateCcw className="h-3.5 w-3.5" /> Reset view

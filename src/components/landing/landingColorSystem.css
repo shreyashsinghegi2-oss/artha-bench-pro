@@ -1,0 +1,89 @@
+/* Final landing color system — visual-only, scoped to existing landing sections. */
+.landing-shell #research{
+  background:
+    radial-gradient(700px 260px at 8% 0%,rgba(79,70,229,.10),transparent 68%),
+    radial-gradient(620px 240px at 92% 100%,rgba(14,165,233,.08),transparent 70%),
+    #F8FAFC !important;
+  color:#0F172A !important;
+  border-color:#E2E8F0 !important;
+}
+.landing-shell #research h2,
+.landing-shell #research b{color:#0F172A !important;}
+.landing-shell #research p,
+.landing-shell #research small{color:#475569 !important;}
+.landing-shell #research .text-teal-700{color:#4338CA !important;}
+
+.landing-shell #capabilities > .landing-mood-reliability{
+  background:
+    radial-gradient(620px 260px at 8% 20%,rgba(79,70,229,.10),transparent 68%),
+    #F8F9FF !important;
+}
+.landing-shell #capabilities > .landing-mood-learning{
+  background:
+    radial-gradient(620px 260px at 92% 20%,rgba(245,158,11,.12),transparent 68%),
+    #FFFBF2 !important;
+}
+.landing-shell #capabilities > .landing-mood-markets{
+  background:
+    radial-gradient(620px 260px at 8% 20%,rgba(16,185,129,.11),transparent 68%),
+    radial-gradient(520px 220px at 92% 80%,rgba(14,165,233,.07),transparent 70%),
+    #F5FBF9 !important;
+}
+.landing-shell #capabilities > .landing-mood-finance{
+  background:
+    radial-gradient(620px 260px at 92% 20%,rgba(244,114,182,.10),transparent 68%),
+    #FFF8FA !important;
+}
+.landing-shell #capabilities > .landing-mood-reports{
+  background:
+    radial-gradient(620px 260px at 8% 20%,rgba(124,58,237,.09),transparent 68%),
+    #FAF8FF !important;
+}
+
+.landing-shell #capabilities > section h2,
+.landing-shell #capabilities > section .font-black{
+  color:#0F172A !important;
+}
+.landing-shell #capabilities > section > div > div > div:first-child > div{
+  color:#475569 !important;
+}
+.landing-shell #capabilities > section p{color:#475569 !important;}
+
+.landing-shell #capabilities > .landing-mood-reliability .landing-feature-card{border-color:#C7D2FE !important;}
+.landing-shell #capabilities > .landing-mood-reliability .rounded-xl{background:#EEF2FF !important;color:#4338CA !important;}
+.landing-shell #capabilities > .landing-mood-learning .landing-feature-card{border-color:#FDE68A !important;}
+.landing-shell #capabilities > .landing-mood-learning .rounded-xl{background:#FFFBEB !important;color:#B45309 !important;}
+.landing-shell #capabilities > .landing-mood-markets .landing-feature-card{border-color:#A7F3D0 !important;}
+.landing-shell #capabilities > .landing-mood-markets .rounded-xl{background:#ECFDF5 !important;color:#047857 !important;}
+.landing-shell #capabilities > .landing-mood-finance .landing-feature-card{border-color:#FBCFE8 !important;}
+.landing-shell #capabilities > .landing-mood-finance .rounded-xl{background:#FDF2F8 !important;color:#BE185D !important;}
+.landing-shell #capabilities > .landing-mood-reports .landing-feature-card{border-color:#DDD6FE !important;}
+.landing-shell #capabilities > .landing-mood-reports .rounded-xl{background:#F5F3FF !important;color:#6D28D9 !important;}
+
+.landing-shell .crypto-market-module{
+  background:
+    radial-gradient(700px 280px at 12% 10%,rgba(59,130,246,.12),transparent 65%),
+    radial-gradient(620px 260px at 88% 90%,rgba(124,58,237,.11),transparent 68%),
+    #050B16 !important;
+  border-color:#1E3A5F !important;
+}
+.landing-shell .crypto-market-module h2,
+.landing-shell .crypto-market-module h3{color:#F8FAFC !important;}
+.landing-shell .crypto-market-module p{color:#CBD5E1 !important;}
+
+.landing-shell #research .research-node{
+  background:#FFFFFF !important;
+  border-color:#E2E8F0 !important;
+  box-shadow:0 8px 24px rgba(15,23,42,.06) !important;
+}
+.landing-shell #research .research-node span{color:#4338CA !important;}
+.landing-shell #research .research-connector{
+  background:linear-gradient(90deg,#CBD5E1,#818CF8,#CBD5E1) !important;
+}
+
+@media(max-width:767px){
+  .landing-shell #research,
+  .landing-shell #capabilities > section{
+    background-image:none !important;
+  }
+}

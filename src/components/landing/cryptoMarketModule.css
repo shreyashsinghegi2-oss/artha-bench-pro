@@ -126,3 +126,41 @@
  .crypto-market-module *::after {
   box-shadow: none;
 }
+
+.crypto-market-module{margin-top:2rem;overflow:hidden;border:1px solid rgba(148,163,184,.16);border-radius:12px;background:#07111F;color:#F8FAFC;box-shadow:0 12px 35px rgba(0,0,0,.14)}
+.crypto-module-head{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:18px 20px;border-bottom:1px solid rgba(148,163,184,.12);background:#0B1627}
+.crypto-instrument{display:flex;align-items:center;gap:12px;min-width:0}
+.crypto-btc-mark{display:grid;place-items:center;width:36px;height:36px;border:1px solid rgba(148,163,184,.18);border-radius:10px;background:#101F34;color:#14B8A6;font-weight:800}
+.crypto-title-line{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.crypto-title-line h3{margin:0;font-size:15px;font-weight:700;letter-spacing:-.01em}
+.crypto-symbol-tag,.crypto-source{font-size:10px;font-weight:650;letter-spacing:.05em;text-transform:uppercase;color:#94A3B8}
+.crypto-symbol-tag{padding:3px 6px;border:1px solid rgba(148,163,184,.16);border-radius:5px}
+.crypto-live-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:#14B8A6;box-shadow:0 0 0 3px rgba(20,184,166,.10)}
+.crypto-price-line{display:flex;align-items:baseline;gap:10px;margin-top:5px;font-variant-numeric:tabular-nums}
+.crypto-price-line strong{font-size:20px;letter-spacing:-.02em}
+.crypto-price-line span{font-size:11px;font-weight:700}
+.crypto-price-line .positive{color:#22C55E}.crypto-price-line .negative{color:#F05252}
+.crypto-price-line small{color:#94A3B8;font-size:10px}
+.crypto-head-actions{display:flex;align-items:center;gap:8px}
+.crypto-icon-button{display:inline-grid;place-items:center;min-width:44px;min-height:44px;border:1px solid rgba(148,163,184,.18);border-radius:9px;background:#101F34;color:#CBD5E1;cursor:pointer}
+.crypto-icon-button:hover{border-color:rgba(20,184,166,.5);color:#14B8A6}
+.crypto-icon-button:focus-visible,.crypto-workspace-link:focus-visible,.crypto-timeframe:focus-visible,.crypto-asset-trigger:focus-visible,.crypto-tool-button:focus-visible{outline:2px solid #14B8A6;outline-offset:2px}
+.crypto-workspace-link{display:inline-flex;align-items:center;gap:7px;min-height:44px;padding:0 12px;border:1px solid rgba(148,163,184,.2);border-radius:9px;color:#CBD5E1;text-decoration:none;font-size:11px;font-weight:650}
+.crypto-workspace-link:hover{border-color:rgba(20,184,166,.45);color:#F8FAFC}
+.crypto-toolbar-wrap{padding:12px 20px;border-bottom:1px solid rgba(148,163,184,.12);background:#0B1627}
+.crypto-toolbar{display:flex;align-items:center;gap:8px;min-width:max-content}
+.crypto-asset-combobox{position:relative}
+.crypto-asset-trigger{display:flex;align-items:center;gap:9px;min-width:190px;min-height:44px;padding:0 10px;border:1px solid rgba(148,163,184,.18);border-radius:9px;background:#101F34;color:#F8FAFC;text-align:left;cursor:pointer}
+.crypto-coin-mark{color:#14B8A6;font-weight:800}.crypto-asset-copy{display:flex;flex:1;flex-direction:column}.crypto-asset-copy strong{font-size:11px}.crypto-asset-copy small{color:#64748B;font-size:9px;margin-top:2px}.crypto-chevron{color:#94A3B8}
+.crypto-asset-menu{position:absolute;z-index:20;top:50px;left:0;width:270px;padding:7px;border:1px solid rgba(148,163,184,.18);border-radius:10px;background:#0B1627;box-shadow:0 16px 35px rgba(0,0,0,.3)}
+.crypto-search{display:flex;align-items:center;gap:7px;padding:8px;border-bottom:1px solid rgba(148,163,184,.12);color:#94A3B8}.crypto-search input{width:100%;border:0;outline:0;background:transparent;color:#F8FAFC;font-size:11px}
+.crypto-asset-option{display:flex;justify-content:space-between;width:100%;min-height:40px;padding:8px;border:0;border-radius:6px;background:transparent;color:#CBD5E1;text-align:left;font-size:11px;cursor:pointer}.crypto-asset-option:hover,.crypto-asset-option[aria-selected=true]{background:#101F34;color:#F8FAFC}.crypto-asset-option small{color:#64748B}
+.crypto-toolbar-divider{width:1px;height:28px;background:rgba(148,163,184,.16);margin:0 3px}
+.crypto-timeframes{display:flex;align-items:center;padding:3px;border:1px solid rgba(148,163,184,.15);border-radius:8px;background:#07111F}
+.crypto-timeframe{min-width:44px;min-height:38px;padding:0 9px;border:0;border-radius:6px;background:transparent;color:#94A3B8;font-size:11px;font-weight:700;cursor:pointer}.crypto-timeframe:hover{color:#F8FAFC;background:#101F34}.crypto-timeframe.is-active{background:#14B8A6;color:#07111F}
+.crypto-tool-button{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:0 10px;border:1px solid transparent;border-radius:8px;background:transparent;color:#94A3B8;font-size:11px;font-weight:650;cursor:pointer}.crypto-tool-button:hover{background:#101F34;color:#F8FAFC}
+.crypto-chart-shell{padding:12px 16px 0;background:#07111F}.crypto-chart-surface{min-height:430px;overflow:hidden;border:1px solid rgba(148,163,184,.12);border-radius:10px;background:#081523}
+.crypto-chart-helper{padding:8px 2px;color:#64748B;font-size:10px}.crypto-empty{display:grid;place-items:center;min-height:430px;color:#94A3B8;font-size:11px;text-align:center}
+.crypto-chart-footer{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:11px 2px 13px;border-top:1px solid rgba(148,163,184,.10);color:#64748B;font-size:10px}.crypto-chart-footer span{white-space:nowrap}.crypto-chart-footer a{display:inline-flex;align-items:center;gap:4px;color:#94A3B8;text-decoration:none}.crypto-chart-footer a:hover{color:#14B8A6}.crypto-error{padding:7px 0;color:#F05252;font-size:10px}
+@media(max-width:760px){.crypto-module-head{align-items:flex-start;flex-direction:column;padding:16px}.crypto-head-actions{width:100%;justify-content:flex-end}.crypto-workspace-link{margin-left:auto}.crypto-toolbar-wrap{overflow-x:auto;padding:10px 12px}.crypto-chart-shell{padding:8px 10px 0}.crypto-chart-surface,.crypto-empty{min-height:330px}.crypto-chart-footer{align-items:flex-start;flex-direction:column;gap:7px}.crypto-price-line{flex-wrap:wrap}.crypto-price-line strong{font-size:18px}}
+@media(prefers-reduced-motion:reduce){.crypto-market-module *{scroll-behavior:auto!important}}

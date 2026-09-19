@@ -676,3 +676,93 @@
   .landing-shell #business-brief .live-news-ticker .live-news-headline{font-size:12px!important}
   .landing-shell #business-brief .live-news-ticker .live-news-source{font-size:11px!important}
 }
+
+
+/* LIVE NEWS — final newsroom ticker fix. Scoped only to the landing-page news strip. */
+.landing-shell #business-brief .live-news-ticker{
+  height:28px!important;
+  min-height:28px!important;
+  width:100%!important;
+  margin:0!important;
+  padding:0!important;
+  background:#fff!important;
+  border-top:1px solid #CBD5E1!important;
+  border-bottom:1px solid #CBD5E1!important;
+  border-left:0!important;
+  border-right:0!important;
+  box-shadow:none!important;
+}
+.landing-shell #business-brief .live-news-ticker .live-news-label{
+  height:28px!important;
+  min-height:28px!important;
+  padding:0 10px!important;
+  background:#fff!important;
+  color:#0F172A!important;
+  border-right:1px solid #D5DEE8!important;
+}
+.landing-shell #business-brief .live-news-ticker .live-news-viewport{
+  height:28px!important;
+  min-height:28px!important;
+  background:#fff!important;
+}
+.landing-shell #business-brief .live-news-ticker .live-news-track{
+  display:flex!important;
+  width:max-content!important;
+  min-width:max-content!important;
+  height:28px!important;
+  align-items:center!important;
+  animation:artha-live-news-ticker 42s linear infinite!important;
+  animation-play-state:running!important;
+  will-change:transform!important;
+}
+.landing-shell #business-brief .live-news-ticker:hover .live-news-track{
+  animation-play-state:paused!important;
+}
+.landing-shell #business-brief .live-news-ticker .live-news-item{
+  display:inline-flex!important;
+  align-items:center!important;
+  gap:6px!important;
+  margin-right:30px!important;
+  white-space:nowrap!important;
+  text-decoration:none!important;
+}
+.landing-shell #business-brief .live-news-ticker .live-news-headline{
+  font-size:12px!important;
+  line-height:1!important;
+  font-weight:800!important;
+}
+.landing-shell #business-brief .live-news-ticker .live-news-item:nth-child(3n+1) .live-news-headline{color:#0F766E!important}
+.landing-shell #business-brief .live-news-ticker .live-news-item:nth-child(3n+2) .live-news-headline{color:#1D4ED8!important}
+.landing-shell #business-brief .live-news-ticker .live-news-item:nth-child(3n) .live-news-headline{color:#7C3AED!important}
+.landing-shell #business-brief .live-news-ticker .live-news-source{
+  font-size:11px!important;
+  line-height:1!important;
+  font-weight:950!important;
+  letter-spacing:.035em!important;
+}
+.landing-shell #business-brief .live-news-ticker .live-news-source-default{color:#0F766E!important}
+.landing-shell #business-brief .live-news-ticker .live-news-source-cnbc{color:#DC2626!important}
+.landing-shell #business-brief .live-news-ticker .live-news-source-bbc{color:#7C3AED!important}
+.landing-shell #business-brief .live-news-ticker .live-news-source-yahoo{color:#7E22CE!important}
+.landing-shell #business-brief .live-news-ticker .live-news-source-reuters{color:#2563EB!important}
+.landing-shell #business-brief .live-news-ticker .live-news-source-bloomberg{color:#EA580C!important}
+.landing-shell #business-brief .live-news-ticker .live-news-source-marketwatch{color:#15803D!important}
+.landing-shell #business-brief .live-news-ticker .live-news-separator{color:#94A3B8!important}
+.landing-shell #business-brief .live-news-ticker .live-news-label-title{color:#0F172A!important;font-weight:900!important}
+.landing-shell #business-brief .live-news-ticker .live-news-label-24h{color:#16A34A!important;font-weight:900!important}
+.landing-shell #business-brief .live-news-ticker .live-dot{background:#16A34A!important}
+@media(max-width:640px){
+  .landing-shell #business-brief .live-news-ticker,
+  .landing-shell #business-brief .live-news-ticker .live-news-label,
+  .landing-shell #business-brief .live-news-ticker .live-news-viewport,
+  .landing-shell #business-brief .live-news-ticker .live-news-track{
+    height:26px!important;
+    min-height:26px!important;
+  }
+  .landing-shell #business-brief .live-news-ticker .live-news-label{padding:0 8px!important}
+}
+@media(prefers-reduced-motion:reduce){
+  .landing-shell #business-brief .live-news-ticker .live-news-track{
+    animation:none!important;
+  }
+}

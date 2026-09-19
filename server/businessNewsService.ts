@@ -49,21 +49,25 @@ async function fetchRssFeed(feedUrl: string, sourceName: string, category = 'Bus
   try {
     const response = await fetch(feedUrl, {
       headers: {
-        Accept: 'application/rss+xml, application/xml, text/xml;q=0.9, */*;q=0.5',
+        Accept: 'application/rss+xml, application/atom+xml, application/xml, text/xml;q=0.9, */*;q=0.5',
         'User-Agent': 'ArthaBench-Pro/2.0',
       },
       signal: AbortSignal.timeout(5_000),
     });
     if (!response.ok) return [];
     const xml = await response.text();
-    const blocks = xml.match(/<item\b[\s\S]*?<\/item>/gi) || [];
+    const blocks = [
+      ...(xml.match(/<item\\b[\\s\\S]*?<\\/item>/gi) || []),
+      ...(xml.match(/<entry\\b[\\s\\S]*?<\\/entry>/gi) || []),
+    ];
     const retrievedAt = new Date().toISOString();
 
-    return blocks.slice(0, 12).flatMap((block, index) => {
+    return blocks.slice(0, 16).flatMap((block, index) => {
       const title = stripHtml(extractTag(block, 'title'));
-      const url = safeHttpUrl(extractTag(block, 'link'));
-      const publishedAt = extractTag(block, 'pubDate');
-      const description = stripHtml(extractTag(block, 'description'));
+      const url = safeHttpUrl(extractTag(block, 'link')) || safeHttpUrl(extractAttribute(block, 'link', 'href'));
+      const publishedAt = extractTag(block, 'pubDate') || extractTag(block, 'published') || extractTag(block, 'updated');
+      const description = stripHtml(extractTag(block, 'description') || extractTag(block, 'summary') || extractTag(block, 'content'));
+      const itemSource = stripHtml(extractTag(block, 'source')) || sourceName;
       const imageUrl =
         safeHttpUrl(extractAttribute(block, 'media:content', 'url')) ||
         safeHttpUrl(extractAttribute(block, 'media:thumbnail', 'url')) ||
@@ -71,10 +75,10 @@ async function fetchRssFeed(feedUrl: string, sourceName: string, category = 'Bus
       if (!title || !url) return [];
       const timestamp = Date.parse(publishedAt);
       return [{
-        id: `rss-${sourceName.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${timestamp || retrievedAt}-${index}`,
+        id: `rss-${itemSource.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${timestamp || retrievedAt}-${index}`,
         title,
         summary: description || 'Open the original publisher article for the full report.',
-        sourceName,
+        sourceName: itemSource,
         sourceUrl: url,
         publishedAt: Number.isFinite(timestamp) ? new Date(timestamp).toISOString() : null,
         retrievedAt,
@@ -91,12 +95,15 @@ async function fetchRssFeed(feedUrl: string, sourceName: string, category = 'Bus
 async function fetchPublicNewsFallback(category = 'business'): Promise<NormalizedNewsItem[]> {
   const feeds = category.trim().toLowerCase() === 'all'
     ? [
+        ['https://news.google.com/rss/search?q=business%20markets%20finance%20economy&hl=en-US&gl=US&ceid=US:en', 'Google News Business'],
+        ['https://news.google.com/rss/search?q=technology%20AI%20semiconductor%20companies&hl=en-US&gl=US&ceid=US:en', 'Google News Technology'],
         ['https://feeds.bbci.co.uk/news/rss.xml', 'BBC News'],
-        ['https://feeds.bbci.co.uk/news/technology/rss.xml', 'BBC Technology'],
         ['https://finance.yahoo.com/rss/topstories', 'Yahoo Finance'],
         ['https://www.cnbc.com/id/100003114/device/rss/rss.html', 'CNBC'],
       ] as const
     : [
+        ['https://news.google.com/rss/search?q=business%20markets%20finance%20companies%20earnings&hl=en-US&gl=US&ceid=US:en', 'Google News Business'],
+        ['https://news.google.com/rss/search?q=markets%20economy%20stocks%20finance&hl=en-US&gl=US&ceid=US:en', 'Google News Markets'],
         ['https://finance.yahoo.com/rss/topstories', 'Yahoo Finance'],
         ['https://www.cnbc.com/id/100003114/device/rss/rss.html', 'CNBC'],
       ] as const;

@@ -316,3 +316,17 @@
   background:#86EFAC !important;
   box-shadow:none !important;
 }
+
+/* Remove all decorative green patches/glows from the Intelligence Layer. */
+.landing-shell .landing-mood-research::after,
+.landing-shell .landing-mood-research::before{
+  content:none !important;
+  display:none !important;
+  background:none !important;
+  box-shadow:none !important;
+  filter:none !important;
+}
+.landing-shell .landing-mood-research{
+  background:#FFFFFF !important;
+  background-image:none !important;
+}

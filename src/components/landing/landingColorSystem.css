@@ -158,3 +158,120 @@
   .landing-shell .landing-mood-research::before{display:none;}
   .landing-shell .research-secondary-note{padding:18px;}
 }
+
+/* Final user-directed palette: white workspace + light glowing green accents. */
+.landing-shell .landing-mood-research{
+  background:
+    radial-gradient(650px 260px at 10% 8%,rgba(34,197,94,.14),transparent 68%),
+    radial-gradient(600px 250px at 92% 88%,rgba(16,185,129,.09),transparent 70%),
+    #FFFFFF !important;
+  color:#0B0F0D !important;
+}
+.landing-shell .landing-mood-research::before{
+  background-image:
+    linear-gradient(rgba(22,163,74,.045) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(22,163,74,.045) 1px,transparent 1px);
+}
+.landing-shell .landing-mood-research .text-teal-700{
+  color:#15803D !important;
+  font-weight:900 !important;
+}
+.landing-shell .landing-mood-research h2{
+  color:#080C09 !important;
+  font-weight:950 !important;
+}
+.landing-shell .landing-mood-research p{color:#475569 !important;}
+.landing-shell .research-secondary-note{
+  border-color:#D1FAE5 !important;
+  background:#FFFFFF !important;
+  box-shadow:0 18px 50px rgba(22,163,74,.09),0 2px 10px rgba(15,23,42,.04) !important;
+}
+.landing-shell .research-node{
+  border-color:#D1FAE5 !important;
+  box-shadow:0 8px 24px rgba(22,163,74,.07) !important;
+  animation:arthaResearchFloat 5s ease-in-out infinite;
+}
+.landing-shell .research-node:nth-child(1){animation-delay:0s;}
+.landing-shell .research-node:nth-child(3){animation-delay:.35s;}
+.landing-shell .research-node:nth-child(5){animation-delay:.7s;}
+.landing-shell .research-node:nth-child(7){animation-delay:1.05s;}
+.landing-shell .research-node span{color:#15803D !important;}
+.landing-shell .research-connector{
+  background:linear-gradient(90deg,#BBF7D0,#22C55E,#BBF7D0) !important;
+  height:2px;
+  animation:arthaResearchPulse 2.8s ease-in-out infinite;
+}
+@keyframes arthaResearchFloat{
+  0%,100%{transform:translateY(0);box-shadow:0 8px 24px rgba(22,163,74,.07);}
+  50%{transform:translateY(-3px);box-shadow:0 12px 30px rgba(22,163,74,.12);}
+}
+@keyframes arthaResearchPulse{
+  0%,100%{opacity:.45;}
+  50%{opacity:1;box-shadow:0 0 10px rgba(34,197,94,.24);}
+}
+
+/* White, finance-native capability surfaces; green is the primary accent. */
+.landing-shell .landing-mood-reliability,
+.landing-shell .landing-mood-learning,
+.landing-shell .landing-mood-markets,
+.landing-shell .landing-mood-finance,
+.landing-shell .landing-mood-reports{
+  background:#FFFFFF !important;
+}
+.landing-shell .landing-mood-reliability::after,
+.landing-shell .landing-mood-learning::after,
+.landing-shell .landing-mood-markets::after,
+.landing-shell .landing-mood-finance::after,
+.landing-shell .landing-mood-reports::after{
+  content:"";
+  position:absolute;
+  width:260px;height:260px;
+  right:-100px;top:-120px;
+  border-radius:999px;
+  background:rgba(34,197,94,.075);
+  filter:blur(40px);
+  pointer-events:none;
+}
+.landing-shell .landing-mood-reliability h2,
+.landing-shell .landing-mood-learning h2,
+.landing-shell .landing-mood-markets h2,
+.landing-shell .landing-mood-finance h2,
+.landing-shell .landing-mood-reports h2{
+  color:#080C09 !important;
+}
+.landing-shell .landing-mood-reliability .landing-feature-card,
+.landing-shell .landing-mood-learning .landing-feature-card,
+.landing-shell .landing-mood-markets .landing-feature-card,
+.landing-shell .landing-mood-finance .landing-feature-card,
+.landing-shell .landing-mood-reports .landing-feature-card{
+  border-color:#D1D5DB !important;
+  box-shadow:0 12px 30px rgba(15,23,42,.055) !important;
+  transition:transform .25s ease,box-shadow .25s ease,border-color .25s ease;
+}
+.landing-shell .landing-mood-reliability .landing-feature-card:hover,
+.landing-shell .landing-mood-learning .landing-feature-card:hover,
+.landing-shell .landing-mood-markets .landing-feature-card:hover,
+.landing-shell .landing-mood-finance .landing-feature-card:hover,
+.landing-shell .landing-mood-reports .landing-feature-card:hover{
+  transform:translateY(-4px);
+  border-color:#86EFAC !important;
+  box-shadow:0 16px 38px rgba(22,163,74,.10) !important;
+}
+.landing-shell .landing-mood-reliability .rounded-xl,
+.landing-shell .landing-mood-learning .rounded-xl,
+.landing-shell .landing-mood-markets .rounded-xl,
+.landing-shell .landing-mood-finance .rounded-xl,
+.landing-shell .landing-mood-reports .rounded-xl{
+  background:#F0FDF4 !important;
+  color:#15803D !important;
+}
+.landing-shell .landing-mood-reliability .text-slate-600,
+.landing-shell .landing-mood-learning .text-slate-600,
+.landing-shell .landing-mood-markets .text-slate-600,
+.landing-shell .landing-mood-finance .text-slate-600,
+.landing-shell .landing-mood-reports .text-slate-600{
+  color:#475569 !important;
+}
+@media(prefers-reduced-motion:reduce){
+  .landing-shell .research-node,.landing-shell .research-connector{animation:none !important;}
+}

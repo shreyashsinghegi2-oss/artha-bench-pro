@@ -50,7 +50,7 @@ export const CryptoAssetSelector: React.FC<Props> = ({
         className="min-w-0 rounded-xl border border-[#D1D5DB] bg-white px-3 py-2.5 text-xs font-bold text-[#111827] outline-none focus:border-[#60A5FA] focus:ring-2 focus:ring-[#60A5FA] sm:w-[220px]"
       >
         {CRYPTO_SYMBOLS.map((item) => (
-          <option key={item} value={item}>{ASSET_NAMES[item]}</option>
+          <option key={item} value={item} className="bg-white text-[#111827]">{ASSET_NAMES[item]}</option>
         ))}
       </select>
       <div className="flex min-w-0 gap-1 overflow-x-auto" role="tablist" aria-label="Crypto chart timeframe">

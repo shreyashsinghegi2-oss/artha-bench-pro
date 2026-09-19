@@ -17,6 +17,7 @@ import {
 } from '../../services/learningApi';
 import { getOverallProgressPercentage, getPaperPortfolio } from '../../services/learningStorage';
 import { SafetyBanner } from '../SafetyBanner';
+import './dashboardProduct.css';
 import { DashboardAssistant } from './DashboardAssistant';
 import { IndiaMarketTicker } from './IndiaMarketTicker';
 import { BusinessNewsTicker } from './BusinessNewsTicker';
@@ -213,8 +214,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
   const groundingDetail = latestReport ? latestReport.verdict.replaceAll('_', ' ') : 'Run an evaluation to populate';
 
   return (
-    <div className="mx-auto max-w-[1700px] space-y-7 px-4 py-7 sm:px-6 sm:py-9">
-      <section className="relative overflow-hidden rounded-[30px] border border-line bg-surface p-6 shadow-sm sm:p-8">
+    <div className="dashboard-product-shell mx-auto max-w-[1700px] space-y-7 px-4 py-7 sm:px-6 sm:py-9">
+      <section className="dashboard-hero relative overflow-hidden rounded-[30px] border border-line bg-surface p-6 shadow-sm sm:p-8">
         <div className="pointer-events-none absolute inset-x-0 top-0 flex h-1" aria-hidden="true">
           <span className="flex-1 bg-[#FF9933]" />
           <span className="flex-1 bg-white/80" />
@@ -243,12 +244,16 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
           </div>
           <div className="flex flex-wrap gap-2.5">
             <button type="button" onClick={() => void loadDashboard()} disabled={loading}
-              className="inline-flex items-center gap-2 rounded-xl border border-line bg-surface px-4 py-2.5 text-xs font-bold text-ink transition hover:bg-subtle disabled:opacity-50">
+              className="dashboard-cta inline-flex items-center gap-2 rounded-xl border border-line bg-surface px-4 py-2.5 text-xs font-bold text-ink transition hover:bg-subtle disabled:opacity-50">
               <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} /> Refresh intelligence
             </button>
             <button type="button" onClick={() => onNavigate('evaluation-lab')}
-              className="inline-flex items-center gap-2 rounded-xl bg-brand px-4 py-2.5 text-xs font-bold text-brand-foreground hover:text-white shadow-sm transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 focus:ring-offset-canvas">
-              <FlaskConical className="h-4 w-4" /> Run evaluation
+              className="dashboard-cta inline-flex items-center gap-2 rounded-xl bg-brand px-4 py-2.5 text-xs font-bold text-brand-foreground hover:text-white shadow-sm transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 focus:ring-offset-canvas">
+              <FlaskConical className="h-4 w-4" /> Open Workspace
+            </button>
+            <button type="button" onClick={() => onNavigate('reports')}
+              className="inline-flex items-center gap-2 rounded-xl border border-interactive/20 bg-interactive-soft px-4 py-2.5 text-xs font-bold text-interactive transition hover:border-interactive/40">
+              <FileCheck2 className="h-4 w-4" /> Inspect Evidence
             </button>
           </div>
         </div>
@@ -258,7 +263,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
 
       {loadError && <div className="rounded-2xl border border-danger/25 bg-danger/10 px-4 py-3 text-xs text-danger">{loadError}</div>}
 
-      <section className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
+      <section className="dashboard-metric-grid grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
         <div className="rounded-2xl border border-line bg-surface p-4 shadow-sm">
           <div className="flex items-start justify-between gap-3">
             <div><p className="text-[10px] font-bold uppercase tracking-[0.14em] text-secondary">Market breadth</p><p className="mt-2 text-2xl font-black text-ink">{quotes.length ? `${gainers}/${quotes.length}` : '—'}</p><p className="mt-1 text-[10px] text-secondary">{quotes.length ? 'provider-backed tracked assets advancing' : 'Market quotes unavailable'}</p></div>

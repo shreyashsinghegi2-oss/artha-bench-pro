@@ -35,15 +35,15 @@
 .connected-landing section{min-width:0}
 .cl-hero-grid>*,.cl-cols>*{min-width:0}
 .cl-brand{min-width:0}
-.cl-brand-copy{min-width:0}
+.cl-brand > span:last-child{min-width:0}
 .cl-logo{flex:none;transition:transform .35s cubic-bezier(.2,.7,.2,1),filter .35s}
 .cl-brand:hover .cl-logo{transform:rotate(-5deg) scale(1.06);filter:drop-shadow(0 5px 12px rgba(15,123,108,.18))}
-.cl-primary,.cl-secondary,.cl-header-cta{position:relative;overflow:hidden;will-change:transform}
-.cl-primary:hover,.cl-secondary:hover,.cl-header-cta:hover{transform:translateY(-2px)}
-.cl-primary:active,.cl-secondary:active,.cl-header-cta:active{transform:translateY(0) scale(.985)}
+.cl-primary,.cl-secondary,.cl-right > .cl-primary.cl-small{position:relative;overflow:hidden;will-change:transform}
+.cl-primary:hover,.cl-secondary:hover,.cl-right > .cl-primary.cl-small:hover{transform:translateY(-2px)}
+.cl-primary:active,.cl-secondary:active,.cl-right > .cl-primary.cl-small:active{transform:translateY(0) scale(.985)}
 .cl-primary:after,.cl-secondary:after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 30%,rgba(255,255,255,.16) 50%,transparent 70%);transform:translateX(-130%);transition:transform .6s ease;pointer-events:none}
 .cl-primary:hover:after,.cl-secondary:hover:after{transform:translateX(130%)}
-.cl-header-cta-short{display:none}
+.cl-right > .cl-primary.cl-small-short{display:none}
 .cl-card,.cl-module,.cl-macro .cl-card{will-change:transform,box-shadow}
 .cl-macro .cl-card:hover{transform:translateY(-5px) scale(1.01);border-color:#bfe3dc;box-shadow:0 18px 40px rgba(15,123,108,.10)}
 .cl-macro .cl-card strong{transition:transform .25s ease}
@@ -72,9 +72,9 @@
   .cl-brand b{font-size:11px;letter-spacing:.12em;white-space:nowrap}
   .cl-brand small{font-size:7px;letter-spacing:.14em;white-space:nowrap}
   .cl-right{gap:6px;flex:none}
-  .cl-header-cta{padding:9px 10px;font-size:11px;white-space:nowrap}
-  .cl-header-cta-full{display:none}
-  .cl-header-cta-short{display:inline}
+  .cl-right > .cl-primary.cl-small{padding:9px 10px;font-size:11px;white-space:nowrap}
+  .cl-right > .cl-primary.cl-small-full{display:none}
+  .cl-right > .cl-primary.cl-small-short{display:inline}
   .cl-hero{padding:38px 0 48px}
   .cl-hero-grid{gap:28px}
   .cl-hero h1{font-size:clamp(38px,11vw,52px);line-height:1.02}
@@ -94,7 +94,7 @@
   .cl-logo{width:30px;height:30px}
   .cl-brand b{font-size:10px}
   .cl-brand small{font-size:6.5px}
-  .cl-header-cta{padding:8px 9px}
+  .cl-right > .cl-primary.cl-small{padding:8px 9px}
   .cl-hero{padding-top:30px}
   .cl-hero h1{font-size:38px}
   .cl-pill{font-size:9px;padding:8px 11px}
@@ -106,4 +106,14 @@
   .cl-logo,.cl-primary,.cl-secondary,.cl-card,.cl-module,.cl-macro .cl-card{transition:none!important}
   .cl-primary:after,.cl-secondary:after,.cl-answer-box.scan:after,.cl-inspect.pulse{animation:none!important}
   .cl-brand:hover .cl-logo{transform:none}
+}
+
+@media(max-width:767px){
+  .cl-right > .cl-primary.cl-small{font-size:0;padding:9px 10px;gap:5px}
+  .cl-right > .cl-primary.cl-small:before{content:"Open";font-size:11px;line-height:1}
+  .cl-right > .cl-primary.cl-small svg{width:13px;height:13px}
+}
+@media(max-width:420px){
+  .cl-right > .cl-primary.cl-small{padding:8px 9px}
+  .cl-right > .cl-primary.cl-small:before{font-size:10px}
 }

@@ -77,7 +77,7 @@ const IndiaMarketPulse: React.FC = () => {
 
   useEffect(() => {
     void load();
-    const timer = window.setInterval(() => void load(), 60000);
+    const timer = window.setInterval(() => void load(), 15000);
     return () => window.clearInterval(timer);
   }, []);
 
@@ -92,30 +92,32 @@ const IndiaMarketPulse: React.FC = () => {
     return map;
   }, [quotes]);
 
-  const companiesWithQuotes = useMemo(
+  const availableCompanies = useMemo(
     () =>
       INDIA_MARKET_UNIVERSE.map((company) => ({
         company,
         quote: quoteBySymbol.get(normalizeSymbol(company.providerSymbol)),
-      })),
+      }))
+        .filter(
+          (
+            item
+          ): item is {
+            company: (typeof INDIA_MARKET_UNIVERSE)[number];
+            quote: NormalizedMarketQuote;
+          } => Boolean(item.quote)
+        )
+        .sort(
+          (a, b) =>
+            Number(b.quote.changePercent) - Number(a.quote.changePercent)
+        ),
     [quoteBySymbol]
   );
 
-  const allCompanies = useMemo(
-    () =>
-      [...companiesWithQuotes].sort((a, b) => {
-        const aChange = a.quote ? Number(a.quote.changePercent) : Number.NEGATIVE_INFINITY;
-        const bChange = b.quote ? Number(b.quote.changePercent) : Number.NEGATIVE_INFINITY;
-        return bChange - aChange;
-      }),
-    [companiesWithQuotes]
+  const gainers = availableCompanies.filter(
+    ({ quote }) => Number(quote.changePercent) > 0
   );
-
-  const gainers = allCompanies.filter(
-    ({ quote }) => quote && Number(quote.changePercent) > 0
-  );
-  const decliners = allCompanies.filter(
-    ({ quote }) => quote && Number(quote.changePercent) < 0
+  const decliners = availableCompanies.filter(
+    ({ quote }) => Number(quote.changePercent) < 0
   );
 
   const provider =
@@ -146,41 +148,13 @@ const IndiaMarketPulse: React.FC = () => {
     return `${value >= 0 ? "+" : ""}${value.toFixed(2)}%`;
   };
 
-  const freshnessLabel = (quote: NormalizedMarketQuote) => {
-    if (quote.freshness === "delayed") return "Delayed";
-    if (quote.freshness === "real_time") return "Real-time provider quote";
-    if (quote.freshness === "end_of_day") return "End-of-day reference";
-    return "Available";
-  };
-
   const CompanyRow = ({
     company,
     quote,
   }: {
     company: (typeof INDIA_MARKET_UNIVERSE)[number];
-    quote?: NormalizedMarketQuote;
+    quote: NormalizedMarketQuote;
   }) => {
-    if (!quote) {
-      return (
-        <li className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 border-t border-[#E2E8F0] px-4 py-3 first:border-t-0 sm:grid-cols-[minmax(0,1.6fr)_minmax(110px,.7fr)_minmax(190px,auto)] sm:px-5">
-          <div className="min-w-0">
-            <div className="truncate text-sm font-black text-[#0F172A]">
-              {company.officialName}
-            </div>
-            <div className="mt-0.5 text-[10px] font-semibold uppercase tracking-[.08em] text-[#64748B]">
-              {company.providerSymbol}
-            </div>
-          </div>
-          <span className="hidden text-right text-xs font-bold text-[#94A3B8] sm:block">
-            —
-          </span>
-          <span className="rounded-md bg-slate-50 px-2 py-1 text-[10px] font-bold text-[#64748B]">
-            Quote unavailable
-          </span>
-        </li>
-      );
-    }
-
     const change = Number(quote.changePercent);
     const isUp = change > 0;
     const isFlat = change === 0;
@@ -191,7 +165,10 @@ const IndiaMarketPulse: React.FC = () => {
         : "bg-[#FEF2F2] text-[#B91C1C]";
 
     return (
-      <li className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-t border-[#E2E8F0] px-4 py-3 first:border-t-0 sm:grid-cols-[minmax(0,1.6fr)_minmax(110px,.7fr)_minmax(190px,auto)] sm:px-5">
+      <li
+        className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-t border-[#E2E8F0] px-4 py-3 first:border-t-0 sm:grid-cols-[minmax(0,1.6fr)_minmax(110px,.7fr)_minmax(190px,auto)] sm:px-5"
+        aria-label={`${company.officialName}, ${isUp ? "up" : isFlat ? "unchanged" : "down"} ${Math.abs(change).toFixed(2)} percent`}
+      >
         <div className="min-w-0">
           <div className="truncate text-sm font-black text-[#0F172A]">
             {company.officialName}
@@ -205,7 +182,6 @@ const IndiaMarketPulse: React.FC = () => {
         </div>
         <div
           className={`col-span-2 flex items-center justify-end gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-black tabular-nums sm:col-span-1 ${movementClass}`}
-          aria-label={`${company.officialName}, ${isUp ? "up" : isFlat ? "unchanged" : "down"} ${Math.abs(change).toFixed(2)} percent today`}
         >
           <span aria-hidden="true">{isUp ? "↑" : isFlat ? "→" : "↓"}</span>
           <span>{formatChange(quote)}</span>
@@ -234,7 +210,7 @@ const IndiaMarketPulse: React.FC = () => {
               Today’s intraday movers
             </h2>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-[#475569]">
-              Provider-backed price snapshot for every company configured in the India Market Pulse universe.
+              Showing only companies for which the existing market-data connection returned a verified INR intraday quote.
             </p>
           </div>
 
@@ -245,52 +221,17 @@ const IndiaMarketPulse: React.FC = () => {
                   ? `Last updated: ${new Date(providerStamp).toLocaleString("en-IN")}`
                   : "Last updated: unavailable"}
               </div>
+              <div>Provider: {provider}</div>
               <div>
-                Provider: {provider}
-                {quotes.length > 0 ? ` · ${freshnessLabel(quotes[0])}` : ""}
-              </div>
-              <div>
-                {INDIA_MARKET_UNIVERSE.length} configured companies · {gainers.length} gainers · {decliners.length} decliners
+                {availableCompanies.length} available · {gainers.length} ↑ · {decliners.length} ↓
               </div>
             </div>
             <a
               href="/finance/markets/intraday"
-              className="inline-flex items-center rounded-lg border border-[#CBD5E1] bg-white px-3.5 py-2 text-xs font-black text-[#0F172A] transition hover:border-[#0F766E] hover:bg-[#F8FAFC] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#60A5FA]"
+              className="inline-flex items-center rounded-lg border border-[#CBD5E1] bg-white px-3.5 py-2 text-xs font-black text-[#0F172A] transition hover:border-[#0F766E] hover:bg-[#F8FAFC]"
             >
               Open intraday markets →
             </a>
-          </div>
-        </div>
-
-        <div className="mt-8 grid gap-5 lg:grid-cols-2">
-          <div className="rounded-2xl border border-[#E2E8F0] bg-white shadow-sm">
-            <div className="flex items-center gap-2 border-b border-[#E2E8F0] px-4 py-3 sm:px-5">
-              <span className="text-base font-black text-[#15803D]" aria-hidden="true">↑</span>
-              <h3 className="text-sm font-black text-[#0F172A]">Top gainers</h3>
-              <span className="ml-auto text-[9px] font-bold uppercase tracking-[.12em] text-[#94A3B8]">
-                {gainers.length}
-              </span>
-            </div>
-            <div className="px-4 py-3 text-xs text-[#475569] sm:px-5">
-              {gainers.length > 0
-                ? `All ${gainers.length} verified gainers are included in the full company list below.`
-                : "No verified gainers are currently available."}
-            </div>
-          </div>
-
-          <div className="rounded-2xl border border-[#E2E8F0] bg-white shadow-sm">
-            <div className="flex items-center gap-2 border-b border-[#E2E8F0] px-4 py-3 sm:px-5">
-              <span className="text-base font-black text-[#B91C1C]" aria-hidden="true">↓</span>
-              <h3 className="text-sm font-black text-[#0F172A]">Top decliners</h3>
-              <span className="ml-auto text-[9px] font-bold uppercase tracking-[.12em] text-[#94A3B8]">
-                {decliners.length}
-              </span>
-            </div>
-            <div className="px-4 py-3 text-xs text-[#475569] sm:px-5">
-              {decliners.length > 0
-                ? `All ${decliners.length} verified decliners are included in the full company list below.`
-                : "No verified decliners are currently available."}
-            </div>
           </div>
         </div>
 
@@ -298,14 +239,14 @@ const IndiaMarketPulse: React.FC = () => {
           <div className="flex items-center justify-between gap-4 border-b border-[#E2E8F0] bg-[#F8FAFC] px-4 py-3 sm:px-5">
             <div>
               <h3 className="text-base font-black text-[#0F172A]">
-                All Indian market companies
+                Available intraday companies
               </h3>
               <p className="mt-0.5 text-[10px] font-semibold text-[#64748B]">
-                Sorted by verified percentage movement. Every configured company remains visible.
+                Only provider-returned INR quotes are listed. Sorted by percentage movement.
               </p>
             </div>
             <span className="rounded-full border border-[#CBD5E1] bg-white px-2.5 py-1 text-[10px] font-black text-[#0F172A]">
-              {INDIA_MARKET_UNIVERSE.length}
+              {availableCompanies.length}
             </span>
           </div>
 
@@ -317,8 +258,11 @@ const IndiaMarketPulse: React.FC = () => {
 
           {loading ? (
             <div className="divide-y divide-[#E2E8F0]">
-              {INDIA_MARKET_UNIVERSE.slice(0, 8).map((company) => (
-                <div key={company.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 px-4 py-3 sm:px-5">
+              {Array.from({ length: 8 }).map((_, index) => (
+                <div
+                  key={index}
+                  className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 px-4 py-3 sm:px-5"
+                >
                   <div>
                     <div className="h-4 w-44 animate-pulse rounded bg-slate-100" />
                     <div className="mt-2 h-2.5 w-20 animate-pulse rounded bg-slate-100" />
@@ -327,12 +271,16 @@ const IndiaMarketPulse: React.FC = () => {
                 </div>
               ))}
             </div>
-          ) : (
+          ) : availableCompanies.length > 0 ? (
             <ul>
-              {allCompanies.map(({ company, quote }) => (
+              {availableCompanies.map(({ company, quote }) => (
                 <CompanyRow key={company.id} company={company} quote={quote} />
               ))}
             </ul>
+          ) : (
+            <div className="px-5 py-10 text-center text-sm font-semibold text-[#64748B]">
+              Verified intraday ranking data is currently unavailable.
+            </div>
           )}
         </div>
 
@@ -350,7 +298,7 @@ const IndiaMarketPulse: React.FC = () => {
         )}
 
         <div className="mt-4 text-[9px] leading-5 text-[#64748B]">
-          The list contains every company configured in the existing India Market Pulse universe. Prices and movements are shown only when the connected provider returns a verified quote; unavailable rows remain visible rather than being replaced with fake values. A “real-time” label is used only when the provider response identifies real-time freshness.
+          Prices, rupee changes and percentage movements come only from the existing connected market-data path. The section refreshes every 15 seconds; a real-time claim is made only when the provider itself reports real-time freshness.
         </div>
       </div>
     </section>

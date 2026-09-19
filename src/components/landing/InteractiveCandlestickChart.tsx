@@ -1,17 +1,17 @@
 import React, { useEffect, useRef } from 'react';
 import { CandlestickSeries, ColorType, CrosshairMode, createChart, IChartApi, ISeriesApi, Time } from 'lightweight-charts';
-import { CryptoCandle } from '../crypto/cryptoTypes';
+import { CryptoCandle, CryptoInterval } from '../crypto/cryptoTypes';
 
-interface Props { candles: CryptoCandle[]; onResetReady?: (reset: () => void) => void; }
+interface Props { candles: CryptoCandle[]; interval?: CryptoInterval; onResetReady?: (reset: () => void) => void; }
 
-const getDefaultVisibleBars = (width: number) => width >= 1024 ? 80 : width >= 640 ? 60 : 42;
+const getDefaultVisibleBars = (interval: CryptoInterval = '5m', width: number) => { const targets: Record<CryptoInterval, number> = { '1m': 100, '5m': 85, '15m': 75, '1h': 65, '4h': 55, '1d': 45 }; const target = targets[interval] ?? 85; const responsive = width >= 1024 ? 1 : width >= 640 ? 0.8 : 0.62; return Math.max(width < 640 ? 32 : 40, Math.round(target * responsive)); };
 
-export const InteractiveCandlestickChart: React.FC<Props> = ({ candles, onResetReady }) => {
+export const InteractiveCandlestickChart: React.FC<Props> = ({ candles, interval = '5m', onResetReady }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const seriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
   const priceLineRef = useRef<ReturnType<ISeriesApi<'Candlestick'>['createPriceLine']> | null>(null);
-  const hasInitialViewRef = useRef(false);
+  const hasInitialViewRef = useRef(false);\n  const candlesRef = useRef<CryptoCandle[]>([]);\n  const intervalRef = useRef<CryptoInterval>(interval);
 
   const applyDefaultMediumView = () => {
     const chart = chartRef.current;

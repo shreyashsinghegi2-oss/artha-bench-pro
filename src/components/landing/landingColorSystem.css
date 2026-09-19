@@ -87,3 +87,74 @@
     background-image:none !important;
   }
 }
+
+/* Research-workspace refinement: richer but restrained financial product surfaces. */
+.landing-shell .landing-mood-research{
+  position:relative;
+  overflow:hidden;
+  background:
+    radial-gradient(700px 300px at 8% 8%,rgba(79,70,229,.14),transparent 68%),
+    radial-gradient(620px 280px at 92% 92%,rgba(13,148,136,.10),transparent 70%),
+    linear-gradient(135deg,#F8FAFF 0%,#FFFFFF 52%,#F6FFFD 100%) !important;
+}
+.landing-shell .landing-mood-research::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  background-image:linear-gradient(rgba(99,102,241,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(99,102,241,.045) 1px,transparent 1px);
+  background-size:32px 32px;
+  mask-image:linear-gradient(to bottom,black,transparent 85%);
+}
+.landing-shell .landing-mood-research > div{position:relative;z-index:1;}
+.landing-shell .landing-mood-research h2{color:#0B1220 !important;letter-spacing:-.03em;}
+.landing-shell .landing-mood-research p{color:#475569 !important;}
+.landing-shell .landing-mood-research .text-teal-700{color:#4338CA !important;}
+.landing-shell .research-secondary-note{
+  position:relative;
+  padding:28px;
+  border:1px solid #E2E8F0;
+  border-radius:22px;
+  background:rgba(255,255,255,.82);
+  box-shadow:0 18px 50px rgba(15,23,42,.07);
+  backdrop-filter:blur(10px);
+}
+.landing-shell .research-node{
+  min-height:108px;
+  border-radius:16px !important;
+  border:1px solid #D9E2EC !important;
+  background:#FFFFFF !important;
+  box-shadow:0 8px 24px rgba(15,23,42,.055) !important;
+}
+.landing-shell .research-node b{color:#0F172A !important;}
+.landing-shell .research-node small{color:#64748B !important;}
+.landing-shell .research-node span{color:#4F46E5 !important;}
+.landing-shell .research-connector{opacity:.9;}
+
+.landing-shell .landing-mood-reliability{background:linear-gradient(135deg,#F7F8FF,#FFFFFF 58%,#F5F3FF) !important;}
+.landing-shell .landing-mood-learning{background:linear-gradient(135deg,#FFFCF3,#FFFFFF 58%,#FFF8E8) !important;}
+.landing-shell .landing-mood-markets{background:linear-gradient(135deg,#F3FBF8,#FFFFFF 58%,#F1F8FF) !important;}
+.landing-shell .landing-mood-finance{background:linear-gradient(135deg,#FFF8FB,#FFFFFF 58%,#FFF5F6) !important;}
+.landing-shell .landing-mood-reports{background:linear-gradient(135deg,#FAF8FF,#FFFFFF 58%,#F5F7FF) !important;}
+
+.landing-shell .landing-mood-reliability h2,
+.landing-shell .landing-mood-learning h2,
+.landing-shell .landing-mood-markets h2,
+.landing-shell .landing-mood-finance h2,
+.landing-shell .landing-mood-reports h2{color:#0F172A !important;}
+.landing-shell .landing-mood-reliability .text-slate-600,
+.landing-shell .landing-mood-learning .text-slate-600,
+.landing-shell .landing-mood-markets .text-slate-600,
+.landing-shell .landing-mood-finance .text-slate-600,
+.landing-shell .landing-mood-reports .text-slate-600{color:#475569 !important;}
+
+.landing-shell .landing-mood-reliability .landing-feature-card{box-shadow:0 14px 36px rgba(79,70,229,.08) !important;}
+.landing-shell .landing-mood-learning .landing-feature-card{box-shadow:0 14px 36px rgba(245,158,11,.08) !important;}
+.landing-shell .landing-mood-markets .landing-feature-card{box-shadow:0 14px 36px rgba(16,185,129,.08) !important;}
+.landing-shell .landing-mood-finance .landing-feature-card{box-shadow:0 14px 36px rgba(244,114,182,.08) !important;}
+.landing-shell .landing-mood-reports .landing-feature-card{box-shadow:0 14px 36px rgba(124,58,237,.08) !important;}
+
+@media(max-width:767px){
+  .landing-shell .landing-mood-research::before{display:none;}
+  .landing-shell .research-secondary-note{padding:18px;}
+}

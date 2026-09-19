@@ -47,7 +47,7 @@ export const CryptoAssetSelector: React.FC<Props> = ({
         id="landing-crypto-asset"
         value={symbol}
         onChange={(event) => onSymbolChange(event.target.value as CryptoSymbol)}
-        className="min-h-[38px] min-w-0 rounded-lg border border-[#D1D5DB] bg-white px-3 py-2.5 text-xs font-bold text-[#111827] outline-none focus:border-[#60A5FA] focus:ring-2 focus:ring-[#60A5FA] sm:w-[220px]"
+        className="crypto-control min-h-[38px] min-w-0 rounded-lg border border-[#D1D5DB] bg-white px-3 py-2.5 text-xs font-bold text-[#111827] outline-none focus:border-[#60A5FA] focus:ring-2 focus:ring-[#60A5FA] sm:w-[220px]"
       >
         {CRYPTO_SYMBOLS.map((item) => (
           <option key={item} value={item} className="bg-white text-[#111827]">{ASSET_NAMES[item]}</option>
@@ -61,7 +61,7 @@ export const CryptoAssetSelector: React.FC<Props> = ({
             role="tab"
             aria-selected={interval === item} aria-pressed={interval === item}
             onClick={() => onIntervalChange(item)}
-            className={`shrink-0 min-h-[36px] rounded-lg border px-3 py-2 text-[13px] font-semibold leading-none text-[#111827] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#60A5FA] focus-visible:ring-offset-2 focus-visible:ring-offset-[#050505] ${interval === item ? 'border-2 border-[#2563EB] bg-[#F3F4F6] text-[#111827] hover:bg-[#E5E7EB]' : 'border-[#D1D5DB] bg-white text-[#111827] hover:border-[#94A3B8] hover:bg-[#F3F4F6]'} [&_svg]:text-[#111827]`}
+            className={`crypto-control crypto-timeframe shrink-0 min-h-[38px] rounded-lg border px-3 py-2 text-[13px] font-semibold leading-none text-[#111827] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#60A5FA] focus-visible:ring-offset-2 focus-visible:ring-offset-[#050505] ${interval === item ? 'border-2 border-[#2563EB] bg-[#F3F4F6] text-[#111827] hover:bg-[#E5E7EB]' : 'border-[#D1D5DB] bg-white text-[#111827] hover:border-[#94A3B8] hover:bg-[#F3F4F6]'} [&_svg]:text-[#111827]`}
             aria-label={`${INTERVAL_LABELS[item]} timeframe for ${cryptoDisplayName(symbol)}`}
           >
             {INTERVAL_LABELS[item]}
@@ -73,7 +73,7 @@ export const CryptoAssetSelector: React.FC<Props> = ({
       type="button"
       onClick={onReset}
       disabled={resetDisabled}
-      className="inline-flex min-h-[36px] shrink-0 items-center justify-center gap-1.5 rounded-lg border border-[#D1D5DB] bg-white px-3 py-2 text-[13px] font-semibold leading-none text-[#111827] hover:border-[#94A3B8] hover:bg-[#F3F4F6] active:bg-[#E5E7EB] disabled:cursor-not-allowed disabled:border-[#D1D5DB] disabled:bg-[#F9FAFB] disabled:text-[#6B7280] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#60A5FA] focus-visible:ring-offset-2 focus-visible:ring-offset-[#050505] [&_svg]:text-[#111827]"
+      className="crypto-control inline-flex min-h-[38px] shrink-0 items-center justify-center gap-1.5 rounded-lg border border-[#D1D5DB] bg-white px-3 py-2 text-[13px] font-semibold leading-none text-[#111827] hover:border-[#94A3B8] hover:bg-[#F3F4F6] active:bg-[#E5E7EB] disabled:cursor-not-allowed disabled:border-[#D1D5DB] disabled:bg-[#F9FAFB] disabled:text-[#6B7280] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#60A5FA] focus-visible:ring-offset-2 focus-visible:ring-offset-[#050505] [&_svg]:text-[#111827]"
       aria-label="Reset crypto chart view" aria-disabled={resetDisabled}
     >
       <RotateCcw className="h-3.5 w-3.5" /> Reset view

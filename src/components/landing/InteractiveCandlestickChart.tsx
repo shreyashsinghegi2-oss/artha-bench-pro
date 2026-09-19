@@ -1,15 +1,16 @@
 import React, { useEffect, useRef } from 'react';
-import { CandlestickSeries, ColorType, CrosshairMode, createChart, IChartApi, ISeriesApi, Time } from 'lightweight-charts';
+import { CandlestickSeries, LineSeries, ColorType, CrosshairMode, createChart, IChartApi, ISeriesApi, Time } from 'lightweight-charts';
 import { CryptoCandle, CryptoInterval } from '../crypto/cryptoTypes';
 
-interface Props { candles: CryptoCandle[]; interval?: CryptoInterval; onResetReady?: (reset: () => void) => void; }
+interface Props { showIndicators?: boolean; candles: CryptoCandle[]; interval?: CryptoInterval; onResetReady?: (reset: () => void) => void; }
 
 const getDefaultVisibleBars = (interval: CryptoInterval = '5m', width: number) => { const targets: Record<CryptoInterval, number> = { '1m': 120, '5m': 100, '15m': 90, '1h': 80, '4h': 70, '1d': 60 }; const target = targets[interval] ?? 85; const responsive = width >= 1024 ? 1 : width >= 640 ? 0.8 : 0.62; return Math.max(width < 640 ? 32 : 40, Math.round(target * responsive)); };
 
-export const InteractiveCandlestickChart: React.FC<Props> = ({ candles, interval = '5m', onResetReady }) => {
+export const InteractiveCandlestickChart: React.FC<Props> = ({ showIndicators = false, candles, interval = '5m', onResetReady }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const seriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
+  const maLineRef = useRef<ISeriesApi<'Line'> | null>(null);
   const priceLineRef = useRef<ReturnType<ISeriesApi<'Candlestick'>['createPriceLine']> | null>(null);
   const hasInitialViewRef = useRef(false);
   const candlesRef = useRef<CryptoCandle[]>([]);
@@ -94,6 +95,7 @@ export const InteractiveCandlestickChart: React.FC<Props> = ({ candles, interval
     return () => {
       resizeObserver.disconnect();
       priceLineRef.current = null;
+      maLineRef.current = null;
       chart.remove();
       chartRef.current = null;
       seriesRef.current = null;
@@ -121,13 +123,19 @@ export const InteractiveCandlestickChart: React.FC<Props> = ({ candles, interval
       priceLineRef.current = series.createPriceLine({ price: latest.close, color: '#22c55e', lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: 'LIVE' });
     }
 
+    if (showIndicators) {
+      const ma = candles.map((c, i) => { const from=Math.max(0,i-19); const slice=candles.slice(from,i+1); return { time: Math.floor(c.openTime/1000) as Time, value: slice.reduce((sum,x)=>sum+x.close,0)/slice.length }; });
+      if (!maLineRef.current) maLineRef.current = chart.addSeries(LineSeries, { color:'#14B8A6', lineWidth:1, priceLineVisible:false, lastValueVisible:false });
+      maLineRef.current.setData(ma);
+    } else if (maLineRef.current) { chart.removeSeries(maLineRef.current); maLineRef.current=null; }
+
     // Apply the default range only once after the historical dataset first loads.
     // Subsequent live OHLC updates preserve the user's zoom and pan.
     if (!hasInitialViewRef.current && containerRef.current?.clientWidth && containerRef.current?.clientHeight) {
       applyDefaultMediumView();
       hasInitialViewRef.current = true;
     }
-  }, [candles]);
+  }, [candles, showIndicators]);
 
   return <div className="relative h-[300px] w-full sm:h-[420px] lg:h-[540px]" aria-label="Interactive crypto candlestick chart">
     <div className="pointer-events-none absolute left-3 top-3 z-10 rounded-lg border border-[#262626] bg-[#0B0B0C] px-2.5 py-1.5 text-[9px] font-semibold text-[#CBD5E1]">Scroll/pinch to zoom · Drag to pan</div>

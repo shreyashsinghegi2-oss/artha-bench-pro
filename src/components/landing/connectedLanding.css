@@ -151,3 +151,20 @@
 @media(prefers-reduced-motion:reduce){
   .cl-workspace-preview,.cl-workspace-preview svg .cl-candle,.cl-workspace-preview svg rect[class*="candle"],.cl-workspace-preview svg .cl-ma,.cl-workspace-preview svg path[data-ma],.cl-workspace-preview svg path.ma-line,.cl-answer.scan::after,.cl-inspect.pu::before,.cl-inspect[data-pulse="true"]::before,.cl-float,.cl-floating-badge,.cl-evidence-dot,.cl-evidence .dot,.cl-evc .dot,.cl-skeleton,.cl-sk,.cl-module-row,.cl-row{animation:none!important;transition:none!important}
 }
+
+
+/* Exact interaction hooks restored */
+.cl-answer-box.scan::after{content:"";position:absolute;left:0;right:0;top:-2px;height:2px;pointer-events:none;opacity:0;background:currentColor;box-shadow:0 0 12px currentColor;animation:cl-scan 1.1s ease forwards}
+.cl-answer-box{position:relative;overflow:hidden}
+.cl-module-grid.sh{animation:cl-sh .5s ease both}
+.cl-ty::after{content:"";display:inline-block;width:1px;height:1em;margin-left:2px;vertical-align:-2px;background:currentColor;animation:cl-ty-caret .8s steps(1) infinite}
+.cl-score-ring{position:relative;display:grid;place-items:center}
+.cl-score-arc{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg)}
+.cl-score-track,.cl-score-progress{fill:none;stroke-width:3}
+.cl-score-progress{stroke-dasharray:1;stroke-dashoffset:1;stroke-linecap:round;transition:stroke-dashoffset 2.4s cubic-bezier(.2,.8,.2,1)}
+.cl-score-ring.is-complete .cl-score-progress{stroke-dashoffset:0}
+.cl-score-value{position:relative;z-index:1}
+@media(prefers-reduced-motion:reduce){
+ .cl-module-grid.sh,.cl-ty::after{animation:none!important}
+ .cl-score-progress{transition:none!important;stroke-dashoffset:0!important}
+}

@@ -762,7 +762,5 @@
   .landing-shell #business-brief .live-news-ticker .live-news-label{padding:0 8px!important}
 }
 @media(prefers-reduced-motion:reduce){
-  .landing-shell #business-brief .live-news-ticker .live-news-track{
-    animation:none!important;
-  }
+  .landing-shell #business-brief .live-news-ticker .live-news-track{animation-play-state:running!important;}
 }

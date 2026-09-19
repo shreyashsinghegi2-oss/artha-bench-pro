@@ -24,6 +24,7 @@ const INTERVAL_LABELS: Record<CryptoInterval, string> = {
 export const cryptoDisplayName = (symbol: CryptoSymbol) => ASSET_NAMES[symbol];
 
 interface Props {
+  onIndicatorsChange?: (enabled: boolean) => void;
   symbol: CryptoSymbol;
   interval: CryptoInterval;
   onSymbolChange: (symbol: CryptoSymbol) => void;
@@ -39,7 +40,9 @@ export const CryptoAssetSelector: React.FC<Props> = ({
   onIntervalChange,
   onReset,
   resetDisabled = false,
+  onIndicatorsChange,
 }) => {
+  const [indicators, setIndicators] = React.useState(false);
   const [open, setOpen] = React.useState(false);
   const [query, setQuery] = React.useState('');
   const filtered = CRYPTO_SYMBOLS.filter((item) =>
@@ -78,7 +81,7 @@ export const CryptoAssetSelector: React.FC<Props> = ({
         ))}
       </div>
       <div className="crypto-toolbar-divider" aria-hidden="true" />
-      <button type="button" className="crypto-tool-button" aria-label="Chart indicators" title="Indicators"><SlidersHorizontal size={15}/><span>Indicators</span></button>
+      <button type="button" onClick={() => { const next=!indicators; setIndicators(next); onIndicatorsChange?.(next); }} className={`crypto-tool-button ${indicators ? "is-active" : ""}`} aria-label="Chart indicators" aria-pressed={indicators} title="Indicators"><SlidersHorizontal size={15}/><span>Indicators</span></button>
       <button type="button" className="crypto-tool-button" aria-label="Chart type: Candles" title="Candles"><CandlestickChart size={15}/><span>Candles</span></button>
       <button type="button" onClick={onReset} disabled={resetDisabled} className="crypto-icon-button" aria-label="Reset chart view" title="Reset view"><RotateCcw size={16}/></button>
     </div>

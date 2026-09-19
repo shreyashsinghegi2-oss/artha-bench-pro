@@ -3,7 +3,7 @@ import{ArrowRight,BookOpen,BrainCircuit,CheckCircle2,FlaskConical,GraduationCap,
 import{NavigationDestination}from'../../types';
 import{fetchBusinessNews,fetchMarketOverview}from'../../services/learningApi';
 import{INDIA_MARKET_UNIVERSE}from'../../data/indiaMarketUniverse';
-import{NormalizedMarketQuote}from'../../types';
+import{IndiaMarketTickerResponse,NormalizedMarketQuote}from'../../types';
 import{ArthaMindLogo}from'./ArthaMindLogo';
 import{HeroProductMockup}from'./HeroProductMockup';
 import{LiveMarketTicker}from'./LiveMarketTicker';
@@ -52,7 +52,7 @@ const IndiaMarketPulse: React.FC = () => {
         await Promise.all(chunks.map((chunk) => fetchMarketOverview(chunk)))
       ).flat();
 
-      const valid = received.filter(
+      let valid = received.filter(
         (quote) =>
           quote &&
           quote.freshness !== "demo" &&
@@ -64,6 +64,43 @@ const IndiaMarketPulse: React.FC = () => {
           quote.change != null &&
           Number.isFinite(Number(quote.change))
       );
+
+      // Reuse the exact India-market provider path already powering the main dashboard
+      // when the configured company batch does not return usable intraday quotes.
+      if (!valid.length) {
+        const ticker: IndiaMarketTickerResponse = await fetchIndiaMarketTicker();
+        valid = (ticker.items || [])
+          .filter(
+            (item) =>
+              item.status === "available" &&
+              !item.yahooSymbol.startsWith("^") &&
+              item.currency === "INR" &&
+              Number.isFinite(Number(item.price)) &&
+              item.change != null &&
+              Number.isFinite(Number(item.change)) &&
+              item.changePercent != null &&
+              Number.isFinite(Number(item.changePercent))
+          )
+          .map((item) => ({
+            symbol: item.yahooSymbol,
+            name: item.label,
+            assetType: "equity",
+            exchange: "NSE",
+            currency: "INR",
+            price: Number(item.price),
+            open: null,
+            high: null,
+            low: null,
+            previousClose: null,
+            change: Number(item.change),
+            changePercent: Number(item.changePercent),
+            volume: null,
+            providerTimestamp: item.providerTimestamp,
+            retrievedAt: ticker.retrievedAt,
+            freshness: item.freshness || "delayed",
+            providerName: "Yahoo Finance",
+          }));
+      }
 
       setQuotes(valid);
       setUpdatedAt(new Date().toISOString());
@@ -298,7 +335,7 @@ const IndiaMarketPulse: React.FC = () => {
         )}
 
         <div className="mt-4 text-[9px] leading-5 text-[#64748B]">
-          Prices, rupee changes and percentage movements come only from the existing connected market-data path. The section refreshes every 15 seconds; a real-time claim is made only when the provider itself reports real-time freshness.
+          Prices, rupee changes and percentage movements come only from the existing connected market-data path. The section refreshes every 15 seconds and falls back to the same India-market provider path used by the main dashboard; a real-time claim is made only when the provider itself reports real-time freshness.
         </div>
       </div>
     </section>

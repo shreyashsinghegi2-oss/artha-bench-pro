@@ -1,4 +1,4 @@
-import React,{useEffect,useState}from'react';
+import React,{useEffect,useMemo,useState}from'react';
 import{ArrowRight,BookOpen,BrainCircuit,CheckCircle2,FlaskConical,GraduationCap,LineChart,LockKeyhole,ShieldCheck,WalletCards}from'lucide-react';
 import{NavigationDestination}from'../../types';
 import{fetchBusinessNews,fetchMarketOverview}from'../../services/learningApi';

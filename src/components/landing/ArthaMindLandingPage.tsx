@@ -48,7 +48,10 @@ const IndiaMarketPulse: React.FC = () => {
         { length: Math.ceil(symbols.length / 20) },
         (_, index) => symbols.slice(index * 20, index * 20 + 20)
       );
-      const received = (await Promise.all(chunks.map((chunk) => fetchMarketOverview(chunk)))).flat();
+      const received = (
+        await Promise.all(chunks.map((chunk) => fetchMarketOverview(chunk)))
+      ).flat();
+
       const valid = received.filter(
         (quote) =>
           quote &&
@@ -61,6 +64,7 @@ const IndiaMarketPulse: React.FC = () => {
           quote.change != null &&
           Number.isFinite(Number(quote.change))
       );
+
       setQuotes(valid);
       setUpdatedAt(new Date().toISOString());
     } catch {
@@ -77,29 +81,45 @@ const IndiaMarketPulse: React.FC = () => {
     return () => window.clearInterval(timer);
   }, []);
 
-  const companies = useMemo(() => {
-    const map = new Map<string, (typeof INDIA_MARKET_UNIVERSE)[number]>();
-    INDIA_MARKET_UNIVERSE.forEach((company) => {
-      const symbol = company.providerSymbol.toUpperCase();
-      map.set(symbol, company);
-      map.set(symbol.replace(/\.(NS|BO)$/, ""), company);
+  const normalizeSymbol = (symbol: string) =>
+    symbol.toUpperCase().replace(/\.(NS|BO)$/, "");
+
+  const quoteBySymbol = useMemo(() => {
+    const map = new Map<string, NormalizedMarketQuote>();
+    quotes.forEach((quote) => {
+      map.set(normalizeSymbol(String(quote.symbol)), quote);
     });
     return map;
-  }, []);
+  }, [quotes]);
 
-  const ranked = useMemo(
+  const companiesWithQuotes = useMemo(
     () =>
-      quotes
-        .filter((quote) => quote.changePercent != null)
-        .sort((a, b) => Number(b.changePercent) - Number(a.changePercent)),
-    [quotes]
+      INDIA_MARKET_UNIVERSE.map((company) => ({
+        company,
+        quote: quoteBySymbol.get(normalizeSymbol(company.providerSymbol)),
+      })),
+    [quoteBySymbol]
   );
-  const gainers = ranked.filter((quote) => Number(quote.changePercent) > 0);
-  const decliners = [...ranked]
-    .filter((quote) => Number(quote.changePercent) < 0)
-    .sort((a, b) => Number(a.changePercent) - Number(b.changePercent));
 
-  const provider = quotes[0]?.providerName || "Connected market-data provider";
+  const allCompanies = useMemo(
+    () =>
+      [...companiesWithQuotes].sort((a, b) => {
+        const aChange = a.quote ? Number(a.quote.changePercent) : Number.NEGATIVE_INFINITY;
+        const bChange = b.quote ? Number(b.quote.changePercent) : Number.NEGATIVE_INFINITY;
+        return bChange - aChange;
+      }),
+    [companiesWithQuotes]
+  );
+
+  const gainers = allCompanies.filter(
+    ({ quote }) => quote && Number(quote.changePercent) > 0
+  );
+  const decliners = allCompanies.filter(
+    ({ quote }) => quote && Number(quote.changePercent) < 0
+  );
+
+  const provider =
+    quotes[0]?.providerName || "Connected market-data provider";
   const providerStamp =
     quotes.map((quote) => quote.providerTimestamp).filter(Boolean).sort().at(-1) ||
     quotes.map((quote) => quote.retrievedAt).filter(Boolean).sort().at(-1) ||
@@ -115,8 +135,7 @@ const IndiaMarketPulse: React.FC = () => {
 
   const formatChange = (quote: NormalizedMarketQuote) => {
     const value = Number(quote.change);
-    const sign = value >= 0 ? "+" : "";
-    return `${sign}₹${Math.abs(value).toLocaleString("en-IN", {
+    return `${value >= 0 ? "+" : "-"}₹${Math.abs(value).toLocaleString("en-IN", {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     })}`;
@@ -129,108 +148,70 @@ const IndiaMarketPulse: React.FC = () => {
 
   const freshnessLabel = (quote: NormalizedMarketQuote) => {
     if (quote.freshness === "delayed") return "Delayed";
-    if (quote.freshness === "real_time") return "Verified provider timestamp";
-    if (quote.freshness === "stale") return "Stale";
+    if (quote.freshness === "real_time") return "Real-time provider quote";
     if (quote.freshness === "end_of_day") return "End-of-day reference";
     return "Available";
   };
 
-  const Row = ({ quote }: { quote: NormalizedMarketQuote }) => {
-    const company = companies.get(String(quote.symbol).toUpperCase());
-    if (!company) return null;
-
-    const changePercent = Number(quote.changePercent);
-    const isUp = changePercent > 0;
-    const movementClass = isUp
-      ? "bg-[#F0FDF4] text-[#15803D]"
-      : "bg-[#FEF2F2] text-[#B91C1C]";
-    const direction = isUp ? "up" : "down";
-
-    return (
-      <li className="border-t border-[#E2E8F0] first:border-t-0">
-        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 px-4 py-3 sm:px-5">
+  const CompanyRow = ({
+    company,
+    quote,
+  }: {
+    company: (typeof INDIA_MARKET_UNIVERSE)[number];
+    quote?: NormalizedMarketQuote;
+  }) => {
+    if (!quote) {
+      return (
+        <li className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 border-t border-[#E2E8F0] px-4 py-3 first:border-t-0 sm:grid-cols-[minmax(0,1.6fr)_minmax(110px,.7fr)_minmax(190px,auto)] sm:px-5">
           <div className="min-w-0">
             <div className="truncate text-sm font-black text-[#0F172A]">
               {company.officialName}
             </div>
             <div className="mt-0.5 text-[10px] font-semibold uppercase tracking-[.08em] text-[#64748B]">
-              {quote.symbol}
+              {company.providerSymbol}
             </div>
           </div>
-          <div className="flex items-center justify-end gap-3 text-right tabular-nums sm:gap-5">
-            <span className="font-black text-[#0F172A]">{formatPrice(quote)}</span>
-            <span
-              className={`inline-flex min-w-[116px] items-center justify-end gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-black ${movementClass}`}
-              aria-label={`${company.officialName}, ${direction} ${Math.abs(changePercent).toFixed(2)} percent today`}
-            >
-              <span aria-hidden="true">{isUp ? "↑" : "↓"}</span>
-              <span>{formatChange(quote)}</span>
-              <span>{formatPercent(quote)}</span>
-            </span>
-          </div>
-        </div>
-      </li>
-    );
-  };
+          <span className="hidden text-right text-xs font-bold text-[#94A3B8] sm:block">
+            —
+          </span>
+          <span className="rounded-md bg-slate-50 px-2 py-1 text-[10px] font-bold text-[#64748B]">
+            Quote unavailable
+          </span>
+        </li>
+      );
+    }
 
-  const Column = ({
-    title,
-    items,
-    isGainer,
-  }: {
-    title: string;
-    items: NormalizedMarketQuote[];
-    isGainer: boolean;
-  }) => {
-    const tone = isGainer ? "text-[#15803D]" : "text-[#B91C1C]";
-    const direction = isGainer ? "↑" : "↓";
-    const label = title.toLowerCase();
+    const change = Number(quote.changePercent);
+    const isUp = change > 0;
+    const isFlat = change === 0;
+    const movementClass = isUp
+      ? "bg-[#F0FDF4] text-[#15803D]"
+      : isFlat
+        ? "bg-slate-50 text-[#64748B]"
+        : "bg-[#FEF2F2] text-[#B91C1C]";
 
     return (
-      <section
-        className="rounded-2xl border border-[#E2E8F0] bg-white shadow-sm"
-        aria-labelledby={`india-pulse-${isGainer ? "gainers" : "decliners"}`}
-      >
-        <div className="flex items-center gap-2 border-b border-[#E2E8F0] px-4 py-3 sm:px-5">
-          <span className={`text-base font-black ${tone}`} aria-hidden="true">
-            {direction}
-          </span>
-          <h3
-            id={`india-pulse-${isGainer ? "gainers" : "decliners"}`}
-            className="text-sm font-black text-[#0F172A]"
-          >
-            {title}
-          </h3>
-          <span className="ml-auto text-[9px] font-bold uppercase tracking-[.12em] text-[#94A3B8]">
-            {items.length}
-          </span>
-        </div>
-
-        {loading ? (
-          <ul aria-label={`Loading ${label}`} className="divide-y divide-[#E2E8F0]">
-            {Array.from({ length: 4 }).map((_, index) => (
-              <li key={index} className="px-4 py-3 sm:px-5">
-                <div className="flex items-center justify-between gap-4">
-                  <div className="h-4 w-32 animate-pulse rounded bg-slate-100" />
-                  <div className="h-4 w-52 animate-pulse rounded bg-slate-100" />
-                </div>
-              </li>
-            ))}
-          </ul>
-        ) : items.length > 0 ? (
-          <ul>
-            {items.map((quote) => (
-              <Row key={quote.symbol} quote={quote} />
-            ))}
-          </ul>
-        ) : (
-          <div className="px-5 py-7 text-xs text-[#64748B]">
-            {error
-              ? "Market quotes could not be refreshed right now."
-              : "Verified intraday ranking data is currently unavailable."}
+      <li className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-t border-[#E2E8F0] px-4 py-3 first:border-t-0 sm:grid-cols-[minmax(0,1.6fr)_minmax(110px,.7fr)_minmax(190px,auto)] sm:px-5">
+        <div className="min-w-0">
+          <div className="truncate text-sm font-black text-[#0F172A]">
+            {company.officialName}
           </div>
-        )}
-      </section>
+          <div className="mt-0.5 text-[10px] font-semibold uppercase tracking-[.08em] text-[#64748B]">
+            {quote.symbol}
+          </div>
+        </div>
+        <div className="text-right font-black tabular-nums text-[#0F172A]">
+          {formatPrice(quote)}
+        </div>
+        <div
+          className={`col-span-2 flex items-center justify-end gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-black tabular-nums sm:col-span-1 ${movementClass}`}
+          aria-label={`${company.officialName}, ${isUp ? "up" : isFlat ? "unchanged" : "down"} ${Math.abs(change).toFixed(2)} percent today`}
+        >
+          <span aria-hidden="true">{isUp ? "↑" : isFlat ? "→" : "↓"}</span>
+          <span>{formatChange(quote)}</span>
+          <span>{formatPercent(quote)}</span>
+        </div>
+      </li>
     );
   };
 
@@ -253,7 +234,7 @@ const IndiaMarketPulse: React.FC = () => {
               Today’s intraday movers
             </h2>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-[#475569]">
-              Provider-backed price snapshot for selected Indian listed companies. Prices and availability can vary by source.
+              Provider-backed price snapshot for every company configured in the India Market Pulse universe.
             </p>
           </div>
 
@@ -268,6 +249,9 @@ const IndiaMarketPulse: React.FC = () => {
                 Provider: {provider}
                 {quotes.length > 0 ? ` · ${freshnessLabel(quotes[0])}` : ""}
               </div>
+              <div>
+                {INDIA_MARKET_UNIVERSE.length} configured companies · {gainers.length} gainers · {decliners.length} decliners
+              </div>
             </div>
             <a
               href="/finance/markets/intraday"
@@ -279,28 +263,94 @@ const IndiaMarketPulse: React.FC = () => {
         </div>
 
         <div className="mt-8 grid gap-5 lg:grid-cols-2">
-          <Column title="Top gainers" items={gainers} isGainer />
-          <Column title="Top decliners" items={decliners} isGainer={false} />
+          <div className="rounded-2xl border border-[#E2E8F0] bg-white shadow-sm">
+            <div className="flex items-center gap-2 border-b border-[#E2E8F0] px-4 py-3 sm:px-5">
+              <span className="text-base font-black text-[#15803D]" aria-hidden="true">↑</span>
+              <h3 className="text-sm font-black text-[#0F172A]">Top gainers</h3>
+              <span className="ml-auto text-[9px] font-bold uppercase tracking-[.12em] text-[#94A3B8]">
+                {gainers.length}
+              </span>
+            </div>
+            <div className="px-4 py-3 text-xs text-[#475569] sm:px-5">
+              {gainers.length > 0
+                ? `All ${gainers.length} verified gainers are included in the full company list below.`
+                : "No verified gainers are currently available."}
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-[#E2E8F0] bg-white shadow-sm">
+            <div className="flex items-center gap-2 border-b border-[#E2E8F0] px-4 py-3 sm:px-5">
+              <span className="text-base font-black text-[#B91C1C]" aria-hidden="true">↓</span>
+              <h3 className="text-sm font-black text-[#0F172A]">Top decliners</h3>
+              <span className="ml-auto text-[9px] font-bold uppercase tracking-[.12em] text-[#94A3B8]">
+                {decliners.length}
+              </span>
+            </div>
+            <div className="px-4 py-3 text-xs text-[#475569] sm:px-5">
+              {decliners.length > 0
+                ? `All ${decliners.length} verified decliners are included in the full company list below.`
+                : "No verified decliners are currently available."}
+            </div>
+          </div>
         </div>
 
-        {!loading && !error && quotes.length === 0 && (
-          <p className="mt-4 text-[10px] font-semibold text-[#64748B]">
-            Intraday quotes are temporarily unavailable from the connected provider.
-          </p>
-        )}
+        <div className="mt-6 overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white shadow-sm">
+          <div className="flex items-center justify-between gap-4 border-b border-[#E2E8F0] bg-[#F8FAFC] px-4 py-3 sm:px-5">
+            <div>
+              <h3 className="text-base font-black text-[#0F172A]">
+                All Indian market companies
+              </h3>
+              <p className="mt-0.5 text-[10px] font-semibold text-[#64748B]">
+                Sorted by verified percentage movement. Every configured company remains visible.
+              </p>
+            </div>
+            <span className="rounded-full border border-[#CBD5E1] bg-white px-2.5 py-1 text-[10px] font-black text-[#0F172A]">
+              {INDIA_MARKET_UNIVERSE.length}
+            </span>
+          </div>
 
-        {!loading && error && (
-          <button
-            type="button"
-            onClick={() => void load()}
-            className="mt-4 inline-flex items-center rounded-lg border border-[#CBD5E1] bg-white px-3 py-2 text-[10px] font-black text-[#0F172A] hover:border-[#0F766E]"
-          >
-            Try again
-          </button>
+          <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 border-b border-[#E2E8F0] px-4 py-2 text-[9px] font-black uppercase tracking-[.12em] text-[#64748B] sm:grid-cols-[minmax(0,1.6fr)_minmax(110px,.7fr)_minmax(190px,auto)] sm:px-5">
+            <span>Company</span>
+            <span className="text-right">Price</span>
+            <span className="col-span-2 text-right sm:col-span-1">Today</span>
+          </div>
+
+          {loading ? (
+            <div className="divide-y divide-[#E2E8F0]">
+              {INDIA_MARKET_UNIVERSE.slice(0, 8).map((company) => (
+                <div key={company.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 px-4 py-3 sm:px-5">
+                  <div>
+                    <div className="h-4 w-44 animate-pulse rounded bg-slate-100" />
+                    <div className="mt-2 h-2.5 w-20 animate-pulse rounded bg-slate-100" />
+                  </div>
+                  <div className="h-5 w-40 animate-pulse rounded bg-slate-100" />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <ul>
+              {allCompanies.map(({ company, quote }) => (
+                <CompanyRow key={company.id} company={company} quote={quote} />
+              ))}
+            </ul>
+          )}
+        </div>
+
+        {error && (
+          <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-[#64748B]">
+            <span>Market quotes could not be refreshed right now.</span>
+            <button
+              type="button"
+              onClick={() => void load()}
+              className="inline-flex items-center rounded-lg border border-[#CBD5E1] bg-white px-3 py-2 text-[10px] font-black text-[#0F172A] hover:border-[#0F766E]"
+            >
+              Try again
+            </button>
+          </div>
         )}
 
         <div className="mt-4 text-[9px] leading-5 text-[#64748B]">
-          Showing every verified gain/decline returned for the configured Indian market universe. Freshness is shown only from the connected quote response; no “real-time” claim is added unless the provider path supplies real-time freshness.
+          The list contains every company configured in the existing India Market Pulse universe. Prices and movements are shown only when the connected provider returns a verified quote; unavailable rows remain visible rather than being replaced with fake values. A “real-time” label is used only when the provider response identifies real-time freshness.
         </div>
       </div>
     </section>

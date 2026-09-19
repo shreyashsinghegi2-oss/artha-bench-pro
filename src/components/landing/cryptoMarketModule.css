@@ -123,6 +123,6 @@
 .crypto-market-module::before,
 .crypto-market-module::after,
 .crypto-market-module *::before,
-.crypto-market-module *::after {
+ .crypto-market-module *::after {
   box-shadow: none;
 }

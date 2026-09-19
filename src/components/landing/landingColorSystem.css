@@ -275,3 +275,44 @@
 @media(prefers-reduced-motion:reduce){
   .landing-shell .research-node,.landing-shell .research-connector{animation:none !important;}
 }
+
+/* Final correction: pure white ArthaMind Intelligence Layer; no green glow. */
+.landing-shell .landing-mood-research{
+  background:#FFFFFF !important;
+  color:#080C09 !important;
+}
+.landing-shell .landing-mood-research::before{
+  display:none !important;
+  background:none !important;
+}
+.landing-shell .landing-mood-research h2{
+  color:#15803D !important;
+  font-weight:950 !important;
+  text-shadow:none !important;
+}
+.landing-shell .landing-mood-research .text-teal-700{
+  color:#15803D !important;
+  font-weight:900 !important;
+}
+.landing-shell .landing-mood-research p,
+.landing-shell .landing-mood-research small{
+  color:#475569 !important;
+}
+.landing-shell .research-secondary-note{
+  background:#FFFFFF !important;
+  border-color:#E5E7EB !important;
+  box-shadow:0 8px 24px rgba(15,23,42,.05) !important;
+}
+.landing-shell .research-node{
+  background:#FFFFFF !important;
+  border-color:#E5E7EB !important;
+  box-shadow:0 8px 24px rgba(15,23,42,.05) !important;
+  animation:arthaResearchFloat 5s ease-in-out infinite;
+}
+.landing-shell .research-node span{
+  color:#15803D !important;
+}
+.landing-shell .research-connector{
+  background:#86EFAC !important;
+  box-shadow:none !important;
+}

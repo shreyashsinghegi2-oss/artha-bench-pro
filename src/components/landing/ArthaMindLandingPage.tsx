@@ -11,7 +11,7 @@ import{CryptoMarketPreview}from'./CryptoMarketPreview';
 import{BusinessBrief,BusinessNewsTicker,normalizeBusinessNews}from'./BusinessBrief';
 import{InteractiveFeatureCard,MotionReveal,SectionMood}from'./LandingPrimitives';
 import{LanguageSelector}from'../LanguageSelector';
-import'./landingAnimations.css';import'./landingPolish.css';
+import'./landingAnimations.css';import'./landingPolish.css';import'./landingColorSystem.css';
 
 type Props={signedIn:boolean;onEnter:(destination?:NavigationDestination)=>void;onSignIn:()=>void};
 const features=[

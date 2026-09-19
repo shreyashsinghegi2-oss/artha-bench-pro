@@ -57,8 +57,8 @@ async function fetchRssFeed(feedUrl: string, sourceName: string, category = 'Bus
     if (!response.ok) return [];
     const xml = await response.text();
     const blocks = [
-      ...(xml.match(/<item\\b[\\s\\S]*?<\\/item>/gi) || []),
-      ...(xml.match(/<entry\\b[\\s\\S]*?<\\/entry>/gi) || []),
+      ...(xml.match(/<item\b[\s\S]*?<\/item>/gi) || []),
+      ...(xml.match(/<entry\b[\s\S]*?<\/entry>/gi) || []),
     ];
     const retrievedAt = new Date().toISOString();
 

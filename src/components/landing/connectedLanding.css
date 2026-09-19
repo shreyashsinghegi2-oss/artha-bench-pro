@@ -117,3 +117,37 @@
   .cl-right > .cl-primary.cl-small{padding:8px 9px}
   .cl-right > .cl-primary.cl-small:before{font-size:10px}
 }
+
+
+/* Animation restoration: original prototype motion translated to current cl-* components */
+@keyframes cl-as{from{opacity:0;transform:translateY(28px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes cl-dr{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
+@keyframes cl-sh{0%{opacity:.55;transform:translateY(5px)}100%{opacity:1;transform:translateY(0)}}
+@keyframes cl-rp{0%{box-shadow:0 0 0 0 currentColor;opacity:1}70%{box-shadow:0 0 0 8px transparent;opacity:.7}100%{box-shadow:0 0 0 0 transparent;opacity:1}}
+@keyframes cl-ty-caret{50%{opacity:0}}
+.cl-workspace-preview{animation:cl-as .9s cubic-bezier(.2,.75,.2,1) both}
+.cl-workspace-preview svg .cl-candle,.cl-workspace-preview svg rect[class*="candle"]{transform-box:fill-box;transform-origin:50% 100%;animation:cl-gr .7s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 70ms)}
+@keyframes cl-gr{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+.cl-workspace-preview svg .cl-ma,.cl-workspace-preview svg path[data-ma],.cl-workspace-preview svg path.ma-line{stroke-dasharray:1;stroke-dashoffset:1;animation:cl-dr 1.8s ease .35s forwards}
+.cl-answer.scan{position:relative;overflow:hidden}
+.cl-answer.scan::after{content:"";position:absolute;left:0;right:0;top:-2px;height:2px;pointer-events:none;opacity:0;background:currentColor;box-shadow:0 0 12px currentColor;animation:cl-scan 1.1s ease forwards}
+@keyframes cl-scan{0%{top:-2px;opacity:0}10%{opacity:.7}90%{opacity:.7}100%{top:100%;opacity:0}}
+.cl-inspect.pu,.cl-inspect[data-pulse="true"]{position:relative}
+.cl-inspect.pu::before,.cl-inspect[data-pulse="true"]::before{content:"";position:absolute;inset:-5px;border:1px solid currentColor;border-radius:inherit;animation:cl-rp 1.7s ease-out infinite;pointer-events:none}
+.cl-float,.cl-floating-badge{animation:cl-fd 4s ease-in-out infinite}
+.cl-float:nth-child(2),.cl-floating-badge:nth-child(2){animation-delay:1.1s}
+@keyframes cl-fd{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+.cl-evidence-dot,.cl-evidence .dot,.cl-evc .dot{animation:cl-rp 1.8s ease-out infinite}
+.cl-skeleton,.cl-sk{background:linear-gradient(90deg,transparent,rgba(255,255,255,.14),transparent);background-size:200% 100%;animation:cl-shimmer 1.4s linear infinite}
+@keyframes cl-shimmer{to{background-position:-200% 0}}
+.cl-steps.in::after,.cl-steps .st.in::after,.cl-st.in::after{width:100%;transition:width 2.4s ease}
+.cl-step-number,.cl-steps .sp .n{transition:color .45s ease;transition-delay:var(--d,0ms)}
+.cl-card{position:relative;overflow:hidden}
+.cl-card::before{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(220px circle at var(--mx,50%) var(--my,50%),rgba(255,255,255,.10),transparent 62%);opacity:0;transition:opacity .25s ease}
+.cl-card:hover::before{opacity:1}
+.cl-row{transition-delay:var(--row-delay,0ms)}
+.cl-module-row,.cl-row{animation:cl-sh .55s ease both}
+.cl-module-row[data-delay],.cl-row[data-delay]{animation-delay:var(--row-delay,0ms)}
+@media(prefers-reduced-motion:reduce){
+  .cl-workspace-preview,.cl-workspace-preview svg .cl-candle,.cl-workspace-preview svg rect[class*="candle"],.cl-workspace-preview svg .cl-ma,.cl-workspace-preview svg path[data-ma],.cl-workspace-preview svg path.ma-line,.cl-answer.scan::after,.cl-inspect.pu::before,.cl-inspect[data-pulse="true"]::before,.cl-float,.cl-floating-badge,.cl-evidence-dot,.cl-evidence .dot,.cl-evc .dot,.cl-skeleton,.cl-sk,.cl-module-row,.cl-row{animation:none!important;transition:none!important}
+}

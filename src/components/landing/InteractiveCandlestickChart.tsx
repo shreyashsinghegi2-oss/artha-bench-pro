@@ -4,7 +4,7 @@ import { CryptoCandle, CryptoInterval } from '../crypto/cryptoTypes';
 
 interface Props { candles: CryptoCandle[]; interval?: CryptoInterval; onResetReady?: (reset: () => void) => void; }
 
-const getDefaultVisibleBars = (interval: CryptoInterval = '5m', width: number) => { const targets: Record<CryptoInterval, number> = { '1m': 100, '5m': 85, '15m': 75, '1h': 65, '4h': 55, '1d': 45 }; const target = targets[interval] ?? 85; const responsive = width >= 1024 ? 1 : width >= 640 ? 0.8 : 0.62; return Math.max(width < 640 ? 32 : 40, Math.round(target * responsive)); };
+const getDefaultVisibleBars = (interval: CryptoInterval = '5m', width: number) => { const targets: Record<CryptoInterval, number> = { '1m': 120, '5m': 100, '15m': 90, '1h': 80, '4h': 70, '1d': 60 }; const target = targets[interval] ?? 85; const responsive = width >= 1024 ? 1 : width >= 640 ? 0.8 : 0.62; return Math.max(width < 640 ? 32 : 40, Math.round(target * responsive)); };
 
 export const InteractiveCandlestickChart: React.FC<Props> = ({ candles, interval = '5m', onResetReady }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);

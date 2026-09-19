@@ -1183,3 +1183,59 @@
   }
 }
 
+
+/* India Market Pulse — final white-surface and control contrast correction. */
+.landing-shell #india-market-pulse{
+  background:#FFFFFF!important;
+  color:#0F172A!important;
+  border-top:1px solid #E2E8F0!important;
+  border-bottom:1px solid #E2E8F0!important;
+}
+.landing-shell #india-market-pulse h2,
+.landing-shell #india-market-pulse h3,
+.landing-shell #india-market-pulse .text-\[\#0F172A\]{
+  color:#0F172A!important;
+}
+.landing-shell #india-market-pulse p,
+.landing-shell #india-market-pulse .text-\[\#475569\]{
+  color:#475569!important;
+}
+.landing-shell #india-market-pulse .text-\[\#64748B\]{
+  color:#64748B!important;
+}
+.landing-shell #india-market-pulse .bg-white{
+  background:#FFFFFF!important;
+}
+.landing-shell #india-market-pulse .border-\[\#E2E8F0\]{
+  border-color:#E2E8F0!important;
+}
+.landing-shell #india-market-pulse a{
+  color:#0F172A!important;
+  background:#FFFFFF!important;
+  border-color:#CBD5E1!important;
+}
+.landing-shell #india-market-pulse a:hover{
+  color:#0F172A!important;
+  background:#F8FAFC!important;
+  border-color:#0F766E!important;
+}
+.landing-shell #india-market-pulse .text-\[\#15803D\]{
+  color:#15803D!important;
+}
+.landing-shell #india-market-pulse .text-\[\#B91C1C\]{
+  color:#B91C1C!important;
+}
+.landing-shell #india-market-pulse .bg-\[\#F0FDF4\]{
+  background:#F0FDF4!important;
+}
+.landing-shell #india-market-pulse .bg-\[\#FEF2F2\]{
+  background:#FEF2F2!important;
+}
+/* Dark-surface buttons always use light text; light-surface buttons use dark text. */
+.landing-shell .landing-mood-hero .landing-button{
+  color:#FFFFFF!important;
+}
+.landing-shell #capabilities .landing-button,
+.landing-shell #trust .landing-button{
+  color:#0F172A!important;
+}

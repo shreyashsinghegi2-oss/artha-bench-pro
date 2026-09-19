@@ -11,18 +11,21 @@ export const InteractiveCandlestickChart: React.FC<Props> = ({ candles, interval
   const chartRef = useRef<IChartApi | null>(null);
   const seriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
   const priceLineRef = useRef<ReturnType<ISeriesApi<'Candlestick'>['createPriceLine']> | null>(null);
-  const hasInitialViewRef = useRef(false);\n  const candlesRef = useRef<CryptoCandle[]>([]);\n  const intervalRef = useRef<CryptoInterval>(interval);
+  const hasInitialViewRef = useRef(false);
+  const candlesRef = useRef<CryptoCandle[]>([]);
+  const intervalRef = useRef<CryptoInterval>(interval);
 
   const applyDefaultMediumView = () => {
     const chart = chartRef.current;
     const container = containerRef.current;
     const series = seriesRef.current;
-    if (!chart || !container || !series || !candles.length) return;
+    const data = candlesRef.current;
+    if (!chart || !container || !series || !data.length || container.clientWidth <= 0 || container.clientHeight <= 0) return;
 
-    const width = container.clientWidth || 1024;
-    const visibleBars = Math.min(getDefaultVisibleBars(width), candles.length);
-    const from = Math.max(0, candles.length - visibleBars);
-    const to = candles.length - 1;
+    const width = container.clientWidth;
+    const visibleBars = Math.min(getDefaultVisibleBars(intervalRef.current, width), data.length);
+    const from = Math.max(0, data.length - visibleBars);
+    const to = data.length - 1;
 
     chart.timeScale().setVisibleLogicalRange({ from, to });
     series.priceScale().applyOptions({
@@ -80,6 +83,10 @@ export const InteractiveCandlestickChart: React.FC<Props> = ({ candles, interval
     const resizeObserver = new ResizeObserver(() => {
       if (container.isConnected) {
         chart.applyOptions({ width: container.clientWidth || 0 });
+        if (!hasInitialViewRef.current && container.clientWidth > 0 && container.clientHeight > 0 && candlesRef.current.length) {
+          applyDefaultMediumView();
+          hasInitialViewRef.current = true;
+        }
       }
     });
     resizeObserver.observe(container);
@@ -97,6 +104,8 @@ export const InteractiveCandlestickChart: React.FC<Props> = ({ candles, interval
     const chart = chartRef.current;
     const series = seriesRef.current;
     if (!chart || !series || !candles.length) return;
+    candlesRef.current = candles;
+    intervalRef.current = interval;
 
     series.setData(candles.map((candle) => ({
       time: Math.floor(candle.openTime / 1000) as Time,
@@ -114,7 +123,7 @@ export const InteractiveCandlestickChart: React.FC<Props> = ({ candles, interval
 
     // Apply the default range only once after the historical dataset first loads.
     // Subsequent live OHLC updates preserve the user's zoom and pan.
-    if (!hasInitialViewRef.current) {
+    if (!hasInitialViewRef.current && containerRef.current?.clientWidth && containerRef.current?.clientHeight) {
       applyDefaultMediumView();
       hasInitialViewRef.current = true;
     }

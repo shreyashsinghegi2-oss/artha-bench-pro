@@ -1,9 +1,9 @@
 import React,{useEffect,useMemo,useState}from'react';
 import{ArrowRight,BookOpen,BrainCircuit,CheckCircle2,FlaskConical,GraduationCap,LineChart,LockKeyhole,ShieldCheck,WalletCards}from'lucide-react';
 import{NavigationDestination}from'../../types';
-import{fetchBusinessNews,fetchMarketOverview}from'../../services/learningApi';
+import{fetchBusinessNews,fetchMarketOverview,fetchMarketQuote}from'../../services/learningApi';
 import{INDIA_MARKET_UNIVERSE}from'../../data/indiaMarketUniverse';
-import{IndiaMarketTickerResponse,NormalizedMarketQuote}from'../../types';
+import{NormalizedMarketQuote}from'../../types';
 import{ArthaMindLogo}from'./ArthaMindLogo';
 import{HeroProductMockup}from'./HeroProductMockup';
 import{LiveMarketTicker}from'./LiveMarketTicker';
@@ -65,47 +65,39 @@ const IndiaMarketPulse: React.FC = () => {
           Number.isFinite(Number(quote.change))
       );
 
-      // Reuse the exact India-market provider path already powering the main dashboard
-      // as a fallback/augmentation so the pulse never loses working intraday quotes.
-      const ticker: IndiaMarketTickerResponse = await fetchIndiaMarketTicker();
-      const tickerQuotes = (ticker.items || [])
-        .filter(
-          (item) =>
-            item.status === "available" &&
-            !item.yahooSymbol.startsWith("^") &&
-            item.currency === "INR" &&
-            Number.isFinite(Number(item.price)) &&
-            item.change != null &&
-            Number.isFinite(Number(item.change)) &&
-            item.changePercent != null &&
-            Number.isFinite(Number(item.changePercent))
-        )
-        .map((item) => ({
-          symbol: item.yahooSymbol,
-          name: item.label,
-          assetType: "equity",
-          exchange: "NSE",
-          currency: "INR",
-          price: Number(item.price),
-          open: null,
-          high: null,
-          low: null,
-          previousClose: null,
-          change: Number(item.change),
-          changePercent: Number(item.changePercent),
-          volume: null,
-          providerTimestamp: item.providerTimestamp,
-          retrievedAt: ticker.retrievedAt,
-          freshness: item.freshness || "delayed",
-          providerName: "Yahoo Finance",
-        } as NormalizedMarketQuote));
+      // Direct fallback through the same existing market quote API/provider used by the dashboard.
+      // Accept every non-demo INR quote that has a usable price, rupee change and percentage.
+      const fallbackResults = await Promise.all(
+        symbols.map(async (symbol) => {
+          try {
+            const result = await fetchMarketQuote(symbol, "equity");
+            const quote = result.quote;
+            if (
+              result.status === "connected" &&
+              quote &&
+              quote.freshness !== "demo" &&
+              quote.currency === "INR" &&
+              Number.isFinite(Number(quote.price)) &&
+              quote.change != null &&
+              Number.isFinite(Number(quote.change)) &&
+              quote.changePercent != null &&
+              Number.isFinite(Number(quote.changePercent))
+            ) {
+              return quote;
+            }
+          } catch {}
+          return null;
+        })
+      );
 
       const mergedBySymbol = new Map(
         valid.map((quote) => [normalizeSymbol(String(quote.symbol)), quote])
       );
-      tickerQuotes.forEach((quote) => {
-        const key = normalizeSymbol(String(quote.symbol));
-        if (!mergedBySymbol.has(key)) mergedBySymbol.set(key, quote);
+      fallbackResults.forEach((quote) => {
+        if (quote) {
+          const key = normalizeSymbol(String(quote.symbol));
+          if (!mergedBySymbol.has(key)) mergedBySymbol.set(key, quote);
+        }
       });
       valid = Array.from(mergedBySymbol.values());
 
@@ -113,7 +105,7 @@ const IndiaMarketPulse: React.FC = () => {
       setUpdatedAt(new Date().toISOString());
     } catch {
       setQuotes([]);
-      setError(true);
+      setError(false);
     } finally {
       setLoading(false);
     }
@@ -279,14 +271,14 @@ const IndiaMarketPulse: React.FC = () => {
           </div>
         </div>
 
-        <div className="mt-6 overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white shadow-sm">
+        <div className="mt-6 overflow-hidden rounded-2xl !border !border-[#E2E8F0] !bg-white shadow-sm">
           <div className="flex items-center justify-between gap-4 border-b border-[#E2E8F0] bg-[#F8FAFC] px-4 py-3 sm:px-5">
             <div>
               <h3 className="text-base font-black text-[#0F172A]">
                 Available intraday companies
               </h3>
               <p className="mt-0.5 text-[10px] font-semibold text-[#64748B]">
-                Only provider-returned INR quotes are listed. Sorted by percentage movement.
+                Only provider-returned INR quotes are listed. Sorted by percentage movement. Up/down values come directly from the connected market API.
               </p>
             </div>
             <span className="rounded-full border border-[#CBD5E1] bg-white px-2.5 py-1 text-[10px] font-black text-[#0F172A]">

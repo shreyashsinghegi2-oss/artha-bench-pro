@@ -1,0 +1,128 @@
+/* Crypto market module — scoped contrast/control visibility only. */
+.crypto-market-module,
+.crypto-market-module * {
+  opacity: 1;
+  visibility: visible;
+  mix-blend-mode: normal;
+}
+
+.crypto-market-module {
+  background: #050505 !important;
+  color: #CBD5E1 !important;
+}
+
+.crypto-market-module > div,
+.crypto-market-module .crypto-chart-surface {
+  background: #0B0B0C !important;
+  border-color: #262626 !important;
+}
+
+.crypto-market-module :is(h1,h2,h3,h4,h5,h6) { color: #FFFFFF !important; }
+.crypto-market-module :is(p,span,label,small,strong,em,li,dt,dd) { color: #CBD5E1 !important; }
+.crypto-market-module :is(a) { color: #BFDBFE !important; }
+.crypto-market-module :is(svg) { color: #CBD5E1 !important; }
+
+.crypto-market-module .crypto-control,
+.crypto-market-module select.crypto-control,
+.crypto-market-module button.crypto-control,
+.crypto-market-module .crypto-control span,
+.crypto-market-module .crypto-control svg {
+  background-color: #FFFFFF !important;
+  color: #111827 !important;
+  border-color: #D1D5DB !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  min-height: 38px;
+  border-radius: 8px;
+  font-weight: 600;
+  mix-blend-mode: normal !important;
+}
+
+.crypto-market-module .crypto-control svg {
+  background: transparent !important;
+}
+
+.crypto-market-module .crypto-control:hover {
+  background-color: #EFF6FF !important;
+  color: #111827 !important;
+  border-color: #2563EB !important;
+}
+
+.crypto-market-module .crypto-control:focus-visible {
+  background-color: #FFFFFF !important;
+  color: #111827 !important;
+  outline: 2px solid #60A5FA !important;
+  outline-offset: 2px !important;
+}
+
+.crypto-market-module .crypto-control:disabled {
+  background-color: #F9FAFB !important;
+  color: #6B7280 !important;
+  opacity: .85 !important;
+}
+
+.crypto-market-module select.crypto-control {
+  appearance: auto !important;
+  -webkit-appearance: auto !important;
+  background-color: #FFFFFF !important;
+  color: #111827 !important;
+}
+
+.crypto-market-module select.crypto-control option {
+  background-color: #FFFFFF !important;
+  color: #111827 !important;
+}
+
+.crypto-market-module .crypto-timeframe[aria-pressed="false"] {
+  background-color: #FFFFFF !important;
+  color: #111827 !important;
+  border: 1px solid #D1D5DB !important;
+}
+
+.crypto-market-module .crypto-timeframe[aria-pressed="true"] {
+  background-color: #F3F4F6 !important;
+  color: #111827 !important;
+  border: 2px solid #2563EB !important;
+}
+
+.crypto-market-module .crypto-timeframe[aria-pressed="true"] :is(span,svg) {
+  color: #111827 !important;
+  background: transparent !important;
+}
+
+.crypto-market-module .crypto-timeframe[aria-pressed="false"]:hover {
+  background-color: #EFF6FF !important;
+  color: #111827 !important;
+  border-color: #2563EB !important;
+}
+
+.crypto-market-module .crypto-timeframe[aria-pressed="true"]:hover {
+  background-color: #E5E7EB !important;
+  color: #111827 !important;
+}
+
+.crypto-market-module .crypto-dashboard-cta,
+.crypto-market-module .crypto-dashboard-cta :is(span,svg) {
+  background-color: #FFFFFF !important;
+  color: #111827 !important;
+  border-color: #D1D5DB !important;
+}
+
+.crypto-market-module .crypto-dashboard-cta:hover {
+  background-color: #EFF6FF !important;
+  color: #111827 !important;
+  border-color: #2563EB !important;
+}
+
+.crypto-market-module .crypto-status-positive { color: #4ADE80 !important; }
+.crypto-market-module .crypto-status-negative { color: #F87171 !important; }
+.crypto-market-module .crypto-eyebrow { color: #E5E7EB !important; }
+.crypto-market-module .crypto-metadata { color: #94A3B8 !important; }
+.crypto-market-module .crypto-helper { color: #CBD5E1 !important; }
+
+.crypto-market-module::before,
+.crypto-market-module::after,
+.crypto-market-module *::before,
+.crypto-market-module *::after {
+  box-shadow: none;
+}

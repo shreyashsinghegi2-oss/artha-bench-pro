@@ -33,7 +33,279 @@ export const ArthaMindLandingPage:React.FC<Props>=({signedIn,onEnter,onSignIn})=
 <section id="capabilities"><FeatureSection mood="reliability" eyebrow="AI Reliability Lab" title="Compare answers without pretending confidence equals correctness." feature={features[0]} delay={0}/><FeatureSection mood="learning" eyebrow="Financial Learning" title="Build understanding with calm progress, not gain-chasing visuals." feature={features[1]} delay={60}/><FeatureSection mood="markets" eyebrow="Markets & Crypto" title="Finance-native market research with honest source states." feature={features[2]} delay={80}/><FeatureSection mood="finance" eyebrow="Personal Finance" title="Income, expenses, budgets, reports and EMIs connected under one workspace." feature={features[3]} delay={80}/><FeatureSection mood="reports" eyebrow="Evidence & methodology" title="Reports and methodology make the basis easier to inspect." feature={features[5]} delay={80}/></section>
 <SectionMood id="trust" mood="trust" className="border-y border-teal-100"><div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8"><MotionReveal><div className="grid gap-8 lg:grid-cols-[.8fr_1.2fr]"><div><ShieldCheck className="h-8 w-8 text-[#0F766E]"/><div className="mt-4 text-[10px] font-black uppercase tracking-[.15em] text-[#0F766E]">Trust & privacy</div><h2 className="mt-2 text-3xl font-black">Personalization should be a switch, not a surprise.</h2><p className="mt-3 text-sm leading-7 text-slate-600">Public context and your private finance records are different data categories. ArthaMind only receives personal categories you enable.</p><a href="/trust" className="landing-link mt-5 inline-flex items-center gap-1 text-sm font-black text-[#0F766E]">Open Trust Centre<ArrowRight className="h-4 w-4"/></a></div><div className="grid gap-3 sm:grid-cols-2"><Trust title="User-scoped workspace" text="Signed-in cloud records remain associated with the authenticated user and existing access policies."/><Trust title="Context by category" text="Income, expenses, budgets, EMIs, goals and other supported categories can be controlled independently."/><Trust title="No brokerage layer" text="Artha Bench does not execute trades, approve loans or present generated text as guaranteed advice."/><Trust title="Visible limitations" text="Source failures, unavailable rate references and incomplete personal data are stated instead of filled with fake values."/></div></div></MotionReveal></div></SectionMood>
 </main><footer className="bg-[#172033] text-slate-300"><div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 sm:px-6 md:grid-cols-[1fr_auto] lg:px-8"><div className="flex items-start gap-3"><ArthaMindLogo className="h-9 w-9" compact/><div><div className="text-sm font-black text-white">ArthaMind AI × Artha Bench Pro</div><p className="mt-1 max-w-xl text-xs leading-5 text-slate-400">India-focused financial intelligence, education and AI reliability. Educational/research use only—not investment, tax, legal or lending advice.</p></div></div><nav className="flex flex-wrap gap-x-5 gap-y-2 text-xs font-semibold"><a href="/about">About</a><a href="/trust">Trust Centre</a><a href="/methodology">Methodology</a><a href="/roadmap">Roadmap</a><a href="/support">Support</a><a href="/changelog">What’s new</a><a href="/access">Beta access</a></nav></div></footer></div>};
-const IndiaMarketPulse:React.FC=()=>{const[quotes,setQuotes]=useState<NormalizedMarketQuote[]>([]);const[loading,setLoading]=useState(true);const[error,setError]=useState(false);const[updatedAt,setUpdatedAt]=useState<string|null>(null);const load=async()=>{setLoading(true);setError(false);try{const symbols=INDIA_MARKET_UNIVERSE.map(company=>company.providerSymbol);const received=(await Promise.all(Array.from({length:Math.ceil(symbols.length/20)},(_,index)=>fetchMarketOverview(symbols.slice(index*20,index*20+20))))).flat();const valid=received.filter(q=>q&&q.freshness!=='demo'&&q.freshness!=='stale'&&q.currency==='INR'&&Number.isFinite(Number(q.price))&&q.changePercent!=null&&Number.isFinite(Number(q.changePercent))&&q.change!=null&&Number.isFinite(Number(q.change)));setQuotes(valid);setUpdatedAt(new Date().toISOString());}catch{setQuotes([]);setError(true)}finally{setLoading(false)}};useEffect(()=>{void load();const timer=window.setInterval(()=>void load(),60000);return()=>window.clearInterval(timer)},[]);const companies=useMemo(()=>{const map=new Map<string,(typeof INDIA_MARKET_UNIVERSE)[number]>();INDIA_MARKET_UNIVERSE.forEach(company=>{const symbol=company.providerSymbol.toUpperCase();map.set(symbol,company);map.set(symbol.replace(/\.(NS|BO)$/,''),company)});return map},[]);const ranked=useMemo(()=>quotes.filter(q=>q.changePercent!=null).sort((a,b)=>Number(b.changePercent)-Number(a.changePercent)),[quotes]);const gainers=ranked.filter(q=>Number(q.changePercent)>0);const decliners=[...ranked].filter(q=>Number(q.changePercent)<0).sort((a,b)=>Number(a.changePercent)-Number(b.changePercent));const provider=quotes[0]?.providerName||'Connected market-data provider';const stamp=quotes.map(q=>q.providerTimestamp).filter(Boolean).sort().at(-1)||quotes.map(q=>q.retrievedAt).filter(Boolean).sort().at(-1)||updatedAt;const formatPrice=(q:NormalizedMarketQuote)=>new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR',minimumFractionDigits:2,maximumFractionDigits:2}).format(Number(q.price));const formatChange=(q:NormalizedMarketQuote)=>`${Number(q.change)>=0?'+':''}₹${Math.abs(Number(q.change)).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})}`;const formatPct=(q:NormalizedMarketQuote)=>`${Number(q.changePercent)>=0?'+':''}${Number(q.changePercent).toFixed(2)}%`;const freshness=(q:NormalizedMarketQuote)=>q.freshness==='delayed'?'Delayed':q.freshness==='real_time'?'Verified provider timestamp':q.freshness==='stale'?'Stale':q.freshness==='end_of_day'?'End-of-day reference':'Available';const Row=({q}: {q:NormalizedMarketQuote})=>{const company=companies.get(String(q.symbol).toUpperCase());if(!company)return null;const up=Number(q.changePercent)>0;return <li className="border-t border-[#E2E8F0] first:border-t-0"><div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 px-4 py-3 sm:px-5"><div className="min-w-0"><div className="truncate text-sm font-black text-[#0F172A]">{company.officialName}</div><div className="mt-0.5 text-[10px] font-semibold uppercase tracking-[.08em] text-[#64748B]">{q.symbol}</div></div><div className="flex items-center justify-end gap-3 text-right tabular-nums sm:gap-5"><span className="font-black text-[#0F172A]">{formatPrice(q)}</span><span className={`inline-flex min-w-[116px] items-center justify-end gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-black ${up?'bg-[#F0FDF4] text-[#15803D]':'bg-[#FEF2F2] text-[#B91C1C]'}`} aria-label={`${company.officialName}, ${up?'up':'down'} ${Math.abs(Number(q.changePercent)).toFixed(2)} percent today`}><span aria-hidden="true">{up?'↑':'↓'}</span><span>{formatChange(q)}</span><span>{formatPct(q)}</span></span></div></div></li>};const Column=({title,items,up}:{title:string;items:NormalizedMarketQuote[];up:boolean})=><section className="rounded-2xl border border-[#E2E8F0] bg-white shadow-sm" aria-labelledby={`india-pulse-${up?'gainers':'decliners'}`}><div className="flex items-center gap-2 border-b border-[#E2E8F0] px-4 py-3 sm:px-5"><span className={`text-base font-black ${up?'text-[#15803D]':'text-[#B91C1C]'}`} aria-hidden="true">{up?'↑':'↓'}</span><h3 id={`india-pulse-${up?'gainers':'decliners'}`} className="text-sm font-black text-[#0F172A]">{title}</h3><span className="ml-auto text-[9px] font-bold uppercase tracking-[.12em] text-[#94A3B8]">{items.length</span></div>{loading?<ul aria-label={`Loading ${title.toLowerCase()}`} className="divide-y divide-[#E2E8F0]">{Array.from({length:4}).map((_,i)=><li key={i} className="px-4 py-3 sm:px-5"><div className="flex items-center justify-between gap-4"><div className="h-4 w-32 animate-pulse rounded bg-slate-100"/><div className="h-4 w-52 animate-pulse rounded bg-slate-100"/></div></li>)}</ul>:items.length?<ul>{items.map(q=><Row key={q.symbol} q={q}/>)}</ul>:<div className="px-5 py-7 text-xs text-[#64748B]">{error?'Market quotes could not be refreshed right now.':'Verified intraday ranking data is currently unavailable.'}</div>}</section>;return <section id="india-market-pulse" className="border-y border-[#E2E8F0] bg-white" aria-labelledby="india-market-pulse-title"><div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8"><div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between"><div><div className="text-[10px] font-black uppercase tracking-[.18em] text-[#0F766E]">INDIA MARKET PULSE</div><h2 id="india-market-pulse-title" className="mt-2 text-3xl font-black tracking-[-.025em] text-[#0F172A] sm:text-4xl">Today’s intraday movers</h2><p className="mt-3 max-w-2xl text-sm leading-6 text-[#475569]">Provider-backed price snapshot for selected Indian listed companies. Prices and availability can vary by source.</p></div><div className="flex flex-col items-start gap-3 lg:items-end"><div className="text-right text-[10px] leading-5 text-[#64748B]"><div>{stamp?`Last updated: ${new Date(stamp).toLocaleString('en-IN')}`:'Last updated: unavailable'}</div><div>Provider: {provider}{quotes.length? ` · ${freshness(quotes[0])}`:''}</div></div><a href="/finance/markets/intraday" className="inline-flex items-center rounded-lg border border-[#CBD5E1] bg-white px-3.5 py-2 text-xs font-black text-[#0F172A] transition hover:border-[#0F766E] hover:bg-[#F8FAFC] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#60A5FA]">Open intraday markets →</a></div></div><div className="mt-8 grid gap-5 lg:grid-cols-2"><Column title="Top gainers" items={gainers} up/><Column title="Top decliners" items={decliners} up={false}/></div>{!loading&&quotes.length>0&&quotes.length<4&&<p className="mt-4 text-[10px] font-semibold text-[#64748B]">Additional verified intraday quotes are currently unavailable.</p>}{!loading&&!error&&!quotes.length&&<p className="mt-4 text-[10px] font-semibold text-[#64748B]">Intraday quotes are temporarily unavailable from the connected provider.</p>}{!loading&&error&&<button type="button" onClick={()=>void load()} className="mt-4 inline-flex items-center rounded-lg border border-[#CBD5E1] bg-white px-3 py-2 text-[10px] font-black text-[#0F172A] hover:border-[#0F766E]">Try again</button>}<div className="mt-4 text-[9px] leading-5 text-[#64748B]">Showing every verified gain/decline returned for the configured Indian market universe. Freshness is shown only from the connected quote response; no “real-time” claim is added unless the provider path supplies real-time freshness.</div></div></section>};
+const IndiaMarketPulse: React.FC = () => {
+  const [quotes, setQuotes] = useState<NormalizedMarketQuote[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [updatedAt, setUpdatedAt] = useState<string | null>(null);
+
+  const load = async () => {
+    setLoading(true);
+    setError(false);
+    try {
+      const symbols = INDIA_MARKET_UNIVERSE.map((company) => company.providerSymbol);
+      const chunks = Array.from(
+        { length: Math.ceil(symbols.length / 20) },
+        (_, index) => symbols.slice(index * 20, index * 20 + 20)
+      );
+      const received = (await Promise.all(chunks.map((chunk) => fetchMarketOverview(chunk)))).flat();
+      const valid = received.filter(
+        (quote) =>
+          quote &&
+          quote.freshness !== "demo" &&
+          quote.freshness !== "stale" &&
+          quote.currency === "INR" &&
+          Number.isFinite(Number(quote.price)) &&
+          quote.changePercent != null &&
+          Number.isFinite(Number(quote.changePercent)) &&
+          quote.change != null &&
+          Number.isFinite(Number(quote.change))
+      );
+      setQuotes(valid);
+      setUpdatedAt(new Date().toISOString());
+    } catch {
+      setQuotes([]);
+      setError(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void load();
+    const timer = window.setInterval(() => void load(), 60000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  const companies = useMemo(() => {
+    const map = new Map<string, (typeof INDIA_MARKET_UNIVERSE)[number]>();
+    INDIA_MARKET_UNIVERSE.forEach((company) => {
+      const symbol = company.providerSymbol.toUpperCase();
+      map.set(symbol, company);
+      map.set(symbol.replace(/\.(NS|BO)$/, ""), company);
+    });
+    return map;
+  }, []);
+
+  const ranked = useMemo(
+    () =>
+      quotes
+        .filter((quote) => quote.changePercent != null)
+        .sort((a, b) => Number(b.changePercent) - Number(a.changePercent)),
+    [quotes]
+  );
+  const gainers = ranked.filter((quote) => Number(quote.changePercent) > 0);
+  const decliners = [...ranked]
+    .filter((quote) => Number(quote.changePercent) < 0)
+    .sort((a, b) => Number(a.changePercent) - Number(b.changePercent));
+
+  const provider = quotes[0]?.providerName || "Connected market-data provider";
+  const providerStamp =
+    quotes.map((quote) => quote.providerTimestamp).filter(Boolean).sort().at(-1) ||
+    quotes.map((quote) => quote.retrievedAt).filter(Boolean).sort().at(-1) ||
+    updatedAt;
+
+  const formatPrice = (quote: NormalizedMarketQuote) =>
+    new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency: "INR",
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(Number(quote.price));
+
+  const formatChange = (quote: NormalizedMarketQuote) => {
+    const value = Number(quote.change);
+    const sign = value >= 0 ? "+" : "";
+    return `${sign}₹${Math.abs(value).toLocaleString("en-IN", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
+  };
+
+  const formatPercent = (quote: NormalizedMarketQuote) => {
+    const value = Number(quote.changePercent);
+    return `${value >= 0 ? "+" : ""}${value.toFixed(2)}%`;
+  };
+
+  const freshnessLabel = (quote: NormalizedMarketQuote) => {
+    if (quote.freshness === "delayed") return "Delayed";
+    if (quote.freshness === "real_time") return "Verified provider timestamp";
+    if (quote.freshness === "stale") return "Stale";
+    if (quote.freshness === "end_of_day") return "End-of-day reference";
+    return "Available";
+  };
+
+  const Row = ({ quote }: { quote: NormalizedMarketQuote }) => {
+    const company = companies.get(String(quote.symbol).toUpperCase());
+    if (!company) return null;
+
+    const changePercent = Number(quote.changePercent);
+    const isUp = changePercent > 0;
+    const movementClass = isUp
+      ? "bg-[#F0FDF4] text-[#15803D]"
+      : "bg-[#FEF2F2] text-[#B91C1C]";
+    const direction = isUp ? "up" : "down";
+
+    return (
+      <li className="border-t border-[#E2E8F0] first:border-t-0">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 px-4 py-3 sm:px-5">
+          <div className="min-w-0">
+            <div className="truncate text-sm font-black text-[#0F172A]">
+              {company.officialName}
+            </div>
+            <div className="mt-0.5 text-[10px] font-semibold uppercase tracking-[.08em] text-[#64748B]">
+              {quote.symbol}
+            </div>
+          </div>
+          <div className="flex items-center justify-end gap-3 text-right tabular-nums sm:gap-5">
+            <span className="font-black text-[#0F172A]">{formatPrice(quote)}</span>
+            <span
+              className={`inline-flex min-w-[116px] items-center justify-end gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-black ${movementClass}`}
+              aria-label={`${company.officialName}, ${direction} ${Math.abs(changePercent).toFixed(2)} percent today`}
+            >
+              <span aria-hidden="true">{isUp ? "↑" : "↓"}</span>
+              <span>{formatChange(quote)}</span>
+              <span>{formatPercent(quote)}</span>
+            </span>
+          </div>
+        </div>
+      </li>
+    );
+  };
+
+  const Column = ({
+    title,
+    items,
+    isGainer,
+  }: {
+    title: string;
+    items: NormalizedMarketQuote[];
+    isGainer: boolean;
+  }) => {
+    const tone = isGainer ? "text-[#15803D]" : "text-[#B91C1C]";
+    const direction = isGainer ? "↑" : "↓";
+    const label = title.toLowerCase();
+
+    return (
+      <section
+        className="rounded-2xl border border-[#E2E8F0] bg-white shadow-sm"
+        aria-labelledby={`india-pulse-${isGainer ? "gainers" : "decliners"}`}
+      >
+        <div className="flex items-center gap-2 border-b border-[#E2E8F0] px-4 py-3 sm:px-5">
+          <span className={`text-base font-black ${tone}`} aria-hidden="true">
+            {direction}
+          </span>
+          <h3
+            id={`india-pulse-${isGainer ? "gainers" : "decliners"}`}
+            className="text-sm font-black text-[#0F172A]"
+          >
+            {title}
+          </h3>
+          <span className="ml-auto text-[9px] font-bold uppercase tracking-[.12em] text-[#94A3B8]">
+            {items.length}
+          </span>
+        </div>
+
+        {loading ? (
+          <ul aria-label={`Loading ${label}`} className="divide-y divide-[#E2E8F0]">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <li key={index} className="px-4 py-3 sm:px-5">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="h-4 w-32 animate-pulse rounded bg-slate-100" />
+                  <div className="h-4 w-52 animate-pulse rounded bg-slate-100" />
+                </div>
+              </li>
+            ))}
+          </ul>
+        ) : items.length > 0 ? (
+          <ul>
+            {items.map((quote) => (
+              <Row key={quote.symbol} quote={quote} />
+            ))}
+          </ul>
+        ) : (
+          <div className="px-5 py-7 text-xs text-[#64748B]">
+            {error
+              ? "Market quotes could not be refreshed right now."
+              : "Verified intraday ranking data is currently unavailable."}
+          </div>
+        )}
+      </section>
+    );
+  };
+
+  return (
+    <section
+      id="india-market-pulse"
+      className="border-y border-[#E2E8F0] bg-white"
+      aria-labelledby="india-market-pulse-title"
+    >
+      <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <div className="text-[10px] font-black uppercase tracking-[.18em] text-[#0F766E]">
+              INDIA MARKET PULSE
+            </div>
+            <h2
+              id="india-market-pulse-title"
+              className="mt-2 text-3xl font-black tracking-[-.025em] text-[#0F172A] sm:text-4xl"
+            >
+              Today’s intraday movers
+            </h2>
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-[#475569]">
+              Provider-backed price snapshot for selected Indian listed companies. Prices and availability can vary by source.
+            </p>
+          </div>
+
+          <div className="flex flex-col items-start gap-3 lg:items-end">
+            <div className="text-right text-[10px] leading-5 text-[#64748B]">
+              <div>
+                {providerStamp
+                  ? `Last updated: ${new Date(providerStamp).toLocaleString("en-IN")}`
+                  : "Last updated: unavailable"}
+              </div>
+              <div>
+                Provider: {provider}
+                {quotes.length > 0 ? ` · ${freshnessLabel(quotes[0])}` : ""}
+              </div>
+            </div>
+            <a
+              href="/finance/markets/intraday"
+              className="inline-flex items-center rounded-lg border border-[#CBD5E1] bg-white px-3.5 py-2 text-xs font-black text-[#0F172A] transition hover:border-[#0F766E] hover:bg-[#F8FAFC] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#60A5FA]"
+            >
+              Open intraday markets →
+            </a>
+          </div>
+        </div>
+
+        <div className="mt-8 grid gap-5 lg:grid-cols-2">
+          <Column title="Top gainers" items={gainers} isGainer />
+          <Column title="Top decliners" items={decliners} isGainer={false} />
+        </div>
+
+        {!loading && !error && quotes.length === 0 && (
+          <p className="mt-4 text-[10px] font-semibold text-[#64748B]">
+            Intraday quotes are temporarily unavailable from the connected provider.
+          </p>
+        )}
+
+        {!loading && error && (
+          <button
+            type="button"
+            onClick={() => void load()}
+            className="mt-4 inline-flex items-center rounded-lg border border-[#CBD5E1] bg-white px-3 py-2 text-[10px] font-black text-[#0F172A] hover:border-[#0F766E]"
+          >
+            Try again
+          </button>
+        )}
+
+        <div className="mt-4 text-[9px] leading-5 text-[#64748B]">
+          Showing every verified gain/decline returned for the configured Indian market universe. Freshness is shown only from the connected quote response; no “real-time” claim is added unless the provider path supplies real-time freshness.
+        </div>
+      </div>
+    </section>
+  );
+};
 
 function FeatureSection({mood,eyebrow,title,feature,delay}:{mood:'reliability'|'learning'|'markets'|'finance'|'reports',eyebrow:string,title:string,feature:typeof features[number],delay:number}){const Icon=feature.icon;return <SectionMood mood={mood} className="border-b border-slate-200/70"><div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8"><MotionReveal delay={delay}><div className="grid items-center gap-8 lg:grid-cols-[1fr_.8fr]"><div><div className="text-[10px] font-black uppercase tracking-[.15em] text-slate-600">{eyebrow}</div><h2 className="mt-2 max-w-3xl text-3xl font-black">{title}</h2><p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600">{feature.text}</p></div><InteractiveFeatureCard accent={feature.accent} className="bg-white p-5"><div className="flex items-center gap-3"><div className="rounded-xl bg-slate-50 p-3"><Icon className="h-5 w-5"/></div><div className="font-black">{feature.title}</div></div><div className="mt-5">{feature.visual}</div></InteractiveFeatureCard></div></MotionReveal></div></SectionMood>}
 const Trust=({title,text}:{title:string,text:string})=><div className="rounded-2xl border border-teal-100 bg-white p-4"><div className="text-sm font-black">{title}</div><p className="mt-1 text-xs leading-5 text-slate-600">{text}</p></div>;

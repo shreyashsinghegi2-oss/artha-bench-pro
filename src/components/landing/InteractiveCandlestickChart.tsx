@@ -41,17 +41,17 @@ export const InteractiveCandlestickChart: React.FC<Props> = ({ candles, interval
     const chart = createChart(container, {
       autoSize: true,
       height: 540,
-      layout: { background: { type: ColorType.Solid, color: '#050505' }, textColor: '#d1d5db' },
-      grid: { vertLines: { color: '#141414' }, horzLines: { color: '#141414' } },
+      layout: { background: { type: ColorType.Solid, color: '#111111' }, textColor: '#CBD5E1' },
+      grid: { vertLines: { color: '#262626' }, horzLines: { color: '#262626' } },
       crosshair: { mode: CrosshairMode.Normal, vertLine: { color: '#737373', labelBackgroundColor: '#171717' }, horzLine: { color: '#737373', labelBackgroundColor: '#171717' } },
-      rightPriceScale: { borderColor: '#2a2a2a', textColor: '#e5e7eb', autoScale: true, scaleMargins: { top: 0.12, bottom: 0.12 } },
+      rightPriceScale: { borderColor: '#262626', textColor: '#94A3B8', autoScale: true, scaleMargins: { top: 0.12, bottom: 0.12 } },
       timeScale: {
         timeVisible: true,
         secondsVisible: false,
         rightOffset: 4,
         barSpacing: 7,
         minBarSpacing: 3,
-        borderColor: '#2a2a2a',
+        borderColor: '#262626',
         rightBarStaysOnScroll: true,
         fixLeftEdge: false,
         fixRightEdge: false,
@@ -130,8 +130,8 @@ export const InteractiveCandlestickChart: React.FC<Props> = ({ candles, interval
   }, [candles]);
 
   return <div className="relative h-[300px] w-full sm:h-[420px] lg:h-[540px]" aria-label="Interactive crypto candlestick chart">
-    <div className="pointer-events-none absolute left-3 top-3 z-10 rounded-lg border border-white/10 bg-black/70 px-2.5 py-1.5 text-[9px] font-semibold text-white/45 backdrop-blur-sm">Scroll/pinch to zoom · Drag to pan</div>
+    <div className="pointer-events-none absolute left-3 top-3 z-10 rounded-lg border border-white/10 bg-black/70 px-2.5 py-1.5 text-[9px] font-semibold text-[#CBD5E1] bg-[#111111]">Scroll/pinch to zoom · Drag to pan</div>
     <div ref={containerRef} className="h-full w-full" />
-    <div className="pointer-events-none absolute bottom-2 left-3 z-10 text-[8px] font-semibold text-white/25">TradingView Lightweight Charts</div>
+    <div className="pointer-events-none absolute bottom-2 left-3 z-10 text-[8px] font-semibold text-[#94A3B8]">TradingView Lightweight Charts</div>
   </div>;
 };

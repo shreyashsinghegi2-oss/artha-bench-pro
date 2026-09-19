@@ -1239,3 +1239,32 @@
 .landing-shell #trust .landing-button{
   color:#0F172A!important;
 }
+
+/* Landing visual refinement: richer surfaces without changing component/data behavior. */
+.landing-shell #business-brief a:hover,
+.landing-shell #business-brief button:hover,
+.landing-shell .business-brief a:hover,
+.landing-shell .business-brief button:hover{
+  border-color:inherit !important;
+  outline:none !important;
+  box-shadow:none !important;
+}
+.landing-shell .crypto-market-module .crypto-text-control,
+.landing-shell .crypto-market-module .crypto-text-control select{
+  color:#FFFFFF !important;
+  border-color:transparent !important;
+  background:transparent !important;
+  box-shadow:none !important;
+}
+.landing-shell .crypto-market-module .crypto-timeframe{border-color:transparent !important;}
+.landing-shell .crypto-market-module .crypto-timeframe[aria-pressed="true"]{
+  background:#1F2937 !important;
+  color:#FFFFFF !important;
+}
+/* Soft product accents for existing landing surfaces only. */
+.landing-shell section:nth-of-type(2){
+  background:linear-gradient(135deg,#F8FAFC 0%,#FFFFFF 52%,#F5F3FF 100%);
+}
+.landing-shell section:nth-of-type(2) h2,
+.landing-shell section:nth-of-type(2) h3{color:#0F172A;}
+.landing-shell .landing-button:hover{transform:translateY(-1px);}

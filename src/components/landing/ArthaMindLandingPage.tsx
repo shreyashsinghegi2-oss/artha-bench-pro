@@ -66,41 +66,48 @@ const IndiaMarketPulse: React.FC = () => {
       );
 
       // Reuse the exact India-market provider path already powering the main dashboard
-      // when the configured company batch does not return usable intraday quotes.
-      if (!valid.length) {
-        const ticker: IndiaMarketTickerResponse = await fetchIndiaMarketTicker();
-        valid = (ticker.items || [])
-          .filter(
-            (item) =>
-              item.status === "available" &&
-              !item.yahooSymbol.startsWith("^") &&
-              item.currency === "INR" &&
-              Number.isFinite(Number(item.price)) &&
-              item.change != null &&
-              Number.isFinite(Number(item.change)) &&
-              item.changePercent != null &&
-              Number.isFinite(Number(item.changePercent))
-          )
-          .map((item) => ({
-            symbol: item.yahooSymbol,
-            name: item.label,
-            assetType: "equity",
-            exchange: "NSE",
-            currency: "INR",
-            price: Number(item.price),
-            open: null,
-            high: null,
-            low: null,
-            previousClose: null,
-            change: Number(item.change),
-            changePercent: Number(item.changePercent),
-            volume: null,
-            providerTimestamp: item.providerTimestamp,
-            retrievedAt: ticker.retrievedAt,
-            freshness: item.freshness || "delayed",
-            providerName: "Yahoo Finance",
-          }));
-      }
+      // as a fallback/augmentation so the pulse never loses working intraday quotes.
+      const ticker: IndiaMarketTickerResponse = await fetchIndiaMarketTicker();
+      const tickerQuotes = (ticker.items || [])
+        .filter(
+          (item) =>
+            item.status === "available" &&
+            !item.yahooSymbol.startsWith("^") &&
+            item.currency === "INR" &&
+            Number.isFinite(Number(item.price)) &&
+            item.change != null &&
+            Number.isFinite(Number(item.change)) &&
+            item.changePercent != null &&
+            Number.isFinite(Number(item.changePercent))
+        )
+        .map((item) => ({
+          symbol: item.yahooSymbol,
+          name: item.label,
+          assetType: "equity",
+          exchange: "NSE",
+          currency: "INR",
+          price: Number(item.price),
+          open: null,
+          high: null,
+          low: null,
+          previousClose: null,
+          change: Number(item.change),
+          changePercent: Number(item.changePercent),
+          volume: null,
+          providerTimestamp: item.providerTimestamp,
+          retrievedAt: ticker.retrievedAt,
+          freshness: item.freshness || "delayed",
+          providerName: "Yahoo Finance",
+        } as NormalizedMarketQuote));
+
+      const mergedBySymbol = new Map(
+        valid.map((quote) => [normalizeSymbol(String(quote.symbol)), quote])
+      );
+      tickerQuotes.forEach((quote) => {
+        const key = normalizeSymbol(String(quote.symbol));
+        if (!mergedBySymbol.has(key)) mergedBySymbol.set(key, quote);
+      });
+      valid = Array.from(mergedBySymbol.values());
 
       setQuotes(valid);
       setUpdatedAt(new Date().toISOString());

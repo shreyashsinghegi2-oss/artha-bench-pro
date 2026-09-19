@@ -102,6 +102,7 @@
   background:linear-gradient(135deg,var(--bg-surface),color-mix(in srgb,var(--bg-surface) 86%,var(--bg-subtle)));
   box-shadow:0 18px 45px -38px rgba(15,23,42,.32);
 }
+.dashboard-product-shell section.rounded-3xl,
 .dashboard-product-shell .dashboard-card{
   border-color:var(--border-subtle);
   background:var(--bg-surface);
@@ -112,9 +113,11 @@
   border-color:color-mix(in srgb,var(--interactive) 18%,var(--border-subtle));
   box-shadow:0 18px 38px -30px rgba(15,23,42,.42);
 }
+.dashboard-product-shell .dashboard-metric-grid > div,
 .dashboard-product-shell .dashboard-metric{
   min-height:116px;
 }
+.dashboard-product-shell .dashboard-metric-grid > div{border-radius:16px;}
 .dashboard-product-shell .dashboard-section-title{
   letter-spacing:-.02em;
 }

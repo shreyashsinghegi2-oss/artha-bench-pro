@@ -1,5 +1,5 @@
 import React from 'react';
-import { RotateCcw } from 'lucide-react';
+import { RotateCcw, ChevronDown, Search, SlidersHorizontal, CandlestickChart } from 'lucide-react';
 import { CRYPTO_INTERVALS, CRYPTO_SYMBOLS, CryptoInterval, CryptoSymbol } from '../crypto/cryptoTypes';
 
 const ASSET_NAMES: Record<CryptoSymbol, string> = {
@@ -39,44 +39,48 @@ export const CryptoAssetSelector: React.FC<Props> = ({
   onIntervalChange,
   onReset,
   resetDisabled = false,
-}) => (
-  <div className="flex flex-col gap-3 border-b border-[#262626] pb-4 sm:flex-row sm:items-center sm:justify-between">
-    <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-center">
-      <label className="sr-only" htmlFor="landing-crypto-asset">Crypto asset</label>
-      <select
-        id="landing-crypto-asset"
-        value={symbol}
-        onChange={(event) => onSymbolChange(event.target.value as CryptoSymbol)}
-        className="crypto-control crypto-text-control min-h-[32px] min-w-0 border-0 bg-transparent px-0 py-1 text-xs font-bold text-white outline-none focus:ring-2 focus:ring-[#60A5FA] sm:w-[180px]"
-      >
-        {CRYPTO_SYMBOLS.map((item) => (
-          <option key={item} value={item} className="bg-[#050505] text-white">{ASSET_NAMES[item]}</option>
-        ))}
-      </select>
-      <div className="flex min-w-0 gap-1 overflow-x-auto" role="tablist" aria-label="Crypto chart timeframe">
+}) => {
+  const [open, setOpen] = React.useState(false);
+  const [query, setQuery] = React.useState('');
+  const filtered = CRYPTO_SYMBOLS.filter((item) =>
+    ASSET_NAMES[item].toLowerCase().includes(query.toLowerCase()) || item.toLowerCase().includes(query.toLowerCase())
+  );
+
+  return (
+    <div className="crypto-toolbar" aria-label="Crypto chart controls">
+      <div className="crypto-asset-combobox">
+        <button type="button" className="crypto-asset-trigger" aria-haspopup="listbox" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
+          <span className="crypto-coin-mark" aria-hidden="true">₿</span>
+          <span className="crypto-asset-copy"><strong>{cryptoDisplayName(symbol)}</strong><small>{symbol}</small></span>
+          <ChevronDown className="crypto-chevron" size={15} aria-hidden="true" />
+        </button>
+        {open && (
+          <div className="crypto-asset-menu" role="listbox" aria-label="Select crypto asset">
+            <div className="crypto-search">
+              <Search size={14} aria-hidden="true" />
+              <input autoFocus value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search asset" aria-label="Search crypto asset" />
+            </div>
+            {filtered.map((item) => (
+              <button key={item} type="button" role="option" aria-selected={symbol === item} onClick={() => { onSymbolChange(item); setOpen(false); setQuery(''); }} className="crypto-asset-option">
+                <span>{ASSET_NAMES[item]}</span><small>{item}</small>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+      <div className="crypto-toolbar-divider" aria-hidden="true" />
+      <div className="crypto-timeframes" role="tablist" aria-label="Crypto chart timeframe">
         {CRYPTO_INTERVALS.map((item) => (
-          <button
-            key={item}
-            type="button"
-            role="tab"
-            aria-selected={interval === item} aria-pressed={interval === item}
-            onClick={() => onIntervalChange(item)}
-            className={`crypto-control crypto-timeframe shrink-0 min-h-[32px] rounded-md border-0 bg-transparent px-2 py-1 text-[12px] font-semibold leading-none text-white transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#60A5FA] focus-visible:ring-offset-2 focus-visible:ring-offset-[#050505] ${interval === item ? 'bg-[#1F2937] text-white' : 'text-white/90 hover:bg-[#111827] hover:text-white'} [&_svg]:text-white`}
-            aria-label={`${INTERVAL_LABELS[item]} timeframe for ${cryptoDisplayName(symbol)}`}
-          >
+          <button key={item} type="button" role="tab" aria-selected={interval === item} onClick={() => onIntervalChange(item)}
+            className={`crypto-timeframe ${interval === item ? 'is-active' : ''}`} aria-label={`${INTERVAL_LABELS[item]} timeframe`}>
             {INTERVAL_LABELS[item]}
           </button>
         ))}
       </div>
+      <div className="crypto-toolbar-divider" aria-hidden="true" />
+      <button type="button" className="crypto-tool-button" aria-label="Chart indicators" title="Indicators"><SlidersHorizontal size={15}/><span>Indicators</span></button>
+      <button type="button" className="crypto-tool-button" aria-label="Chart type: Candles" title="Candles"><CandlestickChart size={15}/><span>Candles</span></button>
+      <button type="button" onClick={onReset} disabled={resetDisabled} className="crypto-icon-button" aria-label="Reset chart view" title="Reset view"><RotateCcw size={16}/></button>
     </div>
-    <button
-      type="button"
-      onClick={onReset}
-      disabled={resetDisabled}
-      className="crypto-control crypto-text-control inline-flex min-h-[32px] shrink-0 items-center justify-center gap-1.5 rounded-md border-0 bg-transparent px-2 py-1 text-[12px] font-semibold leading-none text-white hover:bg-[#111827] hover:text-white disabled:cursor-not-allowed disabled:bg-transparent disabled:text-white/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#60A5FA] focus-visible:ring-offset-2 focus-visible:ring-offset-[#050505] [&_svg]:text-white"
-      aria-label="Reset crypto chart view" aria-disabled={resetDisabled}
-    >
-      <RotateCcw className="h-3.5 w-3.5" /> Reset view
-    </button>
-  </div>
-);
+  );
+};

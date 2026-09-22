@@ -8,17 +8,19 @@ export interface ArthaPilotHandoff { request:string; intent:ArthaPilotIntent; de
 export const ARTHA_PILOT_HANDOFF_KEY='arthabench_artha_pilot_handoff_v1';
 export const ARTHA_PILOT_RECENT_KEY='arthabench_artha_pilot_recent_v1';
 
-const patterns:Array<{intent:ArthaPilotIntent;destination:AppNavigationDestination;label:string;status:string;terms:RegExp}>= [
-  {intent:'calculation',destination:'emi-manager',label:'EMI Manager & calculator',status:'Applying the deterministic EMI formula',terms:/\b(emi|loan|interest rate|principal|tenure|compound interest|calculate my emi|calculate.*loan|calculation|formula)\b/i},
-  {intent:'verify',destination:'evaluation-lab',label:'Evaluation Lab',status:'Preparing a verified evaluation',terms:/\b(verify|verification|check this|check if|fact check|is this answer|claim|reliable|trustworthy|proof|decision receipt)\b/i},
-  {intent:'learning',destination:'tutor',label:'Financial Tutor',status:'Opening a learning session',terms:/\b(learn|explain|quiz|flashcard|flash cards|revision|revise|teach|lesson|study|practice)\b/i},
-  {intent:'future',destination:'financial-twin',label:'Ripple Twin',status:'Opening your future scenario workspace',terms:/\b(future|what if|what happens if|scenario|save every month|projection|projected|replay|change if)\b/i},
-  {intent:'market',destination:'crypto',label:'Crypto workspace',status:'Retrieving verified crypto data',terms:/\b(crypto|bitcoin|ethereum|btc|eth)\b/i},
-  {intent:'market',destination:'news',label:'Business News',status:'Retrieving verified business news',terms:/\b(business news|company news|latest news|news about|headlines)\b/i},
-  {intent:'market',destination:'economy',label:'Economic Data',status:'Retrieving verified economic data',terms:/\b(economic data|economy|inflation|gdp|interest rates|fred|world bank)\b/i},
-  {intent:'market',destination:'markets',label:'Market Data workspace',status:'Retrieving verified market data',terms:/\b(nifty|sensex|stock|share|market|forex|ticker|price moved|moved today|market data)\b/i},
-  {intent:'finance',destination:'budgeting',label:'Finance workspace',status:'Checking your budget context',terms:/\b(budget|income|expense|expenses|spending|salary|goal|saving|savings|emergency fund|cash flow|money plan|plan my money)\b/i},
-  {intent:'navigation',destination:'overview',label:'Global workspace search',status:'Finding the right workspace',terms:/\b(where|find|open|go to|navigate|continue|what should i complete first|next step|workspace|feature|search)\b/i},
+// Each pattern carries a weight: specific subjects (NIFTY, EMI, "what if") outrank generic verbs
+// ("explain", "open"), so "Explain why NIFTY moved" routes to markets rather than the tutor.
+const patterns:Array<{intent:ArthaPilotIntent;destination:AppNavigationDestination;label:string;status:string;terms:RegExp;weight:number}>= [
+  {intent:'calculation',destination:'emi-manager',label:'EMI Manager & calculator',status:'Applying the deterministic EMI formula',terms:/\b(emi|emis|loan|loans|interest rate|principal|tenure|compound interest|calculate my emi|calculate.*loan|calculation|formula|prepay|prepayment|foreclose)\b/gi,weight:3},
+  {intent:'verify',destination:'evaluation-lab',label:'Evaluation Lab',status:'Preparing a verified evaluation',terms:/\b(verify|verification|check this|check if|fact check|is this answer|claim|reliable|trustworthy|proof|decision receipt)\b/gi,weight:3},
+  {intent:'learning',destination:'tutor',label:'Financial Tutor',status:'Opening a learning session',terms:/\b(learn|explain|quiz|flashcard|flash cards|revision|revise|teach|lesson|study|practice|what is|meaning of)\b/gi,weight:1},
+  {intent:'future',destination:'financial-twin',label:'Ripple Twin',status:'Opening your future scenario workspace',terms:/\b(future|what if|what happens if|scenario|save every month|every month|per month|projection|projected|replay|changes? if|in \d+ years?)\b/gi,weight:3},
+  {intent:'market',destination:'crypto',label:'Crypto workspace',status:'Retrieving verified crypto data',terms:/\b(crypto|bitcoin|ethereum|btc|eth)\b/gi,weight:3},
+  {intent:'market',destination:'news',label:'Business News',status:'Retrieving verified business news',terms:/\b(news|business news|company news|latest news|news about|headlines)\b/gi,weight:3},
+  {intent:'market',destination:'economy',label:'Economic Data',status:'Retrieving verified economic data',terms:/\b(economic data|economy|inflation|gdp|interest rates|repo rate|fred|world bank)\b/gi,weight:3},
+  {intent:'market',destination:'markets',label:'Market Data workspace',status:'Retrieving verified market data',terms:/\b(nifty|sensex|stock|stocks|share|shares|market|markets|forex|ticker|price moved|moved today|market data)\b/gi,weight:3},
+  {intent:'finance',destination:'budgeting',label:'Finance workspace',status:'Checking your budget context',terms:/\b(budget|income|expense|expenses|spending|salary|goal|saving|savings|emergency fund|cash flow|money plan|plan my money|cfo)\b/gi,weight:2},
+  {intent:'navigation',destination:'overview',label:'Global workspace search',status:'Finding the right workspace',terms:/\b(where|find|open|go to|navigate|continue|what should i complete first|next step|workspace|feature|search)\b/gi,weight:0.5},
 ];
 
 export function readArthaPilotContext():ArthaPilotUserContext {
@@ -32,7 +34,9 @@ export function readArthaPilotContext():ArthaPilotUserContext {
 export function detectArthaPilotIntent(request:string):ArthaPilotRoute {
   const normalized=request.trim();
   if(!normalized)return {intent:'ambiguous',destination:null,workspaceLabel:'ArthaPilot',status:'Choose an action to begin',requiresPersonalContext:false,allowedContext:[],clarification:'What would you like to understand, plan, learn, or verify?'};
-  for(const pattern of patterns){if(pattern.terms.test(normalized)){const requiresPersonalContext=pattern.intent==='finance'||pattern.intent==='calculation'||pattern.intent==='future';const allowedContext=requiresPersonalContext?['income','expenses','budgets','emis','goals']:[];return {intent:pattern.intent,destination:pattern.destination,workspaceLabel:pattern.label,status:pattern.status,requiresPersonalContext,allowedContext};}}
+  let best:(typeof patterns)[number]|null=null;let bestScore=0;
+  for(const pattern of patterns){const hits=normalized.match(pattern.terms)?.length??0;const score=hits*pattern.weight;if(score>bestScore){best=pattern;bestScore=score;}}
+  if(best){const pattern=best;const requiresPersonalContext=pattern.intent==='finance'||pattern.intent==='calculation'||pattern.intent==='future';const allowedContext=requiresPersonalContext?['income','expenses','budgets','emis','goals']:[];return {intent:pattern.intent,destination:pattern.destination,workspaceLabel:pattern.label,status:pattern.status,requiresPersonalContext,allowedContext};}
   return {intent:'ambiguous',destination:null,workspaceLabel:'ArthaPilot',status:'Choose an available action',requiresPersonalContext:false,allowedContext:[],clarification:'Would you like to plan money, learn, verify an answer, explore markets, or model a future scenario?'};
 }
 

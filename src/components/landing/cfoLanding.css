@@ -1,0 +1,51 @@
+/* Landing AI CFO section: instant health check + live chat. */
+.cfo-land{position:relative;overflow:hidden;background:radial-gradient(900px 400px at 10% 0%,rgba(20,184,166,.08),transparent 70%),radial-gradient(700px 360px at 100% 100%,rgba(99,102,241,.07),transparent 70%),#fff}
+.cfo-land-grid{display:grid;grid-template-columns:minmax(0,.95fr) minmax(0,1.05fr);gap:22px;margin-top:34px;align-items:stretch}
+.cfo-chat-wrap{height:min(760px,calc(100vh - 110px));min-height:560px;display:flex;align-self:start;position:sticky;top:90px}
+.cfo-chat-wrap .cfo-thread{max-height:none}
+.cfo-chat-wrap .cfo-chat{flex:1}
+.cfo-check{padding:22px;display:flex;flex-direction:column;gap:16px;text-align:left}
+.cfo-check-head{display:flex;gap:12px;align-items:center}
+.cfo-check-head b{display:block;font-size:16px}
+.cfo-check-head small{display:block;color:var(--mut);font-size:12px}
+.cfo-check-icon{width:36px;height:36px;border-radius:11px;display:grid;place-items:center;color:#fff;background:linear-gradient(135deg,#0f7b6c,#14b8a6)}
+.cfo-fields{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.cfo-field{display:grid;gap:4px;font-size:12px;font-weight:800;color:var(--ink)}
+.cfo-field small{font-weight:500;color:var(--mut);font-size:11px}
+.cfo-input{display:flex;align-items:center;border:1px solid var(--bd);border-radius:11px;background:#fff;transition:border-color .2s,box-shadow .2s}
+.cfo-input:focus-within{border-color:#14b8a6;box-shadow:0 0 0 4px rgba(20,184,166,.14)}
+.cfo-input i{font-style:normal;padding:0 0 0 11px;color:var(--mut);font-weight:800}
+.cfo-input input{flex:1;min-width:0;border:0;outline:0;background:transparent;padding:10px 11px 10px 6px;font:inherit;font-size:15px;font-weight:800;color:var(--ink);font-variant-numeric:tabular-nums}
+.cfo-error{margin:0;color:#b91c1c;font-size:13px;font-weight:700}
+.cfo-result{display:grid;gap:14px;animation:cfo-in .5s cubic-bezier(.2,.7,.2,1)}
+.cfo-score{display:flex;align-items:center;gap:16px;--tone:#0f7b6c}
+.cfo-score[data-tone=ok]{--tone:#0d9488}.cfo-score[data-tone=warn]{--tone:#d97706}.cfo-score[data-tone=bad]{--tone:#dc2626}
+.cfo-score svg{width:112px;height:112px;transform:rotate(-90deg);flex:none;filter:drop-shadow(0 8px 16px rgba(15,123,108,.15))}
+.cfo-score-track{fill:none;stroke:#e8f0ee;stroke-width:10}
+.cfo-score-arc{fill:none;stroke:var(--tone);stroke-width:10;stroke-linecap:round;transition:stroke-dashoffset .9s cubic-bezier(.2,.7,.2,1),stroke .4s}
+.cfo-score>div{display:flex;align-items:baseline;flex-wrap:wrap;gap:2px 4px}
+.cfo-score b{font-size:44px;line-height:1;font-weight:900;font-variant-numeric:tabular-nums;color:var(--tone);transition:color .4s}
+.cfo-score small{font-size:14px;color:var(--mut);font-weight:800}
+.cfo-score span{flex-basis:100%;font-size:12px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:var(--tone)}
+.cfo-metrics{display:grid;gap:10px}
+.cfo-metric{--tone:#0f7b6c;display:grid;gap:4px}
+.cfo-metric[data-tone=ok]{--tone:#0d9488}.cfo-metric[data-tone=warn]{--tone:#d97706}.cfo-metric[data-tone=bad]{--tone:#dc2626}
+.cfo-metric>div:first-child{display:flex;justify-content:space-between;font-size:13px;font-weight:700}
+.cfo-metric b{color:var(--tone);font-variant-numeric:tabular-nums}
+.cfo-metric small{font-size:11px;color:var(--mut)}
+.cfo-bar{height:7px;border-radius:999px;background:#edf2f1;overflow:hidden}
+.cfo-bar i{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,var(--tone),color-mix(in srgb,var(--tone) 60%,#fff));transform-origin:0 50%;transition:transform .9s cubic-bezier(.2,.7,.2,1)}
+.cfo-summary{margin:0;padding:10px 12px;border-radius:11px;background:#f5f9f8;font-size:13px;color:#1e293b}
+.cfo-actions{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.cfo-actions li{border:1px solid var(--bd);border-radius:12px;padding:10px 12px;background:#fff;opacity:0;animation:cfo-in .5s cubic-bezier(.2,.7,.2,1) forwards;animation-delay:calc(var(--i,0) * 90ms)}
+.cfo-actions b{display:flex;justify-content:space-between;gap:10px;font-size:13.5px}
+.cfo-actions em{font-style:normal;color:#0f7b6c;font-variant-numeric:tabular-nums}
+.cfo-actions p{margin:3px 0 0;font-size:12.5px;color:#475569}
+.cfo-horizon{display:inline-block;margin-bottom:3px;font-size:10px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:#6366f1}
+.cfo-check-cta{display:flex;flex-wrap:wrap;gap:10px}
+.cfo-check-cta .cl-primary,.cfo-check-cta .cl-secondary{display:inline-flex;align-items:center;gap:8px}
+.cfo-land .cl-secondary{color:var(--g);border-color:var(--bd);background:#fff}
+@keyframes cfo-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@media (max-width:1000px){.cfo-land-grid{grid-template-columns:1fr}.cfo-chat-wrap{position:relative;top:0;height:620px}}
+@media (max-width:520px){.cfo-fields{grid-template-columns:1fr}.cfo-score b{font-size:36px}.cfo-score svg{width:92px;height:92px}}
+@media (prefers-reduced-motion:reduce){.cfo-land *{animation:none!important;transition:none!important}.cfo-actions li{opacity:1}}

@@ -8,7 +8,7 @@ interface RateLimitRecord {
 const store = new Map<string, RateLimitRecord>();
 
 // Periodically clean up old records every 5 minutes
-setInterval(() => {
+const cleanupTimer = setInterval(() => {
   const now = Date.now();
   for (const [key, record] of store.entries()) {
     if (now > record.resetTime) {
@@ -16,6 +16,8 @@ setInterval(() => {
     }
   }
 }, 5 * 60 * 1000);
+// Do not keep a process (tests, CLI builds) alive just for this housekeeping timer.
+cleanupTimer.unref?.();
 
 export function createRateLimiter(options: { windowMs: number; max: number; message?: string }) {
   const { windowMs, max, message = 'Too many requests from this IP, please try again later.' } = options;

@@ -52,6 +52,7 @@ import {
 } from './providers/finnhubProvider';
 import { answerCryptoQuestion, getCryptoKlines, getCryptoMarkets } from './cryptoService';
 import { CRYPTO_INTERVALS, CRYPTO_SYMBOLS } from '../src/components/crypto/cryptoTypes';
+import { candleTtlMs, findInstrument, getTerminalCandles, getTerminalSnapshot, TERMINAL_INTERVALS } from './marketTerminal';
 
 export const apiRouter = Router();
 
@@ -1064,6 +1065,34 @@ apiRouter.get('/markets/search', async (req: Request, res: Response, next: NextF
     res.json(results);
   } catch (err) {
     next(err);
+  }
+});
+
+// Market terminal: provider-agnostic snapshot + candles for the landing dashboard and chart.
+apiRouter.get('/markets/terminal/snapshot', async (_req: Request, res: Response) => {
+  try {
+    const snapshot = await getTerminalSnapshot();
+    res.setHeader('Cache-Control', 'public, s-maxage=30, stale-while-revalidate=60');
+    res.json(snapshot);
+  } catch {
+    res.status(503).json({ error: 'Market snapshot is temporarily unavailable.' });
+  }
+});
+
+const terminalCandleQuerySchema = z.object({
+  instrument: z.enum(['nifty50', 'sensex', 'usdinr', 'gold', 'btcusdt']),
+  interval: z.enum(TERMINAL_INTERVALS),
+});
+apiRouter.get('/markets/terminal/candles', async (req: Request, res: Response) => {
+  const parsed = terminalCandleQuerySchema.safeParse(req.query);
+  if (!parsed.success) return res.status(400).json({ error: 'A supported instrument and interval are required.' });
+  try {
+    const data = await getTerminalCandles(parsed.data.instrument, parsed.data.interval);
+    const ttl = Math.round(candleTtlMs(findInstrument(data.instrument)!, data.interval) / 1000);
+    res.setHeader('Cache-Control', `public, s-maxage=${ttl}, stale-while-revalidate=${ttl * 2}`);
+    res.json(data);
+  } catch (error) {
+    res.status(503).json({ error: 'Candles for this instrument and interval are temporarily unavailable.', detail: error instanceof Error ? error.message.slice(0, 160) : undefined });
   }
 });
 

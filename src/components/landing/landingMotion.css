@@ -154,3 +154,54 @@
 .cfo-land{overflow:clip}
 .cl-brand small{white-space:nowrap}
 @media (max-width:1280px){.cl-links{gap:14px!important;font-size:12px}}
+
+/* ── Business Brief readability ─────────────────────────── */
+#business-brief .news-scrim{position:absolute;inset:auto 0 0 0;height:74%;pointer-events:none;background:linear-gradient(to top,rgba(4,7,15,.97) 0%,rgba(4,7,15,.9) 32%,rgba(4,7,15,.62) 62%,rgba(4,7,15,0) 100%)}
+#business-brief .news-scrim-top{position:absolute;inset:0 0 auto 0;height:34%;pointer-events:none;background:linear-gradient(to bottom,rgba(4,7,15,.55),rgba(4,7,15,0))}
+#business-brief .news-copy{z-index:2}
+#business-brief h3.news-headline{margin:0;color:#f8fafc!important;font-weight:900;letter-spacing:-.02em;font-size:clamp(22px,2.6vw,34px);line-height:1.12;text-shadow:0 1px 2px rgba(0,0,0,.45);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+#business-brief .news-dek{color:#cbd5e1!important;font-size:14px;line-height:1.55;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+#business-brief .news-meta{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;font-size:12px;font-weight:700;color:#cbd5e1!important}
+#business-brief .news-meta *{color:inherit}
+#business-brief .news-cta{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 14px;border-radius:999px;background:#f8fafc;color:#0f172a!important;font-weight:900;transition:transform .2s,box-shadow .2s}
+#business-brief a:hover .news-cta,#business-brief a:focus-visible .news-cta{transform:translateY(-1px);box-shadow:0 8px 20px rgba(0,0,0,.35)}
+#business-brief .news-category-badge{display:inline-flex;align-items:center;border-radius:999px;border:1px solid rgba(94,234,212,.45);background:rgba(4,47,46,.88);padding:4px 10px;font-size:10px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:#ccfbf1!important}
+#business-brief .featured-story-media{isolation:isolate}
+@media (max-width:640px){#business-brief .news-scrim{height:82%}#business-brief h3.news-headline{font-size:22px}#business-brief .news-dek{display:none}}
+@media (hover:hover) and (pointer:fine){
+  #business-brief .featured-story-media img,#business-brief [aria-label="More business stories"] img{transition:transform .9s cubic-bezier(.2,.7,.2,1)!important}
+  #business-brief .group:hover .featured-story-media img,#business-brief [aria-label="More business stories"]>div:hover img{transform:scale(1.045)}
+}
+@media (prefers-reduced-motion:reduce){#business-brief img{transition:none!important;transform:none!important}}
+
+/* ── Simplified glass header ───────────────────────────── */
+.cl-header{background:rgba(255,255,255,.72)!important;-webkit-backdrop-filter:saturate(1.6) blur(14px);backdrop-filter:saturate(1.6) blur(14px);padding-top:env(safe-area-inset-top)}
+.cl-header.is-scrolled{background:rgba(255,255,255,.86)!important}
+.cl-nav{height:64px!important}
+.cl-links a{position:relative;padding:10px 2px;color:#334155;text-decoration:none}
+.cl-links a:after{content:"";position:absolute;left:2px;right:2px;bottom:4px;height:2px;border-radius:2px;background:#0f7b6c;transform:scaleX(0);transform-origin:left;transition:transform .3s cubic-bezier(.2,.7,.2,1)}
+.cl-links a:hover:after,.cl-links a.on:after{transform:scaleX(1)}
+.cl-links a:focus-visible,.cl-signin:focus-visible,.cl-menu-button:focus-visible,.cl-mobile-menu a:focus-visible{outline:2px solid #0f7b6c;outline-offset:3px;border-radius:6px}
+.cl-signin{min-height:40px;padding:0 14px;border:1px solid #d6dde5;border-radius:10px;background:rgba(255,255,255,.7);color:#0f172a;font:inherit;font-size:13px;font-weight:800;cursor:pointer;transition:border-color .2s,background .2s,transform .15s}
+.cl-signin:hover{border-color:#0f7b6c;background:#fff}
+.cl-signin:active{transform:scale(.97)}
+.cl-menu-button{display:none;width:44px;height:44px;border:1px solid #d6dde5;border-radius:12px;background:rgba(255,255,255,.7);color:#0f172a;place-items:center;cursor:pointer}
+.cl-mobile-menu{display:none}
+@media (max-width:1050px){
+  .cl-menu-button{display:grid}
+  .cl-mobile-menu.open{display:block;border-top:1px solid #e2e8f0;background:rgba(255,255,255,.96);padding:8px max(16px,env(safe-area-inset-left)) 14px;animation:cl-menu-in .25s cubic-bezier(.2,.7,.2,1)}
+  .cl-mobile-menu nav{display:grid;gap:2px}
+  .cl-mobile-menu a{display:flex;align-items:center;min-height:48px;padding:0 10px;border-radius:10px;color:#0f172a;font-weight:800;text-decoration:none}
+  .cl-mobile-menu a:hover{background:#f1f5f9}
+}
+@keyframes cl-menu-in{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+@media (max-width:640px){.cl-signin{padding:0 10px;font-size:12px}.cl-brand small{display:none}}
+
+/* Press feedback for primary actions */
+.cl-primary:active,.cl-secondary:active,.cl-module:active{transform:translate(var(--mag-x,0px),var(--mag-y,0px)) scale(.97)!important;transition-duration:.08s}
+
+/* Smooth in-page anchors that clear the sticky header */
+html:has(.connected-landing){scroll-behavior:smooth;scroll-padding-top:80px}
+.connected-landing section[id]{scroll-margin-top:80px}
+@media (prefers-reduced-motion:reduce){html:has(.connected-landing){scroll-behavior:auto}.cl-mobile-menu.open{animation:none}.cl-primary:active,.cl-secondary:active,.cl-module:active{transform:none!important}}
+@media (max-width:380px){.cl-brand>span:last-child{display:none}}

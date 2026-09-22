@@ -36,18 +36,30 @@ function observeCountUps(root: HTMLElement, reduce: boolean): () => void {
   return () => { observer.disconnect(); frames.forEach(cancelAnimationFrame); };
 }
 
-/** Adds `.in` to staggered groups; each child receives a `--stagger` index for CSS delays. */
+/**
+ * Adds `.in` to staggered groups; each child receives a `--stagger` index for CSS delays.
+ * Groups rendered later (news and market cards arrive after a fetch) are picked up by a
+ * MutationObserver, so late content still gets its reveal.
+ */
 function observeStaggerGroups(root: HTMLElement, reduce: boolean): () => void {
-  const groups = Array.from(root.querySelectorAll<HTMLElement>('[data-stagger]'));
-  groups.forEach((group) => Array.from(group.children).forEach((child, index) => (child as HTMLElement).style.setProperty('--stagger', String(index))));
-  if (reduce || !('IntersectionObserver' in window)) { groups.forEach((group) => group.classList.add('in')); return () => undefined; }
-  const observer = new IntersectionObserver((entries) => entries.forEach((entry) => {
+  const index = (group: HTMLElement) => Array.from(group.children).forEach((child, i) => (child as HTMLElement).style.setProperty('--stagger', String(i)));
+  const io = reduce || !('IntersectionObserver' in window) ? null : new IntersectionObserver((entries) => entries.forEach((entry) => {
     if (!entry.isIntersecting) return;
     entry.target.classList.add('in');
-    observer.unobserve(entry.target);
+    io?.unobserve(entry.target);
   }), { rootMargin: '0px 0px -10% 0px', threshold: 0.1 });
-  groups.forEach((group) => observer.observe(group));
-  return () => observer.disconnect();
+  const bound = new WeakSet<Element>();
+  const scan = () => root.querySelectorAll<HTMLElement>('[data-stagger]').forEach((group) => {
+    index(group);
+    if (bound.has(group)) return;
+    bound.add(group);
+    if (io) io.observe(group); else group.classList.add('in');
+  });
+  scan();
+  let frame = 0;
+  const mutations = new MutationObserver(() => { if (!frame) frame = requestAnimationFrame(() => { frame = 0; scan(); }); });
+  mutations.observe(root, { childList: true, subtree: true });
+  return () => { io?.disconnect(); mutations.disconnect(); if (frame) cancelAnimationFrame(frame); };
 }
 
 /**

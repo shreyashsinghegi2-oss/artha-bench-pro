@@ -7,7 +7,7 @@ import{NormalizedMarketQuote}from'../../types';
 import{ArthaMindLogo}from'./ArthaMindLogo';
 import{HeroProductMockup}from'./HeroProductMockup';
 import{LiveMarketTicker}from'./LiveMarketTicker';
-import{CryptoMarketPreview}from'./CryptoMarketPreview';
+import{LazyCryptoMarketPreview as CryptoMarketPreview}from'./LazyCryptoMarketPreview';
 import{BusinessBrief,BusinessNewsTicker,normalizeBusinessNews}from'./BusinessBrief';
 import{InteractiveFeatureCard,MotionReveal,SectionMood}from'./LandingPrimitives';
 import{LanguageSelector}from'../LanguageSelector';

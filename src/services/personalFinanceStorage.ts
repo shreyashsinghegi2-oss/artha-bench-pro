@@ -191,12 +191,13 @@ export function expensesForMonth(records: ExpenseRecord[], month: string): Expen
 }
 
 export function totalExpenses(records: ExpenseRecord[]): number {
-  return records.reduce((sum, record) => sum + record.amount, 0);
+  // Sum in integer paise so ₹0.10 + ₹0.20 is exactly ₹0.30 rather than 0.30000000000000004.
+  return records.reduce((sum, record) => sum + Math.round(record.amount * 100), 0) / 100;
 }
 
 export function spendingByCategory(records: ExpenseRecord[]): Record<string, number> {
   return records.reduce<Record<string, number>>((totals, record) => {
-    totals[record.category] = (totals[record.category] ?? 0) + record.amount;
+    totals[record.category] = Math.round(((totals[record.category] ?? 0) + record.amount) * 100) / 100;
     return totals;
   }, {});
 }
@@ -234,8 +235,9 @@ export function priorMonth(month: string): string {
   return date.toISOString().slice(0, 7);
 }
 
-export function currentMonthKey(): string {
-  return new Date().toISOString().slice(0, 7);
+export function currentMonthKey(now = new Date()): string {
+  // Use the user's local calendar month; the UTC month is wrong for IST users between 00:00 and 05:30 on the 1st.
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 }
 
 export function formatINR(amount: number): string {

@@ -124,7 +124,16 @@ export const InteractiveCandlestickChart: React.FC<Props> = ({ showIndicators = 
     }
 
     if (showIndicators) {
-      const ma = candles.map((c, i) => { const from=Math.max(0,i-19); const slice=candles.slice(from,i+1); return { time: Math.floor(c.openTime/1000) as Time, value: slice.reduce((sum,x)=>sum+x.close,0)/slice.length }; });
+      // Simple moving average over 20 closes; points are emitted only once a full window exists
+      // so the first 19 candles are not plotted with a misleading partial-window average.
+      const period = 20;
+      const ma: { time: Time; value: number }[] = [];
+      let windowSum = 0;
+      candles.forEach((c, i) => {
+        windowSum += c.close;
+        if (i >= period) windowSum -= candles[i - period].close;
+        if (i >= period - 1) ma.push({ time: Math.floor(c.openTime / 1000) as Time, value: windowSum / period });
+      });
       if (!maLineRef.current) maLineRef.current = chart.addSeries(LineSeries, { color:'#14B8A6', lineWidth:1, priceLineVisible:false, lastValueVisible:false });
       maLineRef.current.setData(ma);
     } else if (maLineRef.current) { chart.removeSeries(maLineRef.current); maLineRef.current=null; }

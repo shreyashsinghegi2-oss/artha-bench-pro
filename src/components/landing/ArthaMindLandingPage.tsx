@@ -159,6 +159,7 @@ const IndiaMarketPulse: React.FC = () => {
     company,
     quote,
   }: {
+    key?: string;
     company: (typeof INDIA_MARKET_UNIVERSE)[number];
     quote: NormalizedMarketQuote;
   }) => {

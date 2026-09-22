@@ -1,0 +1,96 @@
+/* ArthaMind landing motion layer — scroll progress, hero aurora + spotlight, staggered reveals,
+   workspace tilt, magnetic CTAs, shine sweeps and live-value flashes. Loaded after connectedLanding.css. */
+
+/* Scroll progress */
+.cl-progress{position:fixed;inset:0 0 auto 0;height:3px;z-index:80;pointer-events:none;transform-origin:0 50%;transform:scaleX(var(--cl-scroll,0));background:linear-gradient(90deg,#0f7b6c,#14b8a6 55%,#6366f1);box-shadow:0 0 12px rgba(20,184,166,.45)}
+
+/* Hero aurora + pointer spotlight */
+.cl-hero{isolation:isolate}
+.cl-aurora{position:absolute;inset:-20% -10% auto -10%;height:120%;z-index:-1;pointer-events:none;filter:blur(60px);opacity:.55}
+.cl-aurora i{position:absolute;border-radius:50%;mix-blend-mode:multiply;will-change:transform}
+.cl-aurora i:nth-child(1){width:520px;height:520px;left:52%;top:4%;background:radial-gradient(circle,#99f6e4 0,transparent 68%);animation:cl-aurora-a 18s ease-in-out infinite alternate}
+.cl-aurora i:nth-child(2){width:460px;height:460px;left:70%;top:30%;background:radial-gradient(circle,#c7d2fe 0,transparent 68%);animation:cl-aurora-b 22s ease-in-out infinite alternate}
+.cl-aurora i:nth-child(3){width:380px;height:380px;left:8%;top:40%;background:radial-gradient(circle,#bbf7d0 0,transparent 70%);animation:cl-aurora-c 26s ease-in-out infinite alternate}
+@keyframes cl-aurora-a{to{transform:translate3d(-120px,60px,0) scale(1.15)}}
+@keyframes cl-aurora-b{to{transform:translate3d(-160px,-50px,0) scale(.9)}}
+@keyframes cl-aurora-c{to{transform:translate3d(140px,-40px,0) scale(1.2)}}
+.cl-hero:after{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;opacity:0;transition:opacity .4s;background:radial-gradient(420px circle at var(--spot-x,50%) var(--spot-y,30%),rgba(20,184,166,.12),transparent 70%)}
+.cl-hero:hover:after{opacity:1}
+
+/* Hero pill shimmer */
+.cl-pill{position:relative;overflow:hidden}
+.cl-pill:after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 30%,rgba(255,255,255,.75) 50%,transparent 70%);transform:translateX(-120%);animation:cl-pill-shine 4.8s 2s ease-in-out infinite}
+@keyframes cl-pill-shine{0%,70%{transform:translateX(-120%)}100%{transform:translateX(120%)}}
+
+/* Workspace preview tilt (applied after its reveal completes) */
+.cl-workspace-preview{perspective:1400px}
+.cl-window.cl-reveal.in{transform:rotateX(var(--tilt-x,0deg)) rotateY(var(--tilt-y,0deg));transform-style:preserve-3d;transition:opacity .7s,transform .5s cubic-bezier(.2,.7,.2,1),box-shadow .5s}
+.cl-hero:hover .cl-window.cl-reveal.in{box-shadow:0 40px 90px rgba(11,18,32,.18)}
+
+/* Magnetic CTAs with shine sweep */
+.cl-primary,.cl-secondary{position:relative;overflow:hidden;transform:translate(var(--mag-x,0px),var(--mag-y,0px));transition:transform .25s cubic-bezier(.2,.7,.2,1),background .2s,box-shadow .25s}
+.cl-primary:hover,.cl-secondary:hover{transform:translate(var(--mag-x,0px),calc(var(--mag-y,0px) - 2px))}
+.cl-primary:after{content:"";position:absolute;top:0;bottom:0;left:-60%;width:45%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.35),transparent);transform:skewX(-18deg);transition:left .7s cubic-bezier(.2,.7,.2,1);pointer-events:none}
+.cl-primary:hover:after{left:120%}
+.cl-primary:hover{box-shadow:0 14px 30px rgba(15,123,108,.28)}
+.cl-primary svg,.cl-card-button b svg,.cl-module b svg{transition:transform .25s cubic-bezier(.2,.7,.2,1)}
+.cl-primary:hover svg,.cl-card-button:hover b svg,.cl-module:hover b svg{transform:translateX(4px)}
+
+/* Staggered groups */
+[data-stagger]>*{opacity:0}
+[data-stagger].in>*{opacity:1;animation:cl-stagger-in .65s cubic-bezier(.2,.7,.2,1) backwards;animation-delay:calc(var(--stagger,0) * 90ms)}
+@keyframes cl-stagger-in{from{opacity:0;transform:translateY(18px) scale(.985);filter:blur(4px)}to{opacity:1;transform:none;filter:none}}
+
+/* Section heading accent that draws in on reveal */
+.cl-reveal-section .cl-eyebrow{position:relative;display:inline-block}
+.cl-reveal-section .cl-eyebrow:after{content:"";position:absolute;left:0;right:0;bottom:-4px;height:2px;border-radius:2px;background:linear-gradient(90deg,#0f7b6c,#14b8a6);transform:scaleX(0);transform-origin:left;transition:transform .8s .25s cubic-bezier(.2,.7,.2,1)}
+.cl-reveal-section.in .cl-eyebrow:after{transform:scaleX(1)}
+
+/* Cards: lift + spotlight border following the pointer */
+.cl-card{transition:transform .3s cubic-bezier(.2,.7,.2,1),box-shadow .3s,border-color .3s}
+.cl-card:hover{transform:translateY(-4px);box-shadow:0 18px 40px rgba(11,18,32,.09);border-color:#b7e0d8}
+.cl-module .cl-module-icon{transition:transform .35s cubic-bezier(.2,.7,.2,1),background .3s,color .3s}
+.cl-module:hover .cl-module-icon{transform:rotate(-6deg) scale(1.08)}
+
+/* Stats: gradient numbers */
+.cl-stats b{background:linear-gradient(135deg,#0b6357,#14b8a6);-webkit-background-clip:text;background-clip:text;color:transparent;font-variant-numeric:tabular-nums}
+
+/* Score ring: arc animates to the real share of checks passed */
+.cl-score-progress{transition:stroke-dashoffset 1.2s cubic-bezier(.2,.7,.2,1)!important}
+.cl-check b{transition:color .3s}
+.cl-check.on{animation:cl-check-pop .4s cubic-bezier(.2,.7,.2,1)}
+@keyframes cl-check-pop{0%{transform:scale(.98)}60%{transform:scale(1.015)}100%{transform:none}}
+
+/* Macro cards: flash when a provider value changes */
+.cl-macro strong{display:block;font-variant-numeric:tabular-nums}
+.cl-macro .cl-flash-up{animation:cl-flash-up 1.2s ease}
+.cl-macro .cl-flash-down{animation:cl-flash-down 1.2s ease}
+@keyframes cl-flash-up{0%{color:#15803d;text-shadow:0 0 14px rgba(21,128,61,.35)}100%{color:inherit;text-shadow:none}}
+@keyframes cl-flash-down{0%{color:#c0392b;text-shadow:0 0 14px rgba(192,57,43,.35)}100%{color:inherit;text-shadow:none}}
+.cl-macro .cl-delta-up{color:#15803d}
+.cl-macro .cl-delta-down{color:#c0392b}
+
+/* Final CTA: slow gradient drift */
+.cl-final{background:linear-gradient(120deg,#0b1220,#0b3d38 45%,#1e1b4b 80%,#0b1220);background-size:220% 220%;animation:cl-final-drift 14s ease-in-out infinite alternate}
+@keyframes cl-final-drift{from{background-position:0% 40%}to{background-position:100% 60%}}
+
+/* Back-to-top */
+.cl-top{position:fixed;right:18px;bottom:18px;z-index:70;width:42px;height:42px;border-radius:50%;border:1px solid #d7e6e2;background:#fff;color:#0f7b6c;display:grid;place-items:center;box-shadow:0 10px 24px rgba(11,18,32,.12);opacity:0;transform:translateY(12px) scale(.9);pointer-events:none;transition:opacity .3s,transform .3s cubic-bezier(.2,.7,.2,1)}
+.cl-top.show{opacity:1;transform:none;pointer-events:auto}
+.cl-top:hover{background:#e8f5f2}
+.cl-top:focus-visible,.cl-primary:focus-visible,.cl-secondary:focus-visible{outline:2px solid #0f7b6c;outline-offset:3px}
+
+@media (max-width:1000px){.cl-aurora{opacity:.35}.cl-window.cl-reveal.in{transform:none}}
+
+@media (prefers-reduced-motion:reduce){
+  .cl-aurora i,.cl-pill:after,.cl-final,.cl-check.on,.cl-macro .cl-flash-up,.cl-macro .cl-flash-down{animation:none!important}
+  [data-stagger]>*{opacity:1!important;animation:none!important}
+  .cl-window.cl-reveal.in,.cl-primary,.cl-secondary,.cl-card,.cl-card:hover{transform:none!important;transition:none!important}
+  .cl-reveal-section .cl-eyebrow:after{transform:scaleX(1);transition:none}
+  .cl-progress,.cl-top{transition:none}
+}
+
+/* Score ring arc: sits exactly on the ring border (70px ring, 7px border → 44-unit viewBox, r 19.8, width 4.4) */
+.cl-score-arc{inset:-7px!important;width:calc(100% + 14px)!important;height:calc(100% + 14px)!important}
+.cl-score-track{stroke:transparent}
+.cl-score-progress{stroke:#0f7b6c;stroke-width:4.4}

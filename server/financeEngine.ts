@@ -113,6 +113,9 @@ export function calculateCompoundInterest(
 if (principal < 0 || annualRatePercent < 0 || years <= 0 || monthlyContribution < 0 || compoundingFrequencyPerYear <= 0) {
   throw new Error('Invalid input parameters for compound interest calculation.');
 }
+if (!Number.isInteger(compoundingFrequencyPerYear) || compoundingFrequencyPerYear > 365) {
+  throw new Error('Compounding frequency must be a whole number between 1 and 365.');
+}
 
 
   const P = new Decimal(principal);
@@ -131,23 +134,17 @@ if (principal < 0 || annualRatePercent < 0 || years <= 0 || monthlyContribution 
     const growthFactor = new Decimal(1).plus(ratePerPeriod).pow(totalPeriods.toNumber());
     finalBalanceDec = P.times(growthFactor);
   } else {
-    // Compound interest with regular monthly contributions
-    // Simulate step-by-step per month (12 steps per year)
-    const totalMonths = t.times(12).toNumber();
+    // Compound interest with regular monthly contributions (made at the start of each month).
+    // Fractional years are rounded to the nearest whole month so 1.5 years = 18 deposits.
+    const totalMonths = Math.round(t.times(12).toNumber());
     let balance = P;
-    const ratePerMonth = r.div(12);
+    // Effective monthly rate equivalent to compounding n times per year: (1 + r/n)^(n/12) - 1
+    const effectiveMonthlyRate = new Decimal(1).plus(r.div(n)).pow(n.div(12)).minus(1);
+    const monthlyGrowth = new Decimal(1).plus(effectiveMonthlyRate);
 
     for (let m = 1; m <= totalMonths; m++) {
-      balance = balance.plus(PMT);
+      balance = balance.plus(PMT).times(monthlyGrowth);
       totalContributionsDec = totalContributionsDec.plus(PMT);
-
-      if (compoundingFrequencyPerYear === 12) {
-        balance = balance.times(new Decimal(1).plus(ratePerMonth));
-      } else {
-        // Effective monthly compounding rate matching compounding frequency n
-        const effectiveMonthlyRate = new Decimal(1).plus(r.div(n)).pow(n.div(12).toNumber()).minus(1);
-        balance = balance.times(new Decimal(1).plus(effectiveMonthlyRate));
-      }
     }
     finalBalanceDec = balance;
   }

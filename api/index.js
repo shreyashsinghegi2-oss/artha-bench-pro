@@ -5785,7 +5785,22 @@ function inferTask(prompt, ctx) {
   if (/report/i.test(prompt)) return "report";
   return "education";
 }
+function cfoSystemPrompt(c) {
+  const language = c.language === "hinglish" ? "natural Roman Hindi mixed with simple English" : c.language === "hindi" ? "simple Hindi (Devanagari)" : "clear professional English";
+  return `You are ArthaMind AI CFO, a chief financial officer for Indian households, freelancers and small businesses. Respond in ${language}. Default currency is INR: write amounts as \u20B9 with Indian digit grouping (\u20B91,25,000) and use lakh/crore for large values. Think like a CFO: cash flow first, then debt and EMIs, tax efficiency (old vs new regime, 80C/80D/NPS where relevant), emergency runway, goals and investments, insurance and risk.
+Structure every answer as a CFO brief using the JSON fields:
+- title: "CFO brief: <topic>" (max 8 words after the colon).
+- directAnswer: the bottom line in 2-4 sentences, with the single most important number.
+- steps: 3-5 analysis steps, each titled by the lens used (Cash flow, Debt & EMIs, Tax, Runway, Goals, Risk) with specific numbers from the user's inputs.
+- formula: the main formula actually used (for example EMI, savings rate, runway months), or say it is not needed.
+- example: a worked calculation with the user's own numbers; mark dataStatus "illustrative" when you assume values and list every assumption in inputs.
+- interpretation: what the numbers mean, benchmarked against common Indian rules of thumb (EMI under 40% of take-home, 6 months emergency fund, 20%+ savings rate).
+- risks: concrete downside risks and what would change the answer.
+- keyTakeaways: a prioritised action plan: 3-5 numbered actions, each with a \u20B9 amount or % and a timeline (this week, this month, this quarter).
+Rules: ask for missing numbers only when an answer is impossible without them, otherwise state assumptions and proceed. Never invent live prices, rates, dates, laws or sources; say when a figure must be checked (current RBI repo rate, tax slabs for the year). Do not give buy/sell/hold instructions for specific securities or promise returns. Recommend a SEBI-registered adviser or CA for binding tax, legal or investment decisions.`;
+}
 function systemPrompt(task, c) {
+  if (task === "cfo") return cfoSystemPrompt(c);
   const language = c.language === "hinglish" ? "natural Roman Hindi mixed with simple English" : c.language || "english";
   return `You are ArthaBench, a professional financial educator. Task=${task}. Learner: country=${c.country || "Global"}, currency=${c.currency || "USD"}, language=${language}, level=${c.level || "beginner"}, detail=${c.detail || "detailed"}, goal=${c.learningGoal || "financial literacy"}, style=${c.learningStyle || "practical"}, activity=${c.activityType || "lesson"}, adaptiveDifficulty=${c.adaptiveDifficulty ?? true}. Never output JSON, raw LaTeX, code or developer/template labels. Never invent current data, sources, dates, regulations or calculations. Use verified data and deterministic calculations as authoritative. Explain results clearly. In quiz mode ask one question at a time. In guided calculation, collect missing inputs before calculating. Avoid personalized buy/sell/hold instructions and guaranteed returns.`;
 }
@@ -5793,7 +5808,7 @@ function sanitizeText(text) {
   return text.replace(/```(?:json|markdown|text)?/gi, "").replace(/```/g, "").replace(/^\s*(JSON|Answer):\s*/i, "").replace(/\\text\{([^}]*)\}/g, "$1").replace(/\\times/g, "\xD7").replace(/\\cdot/g, "\xB7").replace(/\\%/g, "%").replace(/\\#/g, "#").replace(/\\frac\{([^}]*)\}\{([^}]*)\}/g, "($1) / ($2)").replace(/\\\[|\\\]/g, "").trim();
 }
 function presentationFromText(text, task) {
-  return { title: task === "calculation" ? "Verified financial calculation" : task === "quiz" ? "Financial learning check" : "ArthaBench financial explanation", directAnswer: sanitizeText(text), steps: [], formula: { expression: "Shown when relevant.", variables: [], whenToUse: "Use a formula when the question requires a calculation." }, example: { title: "Context applied", dataStatus: "not_applicable", dataAsOf: (/* @__PURE__ */ new Date()).toISOString(), inputs: [], calculation: [], result: sanitizeText(text) }, interpretation: [], risks: ["AI-generated explanations should be verified for consequential decisions."], keyTakeaways: [], sources: [] };
+  return { title: task === "cfo" ? "CFO brief" : task === "calculation" ? "Verified financial calculation" : task === "quiz" ? "Financial learning check" : "ArthaBench financial explanation", directAnswer: sanitizeText(text), steps: [], formula: { expression: "Shown when relevant.", variables: [], whenToUse: "Use a formula when the question requires a calculation." }, example: { title: "Context applied", dataStatus: "not_applicable", dataAsOf: (/* @__PURE__ */ new Date()).toISOString(), inputs: [], calculation: [], result: sanitizeText(text) }, interpretation: [], risks: ["AI-generated explanations should be verified for consequential decisions."], keyTakeaways: [], sources: [] };
 }
 async function runAiGateway(request) {
   const id = requestId(), started = Date.now(), context2 = request.context || {}, task = request.task || inferTask(request.prompt, context2), preferred = request.requestedModel || "artha";
@@ -5807,6 +5822,7 @@ async function runAiGateway(request) {
         const structured = presentationFromText(r.text, task);
         return { ok: true, requestId: id, answer: sanitizeText(r.text), structuredAnswer: structured, provider: "NVIDIA NIM", model: r.model, fallbackUsed: model !== preferred, latencyMs: Date.now() - started };
       }
+      if (!process.env.GROQ_API_KEY?.trim()) throw new Error("Groq is not configured.");
       const models = getGroqModels();
       const raw = await callGroqStructuredFinancialAnswer(systemPrompt(task, context2), request.prompt, { modelName: models.tutorModel, history: request.history, fallbackQuestion: request.prompt });
       const parsed = structuredFinancialAnswerSchema.safeParse(raw);
@@ -5818,6 +5834,41 @@ async function runAiGateway(request) {
   }
   const fallback = createFallbackStructuredFinancialAnswer(request.prompt, "The live AI providers are temporarily unavailable. A safe educational fallback is being shown instead.");
   return { ok: false, requestId: id, answer: fallback.directAnswer, structuredAnswer: fallback, provider: "Local fallback", model: "ArthaBench", fallbackUsed: true, latencyMs: Date.now() - started, error: "AI providers temporarily unavailable", sanitizedProviderError: lastError.replace(/Bearer\s+\S+/gi, "Bearer [redacted]") };
+}
+
+// server/rateLimiter.ts
+var store = /* @__PURE__ */ new Map();
+var cleanupTimer = setInterval(() => {
+  const now = Date.now();
+  for (const [key, record] of store.entries()) {
+    if (now > record.resetTime) {
+      store.delete(key);
+    }
+  }
+}, 5 * 60 * 1e3);
+cleanupTimer.unref?.();
+function createRateLimiter(options) {
+  const { windowMs, max, message = "Too many requests from this IP, please try again later." } = options;
+  return (req, res, next) => {
+    const ip = req.headers["x-forwarded-for"]?.split(",")[0]?.trim() || req.socket.remoteAddress || "127.0.0.1";
+    const now = Date.now();
+    let record = store.get(ip);
+    if (!record || now > record.resetTime) {
+      record = { count: 0, resetTime: now + windowMs };
+      store.set(ip, record);
+    }
+    record.count++;
+    res.setHeader("X-RateLimit-Limit", max.toString());
+    res.setHeader("X-RateLimit-Remaining", Math.max(0, max - record.count).toString());
+    res.setHeader("X-RateLimit-Reset", Math.ceil(record.resetTime / 1e3).toString());
+    if (record.count > max) {
+      return res.status(429).json({
+        error: message,
+        reqId: req.reqId || `req-${Date.now()}`
+      });
+    }
+    next();
+  };
 }
 
 // server/financialCalculations.ts
@@ -5861,9 +5912,10 @@ function calculateSavingsTarget(targetAmount, months) {
 }
 
 // server/aiRoutes.ts
+var aiChatLimiter = createRateLimiter({ windowMs: 6e4, max: 20, message: "You are sending questions quickly. Please wait a minute and try again." });
 var aiRouter = Router2();
 var context = z9.object({ country: z9.enum(["India", "US", "Global"]).optional(), currency: z9.enum(["INR", "USD", "EUR", "GBP"]).optional(), language: z9.enum(["english", "hindi", "hinglish"]).optional(), level: z9.enum(["beginner", "intermediate", "advanced"]).optional(), mode: z9.enum(["explain", "quiz", "calc"]).optional(), detail: z9.enum(["short", "detailed"]).optional(), useOfficialSources: z9.boolean().optional(), highContrast: z9.boolean().optional(), reducedMotion: z9.boolean().optional(), learningGoal: z9.string().max(200).optional(), learningStyle: z9.enum(["visual", "practical", "reading", "socratic"]).optional(), activityType: z9.enum(["lesson", "quiz", "calculation", "scenario", "flashcards", "revision", "mock-test"]).optional(), quizType: z9.enum(["mcq", "mixed"]).optional(), quizLength: z9.union([z9.literal(5), z9.literal(10), z9.literal(20), z9.literal(50)]).optional(), adaptiveDifficulty: z9.boolean().optional(), sessionLength: z9.union([z9.literal(15), z9.literal(30), z9.literal(45), z9.literal(60)]).optional(), learnerProfile: z9.string().max(500).optional() });
-var requestSchema = z9.object({ prompt: z9.string().trim().min(1).max(4e3), model: z9.enum(["artha", "nemotron"]).optional(), task: z9.enum(["education", "calculation", "live_data", "quiz", "scenario", "evaluation", "report", "general"]).optional(), history: z9.array(z9.object({ role: z9.enum(["user", "assistant"]), content: z9.string().min(1).max(4e3) })).max(10).optional(), context: context.optional() });
+var requestSchema = z9.object({ prompt: z9.string().trim().min(1).max(4e3), model: z9.enum(["artha", "nemotron"]).optional(), task: z9.enum(["education", "calculation", "live_data", "quiz", "scenario", "evaluation", "report", "general", "cfo"]).optional(), history: z9.array(z9.object({ role: z9.enum(["user", "assistant"]), content: z9.string().min(1).max(4e3) })).max(10).optional(), context: context.optional() });
 var calcSchema = z9.object({ kind: z9.enum(["emi", "emergency-fund", "budget-503020", "savings-target"]), principal: z9.coerce.number().finite().optional(), annualRatePercent: z9.coerce.number().finite().optional(), years: z9.coerce.number().finite().optional(), monthlyIncome: z9.coerce.number().finite().optional(), monthlyExpenses: z9.coerce.number().finite().optional(), targetAmount: z9.coerce.number().finite().optional(), months: z9.coerce.number().finite().optional() });
 function logEvent(event) {
   console.info(JSON.stringify({ scope: "artha-ai", ...event }));
@@ -5875,9 +5927,9 @@ async function handleCentralChat(req, res) {
   logEvent({ requestId: result.requestId, provider: result.provider, model: result.model, fallbackUsed: result.fallbackUsed, latencyMs: result.latencyMs, status: result.ok ? "ok" : "fallback" });
   return res.status(200).json({ ...result, error: result.ok ? void 0 : "The selected AI model is temporarily unavailable. A safe fallback is being shown." });
 }
-aiRouter.post("/ai/chat", handleCentralChat);
-aiRouter.post("/ai/tutor", handleCentralChat);
-aiRouter.post("/tutor", handleCentralChat);
+aiRouter.post("/ai/chat", aiChatLimiter, handleCentralChat);
+aiRouter.post("/ai/tutor", aiChatLimiter, handleCentralChat);
+aiRouter.post("/tutor", aiChatLimiter, handleCentralChat);
 aiRouter.post("/ai/calculate", async (req, res) => {
   const parsed = calcSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: "Please provide valid calculation inputs." });

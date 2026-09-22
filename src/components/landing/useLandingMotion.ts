@@ -52,7 +52,7 @@ function observeStaggerGroups(root: HTMLElement, reduce: boolean): () => void {
 
 /**
  * Landing-page motion system: scroll progress, staggered reveals, count-ups, a pointer-following
- * hero spotlight, 3D tilt on the workspace preview and magnetic primary buttons.
+ * hero spotlight, 3D tilt on the workspace preview, click ripples and magnetic primary buttons.
  * Every effect is skipped or collapsed to its final state when the user prefers reduced motion.
  */
 export function useLandingMotion(rootRef: RefObject<HTMLElement | null>): void {
@@ -81,6 +81,25 @@ export function useLandingMotion(rootRef: RefObject<HTMLElement | null>): void {
       window.removeEventListener('resize', onScroll);
       if (scrollFrame) cancelAnimationFrame(scrollFrame);
     });
+
+    // Click ripple on primary actions and module cards (touch and mouse).
+    if (!reduce) {
+      const ripple = (event: PointerEvent) => {
+        const target = (event.target as HTMLElement | null)?.closest<HTMLElement>('.cl-primary, .cl-secondary, .cl-module');
+        if (!target || !root.contains(target)) return;
+        const rect = target.getBoundingClientRect();
+        const size = Math.max(rect.width, rect.height) * 2;
+        const dot = document.createElement('span');
+        dot.className = 'cl-ripple';
+        dot.style.width = dot.style.height = `${size}px`;
+        dot.style.left = `${event.clientX - rect.left - size / 2}px`;
+        dot.style.top = `${event.clientY - rect.top - size / 2}px`;
+        target.appendChild(dot);
+        dot.addEventListener('animationend', () => dot.remove(), { once: true });
+      };
+      root.addEventListener('pointerdown', ripple);
+      cleanups.push(() => root.removeEventListener('pointerdown', ripple));
+    }
 
     const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
     if (reduce || !finePointer) return () => cleanups.forEach((cleanup) => cleanup());

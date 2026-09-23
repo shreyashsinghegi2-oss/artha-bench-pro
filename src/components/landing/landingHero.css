@@ -67,7 +67,7 @@
 .hp-batt i{position:absolute;inset:1.5px;right:5px;border-radius:1px;background:currentColor}
 .hp-homebar{position:absolute;bottom:7px;left:50%;width:110px;height:4px;margin-left:-55px;border-radius:3px;background:rgba(15,23,42,.35);z-index:6}
 .hp-glare{position:absolute;inset:0;pointer-events:none;background:linear-gradient(115deg,rgba(255,255,255,.18) 0%,rgba(255,255,255,0) 28%);z-index:7}
-.hp-page{position:absolute;inset:0;padding:50px 16px 76px;display:flex;flex-direction:column;gap:12px}
+.hp-page{position:absolute;inset:0;padding:86px 16px 76px;display:flex;flex-direction:column;gap:12px}
 .hp-head b{display:block;font-size:19px;letter-spacing:-.01em}
 .hp-head small{font-size:11px;color:#64748b}
 .hp-card{padding:12px;border-radius:16px;background:#fff;border:1px solid #e8ecf2;box-shadow:0 8px 20px -18px rgba(15,23,42,.6)}
@@ -86,7 +86,9 @@
 .hp-splash-bar i{display:block;height:100%;background:#5eead4;transform-origin:left}
 
 /* Home */
-.hp-page.hp-home{background:linear-gradient(180deg,#0b1b34 0,#123a5c 210px,#f5f7fb 210px)}
+.hp-page.hp-home{gap:10px;background:linear-gradient(180deg,#0b1b34 0,#123a5c 172px,#f5f7fb 172px)}
+.hp-home .hp-actions i{width:36px;height:36px}
+.hp-home .hp-health{padding:10px}
 .hp-top{display:flex;align-items:center;gap:10px;color:#fff}
 .hp-avatar{width:36px;height:36px;border-radius:50%;border:2px solid rgba(255,255,255,.85);object-fit:cover;flex:none}
 .hp-top small{display:block;font-size:10px;color:#9fb3c8}
@@ -186,12 +188,12 @@
 .hx-offer-card li{display:flex;gap:9px;align-items:flex-start;font-size:14px;color:var(--hx-ink)}
 .hx-offer-card li svg{flex:none;margin-top:3px;color:var(--hx-acc)}
 
-/* Header brand: mark + name + parent label */
-.am-mark{display:block;color:#1b1f24;transition:color .2s}
-.am-mark .am-node{transition:fill .2s}
-.cl-brand:hover .am-mark .am-node,.cl-brand:focus-visible .am-mark .am-node,.am-mark.is-active .am-node{fill:#0f5b57}
+/* Header brand: official mark + "ArthaMind AI" + parent label */
+.cl-brand .am-logo{flex:none;transition:transform .35s cubic-bezier(.2,.7,.2,1)}
+.cl-brand:hover .am-logo{transform:rotate(-6deg) scale(1.06)}
 .cl-brand .am-brand-text{display:flex;flex-direction:column;line-height:1.15}
-.connected-landing .cl-brand .am-brand-text b{font-size:15px;font-weight:700;letter-spacing:-.01em}
+.connected-landing .cl-brand .am-brand-text b{font-size:17px;font-weight:800;letter-spacing:-.01em;color:#0b0f14}
+.connected-landing .cl-brand .am-brand-text b em{font-style:normal;color:#1f8f4e}
 .connected-landing .cl-brand .am-brand-text small{font-size:11.5px;font-weight:500;letter-spacing:0;color:#6b7078}
 
 /* Laptop widths */
@@ -218,3 +220,60 @@
   .hx-offer-grid{grid-template-columns:1fr}
 }
 @media (prefers-reduced-motion:reduce){.hx-ring.r2,.hx-float,.hp-bubble.typing i{animation:none}.hx .hx-btn,.hx .hx-btn svg,.hp-lang-bar i{transition:none}}
+
+/* App bar with the official mark (every screen after the splash) */
+.hp-appbar{position:absolute;top:42px;left:14px;right:14px;height:34px;display:flex;align-items:center;gap:8px;z-index:5;color:#0b0f14}
+.hp-appbar .am-logo{border-radius:7px;box-shadow:0 4px 10px -6px rgba(0,0,0,.6)}
+.hp-appbar b{font-size:13.5px;font-weight:800;letter-spacing:-.01em}
+.hp-appbar b em{font-style:normal;color:#1f8f4e}
+.hp-appbar.dark{color:#fff}
+.hp-appbar.dark b em{color:#34c46f}
+.hp-appbar-icons{margin-left:auto;display:inline-flex;align-items:center;gap:8px;opacity:.9}
+.hp-appbar-icons .hp-avatar{width:24px;height:24px;border-width:1.5px}
+.hp-screen.is-dark .hp-appbar-icons{color:#fff}
+
+/* Coin-drop splash */
+.hp-page.hp-splash{padding:0}
+.hp-coin-stage{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;perspective:700px}
+.hp-coin-wrap{position:relative;width:132px;height:170px;display:flex;align-items:flex-end;justify-content:center}
+.hp-coin{position:relative;width:132px;height:132px;transform-style:preserve-3d;z-index:2}
+.hp-coin-face{position:absolute;inset:0;border-radius:50%;backface-visibility:hidden;-webkit-backface-visibility:hidden;box-shadow:0 0 0 2px #7a5813 inset,0 18px 30px -16px rgba(0,0,0,.7)}
+.hp-coin-face>svg{display:block;width:100%;height:100%}
+.hp-coin-mark .am-logo{width:52px;height:52px}
+.hp-coin-face.back{transform:rotateY(180deg)}
+.hp-coin-mark{position:absolute;inset:0;display:grid;place-items:center;filter:drop-shadow(0 1px 0 rgba(255,244,200,.8))}
+.hp-coin-shadow{position:absolute;bottom:-12px;left:50%;width:110px;height:14px;margin-left:-55px;border-radius:50%;background:radial-gradient(closest-side,rgba(0,0,0,.65),transparent);z-index:1}
+.hp-coin-title{display:grid;justify-items:center;gap:2px;color:#fff}
+.hp-coin-title b{font-size:22px;letter-spacing:-.01em}
+.hp-coin-title b em{font-style:normal;color:#34c46f}
+.hp-coin-title small{font-size:12px;color:#9fb3c8}
+
+/* CFO home */
+.hp-hello{color:#fff}
+.hp-hello small{display:block;font-size:10.5px;color:#9fb3c8}
+.hp-hello>div{display:flex;align-items:baseline;gap:8px;margin:2px 0}
+.hp-hello b{font-size:24px;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.hp-hello .hp-up{white-space:nowrap}
+.hp-chart{padding:10px 10px 6px}
+.hp-chart-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px}
+.hp-chart-head b{display:block;font-size:12.5px}
+.hp-chart-head small{font-size:9.5px;color:#94a3b8}
+.hp-chart-val{display:flex;flex-direction:column;align-items:flex-end;gap:2px}
+.hp-chart-val b{font-variant-numeric:tabular-nums}
+.hp-chart-val em{font-style:normal;font-size:9.5px;font-weight:800;padding:1px 6px;border-radius:6px;color:#047857;background:#d1fae5}
+.hp-candles{display:block;width:100%;height:84px}
+.hp-candle-ping{transform-box:fill-box;transform-origin:center;animation:hp-ping 1.6s ease-out infinite}
+@keyframes hp-ping{0%{opacity:1}70%{opacity:.35;transform:scale(2.2)}100%{opacity:1;transform:scale(1)}}
+@media (prefers-reduced-motion:reduce){.hp-candle-ping{animation:none}}
+
+/* Official logo as a faint, slowly breathing watermark behind the hero */
+.hx-watermark{position:absolute;left:-140px;top:40px;width:640px;height:640px;opacity:.045;pointer-events:none;z-index:0;animation:hx-mark 18s ease-in-out infinite}
+.hx-watermark svg{width:100%;height:100%}
+.hx-wrap,.hx-offer{position:relative;z-index:1}
+@keyframes hx-mark{0%,100%{transform:rotate(-4deg) scale(1)}50%{transform:rotate(3deg) scale(1.05) translateY(-12px)}}
+@media (max-width:980px){.hx-watermark{left:auto;right:-160px;top:auto;bottom:320px;width:460px;height:460px}}
+@media (prefers-reduced-motion:reduce){.hx-watermark{animation:none}}
+/* Keep the brand name visible next to the mark on small phones */
+@media (max-width:640px){.connected-landing .cl-brand .am-brand-text b{font-size:15px}.cl-brand .am-logo{width:28px;height:28px}}
+@media (max-width:380px){.connected-landing .cl-brand>span.am-brand-text{display:flex}.connected-landing .cl-brand .am-brand-text b{font-size:13.5px}.cl-brand .am-logo{width:24px;height:24px}}
+@media (max-width:420px){.connected-landing .cl-right{gap:6px}.connected-landing .cl-right select{width:82px;padding-left:10px;padding-right:18px}.connected-landing .cl-right div>svg:first-child{display:none}}

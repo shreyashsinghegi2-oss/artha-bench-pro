@@ -13,3 +13,23 @@
 @keyframes page-enter{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 .page-enter{animation:page-enter .42s cubic-bezier(.2,.7,.2,1) both}
 @media (prefers-reduced-motion:reduce){.page-enter{animation:none}}
+
+/* 3D tilt on hover (see src/lib/tilt3d.ts). A soft light follows the pointer across the card. */
+[data-tilt-on]{transform:perspective(900px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)) translateY(-4px)!important;box-shadow:0 22px 44px -18px rgba(15,23,42,.28),0 0 0 1px rgba(15,157,138,.18)!important;transition:transform .12s ease-out,box-shadow .25s ease!important;will-change:transform;z-index:2}
+[data-tilt-pos]{position:relative}
+[data-tilt-on]::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:radial-gradient(420px circle at var(--gx,50%) var(--gy,50%),rgba(255,255,255,.28),transparent 45%);mix-blend-mode:soft-light}
+:root.dark [data-tilt-on]{box-shadow:0 22px 44px -18px rgba(0,0,0,.6),0 0 0 1px rgba(43,196,154,.25)!important}
+/* Scroll reveal for workspace cards that start below the fold. */
+.sr{opacity:0;transform:translateY(18px) scale(.985);transition:opacity .6s ease,transform .7s cubic-bezier(.2,.7,.2,1)}
+.sr.sr-in{opacity:1;transform:none}
+
+/* Workspace colour tones: a soft, professional wash behind each product area instead of flat white. */
+.app-shell{background-color:var(--bg-canvas);background-image:radial-gradient(900px 520px at 100% -10%,var(--tone-a),transparent 60%),radial-gradient(760px 480px at -10% 30%,var(--tone-b),transparent 60%),radial-gradient(900px 600px at 60% 110%,var(--tone-c),transparent 60%);background-attachment:fixed}
+.app-shell[data-tone="finance"]{--tone-a:rgba(16,185,129,.2);--tone-b:rgba(14,165,233,.13);--tone-c:rgba(245,158,11,.1);--tone-edge:#10b981}
+.app-shell[data-tone="markets"]{--tone-a:rgba(99,102,241,.2);--tone-b:rgba(14,165,233,.14);--tone-c:rgba(16,185,129,.1);--tone-edge:#6366f1}
+.app-shell[data-tone="research"]{--tone-a:rgba(14,165,233,.2);--tone-b:rgba(139,92,246,.13);--tone-c:rgba(16,185,129,.1);--tone-edge:#0ea5e9}
+:root.dark .app-shell[data-tone]{--tone-a:rgba(43,196,154,.10);--tone-b:rgba(96,165,250,.08);--tone-c:rgba(167,139,250,.06)}
+.app-shell main .bg-surface{background-color:color-mix(in srgb,var(--bg-surface) 92%,transparent);backdrop-filter:saturate(1.2)}
+@media (prefers-reduced-motion:reduce){.sr{opacity:1;transform:none;transition:none}}
+.app-shell main [class*="rounded-3xl"][class*="border"]{border-top-color:color-mix(in srgb,var(--tone-edge,#0f9d8a) 55%,transparent)}
+.app-shell main [class*="rounded-3xl"][class*="border"]:hover{border-color:color-mix(in srgb,var(--tone-edge,#0f9d8a) 40%,transparent)}

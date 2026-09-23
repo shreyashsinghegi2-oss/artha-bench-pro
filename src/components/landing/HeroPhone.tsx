@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion, useInView, useMotionValue, useReducedMotion, useSpring, useTransform } from 'motion/react';
+import { companyLogoSrc } from '../market/CompanyLogo';
 import { BarChart3, Bell, Bot, Globe2, Home, ReceiptText, ShieldCheck, Star, Target, Wallet } from 'lucide-react';
 import { SUPPORTED_LANGUAGES } from '../LanguageSelector';
 import { LANDING_REVIEWS } from '../../data/landingReviews';
@@ -72,14 +73,14 @@ const Portrait: React.FC<{ photoSrc?: string }> = ({ photoSrc }) => photoSrc
     </svg>;
 
 /**
- * Company badges drawn in each company's brand colour with its ticker initials. Official logo files
- * are trademarks and are not bundled; set `logo` to a licensed SVG path to replace a badge.
+ * Rows use the owner-supplied company logo when one exists (see CompanyLogo), otherwise a badge in the
+ * company's brand colour with its ticker initials.
  */
 type Row = { name: string; ticker: string; badge: string; color: string; value: number; change: number; decimals: number; logo?: string };
 const MARKETS: Record<'India' | 'US' | 'Forex' | 'Intraday', Row[]> = {
   India: [
-    { name: 'NIFTY 50', ticker: 'NSE index', badge: 'N50', color: '#1e3a8a', value: 24850, change: 0.42, decimals: 1 },
     { name: 'Reliance', ticker: 'RELIANCE', badge: 'RIL', color: '#0a3d91', value: 1412.5, change: 0.64, decimals: 1 },
+    { name: 'TCS', ticker: 'TCS', badge: 'TCS', color: '#1f3b8c', value: 3380, change: -0.31, decimals: 1 },
     { name: 'HDFC Bank', ticker: 'HDFCBANK', badge: 'HB', color: '#004c8f', value: 1968.4, change: 0.22, decimals: 1 },
   ],
   US: [
@@ -93,12 +94,14 @@ const MARKETS: Record<'India' | 'US' | 'Forex' | 'Intraday', Row[]> = {
     { name: 'Pound', ticker: 'GBP/INR', badge: '£', color: '#7c2d12', value: 112.3, change: 0.09, decimals: 2 },
   ],
   Intraday: [
-    { name: 'TCS', ticker: 'TCS', badge: 'TCS', color: '#1f3b8c', value: 3380, change: -0.31, decimals: 1 },
+    { name: 'NIFTY 50', ticker: 'NSE index', badge: 'N50', color: '#1e3a8a', value: 24850, change: 0.42, decimals: 1 },
     { name: 'Infosys', ticker: 'INFY', badge: 'INFY', color: '#007cc3', value: 1542.7, change: 0.58, decimals: 1 },
     { name: 'ICICI Bank', ticker: 'ICICIBANK', badge: 'IB', color: '#b02a30', value: 1421.2, change: 0.14, decimals: 1 },
   ],
 };
 const MARKET_TABS = Object.keys(MARKETS) as Array<keyof typeof MARKETS>;
+/** When the US, Forex and Intraday tabs open (ms into the markets screen). */
+const TAB_AT = [1900, 2900, 3900];
 
 function useDemoFeed(active: boolean) {
   const [rows, setRows] = useState(MARKETS);
@@ -121,7 +124,7 @@ const Price: React.FC<{ row: Row; run: boolean }> = ({ row, run }) => {
 
 const SCREENS = ['splash', 'home', 'markets', 'cfo', 'tax', 'language', 'people'] as const;
 type Screen = typeof SCREENS[number];
-const DURATION: Record<Screen, number> = { splash: 3400, home: 4600, markets: 4000, cfo: 3800, tax: 3400, language: 3800, people: 3400 };
+const DURATION: Record<Screen, number> = { splash: 3400, home: 4600, markets: 5200, cfo: 3800, tax: 3400, language: 3800, people: 3400 };
 const TABS: Array<{ id: Screen; label: string; icon: React.ComponentType<{ size?: number }> }> = [
   { id: 'home', label: 'Home', icon: Home }, { id: 'markets', label: 'Markets', icon: BarChart3 }, { id: 'cfo', label: 'AI CFO', icon: Bot },
   { id: 'tax', label: 'Tax', icon: ReceiptText }, { id: 'language', label: 'Language', icon: Globe2 },
@@ -235,9 +238,10 @@ export const HeroPhone: React.FC<{ photoSrc?: string }> = ({ photoSrc }) => {
   }, [running, index]);
   useEffect(() => {
     if (!running || screen !== 'markets') return;
+    // India stays up longest so the company logos can be read; the other tabs flick past.
     setMarketTab(0);
-    const id = window.setInterval(() => setMarketTab((t) => (t + 1) % MARKET_TABS.length), 1000);
-    return () => window.clearInterval(id);
+    const timers = TAB_AT.map((ms, k) => window.setTimeout(() => setMarketTab(k + 1), ms));
+    return () => timers.forEach(window.clearTimeout);
   }, [running, screen]);
   useEffect(() => {
     if (screen !== 'cfo') return;
@@ -285,7 +289,7 @@ export const HeroPhone: React.FC<{ photoSrc?: string }> = ({ photoSrc }) => {
                 <div className="hp-head"><b>Markets</b><small>Demo feed · not live prices</small></div>
                 <div className="hp-seg" aria-hidden="true">{MARKET_TABS.map((t, i) => <span key={t} className={i === marketTab ? 'on' : ''}>{t}</span>)}</div>
                 <ul className="hp-rows">{feed[MARKET_TABS[marketTab]].map((row) => <li key={row.ticker}>
-                  <span className="hp-logo" style={{ background: row.color }}>{row.logo ? <img src={row.logo} alt=""/> : row.badge}</span>
+                  <span className="hp-logo" style={{ background: row.color }}>{(row.logo ?? companyLogoSrc(row.ticker)) ? <img src={row.logo ?? companyLogoSrc(row.ticker)} alt=""/> : row.badge}</span>
                   <span className="hp-rname"><b>{row.name}</b><small>{row.ticker}</small></span>
                   <span className="hp-rval"><Price row={row} run={animate}/><em className={row.change >= 0 ? 'up' : 'down'}>{row.change >= 0 ? '+' : ''}{row.change.toFixed(2)}%</em></span>
                 </li>)}</ul>

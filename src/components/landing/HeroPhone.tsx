@@ -124,7 +124,7 @@ const Price: React.FC<{ row: Row; run: boolean }> = ({ row, run }) => {
 
 const SCREENS = ['splash', 'home', 'markets', 'cfo', 'tax', 'language', 'people'] as const;
 type Screen = typeof SCREENS[number];
-const DURATION: Record<Screen, number> = { splash: 3400, home: 4600, markets: 5200, cfo: 3800, tax: 3400, language: 3800, people: 3400 };
+const DURATION: Record<Screen, number> = { splash: 5400, home: 4600, markets: 5200, cfo: 3800, tax: 3400, language: 3800, people: 3400 };
 const TABS: Array<{ id: Screen; label: string; icon: React.ComponentType<{ size?: number }> }> = [
   { id: 'home', label: 'Home', icon: Home }, { id: 'markets', label: 'Markets', icon: BarChart3 }, { id: 'cfo', label: 'AI CFO', icon: Bot },
   { id: 'tax', label: 'Tax', icon: ReceiptText }, { id: 'language', label: 'Language', icon: Globe2 },
@@ -145,20 +145,28 @@ const CoinFace: React.FC<{ id: string }> = ({ id }) => <svg viewBox="0 0 120 120
   <circle cx="60" cy="60" r="36" fill={`url(#${id}-c)`} stroke="#a87c24" strokeWidth="1.5"/>
 </svg>;
 
-const COIN_TIMES = [0, 0.42, 0.58, 0.72, 0.86, 1];
-/** Splash: the logo coin drops in spinning, bounces twice while slowing, and settles flat. */
+// Coin intro, 4.4 s: drop spinning, bounce twice and settle (0–2.2 s); rest while the app loads
+// (2.2–3.4 s); flip once more with a small lift (3.4–4.4 s) and settle steady before Home opens.
+const COIN_TIMES = [0, 0.21, 0.29, 0.36, 0.43, 0.5, 0.773, 0.886, 1];
+const COIN_EASE = ['easeIn', 'easeOut', 'easeIn', 'easeOut', 'easeIn', 'linear', 'easeOut', 'easeIn'] as const;
 const CoinDrop: React.FC<{ animate: boolean }> = ({ animate }) => <div className="hp-coin-stage">
   <div className="hp-coin-wrap">
     <motion.div className="hp-coin" initial={animate ? { y: -260, rotateY: 0 } : false}
-      animate={{ y: [-260, 0, -46, 0, -12, 0], rotateY: [0, 1080, 1260, 1380, 1428, 1440] }}
-      transition={{ duration: 2.2, times: COIN_TIMES, ease: ['easeIn', 'easeOut', 'easeIn', 'easeOut', 'easeIn'] }}>
-      <span className="hp-coin-face"><CoinFace id="coin-f"/><span className="hp-coin-mark"><ArthaMindLogoMark size={46} tone="ink" cut="#e6bd5c"/></span></span>
+      animate={{ y: [-260, 0, -46, 0, -12, 0, 0, -26, 0], rotateY: [0, 1080, 1260, 1380, 1428, 1440, 1440, 1620, 1800] }}
+      transition={{ duration: 4.4, times: COIN_TIMES, ease: [...COIN_EASE] }}>
+      <span className="hp-coin-face"><CoinFace id="coin-f"/><span className="hp-coin-mark"><ArthaMindLogoMark size={46} tone="ink" cut="#e6bd5c"/></span><i className="hp-coin-glint" aria-hidden="true"/></span>
       <span className="hp-coin-face back"><CoinFace id="coin-b"/><span className="hp-coin-mark"><ArthaMindLogoMark size={46} tone="ink" cut="#e6bd5c"/></span></span>
     </motion.div>
-    <motion.span className="hp-coin-shadow" initial={animate ? { scaleX: 0.2, opacity: 0 } : false} animate={{ scaleX: [0.2, 1, 0.55, 1, 0.85, 1], opacity: [0, 0.55, 0.3, 0.55, 0.45, 0.55] }} transition={{ duration: 2.2, times: COIN_TIMES }}/>
+    <motion.span className="hp-coin-shadow" initial={animate ? { scaleX: 0.2, opacity: 0 } : false}
+      animate={{ scaleX: [0.2, 1, 0.55, 1, 0.85, 1, 1, 0.62, 1], opacity: [0, 0.55, 0.3, 0.55, 0.45, 0.55, 0.55, 0.32, 0.55] }}
+      transition={{ duration: 4.4, times: COIN_TIMES }}/>
   </div>
   <motion.div className="hp-coin-title" initial={animate ? { opacity: 0, y: 10 } : false} animate={{ opacity: 1, y: 0 }} transition={{ delay: animate ? 2.25 : 0, duration: 0.4 }}>
     <b>ArthaMind <em>AI</em></b><small>by Artha Bench Pro</small>
+  </motion.div>
+  <motion.div className="hp-coin-load" initial={animate ? { opacity: 0 } : false} animate={{ opacity: animate ? [0, 1, 1, 0] : 1 }} transition={{ duration: 2.2, delay: animate ? 2.2 : 0, times: [0, 0.1, 0.8, 1] }}>
+    <span className="hp-coin-bar"><motion.i initial={animate ? { scaleX: 0 } : false} animate={{ scaleX: 1 }} transition={{ delay: animate ? 2.3 : 0, duration: 1.4, ease: [0.4, 0, 0.2, 1] }}/></span>
+    <small>Loading your money dashboard…</small>
   </motion.div>
 </div>;
 
@@ -191,6 +199,22 @@ const CandleChart: React.FC<{ animate: boolean }> = ({ animate }) => {
   </svg>;
 };
 
+/** Breadth and top movers for the visible tab: green for gains, red for losses. */
+const MarketPulse: React.FC<{ rows: Row[]; tab: string }> = ({ rows, tab }) => {
+  const up = rows.filter((r) => r.change >= 0).length;
+  const sorted = [...rows].sort((a, b) => b.change - a.change);
+  const best = sorted[0], worst = sorted[sorted.length - 1];
+  const pct = (v: number) => `${v >= 0 ? '+' : ''}${v.toFixed(2)}%`;
+  return <div className="hp-card hp-pulse">
+    <div className="hp-pulse-head"><small>{tab} pulse · demo</small><b><span className="up">{up} up</span> · <span className="down">{rows.length - up} down</span></b></div>
+    <span className="hp-breadth" aria-hidden="true"><i style={{ width: `${(up / rows.length) * 100}%` }}/></span>
+    <div className="hp-movers">
+      <span><small>Top gainer</small><b>{best.name}</b><em className={best.change >= 0 ? 'up' : 'down'}>{pct(best.change)}</em></span>
+      <span><small>{worst.change < 0 ? 'Top loser' : 'Weakest'}</small><b>{worst.name}</b><em className={worst.change >= 0 ? 'up' : 'down'}>{pct(worst.change)}</em></span>
+    </div>
+  </div>;
+};
+
 /** App bar shown at the top of every screen after the splash. */
 const AppBar: React.FC<{ dark: boolean; photoSrc?: string }> = ({ dark, photoSrc }) => <div className={`hp-appbar ${dark ? 'dark' : ''}`}>
   <ArthaMindLogoMark size={22} tone="app"/>
@@ -208,6 +232,8 @@ export const HeroPhone: React.FC<{ photoSrc?: string }> = ({ photoSrc }) => {
   const [marketTab, setMarketTab] = useState(0);
   const [chatStep, setChatStep] = useState(0);
   const [clock, setClock] = useState(() => new Date());
+  // The coin intro waits for the page to go idle; otherwise a busy first load swallows the animation.
+  const [introReady, setIntroReady] = useState(false);
   const running = inView && pageVisible && !reduced;
   const screen: Screen = reduced ? 'home' : SCREENS[index];
   const feed = useDemoFeed(running && screen === 'markets');
@@ -230,12 +256,19 @@ export const HeroPhone: React.FC<{ photoSrc?: string }> = ({ photoSrc }) => {
     document.addEventListener('visibilitychange', onVis);
     return () => document.removeEventListener('visibilitychange', onVis);
   }, []);
+  useEffect(() => {
+    if (!running || introReady) return;
+    const w = window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number; cancelIdleCallback?: (id: number) => void };
+    if (w.requestIdleCallback) { const id = w.requestIdleCallback(() => setIntroReady(true), { timeout: 1500 }); return () => w.cancelIdleCallback?.(id); }
+    const id = window.setTimeout(() => setIntroReady(true), 400);
+    return () => window.clearTimeout(id);
+  }, [running, introReady]);
   // Advance screens on a timer; the splash shows once, then the tour loops from Home.
   useEffect(() => {
-    if (!running) return;
+    if (!running || (SCREENS[index] === 'splash' && !introReady)) return;
     const id = window.setTimeout(() => setIndex((i) => ((i + 1) % SCREENS.length) || 1), DURATION[SCREENS[index]]);
     return () => window.clearTimeout(id);
-  }, [running, index]);
+  }, [running, index, introReady]);
   useEffect(() => {
     if (!running || screen !== 'markets') return;
     // India stays up longest so the company logos can be read; the other tabs flick past.
@@ -267,15 +300,15 @@ export const HeroPhone: React.FC<{ photoSrc?: string }> = ({ photoSrc }) => {
           <div className="hp-status" aria-hidden="true"><span>{time}</span><span className="hp-sys"><span className="hp-sig"><i/><i/><i/><i/></span><span className="hp-batt"><i/></span></span></div>
 
           {screen !== 'splash' && <AppBar dark={dark} photoSrc={photoSrc}/>}
-          <AnimatePresence mode="wait" initial={false}>
+          <AnimatePresence mode="wait">
             <motion.div key={screen} className={`hp-page hp-${screen}`} initial={animate ? (screen === 'home' ? { opacity: 0, scale: 0.94 } : { opacity: 0, y: 14 }) : false} animate={{ opacity: 1, y: 0, scale: 1 }} exit={animate ? { opacity: 0, y: -10 } : undefined} transition={{ duration: 0.4, ease: [0.2, 0.7, 0.2, 1] }}>
 
-              {screen === 'splash' && <CoinDrop animate={animate}/>}
+              {screen === 'splash' && (introReady || !animate) && <CoinDrop animate={animate}/>}
 
               {screen === 'home' && <>
                 <div className="hp-hello"><small>Good evening, Priya · sample profile</small><div><b><Count to={r.netWorth} run={animate} format={inr}/></b><span className="hp-up">+<Count to={r.cashflow.surplus} run={animate} format={inr}/>/mo</span></div><small>Net worth</small></div>
                 <div className="hp-card hp-chart">
-                  <div className="hp-chart-head"><span><b>NIFTY 50</b><small>Demo feed · 15 min candles</small></span><span className="hp-chart-val"><b><Count to={CANDLES[CANDLES.length - 1].close} run={animate} format={(v) => v.toLocaleString('en-IN', { maximumFractionDigits: 1, minimumFractionDigits: 1 })}/></b><em className="up">+0.84%</em></span></div>
+                  <div className="hp-chart-head"><img className="hp-chart-logo" src={companyLogoSrc('NIFTY 50')} alt="" width={26} height={26}/><span><b>NIFTY 50</b><small>Demo feed · 15 min candles</small></span><span className="hp-chart-val"><b><Count to={CANDLES[CANDLES.length - 1].close} run={animate} format={(v) => v.toLocaleString('en-IN', { maximumFractionDigits: 1, minimumFractionDigits: 1 })}/></b><em className="up">+0.84%</em></span></div>
                   <CandleChart animate={animate}/>
                 </div>
                 <div className="hp-actions">{QUICK.map(([label, Icon]) => <span key={label}><i><Icon size={15}/></i>{label}</span>)}</div>
@@ -293,7 +326,7 @@ export const HeroPhone: React.FC<{ photoSrc?: string }> = ({ photoSrc }) => {
                   <span className="hp-rname"><b>{row.name}</b><small>{row.ticker}</small></span>
                   <span className="hp-rval"><Price row={row} run={animate}/><em className={row.change >= 0 ? 'up' : 'down'}>{row.change >= 0 ? '+' : ''}{row.change.toFixed(2)}%</em></span>
                 </li>)}</ul>
-                <div className="hp-card hp-mini"><small>Watchlist value (demo)</small><b><Count to={184350 + marketTab * 1270} run={animate} format={inr}/></b></div>
+                <MarketPulse rows={feed[MARKET_TABS[marketTab]]} tab={MARKET_TABS[marketTab]}/>
               </>}
 
               {screen === 'cfo' && <>

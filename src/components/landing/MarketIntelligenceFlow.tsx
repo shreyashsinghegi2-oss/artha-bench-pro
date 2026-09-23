@@ -2,6 +2,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import { motion, useInView, useReducedMotion } from 'motion/react';
 import { BadgeCheck, Newspaper, ReceiptIndianRupee } from 'lucide-react';
 import './marketIntelligenceFlow.css';
+import { ArthaMindLogoMark } from '../branding/ArthaMindBrand';
+import { companyLogoSrc } from '../market/CompanyLogo';
 
 /**
  * "Market Intelligence Flow": public signals travel into the ArthaMind reasoning core,
@@ -57,7 +59,7 @@ const Spark: React.FC<{ points: number[]; tone: 'up' | 'down'; play: boolean }> 
 
 const SignalCard: React.FC<{ id: string; play: boolean }> = ({ id, play }) => {
   switch (id) {
-    case 'nifty': return <><small>NIFTY 50 · Index</small><div className="mif-row"><b>23,329</b><span className="up">▲ 0.42%</span></div><Spark points={[3, 4, 3.6, 5, 4.6, 6, 5.8, 7]} tone="up" play={play}/></>;
+    case 'nifty': return <><small><img className="mif-sig-logo" src={companyLogoSrc('NIFTY 50')} alt="" width={14} height={14}/>NIFTY 50 · Index</small><div className="mif-row"><b>23,329</b><span className="up">▲ 0.42%</span></div><Spark points={[3, 4, 3.6, 5, 4.6, 6, 5.8, 7]} tone="up" play={play}/></>;
     case 'btc': return <><small>BTC/USDT · Crypto</small><div className="mif-row"><b>86,292</b><span className="up">▲ 1.14%</span></div><Spark points={[5, 4, 6, 5.5, 7, 6.2, 8, 7.6]} tone="up" play={play}/></>;
     case 'gold': return <><small>Gold · COMEX</small><div className="mif-row"><b>$4,399.9</b><span className="up">▲ 0.54%</span></div><Spark points={[4, 4.5, 4.2, 5, 5.4, 5.1, 5.8, 6]} tone="up" play={play}/></>;
     case 'fx': return <><small>USD/INR · FX</small><div className="mif-row"><b>₹95.58</b><span className="down">▼ 0.23%</span></div><Spark points={[7, 6.6, 6.8, 6, 5.6, 5.9, 5.2, 5]} tone="down" play={play}/></>;
@@ -124,7 +126,7 @@ export const MarketIntelligenceFlow: React.FC = () => {
         <motion.div className="mif-core" animate={{ scale: at(phase, 'verify') && !answered && phase !== 'exit' ? [1, 1.05, 1] : 1 }} transition={{ duration: 1.4, repeat: at(phase, 'verify') && !answered ? Infinity : 0, ease: 'easeInOut' }}>
           <span className={`mif-ring r1 ${flowing ? 'spin' : ''}`}/><span className={`mif-ring r2 ${flowing ? 'spin' : ''}`}/>
           <motion.span className="mif-pulse" animate={{ opacity: at(phase, 'verify') && phase !== 'exit' ? [0, 0.55, 0] : 0, scale: [0.9, 1.25] }} transition={{ duration: 1.4, repeat: at(phase, 'verify') && !answered ? Infinity : 0 }}/>
-          <div className="mif-hex"><b>ArthaMind</b><small>Intelligence</small></div>
+          <div className="mif-hex"><ArthaMindLogoMark size={30} tone="light" cut="#0b2e22" className="mif-hex-logo"/><b>ArthaMind</b><small>Intelligence</small></div>
         </motion.div>
         <ul className="mif-steps">{CORE_STEPS.map((step) => <li key={step.label} className={phase === step.phase ? 'on' : at(phase, step.phase) && phase !== 'exit' ? 'done' : ''}>{at(phase, step.phase) && phase !== step.phase && phase !== 'exit' ? '✓ ' : ''}{step.label}</li>)}</ul>
       </div>

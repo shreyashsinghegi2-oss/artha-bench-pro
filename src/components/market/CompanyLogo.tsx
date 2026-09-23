@@ -10,10 +10,25 @@ const LOGOS: Record<string, { src: string; name: string; match: RegExp }> = {
   HDFCBANK: { src: '/logos/HDFCBANK.png', name: 'HDFC Bank', match: /\bHDFC Bank\b/i },
   INFY: { src: '/logos/INFY.png', name: 'Infosys', match: /\bInfosys\b/i },
   ICICIBANK: { src: '/logos/ICICIBANK.png', name: 'ICICI Bank', match: /\bICICI Bank\b/i },
+  AAPL: { src: '/logos/AAPL.png', name: 'Apple', match: /\bApple\b/ },
+  MSFT: { src: '/logos/MSFT.png', name: 'Microsoft', match: /\bMicrosoft\b/i },
+  NVDA: { src: '/logos/NVDA.png', name: 'NVIDIA', match: /\bNvidia\b/i },
+  NIFTY50: { src: '/logos/NSE.png', name: 'NIFTY 50', match: /\bNifty\b/i },
+  SENSEX: { src: '/logos/BSE.png', name: 'S&P BSE Sensex', match: /\bSensex\b/i },
+};
+
+/** Other spellings of the same instrument used across providers and sample data. */
+const ALIASES: Record<string, string> = {
+  '^NSEI': 'NIFTY50', NIFTY: 'NIFTY50', 'NIFTY 50': 'NIFTY50', 'NIFTY 50 INDEX': 'NIFTY50', 'NSE INDEX': 'NIFTY50',
+  '^BSESN': 'SENSEX', 'BSE SENSEX': 'SENSEX', 'S&P BSE SENSEX': 'SENSEX',
+  'APPLE INC.': 'AAPL', APPLE: 'AAPL', MICROSOFT: 'MSFT', NVIDIA: 'NVDA',
 };
 
 /** "RELIANCE.NS", "TCS:NSE" and "hdfcbank" all resolve to the same key. */
-export const logoKey = (symbol: string) => symbol.toUpperCase().replace(/\.(NS|BO)$/, '').replace(/:(NSE|BSE)$/, '').trim();
+export const logoKey = (symbol: string) => {
+  const key = symbol.toUpperCase().replace(/\.(NS|BO)$/, '').replace(/:(NSE|BSE|NASDAQ|NYSE)$/, '').trim();
+  return ALIASES[key] ?? key;
+};
 
 export const companyLogoSrc = (symbol: string): string | undefined => LOGOS[logoKey(symbol)]?.src;
 

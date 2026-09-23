@@ -75,3 +75,10 @@
 .mif-ghost i{display:block;height:8px;margin-top:8px;border-radius:6px;background:rgba(159,184,173,.14)}
 .mif-ghost i:nth-of-type(2){width:80%}.mif-ghost i:nth-of-type(3){width:55%}
 @media (max-width:760px){.mif-ghost{display:none}}
+/* Official mark inside the ArthaMind core */
+.mif-hex{width:104px;height:118px;gap:1px}
+.mif-hex .mif-hex-logo{justify-self:center;margin-bottom:3px;filter:drop-shadow(0 2px 6px rgba(52,211,153,.35))}
+.mif-hex b{font-size:12.5px}
+.mif-hex small{font-size:8.5px}
+.mif-sig-logo{border-radius:3px;background:#fff;object-fit:contain}
+@media (max-width:640px){.mif-hex{width:84px;height:96px}.mif-hex .mif-hex-logo{width:22px;height:22px}.mif-hex b{font-size:11px}}

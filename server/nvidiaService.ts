@@ -1,11 +1,12 @@
 import type { Request, Response } from 'express';
+import { withDateContext } from './dateContext';
 
 export const DEFAULT_NVIDIA_MODEL = 'nvidia/nemotron-3-ultra-550b-a55b';
 export const NVIDIA_BASE_URL = 'https://integrate.api.nvidia.com/v1';
 const allowedModels = new Set([DEFAULT_NVIDIA_MODEL]);
 
 function buildMessages(systemPrompt: string, userPrompt: string, history?: Array<{ role: string; content: string }>) {
-  const messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [{ role: 'system', content: systemPrompt }];
+  const messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [{ role: 'system', content: withDateContext(systemPrompt) }];
   for (const item of Array.isArray(history) ? history.slice(-10) : []) {
     if ((item.role === 'user' || item.role === 'assistant') && typeof item.content === 'string' && item.content.trim()) messages.push({ role: item.role, content: item.content.slice(0, 4_000) });
   }

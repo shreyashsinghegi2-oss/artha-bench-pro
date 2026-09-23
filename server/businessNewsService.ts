@@ -4,7 +4,8 @@
 
 import { NormalizedNewsItem, StructuredFinancialAnswer } from '../src/types';
 import { fetchNewsFromProvider } from './providers/newsProvider';
-import { callGroqStructuredFinancialAnswer } from './groqService';
+import { callGroqChat, callGroqStructuredFinancialAnswer } from './groqService';
+import { buildRuleBasedNewsBrief, mergeAiNewsBrief, parseJsonObject, type NewsResearchBrief } from '../src/services/newsBrief';
 import {
   buildStructuredFinancialAnswerInstructions,
   createFallbackStructuredFinancialAnswer,
@@ -202,4 +203,40 @@ Please explain:
     disclaimer:
       'AI explanation generated from the supplied headline and summary for educational analysis only. Not investment advice.',
   };
+}
+
+/**
+ * Structured research brief for one article. The rule-based brief is always built first; when an AI
+ * key is configured, the model rewrites the narrative fields and the result is validated and merged.
+ */
+export async function buildNewsResearchBrief(article: {
+  title: string;
+  summary?: string;
+  sourceName: string;
+  sourceUrl?: string;
+  publishedAt?: string | null;
+}, now: Date = new Date()): Promise<NewsResearchBrief> {
+  const rules = buildRuleBasedNewsBrief(article, now);
+  if (!process.env.GROQ_API_KEY?.trim()) return rules;
+  const today = now.toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Kolkata' });
+  const system = `You are ArthaMind's research desk. Today is ${today} (India time). Write a concise, professional research brief on ONE business-news item for Indian retail investors.
+Rules:
+- Use only facts in the supplied headline and summary. Never invent numbers, names, dates or quotes.
+- No buy/sell/hold advice and no price targets.
+- Plain, precise English; each bullet one sentence.
+- If the summary is thin, say what is unknown instead of guessing.
+Reply with JSON only, no prose, in exactly this shape:
+{"summary":"2 sentences: what happened","keyPoints":["3-5 bullets"],"whyItMatters":"1-2 sentences","sentiment":"positive|negative|mixed|unclear","confidence":"low|medium|high","impact":[{"area":"e.g. Banks, Rupee, IT services","direction":"positive|negative|mixed|unclear","note":"one sentence"}],"whatToWatch":["2-4 items"],"verify":["1-3 checks a reader should do"]}`;
+  const user = `Headline: ${article.title}
+Summary: ${article.summary || 'Not supplied'}
+Source: ${article.sourceName}
+Published: ${article.publishedAt || 'unknown'}
+Detected topics: ${rules.topics.join(', ') || 'none'}
+Named in text: ${rules.entities.map((e) => e.name).join(', ') || 'none'}`;
+  try {
+    const reply = await callGroqChat(system, user);
+    return mergeAiNewsBrief(rules, parseJsonObject(reply));
+  } catch {
+    return rules;
+  }
 }

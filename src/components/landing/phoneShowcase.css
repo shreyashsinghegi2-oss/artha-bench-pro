@@ -1,4 +1,4 @@
-/* Scroll-pinned phone showcase. Black and white; green/red only mark money going up or down. */
+/* Scroll-pinned phone showcase in the ArthaMind palette: ink, brand green, with a colour per app screen. */
 .ps-section{position:relative;background:#fff;color:#0a0a0a;border-block:1px solid #ececec}
 .ps-section.is-pinned{height:380vh}
 .ps-section.is-pinned .ps-sticky{position:sticky;top:0;height:100vh;display:flex;align-items:center;overflow:hidden}
@@ -66,3 +66,41 @@
 .ps-signal{display:inline-flex;align-items:flex-end;gap:2px;height:10px}
 .ps-signal i{width:3px;border-radius:1px;background:#0a0a0a}
 .ps-signal i:nth-child(1){height:4px}.ps-signal i:nth-child(2){height:6px}.ps-signal i:nth-child(3){height:8px}.ps-signal i:nth-child(4){height:10px}
+
+/* Brand palette overrides */
+.ps-section{background:linear-gradient(180deg,#f7faf8 0%,#ffffff 60%);--ps-green:#1f8f4e;--ps-green-l:#34c46f;--ps-ink:#0b0f14}
+.connected-landing .ps-eyebrow{color:var(--ps-green)}
+.ps-copy h2 span{color:var(--ps-green)}
+.ps-steps li.on{background:#fff;border-color:#d7eadf;box-shadow:0 18px 40px -30px rgba(31,143,78,.55)}
+.ps-steps li.on .ps-step-n{background:var(--ps-green);border-color:var(--ps-green)}
+.ps-steps li:nth-child(1).on small{color:#1f8f4e}.ps-steps li:nth-child(2).on small{color:#4f46e5}.ps-steps li:nth-child(3).on small{color:#0e7490}.ps-steps li:nth-child(4).on small{color:#b45309}
+.ps-try{background:var(--ps-ink)}
+.ps-try:hover{box-shadow:0 16px 30px -14px rgba(31,143,78,.7)}
+.ps-phone{background:var(--ps-ink);box-shadow:0 0 0 2px #1f2937,0 50px 90px -40px rgba(11,15,20,.55),0 30px 60px -30px rgba(31,143,78,.25)}
+.ps-notch{background:var(--ps-ink)}
+.ps-viewport{background:#f7f9fb}
+.ps-appbar{position:absolute;top:0;left:0;right:0;z-index:1;display:flex;align-items:center;gap:8px;padding:42px 18px 10px;background:rgba(247,249,251,.94);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-bottom:1px solid #e8edf2}
+.ps-appbar b{font-size:13px;color:var(--ps-ink);letter-spacing:-.01em}
+.ps-appbar b em{font-style:normal;color:var(--ps-green)}
+.ps-screen{padding-top:92px}
+.ps-app-kicker{display:inline-flex;align-self:flex-start;padding:4px 9px;border-radius:999px}
+.t-health .ps-app-kicker{color:#1f8f4e;background:#e3f5ea}
+.t-tax .ps-app-kicker{color:#4338ca;background:#e8e7fd}
+.t-freedom .ps-app-kicker{color:#0e7490;background:#dff4f8}
+.t-protect .ps-app-kicker{color:#b45309;background:#fdf0dc}
+.ps-ring{background:radial-gradient(closest-side,#f7f9fb 78%,transparent 79%),conic-gradient(#34c46f 0,#1f8f4e var(--deg),#e2e8f0 0)}
+.ps-ring b{color:#1f8f4e}
+.ps-rows li{border-bottom-color:#e8edf2}
+.ps-rows b.neg{color:#dc2626}
+.t-health .ps-chip{background:#1f8f4e}
+.ps-bars i{background:#cbd5e1}
+.ps-bars .win i{background:linear-gradient(90deg,#34c46f,#1f8f4e)}
+.ps-bars .win b{color:#1f8f4e}
+.t-freedom .ps-progress i{background:linear-gradient(90deg,#0e7490,#34c46f)}
+.t-freedom .ps-big{color:#0e7490}
+.t-protect .ps-progress{background:#fee2e2}
+.t-protect .ps-progress i{background:linear-gradient(90deg,#f59e0b,#b45309)}
+.ps-tabs{background:#fff;border-top-color:#e8edf2}
+.ps-tabs span.on{color:#1f8f4e}
+.ps-tabs span.on::after{background:#1f8f4e}
+.ps-signal i{background:var(--ps-ink)}

@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { CompanyLogo } from '../market/CompanyLogo';
 import { AreaSeries, CandlestickSeries, ColorType, CrosshairMode, HistogramSeries, createChart, type IChartApi, type ISeriesApi, type MouseEventParams, type Time, type UTCTimestamp } from 'lightweight-charts';
 import { AlertTriangle, Maximize2, RefreshCw, RotateCcw } from 'lucide-react';
 import {
@@ -171,7 +172,7 @@ const MarketTerminalChart: React.FC = () => {
   return <div className={`mt-terminal ${showing || !loading ? 'is-ready' : ''}`}>
     <div className="mt-toolbar">
       <div className="mt-tabs" role="tablist" aria-label="Instrument">
-        {TERMINAL_TABS.map((tab, index) => <button key={tab.id} ref={(el) => { tabRefs.current[index] = el; }} type="button" role="tab" aria-selected={instrument === tab.id} tabIndex={instrument === tab.id ? 0 : -1} onKeyDown={(event) => onTabKey(event, index)} onClick={() => setInstrument(tab.id)} className={instrument === tab.id ? 'on' : ''}>{tab.label}</button>)}
+        {TERMINAL_TABS.map((tab, index) => <button key={tab.id} ref={(el) => { tabRefs.current[index] = el; }} type="button" role="tab" aria-selected={instrument === tab.id} tabIndex={instrument === tab.id ? 0 : -1} onKeyDown={(event) => onTabKey(event, index)} onClick={() => setInstrument(tab.id)} className={instrument === tab.id ? 'on' : ''}><CompanyLogo symbol={tab.label} size={16} className="mt-tab-logo"/>{tab.label}</button>)}
       </div>
       <div className="mt-intervals" role="group" aria-label="Candle interval">
         {TERMINAL_INTERVAL_OPTIONS.map((value) => <button key={value} type="button" aria-pressed={interval === value} onClick={() => setIntervalValue(value)} className={interval === value ? 'on' : ''}>{value.toUpperCase()}</button>)}
@@ -182,6 +183,7 @@ const MarketTerminalChart: React.FC = () => {
 
     <div className="mt-head" aria-live="polite">
       <div className="mt-title">
+        <CompanyLogo symbol={TERMINAL_TABS.find((tab) => tab.id === instrument)?.label ?? ''} size={26} className="mt-logo"/>
         <b>{TERMINAL_TABS.find((tab) => tab.id === instrument)?.label}</b>
         <span>{showing?.category ?? (error && !loading ? 'Unavailable' : 'Loading…')}</span>
         {showing && <span className={`mt-status ${isLive ? 'live' : ''}`}><i aria-hidden="true"/>{showing.stale ? 'Showing last good data' : isLive ? 'Live' : 'Delayed'}</span>}

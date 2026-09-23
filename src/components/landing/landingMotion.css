@@ -252,3 +252,105 @@ html:has(.connected-landing){scroll-behavior:smooth;scroll-padding-top:80px}
   .rv-static .rv-card{width:auto}
   .rv-card,.rv-card:hover{transition:none;transform:none}
 }
+
+/* Hero preview chart */
+.lpc{border:1px solid #dbe7e4;border-radius:14px;background:linear-gradient(180deg,#ffffff,#f3faf8);overflow:hidden;box-shadow:inset 0 1px 0 #fff}
+.lpc-head{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 12px 4px;font-size:11px}
+.lpc-pair{display:inline-flex;align-items:baseline;gap:8px}
+.lpc-pair b{color:#0f766e;font-weight:900}
+.lpc-pair strong{font-variant-numeric:tabular-nums;color:#0b1220;font-size:12px}
+.lpc-pair em{font-style:normal;font-weight:800;margin-left:4px}
+.lpc-pair .up em{color:#059669}.lpc-pair .down em{color:#dc2626}
+.lpc-status{display:inline-flex;align-items:center;gap:6px;color:#64748b;font-weight:600}
+.lpc-status i{width:7px;height:7px;border-radius:50%;background:#94a3b8}
+.lpc-status.live i{background:#10b981;box-shadow:0 0 0 0 rgba(16,185,129,.5);animation:lpc-live 1.8s ease-out infinite}
+.lpc-status.offline i{background:#f59e0b}
+@keyframes lpc-live{to{box-shadow:0 0 0 7px rgba(16,185,129,0)}}
+.lpc-frames{display:inline-flex;gap:2px;margin:4px 10px 0;padding:3px;border:1px solid #e2e8f0;border-radius:10px;background:#fff}
+.lpc-frames button{border:0;background:none;border-radius:7px;padding:4px 9px;font:inherit;font-size:11px;font-weight:800;color:#475569;cursor:pointer;transition:background .2s,color .2s}
+.lpc-frames button:hover{color:#0f766e}
+.lpc-frames button.on{background:linear-gradient(135deg,#d1fae5,#e0f2fe);color:#0f766e}
+.lpc-svg{display:block;width:100%;height:auto;margin-top:4px}
+.lpc-grid{stroke:#e2e8f0;stroke-dasharray:3 5}
+.lpc-area{opacity:0;animation:lpc-fade .9s .5s ease-out forwards}
+.lpc-ma{fill:none;stroke-width:2;stroke-linecap:round;stroke-dasharray:1;stroke-dashoffset:1;animation:lpc-draw 1.6s .35s cubic-bezier(.3,.7,.2,1) forwards}
+.lpc-candle{opacity:1;transform-box:fill-box;transform-origin:50% 100%;animation:lpc-rise .55s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 28ms)}
+.lpc-candle.up line{stroke:#059669}.lpc-candle.up rect{fill:#10b981}
+.lpc-candle.down line{stroke:#dc2626}.lpc-candle.down rect{fill:#f87171}
+.lpc-candle line{stroke-width:1.2}
+.lpc-last{stroke-width:1;stroke-dasharray:4 4;opacity:.55}
+.lpc-last.up{stroke:#059669}.lpc-last.down{stroke:#dc2626}
+.lpc-dot.up,.lpc-ping.up{fill:#10b981}.lpc-dot.down,.lpc-ping.down{fill:#ef4444}
+.lpc-ping{transform-box:fill-box;transform-origin:center;animation:lpc-ping 1.8s ease-out infinite}
+.lpc-legend{display:flex;flex-wrap:wrap;gap:12px;padding:2px 12px 10px;font-size:10px;font-weight:700;color:#64748b}
+.lpc-legend span{display:inline-flex;align-items:center;gap:5px}
+.lpc-legend i{display:inline-block;width:12px;height:3px;border-radius:2px}
+.lpc-legend .c{background:linear-gradient(90deg,#10b981 50%,#f87171 50%)}
+.lpc-legend .m{background:linear-gradient(90deg,#6366f1,#0ea5e9)}
+.lpc-sample{color:#b45309}
+@keyframes lpc-rise{from{opacity:0;transform:scaleY(.15)}to{opacity:1;transform:none}}
+@keyframes lpc-draw{to{stroke-dashoffset:0}}
+@keyframes lpc-fade{to{opacity:1}}
+@keyframes lpc-ping{from{transform:scale(1);opacity:.6}to{transform:scale(3.4);opacity:0}}
+@media (prefers-reduced-motion:reduce){.lpc *{animation:none!important}.lpc-area{opacity:1}.lpc-ma{stroke-dashoffset:0}.lpc-ping{display:none}}
+
+/* ---------- Colour bands: each landing chapter gets its own professional tone ---------- */
+.connected-landing section[class*="tone-"]{position:relative;isolation:isolate;overflow:clip}
+.connected-landing section[class*="tone-"]::before{content:"";position:absolute;z-index:-1;width:520px;height:520px;border-radius:50%;filter:blur(70px);opacity:.55;top:-160px;right:-120px;background:var(--blob,#99f6e4);animation:tone-drift 18s ease-in-out infinite alternate;pointer-events:none}
+.connected-landing section[class*="tone-"]::after{content:"";position:absolute;z-index:-1;width:420px;height:420px;border-radius:50%;filter:blur(70px);opacity:.45;bottom:-160px;left:-120px;background:var(--blob2,#bae6fd);animation:tone-drift 22s ease-in-out infinite alternate-reverse;pointer-events:none}
+@keyframes tone-drift{from{transform:translate3d(0,0,0) scale(1)}to{transform:translate3d(-60px,40px,0) scale(1.12)}}
+
+.connected-landing section.tone-sky{background:linear-gradient(180deg,#f0f9ff 0%,#ffffff 70%);--blob:#bae6fd;--blob2:#c7d2fe}
+.connected-landing section.tone-mint{background:linear-gradient(160deg,#ecfdf5 0%,#f0f9ff 55%,#fefce8 100%);--blob:#a7f3d0;--blob2:#fde68a;border-color:#d1fae5}
+.connected-landing section.tone-violet{background:linear-gradient(160deg,#f5f3ff 0%,#eef2ff 50%,#f0fdfa 100%);--blob:#ddd6fe;--blob2:#a5f3fc;border-color:#e0e7ff}
+
+/* Deep navy chapter for "How it works" */
+.connected-landing section.tone-night{background:radial-gradient(900px 500px at 85% 0%,#1e3a8a55,transparent 60%),linear-gradient(160deg,#0b1220 0%,#111c34 55%,#0b2a2a 100%);color:#e2e8f0;--blob:#2563eb;--blob2:#0d9488}
+.connected-landing section.tone-night::before,.connected-landing section.tone-night::after{opacity:.35}
+.connected-landing section.tone-night h2,.connected-landing section.tone-night h4{color:#fff}
+.connected-landing section.tone-night p{color:#b6c3d6}
+.connected-landing section.tone-night .cl-eyebrow{color:#5eead4}
+.connected-landing section.tone-night .cl-steps>div{padding:58px 18px 20px;border:1px solid #ffffff1a;border-radius:16px;background:linear-gradient(180deg,#ffffff0f,#ffffff05);backdrop-filter:blur(6px);transition:transform .35s cubic-bezier(.2,.7,.2,1),border-color .35s,background .35s}
+.connected-landing section.tone-night .cl-steps>div:hover{transform:translateY(-6px);border-color:#5eead466;background:linear-gradient(180deg,#5eead41a,#ffffff08)}
+.connected-landing section.tone-night .cl-steps>div:before{left:18px;right:18px;top:38px;background:linear-gradient(90deg,#5eead4,#818cf8);opacity:.35}
+.connected-landing section.tone-night .cl-steps span{top:18px;left:18px;background:linear-gradient(135deg,#14b8a6,#6366f1);box-shadow:0 0 0 5px #14b8a622,0 10px 24px -6px #6366f199}
+
+/* Forest chapter for trust + final call to action */
+.connected-landing section.tone-forest{background:linear-gradient(180deg,#f0fdf4 0%,#ecfdf5 40%,#ffffff 100%);--blob:#86efac;--blob2:#fcd34d}
+.connected-landing section.tone-forest .cl-card{background:linear-gradient(180deg,#ffffff,#f7fdf9)}
+.connected-landing section.tone-forest .cl-final{position:relative;overflow:hidden;background:linear-gradient(135deg,#052e2b 0%,#0f3b3a 40%,#1e1b4b 100%);box-shadow:0 30px 70px -30px #052e2bcc}
+.connected-landing section.tone-forest .cl-final::before{content:"";position:absolute;inset:-40%;background:conic-gradient(from 0deg,transparent 0 70%,#34d39933 80%,transparent 90%);animation:tone-spin 12s linear infinite;pointer-events:none}
+.connected-landing section.tone-forest .cl-final>*{position:relative}
+@keyframes tone-spin{to{transform:rotate(1turn)}}
+
+/* Section headings: gradient underline that draws in as the section is revealed */
+.connected-landing section[class*="tone-"] h2{position:relative}
+.connected-landing section[class*="tone-"]:not(.tone-night) h2{background:linear-gradient(90deg,#0b1220,#0f766e 60%,#4338ca);-webkit-background-clip:text;background-clip:text;color:transparent}
+.connected-landing section[class*="tone-"] .cl-eyebrow::after{content:"";display:block;height:2px;margin-top:6px;border-radius:2px;background:linear-gradient(90deg,currentColor,transparent);transform:scaleX(0);transform-origin:left;transition:transform .9s .2s cubic-bezier(.2,.7,.2,1)}
+.connected-landing section[class*="tone-"].in .cl-eyebrow::after{transform:scaleX(1)}
+
+/* Cards pick up a coloured edge on hover (3D tilt comes from tilt3d.ts) */
+.connected-landing .cl-card{transition:transform .35s cubic-bezier(.2,.7,.2,1),box-shadow .35s,border-color .35s}
+.connected-landing .cl-card:hover{border-color:#5eead4}
+.connected-landing .tone-violet .cl-card:hover{border-color:#a5b4fc}
+
+/* Scroll-linked parallax for the colour blobs where the browser supports it */
+@supports (animation-timeline:view()){
+  .connected-landing section[class*="tone-"]::before{animation:tone-parallax linear both;animation-timeline:view()}
+  @keyframes tone-parallax{from{transform:translate3d(0,-60px,0) scale(.95)}to{transform:translate3d(-40px,80px,0) scale(1.15)}}
+}
+@media (prefers-reduced-motion:reduce){
+  .connected-landing section[class*="tone-"]::before,.connected-landing section[class*="tone-"]::after,.connected-landing section.tone-forest .cl-final::before{animation:none!important}
+  .connected-landing section[class*="tone-"] .cl-eyebrow::after{transform:none;transition:none}
+}
+@media (max-width:640px){.connected-landing section[class*="tone-"]::before,.connected-landing section[class*="tone-"]::after{width:300px;height:300px}}
+.connected-landing section[class*="tone-"] .cl-final h2{background:none;-webkit-background-clip:border-box;background-clip:border-box;color:#fff}
+/* Module cards: cycling accent colours so the grid reads as a colourful product catalogue */
+.connected-landing #modules .cl-module{--acc:#10b981;--acc2:#0ea5e9;position:relative;overflow:hidden}
+.connected-landing #modules .cl-module:nth-child(4n+2){--acc:#0ea5e9;--acc2:#6366f1}
+.connected-landing #modules .cl-module:nth-child(4n+3){--acc:#8b5cf6;--acc2:#ec4899}
+.connected-landing #modules .cl-module:nth-child(4n+4){--acc:#f59e0b;--acc2:#ef4444}
+.connected-landing #modules .cl-module::before{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:linear-gradient(90deg,var(--acc),var(--acc2));transform:scaleX(.18);transform-origin:left;transition:transform .5s cubic-bezier(.2,.7,.2,1)}
+.connected-landing #modules .cl-module:hover::before{transform:scaleX(1)}
+.connected-landing #modules .cl-module .cl-module-icon{background:linear-gradient(135deg,var(--acc),var(--acc2))!important;color:#fff!important;box-shadow:0 8px 18px -8px var(--acc)}
+.connected-landing #modules .cl-module:hover{border-color:color-mix(in srgb,var(--acc) 45%,white)}

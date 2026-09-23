@@ -193,3 +193,20 @@ export function cfoReviewPrompt(inputs: CfoInputs, report: CfoHealthReport): str
     `Verified calculations: surplus ${formatInr(report.surplus)}/month, ${report.metrics.map((metric) => `${metric.label.toLowerCase()} ${metric.display}`).join(', ')}, health score ${report.score}/100.`,
   ].join(' ');
 }
+
+export interface CfoPlanProfile {
+  name: string; age: string; work: string; monthlyIncome: number; monthlyExpenses: number; monthlyEmi: number;
+  savings: number; dependents: string; insurance: string; goal: string; goalYears: string;
+}
+
+/** Prompt for a complete personal CFO plan, grounded in the intake answers and verified calculations. */
+export function cfoPlanPrompt(profile: CfoPlanProfile, report: CfoHealthReport): string {
+  return [
+    'Draft my complete PERSONAL CFO PLAN from these answers. Use my numbers, keep it simple and practical.',
+    `About me: ${profile.name ? `name ${profile.name}, ` : ''}age ${profile.age}, ${profile.work.toLowerCase()}, dependants: ${profile.dependents}, insurance: ${profile.insurance.toLowerCase()}.`,
+    `Monthly take-home ${formatInr(profile.monthlyIncome)}; expenses excluding EMIs ${formatInr(profile.monthlyExpenses)}; EMIs ${formatInr(profile.monthlyEmi)}; savings and investments ${formatInr(profile.savings)}.`,
+    `Main goal: ${profile.goal.toLowerCase()} in ${profile.goalYears.toLowerCase()}.`,
+    `Verified calculations (use exactly): surplus ${formatInr(report.surplus)}/month, ${report.metrics.map((metric) => `${metric.label.toLowerCase()} ${metric.display}`).join(', ')}, health score ${report.score}/100 (${report.status}).`,
+    'Structure: title "Your personal CFO plan"; bottom line in 3 sentences; analysis steps titled Cash flow, Debt & EMIs, Safety net (emergency fund + insurance), Tax, Goal & investing, each with specific ₹ amounts; action plan as a 30-60-90 day list; the main risks; state any assumption you make.',
+  ].join(' ');
+}

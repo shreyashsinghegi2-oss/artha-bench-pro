@@ -1,8 +1,9 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { motion, useInView, useReducedMotion } from 'motion/react';
-import { ArrowRight, Calculator, FileText, ShieldAlert } from 'lucide-react';
+import { ArrowRight, Calculator, Check, FileText, ShieldAlert } from 'lucide-react';
 import { compareTaxRegimes } from '../../services/indiaTaxEngine';
 import { createDefaultTaxProfile } from '../../services/taxWorkspaceStorage';
+import { HeroPhone } from './HeroPhone';
 import './landingHero.css';
 
 const inr = (v: number) => `₹${Math.round(v).toLocaleString('en-IN')}`;
@@ -125,6 +126,23 @@ const ProductPreview: React.FC = () => {
   </figure>;
 };
 
+const OFFER = [
+  { kicker: 'For your money', name: 'ArthaMind AI', line: 'Plan, check and understand your own finances.', items: [
+    'Money health score and a step-by-step plan',
+    'Old vs new tax regime, with the working shown',
+    'Freedom number, goal SIPs and 14 calculators',
+    'Insurance and emergency-fund gaps',
+    'AI CFO in English, Hindi and Hinglish',
+  ] },
+  { kicker: 'For research', name: 'Artha Bench Pro', line: 'Look at markets and test AI answers before you trust them.', items: [
+    'India, US, forex and crypto market pages',
+    'Business news explained in plain language',
+    'AI answer reliability lab and model comparison',
+    'Financial tutor and short lessons',
+    'Sources and data freshness on every page',
+  ] },
+];
+
 /**
  * Landing hero: a short, plain-language pitch on the left and a calm product preview on the right that
  * shows the core loop: ask → inspect → verify.
@@ -147,7 +165,18 @@ export const LandingHero: React.FC<{ onSample: () => void; onExplore: () => void
       </div>
       <motion.div className="hx-visual" {...item(2)}>
         <ProductPreview/>
+        <HeroPhone/>
       </motion.div>
+    </div>
+
+    <div className="hx-offer" aria-labelledby="hx-offer-title">
+      <h2 id="hx-offer-title" className="hx-offer-title">What you get</h2>
+      <div className="hx-offer-grid">
+        {OFFER.map((o, i) => <motion.article key={o.name} className="hx-offer-card" {...(reduced ? {} : { initial: { opacity: 0, y: 12 }, whileInView: { opacity: 1, y: 0 }, viewport: { once: true, amount: 0.4 }, transition: { delay: i * 0.1, duration: 0.45 } })}>
+          <header><small>{o.kicker}</small><b>{o.name}</b><span>{o.line}</span></header>
+          <ul>{o.items.map((it) => <li key={it}><Check size={14} aria-hidden="true"/>{it}</li>)}</ul>
+        </motion.article>)}
+      </div>
     </div>
   </section>;
 };

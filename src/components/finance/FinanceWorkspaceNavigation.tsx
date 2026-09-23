@@ -6,7 +6,7 @@ import { AppNavigationDestination } from '../../navigationTypes';
 type Props = { currentDestination: AppNavigationDestination; onNavigate: (destination: AppNavigationDestination) => void; };
 
 const tabs: Array<{ id: AppNavigationDestination; label: string; description: string; icon: React.ComponentType<{ className?: string }>; }> = [
-  { id: 'overview', label: 'Overview', description: 'Your financial intelligence overview and current workspace signals.', icon: Gauge },
+  { id: 'overview', label: 'Home', description: 'Your money report, plan and AI CFO in one place.', icon: Gauge },
   { id: 'financial-health', label: 'Financial Health', description: 'Explainable personal financial health indicators based only on recorded workspace data.', icon: HeartPulse },
   { id: 'income', label: 'Income', description: 'Review income sources, recurring amounts and tax context.', icon: WalletCards },
   { id: 'expenses', label: 'Expenses', description: 'Review spending by category and transaction.', icon: ReceiptText },
@@ -26,7 +26,7 @@ export const FinanceWorkspaceNavigation: React.FC<Props> = ({ currentDestination
   const draggedRef = useRef(false);
   const [overflow, setOverflow] = useState({ left: false, right: false });
   const [tooltipId, setTooltipId] = useState<AppNavigationDestination | null>(null);
-  const activeDestination = currentDestination === 'dashboard' ? 'overview' : currentDestination;
+  const activeDestination = currentDestination;
   const currentPath = typeof window !== 'undefined' ? (window.location.pathname.replace(/\/+$/, '') || '/') : pathForDestination(activeDestination);
 
   const updateOverflow = () => { const rail=railRef.current; if(!rail)return; setOverflow({left:rail.scrollLeft>2,right:rail.scrollLeft+rail.clientWidth<rail.scrollWidth-2}); };

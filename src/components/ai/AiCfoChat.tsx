@@ -27,6 +27,8 @@ interface Props {
   externalPrompt?: { id: number; text: string } | null;
   compact?: boolean;
   autoFocus?: boolean;
+  /** Offer the built-in question-by-question CFO plan. Off where a money profile already exists (workspace Home). */
+  offerPlan?: boolean;
 }
 
 const clean = (value: string) => value.replace(/\\\[|\\\]|```/g, '').replace(/^\s*#+\s*/gm, '').replace(/\*\*/g, '').trim();
@@ -106,7 +108,7 @@ const ProfileCard: React.FC<{ profile: CfoProfile; report: CfoHealthReport }> = 
   <p className="cfo-profile-note">Calculated on your device from your answers. Your CFO plan is being drafted below.</p>
 </article>;
 
-export const AiCfoChat: React.FC<Props> = ({ suggestFor, externalPrompt, compact = false, autoFocus = false }) => {
+export const AiCfoChat: React.FC<Props> = ({ suggestFor, externalPrompt, compact = false, autoFocus = false, offerPlan = true }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [draft, setDraft] = useState('');
   const [busy, setBusy] = useState(false);
@@ -177,7 +179,7 @@ export const AiCfoChat: React.FC<Props> = ({ suggestFor, externalPrompt, compact
           <option value="english">English</option><option value="hinglish">Hinglish</option><option value="hindi">हिंदी</option>
         </select>
       </label>
-      {!intake && messages.length > 0 && <button type="button" className="cfo-link" onClick={() => setIntake(true)} disabled={busy}><ClipboardList size={13}/>CFO plan</button>}
+      {offerPlan && !intake && messages.length > 0 && <button type="button" className="cfo-link" onClick={() => setIntake(true)} disabled={busy}><ClipboardList size={13}/>CFO plan</button>}
       {(messages.length > 0 || intake) && <button type="button" className="cfo-link" onClick={() => { setMessages([]); setIntake(false); }} disabled={busy}><RotateCcw size={13}/>New chat</button>}
     </div>
     <div className="cfo-thread" ref={scroller} aria-label="Conversation with the AI CFO">
@@ -186,8 +188,8 @@ export const AiCfoChat: React.FC<Props> = ({ suggestFor, externalPrompt, compact
         <span className="cfo-orb" aria-hidden="true"><BriefcaseBusiness size={22}/></span>
         <b>Ask anything a CFO would answer.</b>
         <p>Salary, tax regime, EMIs, emergency fund, goals or your business cash flow, answered in ₹ with a clear action plan.</p>
-        <button type="button" className="cfo-plan-cta" onClick={() => setIntake(true)}><ClipboardList size={16}/>Build my CFO plan<span>{CFO_QUESTIONS.length} quick questions · about 2 minutes</span></button>
-        <small className="cfo-or">or ask directly</small>
+        {offerPlan && <button type="button" className="cfo-plan-cta" onClick={() => setIntake(true)}><ClipboardList size={16}/>Build my CFO plan<span>{CFO_QUESTIONS.length} quick questions · about 2 minutes</span></button>}
+        {offerPlan && <small className="cfo-or">or ask directly</small>}
         <div className="cfo-chips">{CFO_STARTER_PROMPTS.map((prompt, index) => <button key={prompt} type="button" style={{ '--i': index } as React.CSSProperties} onClick={() => void send(prompt)}>{prompt}</button>)}</div>
       </div>}
       {messages.map((message, index) => message.profile

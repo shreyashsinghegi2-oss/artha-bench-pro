@@ -56,12 +56,12 @@ export const ArthaBenchLogo: React.FC<ArthaBenchLogoProps> = ({
           <span className={`${compact ? 'text-sm' : 'text-base'} font-black tracking-tight text-ink whitespace-nowrap`}>
             Artha Bench
           </span>
-          <span className="rounded-full border border-premium-fill/30 bg-premium-soft px-2 py-0.5 text-[8px] font-black tracking-[0.14em] text-premium">
+          <span className="hidden rounded-full border border-premium-fill/30 bg-premium-soft px-2 py-0.5 text-[8px] font-black tracking-[0.14em] text-premium sm:inline">
             PRO V2.0
           </span>
         </div>
         {!compact && (
-          <p className="mt-1 text-[9px] font-semibold tracking-wide text-secondary">
+          <p className="mt-1 hidden text-[9px] font-semibold tracking-wide text-secondary sm:block">
             Financial Intelligence · Reliability · AI
           </p>
         )}

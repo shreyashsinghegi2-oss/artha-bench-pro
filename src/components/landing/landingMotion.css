@@ -124,7 +124,7 @@
 /* Capability marquee */
 .cl-marquee{overflow:hidden;border-bottom:1px solid var(--bd);background:#fff;padding:14px 0;-webkit-mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)}
 .cl-marquee-track{display:flex;gap:12px;width:max-content;animation:cl-marquee 42s linear infinite}
-.cl-marquee:hover .cl-marquee-track{animation-play-state:paused}
+
 .cl-marquee span{display:inline-flex;align-items:center;gap:8px;white-space:nowrap;border:1px solid var(--bd);border-radius:999px;padding:7px 14px;font-size:13px;font-weight:700;color:#1e293b;background:#fbfdfc}
 .cl-marquee span i{width:6px;height:6px;border-radius:50%;background:linear-gradient(135deg,#14b8a6,#6366f1)}
 @keyframes cl-marquee{to{transform:translateX(-50%)}}
@@ -228,7 +228,7 @@ html:has(.connected-landing){scroll-behavior:smooth;scroll-padding-top:80px}
 .rv-row{overflow:hidden}
 .rv-track{display:flex;gap:16px;width:max-content;padding:6px 0 14px;animation:rv-drift 60s linear infinite}
 .rv-row.reverse .rv-track{animation-direction:reverse;animation-duration:70s}
-.rv-row:hover .rv-track,.rv-row:focus-within .rv-track{animation-play-state:paused}
+
 @keyframes rv-drift{to{transform:translateX(-50%)}}
 .rv-card{flex:none;width:340px;margin:0;display:flex;flex-direction:column;gap:12px;padding:18px 18px 16px;border-radius:18px;border:1px solid #e3ebe8;background:#fff;box-shadow:0 10px 28px rgba(15,23,42,.05);transition:transform .35s cubic-bezier(.2,.7,.2,1),box-shadow .35s,border-color .35s}
 .rv-card:hover{transform:translateY(-6px) rotate(-.4deg);box-shadow:0 24px 44px rgba(15,23,42,.1);border-color:#b7e0d8}

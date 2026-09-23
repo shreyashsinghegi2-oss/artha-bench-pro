@@ -25,7 +25,7 @@ function useAnimatedNumber(target: number, duration = 700): number {
     const origin = from.current;
     let frame = 0;
     const tick = (now: number) => {
-      const t = Math.min(1, (now - start) / duration);
+      const t = Math.min(1, Math.max(0, (now - start) / duration));
       const next = origin + (target - origin) * (1 - (1 - t) ** 3);
       setValue(next);
       if (t < 1) frame = requestAnimationFrame(tick); else from.current = target;

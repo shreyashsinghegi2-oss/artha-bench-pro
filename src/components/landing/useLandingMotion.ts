@@ -18,7 +18,7 @@ function observeCountUps(root: HTMLElement, reduce: boolean): () => void {
     const duration = 1200;
     const start = performance.now();
     const tick = (now: number) => {
-      const progress = Math.min(1, (now - start) / duration);
+      const progress = Math.min(1, Math.max(0, (now - start) / duration));
       node.textContent = String(Math.round(target * easeOutCubic(progress)));
       if (progress < 1) frames.add(requestAnimationFrame(tick));
     };

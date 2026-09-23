@@ -715,9 +715,7 @@
   animation-play-state:running!important;
   will-change:transform!important;
 }
-.landing-shell #business-brief .live-news-ticker:hover .live-news-track{
-  animation-play-state:paused!important;
-}
+
 .landing-shell #business-brief .live-news-ticker .live-news-item{
   display:inline-flex!important;
   align-items:center!important;

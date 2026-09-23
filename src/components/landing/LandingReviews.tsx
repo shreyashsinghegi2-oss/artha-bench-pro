@@ -17,7 +17,7 @@ const ReviewCard: React.FC<{ review: LandingReview; hidden?: boolean }> = ({ rev
   </figcaption>
 </figure>;
 
-/** Two gently drifting rows of reviews that pause on hover or focus; static grid for reduced motion. */
+/** Two gently drifting rows of reviews that keep moving on hover; static grid for reduced motion. */
 export const LandingReviews: React.FC = () => {
   const reviews = LANDING_REVIEWS;
   if (!reviews.length) return null;

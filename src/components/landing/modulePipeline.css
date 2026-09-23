@@ -1,4 +1,4 @@
-/* Module pipeline: inputs → four stages → CFO plan. Dark ink canvas with one colour per stage. */
+/* Module pipeline: inputs → four stages → CFO plan. Monochrome (black and white) overrides at the end of this file. */
 .connected-landing #modules.mp-section{background:radial-gradient(1000px 520px at 12% -10%,#0f766e40,transparent 60%),radial-gradient(900px 520px at 100% 110%,#4338ca40,transparent 60%),linear-gradient(170deg,#070d1a 0%,#0b1426 55%,#0a1a22 100%);color:#e2e8f0;border:0}
 .connected-landing #modules.mp-section h2{background:linear-gradient(90deg,#fff,#a7f3d0 55%,#c7d2fe);-webkit-background-clip:text;background-clip:text;color:transparent}
 .connected-landing #modules.mp-section .cl-eyebrow{color:#5eead4}
@@ -91,3 +91,41 @@
   .mp-inputs span{opacity:1;transform:none;transition:none}
   .mp-fill,.mp-node,.mp-module{transition:none}
 }
+
+/* ---------- Monochrome: black and white only ---------- */
+.connected-landing #modules.mp-section{background:#000;color:#fff}
+.connected-landing #modules.mp-section::before,.connected-landing #modules.mp-section::after{display:none}
+.connected-landing #modules.mp-section h2{background:none;-webkit-background-clip:border-box;background-clip:border-box;color:#fff}
+.connected-landing #modules.mp-section .cl-eyebrow{color:#fff}
+.connected-landing #modules.mp-section .cl-sub{color:#a3a3a3}
+.mp{--c-understand:#fff;--c-optimise:#fff;--c-protect:#fff;--c-plan:#fff}
+.mp .s-understand,.mp .s-optimise,.mp .s-protect,.mp .s-plan{--c:#fff}
+.mp-inputs small,.mp-output small{color:#a3a3a3}
+.mp-inputs span{border-color:#ffffff33;background:#0a0a0a;color:#e5e5e5}
+.mp-inputs span::before{background:#fff;box-shadow:0 0 8px #ffffffaa}
+.mp-pipe{background:#ffffff1f}
+.mp-fill{background:linear-gradient(90deg,#737373,#fff)}
+.mp-node{background:#000;border-color:#ffffff40;color:#a3a3a3;box-shadow:none}
+.mp-node em{background:#000;border-color:#ffffff40;color:#a3a3a3}
+.mp-station b{color:#e5e5e5}.mp-station small{color:#737373}
+.mp-station.done .mp-node{color:#fff;border-color:#ffffffaa}
+.mp-station.on .mp-node{color:#000;background:#fff;border-color:#fff;box-shadow:0 0 0 6px #ffffff1f,0 18px 40px -14px #ffffff66}
+.mp-station.on .mp-node em{color:#fff;border-color:#fff;background:#000}
+.mp-station.on small{color:#fff}
+.mp-output{background:#fff;border-color:#fff;color:#000}
+.mp-output b{color:#000}.mp-output small{color:#525252}
+.mp-output-glow{background:conic-gradient(from 0deg,transparent 0 70%,#00000014 82%,transparent 92%)}
+.mp-panel{background:#0a0a0a;border-color:#ffffff33;box-shadow:0 40px 80px -48px #ffffff40,inset 0 1px 0 #ffffff14}
+.mp-kicker{color:#fff}
+.mp-copy p{color:#a3a3a3}
+.mp-timer{background:#ffffff1f}.mp-timer i{background:#fff}
+.mp-module{background:#000;border-color:#ffffff26}
+.mp-module:hover,.mp-module:focus-visible{background:#111;border-color:#fff}
+.mp-module-code{background:#fff;color:#000;box-shadow:none}
+.mp-module-text small{color:#a3a3a3}
+.mp-module-go{color:#fff}
+.mp-advisor{background:#0a0a0a;border-color:#ffffff40}
+.mp-advisor-icon{background:#fff;color:#000}
+.mp-advisor small{color:#a3a3a3}
+.mp-advisor button{background:#fff;color:#000}
+.mp-advisor button:hover{box-shadow:0 12px 26px -10px #ffffff80}

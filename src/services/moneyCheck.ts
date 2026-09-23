@@ -58,6 +58,8 @@ export interface MoneyCheckReport {
   health: CfoHealthReport;
   cashflow: { surplus: number; savingsRate: number; emiLoad: number };
   netWorth: number;
+  /** Months that savings and investments would cover spending and EMIs if income stopped today. */
+  runwayMonths: number;
   emergency: { target: number; gap: number; months: number };
   freedom: {
     yearsToRetire: number;
@@ -192,6 +194,7 @@ export function buildMoneyCheck(inputs: MoneyCheckInputs): MoneyCheckReport {
     health,
     cashflow: { surplus: round(surplus), savingsRate: surplus / monthlyTakeHome, emiLoad: inputs.monthlyEmi / monthlyTakeHome },
     netWorth: round(liquid + invested - loan),
+    runwayMonths: monthlyOutflow > 0 ? (liquid + invested) / monthlyOutflow : Infinity,
     emergency: { target: round(emergencyTarget), gap: round(Math.max(0, emergencyTarget - liquid)), months: monthlyOutflow > 0 ? liquid / monthlyOutflow : Infinity },
     freedom: {
       yearsToRetire,

@@ -44,6 +44,7 @@ describe('Money Check report', () => {
     expect(r.emergency.target).toBe(6 * 73_000);
     expect(r.emergency.gap).toBe(6 * 73_000 - 250_000);
     expect(r.netWorth).toBe(250_000 + 600_000 - 900_000);
+    expect(r.runwayMonths).toBeCloseTo((250_000 + 600_000) / 73_000, 6);
     expect(r.freedom.yearsToRetire).toBe(31);
     expect(r.freedom.annualExpenseAtRetirement).toBe(Math.round(660_000 * 1.06 ** 31));
     // Health cover rule of thumb: two people → ₹10 lakh; has ₹5 lakh.

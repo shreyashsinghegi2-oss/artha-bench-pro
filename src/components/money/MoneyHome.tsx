@@ -8,6 +8,7 @@ import { AiCfoChat } from '../ai/AiCfoChat';
 import '../ai/aiCfo.css';
 import { MoneyReportView, moneyAskPrompt, shortInr } from './MoneyReport';
 import { MoneySetup } from './MoneySetup';
+import { CalculatorsHub, CALCULATOR_COUNT } from './CalculatorsHub';
 import './moneyHome.css';
 
 type Mode = { kind: 'home' } | { kind: 'setup'; scan: boolean };
@@ -30,6 +31,33 @@ const AREAS: Area[] = [
   { id: 'plan', title: 'Plan', icon: Target, line: (r) => `Freedom number ${shortInr(r.freedom.corpusNeeded)}${r.freedom.freedomAge ? ` · free by ${r.freedom.freedomAge}` : ''}`,
     links: [{ label: 'What-if scenarios', to: 'financial-twin' }, { label: 'Decision replay', to: 'decision-replay' }, { label: 'Retirement plan', ask: 'Using my money report, draft my retirement plan: SIP amount, asset mix by decade, and what to review each year.' }] },
 ];
+
+const LEARN_LINKS: Array<[string, string, AppNavigationDestination]> = [
+  ['Financial tutor', 'Ask any money question and learn step by step', 'tutor'],
+  ['Learning', 'Short lessons on tax, investing and insurance', 'learning'],
+  ['Market data', 'NIFTY, SENSEX, stocks and funds with sources', 'markets'],
+  ['Business news', 'Headlines explained in plain language', 'news'],
+  ['Crypto', 'Live Binance charts with risk labels', 'crypto'],
+  ['Economic data', 'Inflation, rates and growth indicators', 'economy'],
+];
+
+/** Sticky in-page section bar; highlights the section in view. */
+const SectionNav: React.FC<{ sections: Array<[string, string]>; onGo: (id: string) => void }> = ({ sections, onGo }) => {
+  const [active, setActive] = useState(sections[0]?.[0]);
+  const key = sections.map(([id]) => id).join('|');
+  useEffect(() => {
+    if (typeof IntersectionObserver === 'undefined') return;
+    const observer = new IntersectionObserver((entries) => {
+      const visible = entries.filter((e) => e.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
+      if (visible) setActive(visible.target.id);
+    }, { rootMargin: '-140px 0px -55% 0px' });
+    sections.forEach(([id]) => { const el = document.getElementById(id); if (el) observer.observe(el); });
+    return () => observer.disconnect();
+  }, [key]); // eslint-disable-line react-hooks/exhaustive-deps
+  return <nav className="mh-secnav" aria-label="Home sections">
+    {sections.map(([id, label]) => <button key={id} type="button" className={active === id ? 'on' : ''} aria-current={active === id ? 'true' : undefined} onClick={() => { setActive(id); onGo(id); }}>{label}</button>)}
+  </nav>;
+};
 
 const SOURCE_LABEL: Record<MoneyProfile['source'], string> = { questions: 'from your answers', scan: 'from your document and answers', sample: 'from a sample profile' };
 
@@ -64,6 +92,13 @@ export const MoneyHome: React.FC<{ onNavigate: (destination: AppNavigationDestin
   const hello = profile?.name ? `Hi ${profile.name}.` : 'Welcome.';
   const updated = profile ? new Date(profile.updatedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : '';
 
+  const sections = [
+    ...(profile && report ? [['mh-snapshot', 'Snapshot'], ['mh-report', 'Report'], ['mh-plan', 'Plan']] : [['mh-start', 'Get started']]),
+    ['mh-tools', 'Calculators'], ['mh-learn', 'Learn & markets'], ['mh-cfo', 'AI CFO'],
+  ] as Array<[string, string]>;
+  const goTo = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
+  const runway = report ? (Number.isFinite(report.runwayMonths) ? (report.runwayMonths >= 24 ? `${(report.runwayMonths / 12).toFixed(1)} years` : `${report.runwayMonths.toFixed(1)} months`) : 'No outgoings') : '';
+
   return <div className="mh">
     <header className="mh-head">
       <div>
@@ -78,7 +113,9 @@ export const MoneyHome: React.FC<{ onNavigate: (destination: AppNavigationDestin
       </div>}
     </header>
 
-    {!profile && <motion.section className="mh-start" initial={reduced ? false : { opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}>
+    <SectionNav sections={sections} onGo={goTo}/>
+
+    {!profile && <motion.section id="mh-start" className="mh-start mh-anchor" initial={reduced ? false : { opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}>
       <button type="button" className="mh-start-card primary" onClick={() => setMode({ kind: 'setup', scan: false })}>
         <ClipboardList size={22}/><b>Answer about 12 quick questions</b><span>One at a time, mostly taps. About two minutes.</span><em>Start <ArrowRight size={14}/></em>
       </button>
@@ -91,12 +128,25 @@ export const MoneyHome: React.FC<{ onNavigate: (destination: AppNavigationDestin
     </motion.section>}
 
     {profile && report && <>
-      <section className="mh-report" aria-label="Your money report">
+      <section id="mh-snapshot" className="mh-snapshot mh-anchor" aria-label="Snapshot">
+        {[
+          ['Money health', `${report.health.score}/100`, report.health.status],
+          ['Net worth', shortInr(report.netWorth), 'Cash + investments − loans'],
+          ['Monthly surplus', shortInr(report.cashflow.surplus), `${Math.round(report.cashflow.savingsRate * 100)}% of take-home`],
+          ['If income stops', runway, 'Savings and investments cover spending + EMIs'],
+          ['Financially free by', report.freedom.freedomAge ? `Age ${report.freedom.freedomAge}` : 'Not yet', 'Investing your full surplus'],
+        ].map(([k, v, sub], i) => <motion.div key={k} className="mh-stat" initial={reduced ? false : { opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
+          <small>{k}</small><b>{v}</b><span>{sub}</span>
+        </motion.div>)}
+      </section>
+
+      <section id="mh-report" className="mh-report mh-anchor" aria-labelledby="mh-report-title">
+        <h2 id="mh-report-title">Your money report</h2>
         <MoneyReportView report={report} onAsk={() => ask(moneyAskPrompt(profile, report))}/>
       </section>
 
-      <section className="mh-areas" aria-labelledby="mh-areas-title">
-        <h2 id="mh-areas-title">Go deeper</h2>
+      <section id="mh-plan" className="mh-areas mh-anchor" aria-labelledby="mh-areas-title">
+        <h2 id="mh-areas-title">Your plan, area by area</h2>
         <div className="mh-area-grid">
           {AREAS.map((area, i) => {
             const Icon = area.icon;
@@ -112,7 +162,20 @@ export const MoneyHome: React.FC<{ onNavigate: (destination: AppNavigationDestin
       </section>
     </>}
 
-    <section ref={cfoRef} className="mh-cfo" aria-labelledby="mh-cfo-title">
+    <section id="mh-tools" className="mh-tools mh-anchor" aria-labelledby="mh-tools-title">
+      <h2 id="mh-tools-title">Calculators</h2>
+      <p className="mh-section-sub">{CALCULATOR_COUNT} India-specific calculators for investing, safe savings, tax, loans and retirement.{profile ? ' Your numbers are filled in already.' : ''}</p>
+      <CalculatorsHub profile={profile}/>
+    </section>
+
+    <section id="mh-learn" className="mh-learn mh-anchor" aria-labelledby="mh-learn-title">
+      <h2 id="mh-learn-title">Learn & markets</h2>
+      <div className="mh-link-grid">
+        {LEARN_LINKS.map(([label, sub, to]) => <button key={to} type="button" className="mh-link" onClick={() => onNavigate(to)}><b>{label}</b><span>{sub}</span><ArrowRight size={15}/></button>)}
+      </div>
+    </section>
+
+    <section id="mh-cfo" ref={cfoRef} className="mh-cfo mh-anchor" aria-labelledby="mh-cfo-title">
       <div className="mh-cfo-copy">
         <small className="mh-kicker">AI CFO</small>
         <h2 id="mh-cfo-title">Ask anything about your money.</h2>

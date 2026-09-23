@@ -130,6 +130,8 @@ export const ScenarioAssistantPanel: React.FC<ScenarioAssistantPanelProps> = ({
         <textarea
           value={question}
           onChange={(event) => setQuestion(event.target.value)}
+          onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); if (!loading) void analyze(); } }}
+          aria-label="Question for the ArthaMind scenario assistant"
           rows={3}
           className="min-h-[84px] flex-1 resize-y rounded-2xl border border-line bg-canvas px-3.5 py-3 text-xs leading-5 text-ink outline-none focus:border-interactive"
           placeholder="Ask ArthaMind to calculate, explain, compare assumptions, or connect the result to verified context..."

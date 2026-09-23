@@ -8,3 +8,8 @@
 .business-news-ticker-track{animation:business-news-ticker-scroll 84s linear infinite;will-change:transform}.business-news-ticker-shell:hover .business-news-ticker-track,.business-news-ticker-shell:focus-within .business-news-ticker-track{animation-play-state:paused}
 @media(max-width:767px),(hover:none),(pointer:coarse){.india-market-ticker-viewport,.business-news-ticker-viewport{overflow-x:auto;overscroll-behavior-inline:contain;scrollbar-width:thin}.india-market-ticker-track,.business-news-ticker-track{animation:none;transform:none}.india-market-ticker-duplicate,.business-news-ticker-duplicate{display:none}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important}.india-market-ticker-viewport,.business-news-ticker-viewport{overflow-x:auto}.india-market-ticker-track,.business-news-ticker-track{animation:none;transform:none;will-change:auto}.india-market-ticker-duplicate,.business-news-ticker-duplicate{display:none}}
+
+/* Workspace page transition: short fade and rise when switching destinations. */
+@keyframes page-enter{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.page-enter{animation:page-enter .42s cubic-bezier(.2,.7,.2,1) both}
+@media (prefers-reduced-motion:reduce){.page-enter{animation:none}}

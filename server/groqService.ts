@@ -216,13 +216,13 @@ function generateFallbackChatResponse(userPrompt: string): string {
       `- **Quick Ratio (Acid-Test):** $\\frac{\\text{Cash + Marketable Securities + Receivables}}{\\text{Current Liabilities}}$. Excludes inventory because inventory cannot always be liquidated immediately without price haircuts.`;
   }
 
-  return `### Financial Learning Explanation\n\n` +
-    `Regarding your inquiry ("*${userPrompt.trim()}*"):\n\n` +
-    `**Key Concept Breakdown:**\n` +
-    `1. **Core Principle:** Sound financial analysis relies on objective mathematical frameworks, liquidity evaluation, and risk-adjusted return calculations.\n` +
-    `2. **Analytical Steps:** Always establish baseline numbers, account for compounding frequency, and adjust for inflation and tax liabilities.\n` +
-    `3. **Risk & Limitations:** Models assume static inputs. Real-world market execution involves variance, interest rate fluctuations, and unexpected liquidity demands.\n\n` +
-    `*Educational Disclaimer: ArthaBench provides non-advisory educational frameworks only.*`;
+  return `### Here is how to think about it\n\n` +
+    `The live AI adviser is not connected right now, so this is a general framework rather than a tailored answer to "*${userPrompt.trim()}*".\n\n` +
+    `1. **Start with your numbers:** note your monthly take-home, fixed costs, EMIs and savings, since every money decision depends on them.\n` +
+    `2. **Check the basics first:** keep EMIs under about 40% of take-home, aim to save 20% or more, and hold 6 months of expenses as an emergency fund.\n` +
+    `3. **Compare options on the same terms:** use after-tax, inflation-adjusted figures over the same time period.\n` +
+    `4. **Name the risks:** income loss, rate changes and market swings can change the answer, so plan for them.\n\n` +
+    `Please try again in a moment for a full answer. *For education only; not personalised investment advice.*`;
 }
 
 function buildGroqMessages(

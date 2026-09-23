@@ -59,7 +59,9 @@ export const apiRouter = Router();
 // Simple in-memory rate limiter
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
 const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
-const MAX_REQUESTS_PER_WINDOW = 60;
+// Applies to write/compute requests only; cached GET data reads are not counted so page loads and
+// market polling never lock a user (or everyone behind a shared mobile-carrier IP) out of the assistants.
+const MAX_REQUESTS_PER_WINDOW = 120;
 const DIAGNOSTIC_CACHE_MS = 60 * 1000;
 let diagnosticCache:
   | {
@@ -76,7 +78,8 @@ apiRouter.use((req: Request, res: Response, next: NextFunction) => {
   res.setHeader('X-Frame-Options', 'SAMEORIGIN');
   res.setHeader('X-XSS-Protection', '1; mode=block');
 
-  const clientIp = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || '127.0.0.1';
+  if (req.method === 'GET' || req.method === 'HEAD' || req.method === 'OPTIONS') return next();
+  const clientIp = (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.socket.remoteAddress || '127.0.0.1';
   const now = Date.now();
   const limitInfo = rateLimitMap.get(clientIp) || { count: 0, resetTime: now + RATE_LIMIT_WINDOW_MS };
 

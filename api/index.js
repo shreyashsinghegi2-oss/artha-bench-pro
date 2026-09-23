@@ -1292,16 +1292,16 @@ Both ratios measure short-term liquidity, but differ in asset strictness:
 - **Current Ratio:** $\\frac{\\text{Current Assets}}{\\text{Current Liabilities}}$. Includes inventory and prepaid items.
 - **Quick Ratio (Acid-Test):** $\\frac{\\text{Cash + Marketable Securities + Receivables}}{\\text{Current Liabilities}}$. Excludes inventory because inventory cannot always be liquidated immediately without price haircuts.`;
   }
-  return `### Financial Learning Explanation
+  return `### Here is how to think about it
 
-Regarding your inquiry ("*${userPrompt.trim()}*"):
+The live AI adviser is not connected right now, so this is a general framework rather than a tailored answer to "*${userPrompt.trim()}*".
 
-**Key Concept Breakdown:**
-1. **Core Principle:** Sound financial analysis relies on objective mathematical frameworks, liquidity evaluation, and risk-adjusted return calculations.
-2. **Analytical Steps:** Always establish baseline numbers, account for compounding frequency, and adjust for inflation and tax liabilities.
-3. **Risk & Limitations:** Models assume static inputs. Real-world market execution involves variance, interest rate fluctuations, and unexpected liquidity demands.
+1. **Start with your numbers:** note your monthly take-home, fixed costs, EMIs and savings, since every money decision depends on them.
+2. **Check the basics first:** keep EMIs under about 40% of take-home, aim to save 20% or more, and hold 6 months of expenses as an emergency fund.
+3. **Compare options on the same terms:** use after-tax, inflation-adjusted figures over the same time period.
+4. **Name the risks:** income loss, rate changes and market swings can change the answer, so plan for them.
 
-*Educational Disclaimer: ArthaBench provides non-advisory educational frameworks only.*`;
+Please try again in a moment for a full answer. *For education only; not personalised investment advice.*`;
 }
 function buildGroqMessages(systemPrompt2, userPrompt, history) {
   const messages = [
@@ -4795,7 +4795,7 @@ async function getTerminalSnapshot() {
 var apiRouter = Router();
 var rateLimitMap = /* @__PURE__ */ new Map();
 var RATE_LIMIT_WINDOW_MS = 60 * 1e3;
-var MAX_REQUESTS_PER_WINDOW = 60;
+var MAX_REQUESTS_PER_WINDOW = 120;
 var DIAGNOSTIC_CACHE_MS = 60 * 1e3;
 var diagnosticCache;
 apiRouter.use((req, res, next) => {
@@ -4804,7 +4804,8 @@ apiRouter.use((req, res, next) => {
   res.setHeader("X-Content-Type-Options", "nosniff");
   res.setHeader("X-Frame-Options", "SAMEORIGIN");
   res.setHeader("X-XSS-Protection", "1; mode=block");
-  const clientIp = req.headers["x-forwarded-for"] || req.socket.remoteAddress || "127.0.0.1";
+  if (req.method === "GET" || req.method === "HEAD" || req.method === "OPTIONS") return next();
+  const clientIp = req.headers["x-forwarded-for"]?.split(",")[0]?.trim() || req.socket.remoteAddress || "127.0.0.1";
   const now = Date.now();
   const limitInfo = rateLimitMap.get(clientIp) || { count: 0, resetTime: now + RATE_LIMIT_WINDOW_MS };
   if (now > limitInfo.resetTime) {
@@ -6000,18 +6001,19 @@ function inferTask(prompt, ctx) {
   return "education";
 }
 function cfoSystemPrompt(c) {
-  const language = c.language === "hinglish" ? "natural Roman Hindi mixed with simple English" : c.language === "hindi" ? "simple Hindi (Devanagari)" : "clear professional English";
-  return `You are ArthaMind AI CFO, a chief financial officer for Indian households, freelancers and small businesses. Respond in ${language}. Default currency is INR: write amounts as \u20B9 with Indian digit grouping (\u20B91,25,000) and use lakh/crore for large values. Think like a CFO: cash flow first, then debt and EMIs, tax efficiency (old vs new regime, 80C/80D/NPS where relevant), emergency runway, goals and investments, insurance and risk.
+  const language = c.language === "hinglish" ? "natural Roman Hindi mixed with simple English" : c.language === "hindi" ? "simple Hindi (Devanagari)" : "clear, warm, plain English";
+  return `You are ArthaMind CFO, a calm, experienced personal finance adviser for Indian households, freelancers and small businesses. Respond in ${language}. Default currency is INR: write amounts as \u20B9 with Indian digit grouping (\u20B91,25,000) and use lakh/crore for large values. Think like a CFO: cash flow first, then debt and EMIs, emergency runway and insurance, tax efficiency (old vs new regime, 80C/80D/NPS where relevant), then goals and investments.
+Voice: talk to one person, the way a trusted adviser would across the table. Use "you" and short sentences. Explain any jargon in a few words the first time (for example "emergency runway, meaning how many months your savings would last"). Be specific and kind; acknowledge what is already going well before what needs work. Do not use filler or robotic phrases such as "As an AI", "Certainly!", "Great question", "I hope this helps", "delve" or "in today's fast-paced world". No emojis.
 Structure every answer as a CFO brief using the JSON fields:
-- title: "CFO brief: <topic>" (max 8 words after the colon).
-- directAnswer: the bottom line in 2-4 sentences, with the single most important number.
-- steps: 3-5 analysis steps, each titled by the lens used (Cash flow, Debt & EMIs, Tax, Runway, Goals, Risk) with specific numbers from the user's inputs.
-- formula: the main formula actually used (for example EMI, savings rate, runway months), or say it is not needed.
+- title: "CFO brief: <topic>" (max 8 words after the colon). For a request containing "PERSONAL CFO PLAN" use exactly "Your personal CFO plan".
+- directAnswer: the bottom line in 2-4 plain sentences with the single most important number. Address the person by name if given.
+- steps: 3-5 analysis steps, each titled by the lens used (Cash flow, Debt & EMIs, Safety net, Tax, Goal & investing, Risk) with specific \u20B9 numbers from the user's inputs. For a PERSONAL CFO PLAN use exactly the five lenses Cash flow, Debt & EMIs, Safety net, Tax, Goal & investing, and in Goal & investing give a monthly amount and a simple asset mix suited to the timeline.
+- formula: the main formula actually used (for example EMI, savings rate, runway months, SIP future value), or say it is not needed.
 - example: a worked calculation with the user's own numbers; mark dataStatus "illustrative" when you assume values and list every assumption in inputs.
-- interpretation: what the numbers mean, benchmarked against common Indian rules of thumb (EMI under 40% of take-home, 6 months emergency fund, 20%+ savings rate).
+- interpretation: what the numbers mean in everyday terms, benchmarked against common Indian rules of thumb (EMI under 40% of take-home, 6 months emergency fund, 20%+ savings rate, term cover about 10-15x annual income when others depend on you, health cover for the family).
 - risks: concrete downside risks and what would change the answer.
-- keyTakeaways: a prioritised action plan: 3-5 numbered actions, each with a \u20B9 amount or % and a timeline (this week, this month, this quarter).
-Rules: ask for missing numbers only when an answer is impossible without them, otherwise state assumptions and proceed. Never invent live prices, rates, dates, laws or sources; say when a figure must be checked (current RBI repo rate, tax slabs for the year). Do not give buy/sell/hold instructions for specific securities or promise returns. Recommend a SEBI-registered adviser or CA for binding tax, legal or investment decisions.`;
+- keyTakeaways: a prioritised action plan of 3-5 actions, each starting with a verb and including a \u20B9 amount or % and a timeline. For a PERSONAL CFO PLAN prefix them "Next 30 days:", "Next 60 days:" and "Next 90 days:".
+Rules: when numbers verified by the app are given, use them exactly and never recompute them differently. Ask for missing numbers only when an answer is impossible without them, otherwise state assumptions and proceed. Never invent live prices, rates, dates, laws or sources; say when a figure must be checked (current RBI repo rate, tax slabs for the year). Do not give buy/sell/hold instructions for specific securities or promise returns; talk in categories (index funds, debt funds, PPF, FDs). Recommend a SEBI-registered adviser or CA for binding tax, legal or investment decisions.`;
 }
 function systemPrompt(task, c) {
   if (task === "cfo") return cfoSystemPrompt(c);
@@ -6066,10 +6068,11 @@ function createRateLimiter(options) {
   return (req, res, next) => {
     const ip = req.headers["x-forwarded-for"]?.split(",")[0]?.trim() || req.socket.remoteAddress || "127.0.0.1";
     const now = Date.now();
-    let record = store.get(ip);
+    const key = `${windowMs}:${max}:${ip}`;
+    let record = store.get(key);
     if (!record || now > record.resetTime) {
       record = { count: 0, resetTime: now + windowMs };
-      store.set(ip, record);
+      store.set(key, record);
     }
     record.count++;
     res.setHeader("X-RateLimit-Limit", max.toString());
@@ -6128,8 +6131,8 @@ function calculateSavingsTarget(targetAmount, months) {
 // server/aiRoutes.ts
 var aiChatLimiter = createRateLimiter({ windowMs: 6e4, max: 20, message: "You are sending questions quickly. Please wait a minute and try again." });
 var aiRouter = Router2();
-var context = z9.object({ country: z9.enum(["India", "US", "Global"]).optional(), currency: z9.enum(["INR", "USD", "EUR", "GBP"]).optional(), language: z9.enum(["english", "hindi", "hinglish"]).optional(), level: z9.enum(["beginner", "intermediate", "advanced"]).optional(), mode: z9.enum(["explain", "quiz", "calc"]).optional(), detail: z9.enum(["short", "detailed"]).optional(), useOfficialSources: z9.boolean().optional(), highContrast: z9.boolean().optional(), reducedMotion: z9.boolean().optional(), learningGoal: z9.string().max(200).optional(), learningStyle: z9.enum(["visual", "practical", "reading", "socratic"]).optional(), activityType: z9.enum(["lesson", "quiz", "calculation", "scenario", "flashcards", "revision", "mock-test"]).optional(), quizType: z9.enum(["mcq", "mixed"]).optional(), quizLength: z9.union([z9.literal(5), z9.literal(10), z9.literal(20), z9.literal(50)]).optional(), adaptiveDifficulty: z9.boolean().optional(), sessionLength: z9.union([z9.literal(15), z9.literal(30), z9.literal(45), z9.literal(60)]).optional(), learnerProfile: z9.string().max(500).optional() });
-var requestSchema = z9.object({ prompt: z9.string().trim().min(1).max(4e3), model: z9.enum(["artha", "nemotron"]).optional(), task: z9.enum(["education", "calculation", "live_data", "quiz", "scenario", "evaluation", "report", "general", "cfo"]).optional(), history: z9.array(z9.object({ role: z9.enum(["user", "assistant"]), content: z9.string().min(1).max(4e3) })).max(10).optional(), context: context.optional() });
+var context = z9.object({ country: z9.enum(["India", "US", "Global"]).optional().catch(void 0), currency: z9.enum(["INR", "USD", "EUR", "GBP"]).optional().catch(void 0), language: z9.enum(["english", "hindi", "hinglish"]).optional().catch(void 0), level: z9.enum(["beginner", "intermediate", "advanced"]).optional().catch(void 0), mode: z9.enum(["explain", "quiz", "calc"]).optional().catch(void 0), detail: z9.enum(["short", "standard", "detailed"]).optional().catch(void 0), useOfficialSources: z9.boolean().optional().catch(void 0), highContrast: z9.boolean().optional().catch(void 0), reducedMotion: z9.boolean().optional().catch(void 0), learningGoal: z9.string().max(200).optional().catch(void 0), learningStyle: z9.enum(["visual", "practical", "reading", "socratic", "example-first", "step-by-step", "challenge-based", "deep-dive"]).optional().catch(void 0), activityType: z9.enum(["lesson", "quiz", "calculation", "scenario", "flashcards", "revision", "mock-test"]).optional().catch(void 0), quizType: z9.enum(["mcq", "mixed", "true-false", "fill-blank", "short-answer", "scenario", "calculation"]).optional().catch(void 0), quizLength: z9.union([z9.literal(5), z9.literal(10), z9.literal(20), z9.literal(50)]).optional().catch(void 0), adaptiveDifficulty: z9.boolean().optional().catch(void 0), sessionLength: z9.union([z9.literal(2), z9.literal(5), z9.literal(10), z9.literal(15), z9.literal(20), z9.literal(30), z9.literal(45), z9.literal(60)]).optional().catch(void 0), learnerProfile: z9.string().max(500).optional().catch(void 0) });
+var requestSchema = z9.object({ prompt: z9.preprocess((value) => typeof value === "string" ? value.trim().slice(0, 4e3) : value, z9.string().min(1).max(4e3)), model: z9.enum(["artha", "nemotron"]).optional(), task: z9.enum(["education", "calculation", "live_data", "quiz", "scenario", "evaluation", "report", "general", "cfo"]).optional(), history: z9.preprocess((value) => Array.isArray(value) ? value.filter((turn) => turn && (turn.role === "user" || turn.role === "assistant") && typeof turn.content === "string" && turn.content.trim()).slice(-10).map((turn) => ({ role: turn.role, content: turn.content.slice(0, 4e3) })) : void 0, z9.array(z9.object({ role: z9.enum(["user", "assistant"]), content: z9.string().min(1).max(4e3) })).max(10).optional()), context: context.optional().catch(void 0) });
 var calcSchema = z9.object({ kind: z9.enum(["emi", "emergency-fund", "budget-503020", "savings-target"]), principal: z9.coerce.number().finite().optional(), annualRatePercent: z9.coerce.number().finite().optional(), years: z9.coerce.number().finite().optional(), monthlyIncome: z9.coerce.number().finite().optional(), monthlyExpenses: z9.coerce.number().finite().optional(), targetAmount: z9.coerce.number().finite().optional(), months: z9.coerce.number().finite().optional() });
 function logEvent(event) {
   console.info(JSON.stringify({ scope: "artha-ai", ...event }));

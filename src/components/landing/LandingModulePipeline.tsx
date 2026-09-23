@@ -61,7 +61,7 @@ export const LandingModulePipeline: React.FC<{
   };
   const stage = STAGES[active];
 
-  return <div ref={ref} className={`mp ${inView ? 'is-in' : ''}`} style={{ '--active': active } as React.CSSProperties} onMouseLeave={() => setPinned(false)}>
+  return <div ref={ref} className={`mp ${inView ? 'is-in' : ''}`} style={{ '--active': active } as React.CSSProperties}>
     {/* Inputs → pipe → output */}
     <div className="mp-rail">
       <div className="mp-inputs" aria-label="What you bring">
@@ -74,7 +74,7 @@ export const LandingModulePipeline: React.FC<{
           const Icon = s.icon;
           return <button key={s.id} type="button" role="tab" aria-selected={i === active} aria-controls="mp-panel"
             className={`mp-station s-${s.id} ${i === active ? 'on' : ''} ${i < active ? 'done' : ''}`}
-            onMouseEnter={() => { setActive(i); setPinned(true); }} onFocus={() => { setActive(i); setPinned(true); }} onClick={() => { setActive(i); setPinned(true); }}>
+            onMouseEnter={() => setActive(i)} onFocus={() => { setActive(i); setPinned(true); }} onClick={() => { setActive(i); setPinned(true); }}>
             <span className="mp-node"><Icon size={18}/><em>{s.step}</em></span>
             <b>{s.title}</b><small>{s.verb}</small>
           </button>;

@@ -1,10 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion, useInView, useMotionValue, useReducedMotion, useSpring, useTransform } from 'motion/react';
-import { BarChart3, Bot, Globe2, Home, ReceiptText, ShieldCheck, Sparkles, Star, Target, Wallet } from 'lucide-react';
+import { BarChart3, Bell, Bot, Globe2, Home, ReceiptText, ShieldCheck, Star, Target, Wallet } from 'lucide-react';
 import { SUPPORTED_LANGUAGES } from '../LanguageSelector';
 import { LANDING_REVIEWS } from '../../data/landingReviews';
 import { buildMoneyCheck, type MoneyCheckInputs } from '../../services/moneyCheck';
-import { ArthaMindMark } from './ArthaMindMark';
+import { ArthaMindLogoMark } from '../branding/ArthaMindBrand';
 
 /**
  * Hero phone: a continuously running tour of the app. It keeps playing on hover and click and only
@@ -121,13 +121,80 @@ const Price: React.FC<{ row: Row; run: boolean }> = ({ row, run }) => {
 
 const SCREENS = ['splash', 'home', 'markets', 'cfo', 'tax', 'language', 'people'] as const;
 type Screen = typeof SCREENS[number];
-const DURATION: Record<Screen, number> = { splash: 2000, home: 3600, markets: 4000, cfo: 3800, tax: 3400, language: 3800, people: 3400 };
+const DURATION: Record<Screen, number> = { splash: 3400, home: 4600, markets: 4000, cfo: 3800, tax: 3400, language: 3800, people: 3400 };
 const TABS: Array<{ id: Screen; label: string; icon: React.ComponentType<{ size?: number }> }> = [
   { id: 'home', label: 'Home', icon: Home }, { id: 'markets', label: 'Markets', icon: BarChart3 }, { id: 'cfo', label: 'AI CFO', icon: Bot },
   { id: 'tax', label: 'Tax', icon: ReceiptText }, { id: 'language', label: 'Language', icon: Globe2 },
 ];
 const QUICK: Array<[string, React.ComponentType<{ size?: number }>]> = [['Tax', ReceiptText], ['SIP', Target], ['Insure', ShieldCheck], ['Wallet', Wallet]];
-const SPARK = 'M0 34 C 12 30, 18 32, 26 26 S 42 22, 50 24 S 66 14, 76 16 S 92 8, 100 6';
+
+/** Gold coin face: engraved rim text around the official mark. */
+const CoinFace: React.FC<{ id: string }> = ({ id }) => <svg viewBox="0 0 120 120" aria-hidden="true">
+  <defs>
+    <radialGradient id={`${id}-g`} cx="38%" cy="32%" r="75%"><stop offset="0" stopColor="#fbe7a1"/><stop offset=".45" stopColor="#e2b650"/><stop offset=".8" stopColor="#b98a2a"/><stop offset="1" stopColor="#8a6418"/></radialGradient>
+    <radialGradient id={`${id}-c`} cx="45%" cy="40%" r="70%"><stop offset="0" stopColor="#f3d27a"/><stop offset="1" stopColor="#c89a35"/></radialGradient>
+    <path id={`${id}-t`} d="M60 60 m-44 0 a44 44 0 1 1 88 0 a44 44 0 1 1 -88 0"/>
+  </defs>
+  <circle cx="60" cy="60" r="58" fill={`url(#${id}-g)`}/>
+  <circle cx="60" cy="60" r="55" fill="none" stroke="#8a6418" strokeWidth="1.5" strokeDasharray="1.2 2.2" opacity=".7"/>
+  <circle cx="60" cy="60" r="50" fill="none" stroke="#fff3c4" strokeWidth=".8" opacity=".6"/>
+  <text fontSize="7.2" fontWeight="800" letterSpacing="2.2" fill="#6b4d12" opacity=".85"><textPath href={`#${id}-t`}>ARTHAMIND · FINANCE · INTELLIGENCE · INNOVATION ·</textPath></text>
+  <circle cx="60" cy="60" r="36" fill={`url(#${id}-c)`} stroke="#a87c24" strokeWidth="1.5"/>
+</svg>;
+
+const COIN_TIMES = [0, 0.42, 0.58, 0.72, 0.86, 1];
+/** Splash: the logo coin drops in spinning, bounces twice while slowing, and settles flat. */
+const CoinDrop: React.FC<{ animate: boolean }> = ({ animate }) => <div className="hp-coin-stage">
+  <div className="hp-coin-wrap">
+    <motion.div className="hp-coin" initial={animate ? { y: -260, rotateY: 0 } : false}
+      animate={{ y: [-260, 0, -46, 0, -12, 0], rotateY: [0, 1080, 1260, 1380, 1428, 1440] }}
+      transition={{ duration: 2.2, times: COIN_TIMES, ease: ['easeIn', 'easeOut', 'easeIn', 'easeOut', 'easeIn'] }}>
+      <span className="hp-coin-face"><CoinFace id="coin-f"/><span className="hp-coin-mark"><ArthaMindLogoMark size={46} tone="ink" cut="#e6bd5c"/></span></span>
+      <span className="hp-coin-face back"><CoinFace id="coin-b"/><span className="hp-coin-mark"><ArthaMindLogoMark size={46} tone="ink" cut="#e6bd5c"/></span></span>
+    </motion.div>
+    <motion.span className="hp-coin-shadow" initial={animate ? { scaleX: 0.2, opacity: 0 } : false} animate={{ scaleX: [0.2, 1, 0.55, 1, 0.85, 1], opacity: [0, 0.55, 0.3, 0.55, 0.45, 0.55] }} transition={{ duration: 2.2, times: COIN_TIMES }}/>
+  </div>
+  <motion.div className="hp-coin-title" initial={animate ? { opacity: 0, y: 10 } : false} animate={{ opacity: 1, y: 0 }} transition={{ delay: animate ? 2.25 : 0, duration: 0.4 }}>
+    <b>ArthaMind <em>AI</em></b><small>by Artha Bench Pro</small>
+  </motion.div>
+</div>;
+
+/** Demo NIFTY-style candles (deterministic), drawn left to right. */
+const CANDLES = (() => {
+  let price = 24620;
+  return Array.from({ length: 20 }, (_, i) => {
+    const drift = Math.sin(i * 0.55) * 38 + Math.cos(i * 0.21) * 22 + 12;
+    const open = price, close = price + drift;
+    price = close;
+    return { open, close, high: Math.max(open, close) + 18 + (i % 3) * 7, low: Math.min(open, close) - 16 - (i % 4) * 6 };
+  });
+})();
+const CandleChart: React.FC<{ animate: boolean }> = ({ animate }) => {
+  const W = 240, H = 104, pad = 6;
+  const lo = Math.min(...CANDLES.map((c) => c.low)), hi = Math.max(...CANDLES.map((c) => c.high));
+  const y = (v: number) => pad + (1 - (v - lo) / (hi - lo)) * (H - pad * 2);
+  const step = W / CANDLES.length;
+  const ma = CANDLES.map((_, i) => { const s = CANDLES.slice(Math.max(0, i - 4), i + 1); return [step * (i + 0.5), y(s.reduce((a, c) => a + c.close, 0) / s.length)] as const; });
+  const last = CANDLES[CANDLES.length - 1];
+  return <svg className="hp-candles" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" aria-hidden="true">
+    {[0.25, 0.5, 0.75].map((f) => <line key={f} x1="0" x2={W} y1={H * f} y2={H * f} stroke="#eef1f6" strokeDasharray="3 4"/>)}
+    {CANDLES.map((c, i) => { const up = c.close >= c.open; const x = step * (i + 0.5); return <motion.g key={i} style={{ transformBox: 'fill-box', transformOrigin: '50% 100%' }} initial={animate ? { scaleY: 0, opacity: 0 } : false} animate={{ scaleY: 1, opacity: 1 }} transition={{ delay: animate ? 0.15 + i * 0.05 : 0, duration: 0.35, ease: [0.2, 0.7, 0.2, 1] }}>
+      <line x1={x} x2={x} y1={y(c.high)} y2={y(c.low)} stroke={up ? '#059669' : '#dc2626'} strokeWidth="1.2"/>
+      <rect x={x - step * 0.3} y={Math.min(y(c.open), y(c.close))} width={step * 0.6} height={Math.max(1.5, Math.abs(y(c.open) - y(c.close)))} rx="1" fill={up ? '#10b981' : '#f87171'}/>
+    </motion.g>; })}
+    <motion.path d={ma.map(([px, py], i) => `${i ? 'L' : 'M'}${px.toFixed(1)} ${py.toFixed(1)}`).join(' ')} fill="none" stroke="#4f46e5" strokeWidth="1.6" strokeLinecap="round" initial={animate ? { pathLength: 0 } : false} animate={{ pathLength: 1 }} transition={{ delay: animate ? 0.5 : 0, duration: 1.2, ease: 'easeOut' }}/>
+    <line x1="0" x2={W} y1={y(last.close)} y2={y(last.close)} stroke="#059669" strokeDasharray="3 3" opacity=".6"/>
+    <circle className="hp-candle-ping" cx={step * (CANDLES.length - 0.5)} cy={y(last.close)} r="3" fill="#10b981"/>
+  </svg>;
+};
+
+/** App bar shown at the top of every screen after the splash. */
+const AppBar: React.FC<{ dark: boolean; photoSrc?: string }> = ({ dark, photoSrc }) => <div className={`hp-appbar ${dark ? 'dark' : ''}`}>
+  <ArthaMindLogoMark size={22} tone="app"/>
+  <b>ArthaMind <em>AI</em></b>
+  <span className="hp-appbar-icons" aria-hidden="true"><Bell size={14}/><Portrait photoSrc={photoSrc}/></span>
+</div>;
+
 
 export const HeroPhone: React.FC<{ photoSrc?: string }> = ({ photoSrc }) => {
   const ref = useRef<HTMLDivElement>(null);
@@ -195,23 +262,17 @@ export const HeroPhone: React.FC<{ photoSrc?: string }> = ({ photoSrc }) => {
           <div className="hp-island" aria-hidden="true"><i/></div>
           <div className="hp-status" aria-hidden="true"><span>{time}</span><span className="hp-sys"><span className="hp-sig"><i/><i/><i/><i/></span><span className="hp-batt"><i/></span></span></div>
 
+          {screen !== 'splash' && <AppBar dark={dark} photoSrc={photoSrc}/>}
           <AnimatePresence mode="wait" initial={false}>
-            <motion.div key={screen} className={`hp-page hp-${screen}`} initial={animate ? { opacity: 0, y: 14 } : false} animate={{ opacity: 1, y: 0 }} exit={animate ? { opacity: 0, y: -10 } : undefined} transition={{ duration: 0.35, ease: [0.2, 0.7, 0.2, 1] }}>
+            <motion.div key={screen} className={`hp-page hp-${screen}`} initial={animate ? (screen === 'home' ? { opacity: 0, scale: 0.94 } : { opacity: 0, y: 14 }) : false} animate={{ opacity: 1, y: 0, scale: 1 }} exit={animate ? { opacity: 0, y: -10 } : undefined} transition={{ duration: 0.4, ease: [0.2, 0.7, 0.2, 1] }}>
 
-              {screen === 'splash' && <div className="hp-splash">
-                <motion.div className="hp-splash-mark" initial={animate ? { scale: 0.6, opacity: 0 } : false} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring', stiffness: 180, damping: 14 }}><ArthaMindMark size={56}/></motion.div>
-                <motion.b initial={animate ? { opacity: 0, y: 8 } : false} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>ArthaMind AI</motion.b>
-                <motion.small initial={animate ? { opacity: 0 } : false} animate={{ opacity: 1 }} transition={{ delay: 0.45 }}>by Artha Bench Pro</motion.small>
-                <span className="hp-splash-bar"><motion.i initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ duration: 1.6, ease: 'easeInOut' }}/></span>
-              </div>}
+              {screen === 'splash' && <CoinDrop animate={animate}/>}
 
               {screen === 'home' && <>
-                <header className="hp-top"><Portrait photoSrc={photoSrc}/><div><small>Sample profile</small><b>Good evening, Priya</b></div><span className="hp-bell" aria-hidden="true"><Sparkles size={14}/></span></header>
-                <div className="hp-networth">
-                  <small>Net worth</small>
-                  <b><Count to={r.netWorth} run={animate} format={inr}/></b>
-                  <span className="hp-up">Surplus <Count to={r.cashflow.surplus} run={animate} format={inr}/>/mo</span>
-                  <svg viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true"><motion.path d={SPARK} fill="none" stroke="#5eead4" strokeWidth="2" strokeLinecap="round" initial={animate ? { pathLength: 0 } : false} animate={{ pathLength: 1 }} transition={{ duration: 1.1, ease: 'easeOut' }}/></svg>
+                <div className="hp-hello"><small>Good evening, Priya · sample profile</small><div><b><Count to={r.netWorth} run={animate} format={inr}/></b><span className="hp-up">+<Count to={r.cashflow.surplus} run={animate} format={inr}/>/mo</span></div><small>Net worth</small></div>
+                <div className="hp-card hp-chart">
+                  <div className="hp-chart-head"><span><b>NIFTY 50</b><small>Demo feed · 15 min candles</small></span><span className="hp-chart-val"><b><Count to={CANDLES[CANDLES.length - 1].close} run={animate} format={(v) => v.toLocaleString('en-IN', { maximumFractionDigits: 1, minimumFractionDigits: 1 })}/></b><em className="up">+0.84%</em></span></div>
+                  <CandleChart animate={animate}/>
                 </div>
                 <div className="hp-actions">{QUICK.map(([label, Icon]) => <span key={label}><i><Icon size={15}/></i>{label}</span>)}</div>
                 <div className="hp-card hp-health">

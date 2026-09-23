@@ -2,6 +2,7 @@ import React from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { ArrowRight, BadgeIndianRupee, BarChart3, Bot, Calculator, Check, GraduationCap, Languages, ShieldCheck } from 'lucide-react';
 import { HeroPhone, HERO_REPORT, useLanguageCycle } from './HeroPhone';
+import { ArthaMindLogoMark } from '../branding/ArthaMindBrand';
 import './landingHero.css';
 
 /** The ecosystem at a glance: every chip is a real part of the product. */
@@ -56,6 +57,7 @@ export const LandingHero: React.FC<{ onSample: () => void; onExplore: () => void
   const item = (i: number) => (reduced ? {} : { initial: { opacity: 0, y: 12 }, animate: { opacity: 1, y: 0 }, transition: { delay: 0.08 + i * 0.1, duration: 0.45, ease: [0.2, 0.7, 0.2, 1] as [number, number, number, number] } });
 
   return <section className="hx" aria-labelledby="hx-title">
+    <div className="hx-watermark" aria-hidden="true"><ArthaMindLogoMark size={640} tone="ink" cut="#f7f6f2"/></div>
     <div className="hx-wrap">
       <div className="hx-copy">
         <motion.p className="hx-eyebrow" {...item(0)}>ArthaMind AI · personal finance and market research</motion.p>

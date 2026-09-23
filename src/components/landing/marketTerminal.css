@@ -107,3 +107,5 @@
 }
 .crypto-lazy-shell{height:760px;max-width:1200px;margin:0 auto;border-radius:20px;background:linear-gradient(90deg,#0b0b0c,#141417,#0b0b0c);background-size:200% 100%;animation:mk-shimmer 1.6s linear infinite}@media (max-width:640px){.crypto-lazy-shell{height:560px}}@media (prefers-reduced-motion:reduce){.crypto-lazy-shell{animation:none}}
 .mt-skeleton,.mt-overlay,.mt-note{z-index:3}
+.mk-title{display:flex;align-items:center;gap:10px;min-width:0}.mk-card .mk-logo{border-radius:9px;box-shadow:0 0 0 1px #e2e8f0}
+.mt-title .mt-logo{align-self:center;border-radius:7px}.mt-tabs button{display:inline-flex;align-items:center;gap:6px}.mt-tab-logo{border-radius:4px}

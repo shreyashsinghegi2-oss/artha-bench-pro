@@ -30,7 +30,7 @@ import {
   generateVerificationCode,
 } from './financeEngine';
 import { generateLessonContent, reviewQuizAnswer } from './learningService';
-import { getBusinessNews, explainNewsArticle } from './businessNewsService';
+import { getBusinessNews, explainNewsArticle, buildNewsResearchBrief } from './businessNewsService';
 import { handleNewsImage } from './newsImageProxy';
 import { getMarketQuote, searchMarketQuotes, getMarketHistory } from './marketDataService';
 import { getIndiaMarketTicker } from './indiaMarketTickerService';
@@ -1032,6 +1032,25 @@ apiRouter.post('/news/explain', async (req: Request, res: Response, next: NextFu
   try {
     const explanation = await explainNewsArticle(req.body.article || req.body);
     res.json(explanation);
+  } catch (err) {
+    next(err);
+  }
+});
+
+apiRouter.post('/news/brief', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const body = (req.body?.article || req.body || {}) as Record<string, unknown>;
+    const text = (v: unknown, max: number) => (typeof v === 'string' ? v.slice(0, max) : '');
+    const title = text(body.title, 400).trim();
+    if (!title) return res.status(400).json({ error: 'A headline is required.' });
+    const brief = await buildNewsResearchBrief({
+      title,
+      summary: text(body.summary, 2000),
+      sourceName: text(body.sourceName, 120) || 'Unknown source',
+      sourceUrl: text(body.sourceUrl, 600) || undefined,
+      publishedAt: text(body.publishedAt, 60) || null,
+    });
+    res.json({ brief });
   } catch (err) {
     next(err);
   }

@@ -277,3 +277,26 @@
 @media (max-width:640px){.connected-landing .cl-brand .am-brand-text b{font-size:15px}.cl-brand .am-logo{width:28px;height:28px}}
 @media (max-width:380px){.connected-landing .cl-brand>span.am-brand-text{display:flex}.connected-landing .cl-brand .am-brand-text b{font-size:13.5px}.cl-brand .am-logo{width:24px;height:24px}}
 @media (max-width:420px){.connected-landing .cl-right{gap:6px}.connected-landing .cl-right select{width:82px;padding-left:10px;padding-right:18px}.connected-landing .cl-right div>svg:first-child{display:none}}
+/* Coin intro: loading bar and a glint while the coin rests */
+.hp-coin-load{display:grid;justify-items:center;gap:7px;margin-top:14px}
+.hp-coin-bar{display:block;width:120px;height:4px;border-radius:4px;background:rgba(255,255,255,.14);overflow:hidden}
+.hp-coin-bar i{display:block;height:100%;background:linear-gradient(90deg,#e6bd5c,#34c46f);transform-origin:left}
+.hp-coin-load small{font-size:10.5px;color:#9fb3c8;letter-spacing:.02em}
+.hp-coin-glint{position:absolute;inset:0;border-radius:50%;overflow:hidden;pointer-events:none}
+.hp-coin-glint::after{content:"";position:absolute;top:-20%;bottom:-20%;left:-60%;width:40%;background:linear-gradient(100deg,transparent,rgba(255,250,225,.75),transparent);transform:skewX(-18deg);animation:hp-glint 4.4s ease-in-out 1 forwards}
+@keyframes hp-glint{0%,55%{left:-60%}75%,100%{left:130%}}
+/* Market pulse: breadth bar and top movers */
+.hp-pulse{display:grid;gap:8px}
+.hp-pulse-head{display:flex;justify-content:space-between;align-items:baseline}
+.hp-pulse-head small{font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.06em}
+.hp-pulse-head b{font-size:11.5px}
+.hp-pulse .up{color:#047857}.hp-pulse .down{color:#b91c1c}
+.hp-breadth{display:block;height:5px;border-radius:5px;background:#fca5a5;overflow:hidden}
+.hp-breadth i{display:block;height:100%;background:#10b981;transition:width .5s ease}
+.hp-movers{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.hp-movers span{display:grid;gap:1px;padding:6px 8px;border-radius:9px;background:#f8fafc}
+.hp-movers small{font-size:9px;color:#64748b}
+.hp-movers b{font-size:11.5px;color:#0f172a}
+.hp-movers em{font-style:normal;font-size:10.5px;font-weight:800}
+.hp-chart-logo{width:26px;height:26px;border-radius:7px;background:#fff;box-shadow:0 0 0 1px #e5e7eb;object-fit:contain;flex:none}
+.hp-chart-head>span:not(.hp-chart-val){flex:1;margin-left:8px}

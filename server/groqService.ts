@@ -13,6 +13,7 @@ import {
 } from './aiResponseStandard';
 import { generateVerificationCode } from './financeEngine';
 import { computeFullReliabilityEvaluation, FullReliabilityEvaluation } from './scoringEngine';
+import { withDateContext } from './dateContext';
 
 export interface GroqModelsConfig {
   tutorModel: string;
@@ -231,7 +232,7 @@ function buildGroqMessages(
   history?: Array<{ role: string; content: string }>,
 ) {
   const messages: Array<{ role: string; content: string }> = [
-    { role: 'system', content: systemPrompt },
+    { role: 'system', content: withDateContext(systemPrompt) },
   ];
 
   if (Array.isArray(history)) {

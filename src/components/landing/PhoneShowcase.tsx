@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { motion, useMotionValueEvent, useReducedMotion, useScroll, useSpring, useTransform } from 'motion/react';
 import { buildMoneyCheck, SAMPLE_MONEY_CHECK } from '../../services/moneyCheck';
 import './phoneShowcase.css';
+import { ArthaMindLogoMark } from '../branding/ArthaMindBrand';
 
 const inr = (v: number) => `₹${Math.round(v).toLocaleString('en-IN')}`;
 const short = (v: number) => {
@@ -33,11 +34,10 @@ export const PhoneShowcase: React.FC<{ onTry: () => void }> = ({ onTry }) => {
   const { scrollYProgress } = useScroll({ target: section, offset: ['start start', 'end end'] });
   const smooth = useSpring(scrollYProgress, { stiffness: 120, damping: 26, mass: 0.4 });
   const SCREENS = 4;
-  // The strip holds every screen, so one screen is 100 / SCREENS percent of its height.
-  const stripY = useTransform(smooth, [0, 1], ['0%', `-${((SCREENS - 1) / SCREENS) * 100}%`]);
   const phoneRotate = useTransform(smooth, [0, 0.5, 1], [-6, 0, 6]);
   useMotionValueEvent(scrollYProgress, 'change', (v) => setActive(Math.min(SCREENS - 1, Math.max(0, Math.floor(v * SCREENS * 0.999)))));
 
+  // Scroll picks the step and the screen snaps to it (one screen is 100 / SCREENS % of the strip).
   // On phones (no pinned scroll) the screens advance on a timer instead.
   useEffect(() => {
     if (desktop || reduced) return;
@@ -59,13 +59,13 @@ export const PhoneShowcase: React.FC<{ onTry: () => void }> = ({ onTry }) => {
   const termPct = Math.min(100, Math.round(((r.protection.termCoverNeeded - r.protection.termGap) / Math.max(1, r.protection.termCoverNeeded)) * 100));
 
   const screens = [
-    <div className="ps-screen" key="health">
+    <div className="ps-screen t-health" key="health">
       <small className="ps-app-kicker">Money health</small>
       <div className="ps-ring" style={{ '--deg': `${scoreDeg}deg` } as React.CSSProperties}><b>{r.health.score}</b><span>/100 · {r.health.status}</span></div>
       <ul className="ps-rows">{r.health.metrics.map((m) => <li key={m.key}><span>{m.label}</span><b>{m.display}</b></li>)}</ul>
       <div className="ps-chip">Surplus {inr(r.cashflow.surplus)}/mo</div>
     </div>,
-    <div className="ps-screen" key="tax">
+    <div className="ps-screen t-tax" key="tax">
       <small className="ps-app-kicker">Tax · FY 2025-26</small>
       <h4>{r.tax.better === 'same' ? 'Both regimes cost the same' : `${r.tax.better === 'new' ? 'New' : 'Old'} regime saves ${short(r.tax.saving)}`}</h4>
       <div className="ps-bars">
@@ -74,14 +74,14 @@ export const PhoneShowcase: React.FC<{ onTry: () => void }> = ({ onTry }) => {
       </div>
       <ul className="ps-rows"><li><span>Take-home</span><b>{inr(r.tax.monthlyTakeHome)}/mo</b></li><li><span>Salary</span><b>{short(SAMPLE_MONEY_CHECK.annualSalary)}/yr</b></li></ul>
     </div>,
-    <div className="ps-screen" key="freedom">
+    <div className="ps-screen t-freedom" key="freedom">
       <small className="ps-app-kicker">Freedom number</small>
       <h4 className="ps-big">{short(r.freedom.corpusNeeded)}</h4>
       <p className="ps-note">at 60, funds spending to age 85</p>
       <div className="ps-progress"><i style={{ width: `${freedomPct}%` }}/></div>
       <ul className="ps-rows"><li><span>SIP needed</span><b>{inr(r.freedom.monthlySipNeeded)}/mo</b></li><li><span>Free by age</span><b>{r.freedom.freedomAge ?? '—'}</b></li><li><span>Spend at 60</span><b>{short(r.freedom.annualExpenseAtRetirement)}/yr</b></li></ul>
     </div>,
-    <div className="ps-screen" key="protect">
+    <div className="ps-screen t-protect" key="protect">
       <small className="ps-app-kicker">Protection</small>
       <h4>Term cover needed</h4>
       <p className="ps-big">{short(r.protection.termCoverNeeded)}</p>
@@ -111,7 +111,8 @@ export const PhoneShowcase: React.FC<{ onTry: () => void }> = ({ onTry }) => {
             <div className="ps-notch" aria-hidden="true"/>
             <div className="ps-status" aria-hidden="true"><span>9:41</span><span className="ps-signal"><i/><i/><i/><i/></span></div>
             <div className="ps-viewport">
-              <motion.div className="ps-strip" style={pinned ? { y: stripY } : undefined} animate={pinned ? undefined : { y: `-${(active * 100) / SCREENS}%` }} transition={{ type: 'spring', stiffness: 120, damping: 22 }}>
+              <div className="ps-appbar" aria-hidden="true"><ArthaMindLogoMark size={20} tone="app"/><b>ArthaMind <em>AI</em></b></div>
+              <motion.div className="ps-strip" animate={{ y: `-${(active * 100) / SCREENS}%` }} transition={{ type: 'spring', stiffness: 120, damping: 22 }}>
                 {screens}
               </motion.div>
             </div>

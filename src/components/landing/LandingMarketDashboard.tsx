@@ -5,6 +5,10 @@ import {
   type TerminalSnapshotItem,
 } from '../../services/marketTerminalApi';
 import './marketTerminal.css';
+import { CompanyLogo } from '../market/CompanyLogo';
+
+const MkTitle: React.FC<{ label: string; category: string }> = ({ label, category }) =>
+  <div className="mk-title"><CompanyLogo symbol={label} size={30} className="mk-logo"/><div><h3>{label}</h3><span>{category}</span></div></div>;
 
 const MarketTerminalChart = React.lazy(() => import('./MarketTerminalChart'));
 const SNAPSHOT_POLL_MS = 45_000;
@@ -58,14 +62,14 @@ const MarketCard: React.FC<{ item: TerminalSnapshotItem; retrievedAt: string; no
 
   if (item.status !== 'ok' || item.price === null) {
     return <article className="mk-card is-error" style={{ '--i': index } as React.CSSProperties}>
-      <header><div><h3>{item.label}</h3><span>{item.category}</span></div></header>
+      <header><MkTitle label={item.label} category={item.category}/></header>
       <div className="mk-unavailable"><AlertTriangle size={16} aria-hidden="true"/><p>Live data is unavailable right now. We'll retry automatically.</p></div>
       <footer><span>Source: {item.source}</span></footer>
     </article>;
   }
   return <article className={`mk-card ${change.direction}`} style={{ '--i': index } as React.CSSProperties} onPointerMove={onMove} onPointerLeave={onLeave} aria-label={`${item.label} ${formatMarketPrice(item.price, item.currency, item.decimals)}, ${change.text}`}>
     <header>
-      <div><h3>{item.label}</h3><span>{item.category}</span></div>
+      <MkTitle label={item.label} category={item.category}/>
       <span className="mk-fresh">{FRESHNESS_LABEL[item.freshness ?? ''] ?? 'Latest'}</span>
     </header>
     <strong className={`mk-price ${flash ? `flash-${flash}` : ''}`}>{formatMarketPrice(item.price, item.currency, item.decimals)}</strong>
@@ -137,8 +141,8 @@ export const LandingMarketDashboard: React.FC = () => {
         {snapshot
           ? snapshot.items.map((item, index) => <MarketCard key={item.id} item={item} retrievedAt={snapshot.retrievedAt} now={now} index={index}/>)
           : PLACEHOLDERS.map((item) => error
-            ? <article key={item.id} className="mk-card is-error"><header><div><h3>{item.label}</h3><span>{item.category}</span></div></header><div className="mk-unavailable"><AlertTriangle size={16} aria-hidden="true"/><p>{error} Retrying automatically.</p></div></article>
-            : <article key={item.id} className="mk-card is-loading" aria-busy="true"><header><div><h3>{item.label}</h3><span>{item.category}</span></div></header><i className="mk-sk mk-sk-price"/><i className="mk-sk mk-sk-change"/><i className="mk-sk mk-sk-spark"/><i className="mk-sk mk-sk-foot"/></article>)}
+            ? <article key={item.id} className="mk-card is-error"><header><MkTitle label={item.label} category={item.category}/></header><div className="mk-unavailable"><AlertTriangle size={16} aria-hidden="true"/><p>{error} Retrying automatically.</p></div></article>
+            : <article key={item.id} className="mk-card is-loading" aria-busy="true"><header><MkTitle label={item.label} category={item.category}/></header><i className="mk-sk mk-sk-price"/><i className="mk-sk mk-sk-change"/><i className="mk-sk mk-sk-spark"/><i className="mk-sk mk-sk-foot"/></article>)}
       </div>
       <p className="mk-disclaimer">Market data may be delayed; informational use only. Indian index and FX quotes come from an experimental reference feed and are not exchange-certified.</p>
 

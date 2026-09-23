@@ -63,4 +63,33 @@
 .cfo-compose button:disabled{opacity:.35;cursor:not-allowed}
 .cfo-chat button:focus-visible,.cfo-chat select:focus-visible{outline:2px solid var(--cfo-g);outline-offset:2px}
 @media (max-width:640px){.cfo-thread{max-height:480px;padding:14px 10px}.cfo-msg{max-width:100%}}
+/* Guided CFO intake + profile snapshot */
+.cfo-plan-cta{display:grid;grid-template-columns:auto 1fr;align-items:center;column-gap:10px;text-align:left;margin-top:10px;border:1px solid var(--cfo-g);background:linear-gradient(135deg,var(--cfo-g),#0d9488);color:#fff;border-radius:14px;padding:11px 16px;font:inherit;font-size:14px;font-weight:800;cursor:pointer;box-shadow:0 12px 28px rgba(15,123,108,.25);transition:transform .2s,box-shadow .2s}
+.cfo-plan-cta svg{grid-row:span 2}
+.cfo-plan-cta span{grid-column:2;font-size:11px;font-weight:600;opacity:.85}
+.cfo-plan-cta:hover{transform:translateY(-2px);box-shadow:0 16px 34px rgba(15,123,108,.32)}
+.cfo-or{margin-top:6px;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--cfo-mut)}
+.cfo-intake{display:flex;flex-direction:column;gap:10px}
+.cfo-ask{font-size:14.5px;font-weight:600;max-width:560px}
+.cfo-progress{display:block;height:3px;border-radius:3px;background:var(--cfo-bd);overflow:hidden;margin-bottom:10px}
+.cfo-progress i{display:block;height:100%;background:linear-gradient(90deg,var(--cfo-g),var(--cfo-g2));transform-origin:left;transition:transform .5s cubic-bezier(.2,.7,.2,1)}
+.cfo-chips-left{justify-content:flex-start}
+.cfo-intake-form{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:10px}
+.cfo-intake-form input{flex:1 1 180px;min-width:0;border:1px solid var(--cfo-bd);border-radius:10px;padding:9px 12px;font:inherit;font-size:14px;color:var(--cfo-ink);outline:none;transition:border-color .2s,box-shadow .2s}
+.cfo-intake-form input:focus{border-color:var(--cfo-g2);box-shadow:0 0 0 4px rgba(20,184,166,.15)}
+.cfo-intake-form input[aria-invalid=true]{border-color:#e11d48}
+.cfo-intake-form button[type=submit]{display:inline-flex;align-items:center;gap:6px;border:0;border-radius:10px;padding:9px 14px;background:var(--cfo-g);color:#fff;font:inherit;font-size:13px;font-weight:800;cursor:pointer}
+.cfo-intake-form button[type=submit]:disabled{opacity:.45;cursor:not-allowed}
+.cfo-intake-error{margin:6px 0 0;font-size:12px;font-weight:600;color:#be123c}
+.cfo-intake-cancel{align-self:center;color:var(--cfo-mut)}
+.cfo-tag-ok{background:#dcfce7;color:#166534}
+.cfo-profile .cfo-brief-head{margin-bottom:10px}
+.cfo-profile-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin:0}
+.cfo-profile-grid div{border:1px solid var(--cfo-bd);border-radius:10px;padding:8px 10px;background:#fbfdfc;min-width:0}
+.cfo-profile-grid dt{font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--cfo-mut)}
+.cfo-profile-grid dd{margin:2px 0 0;font-weight:800;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.cfo-profile-grid dd.pos{color:var(--cfo-g)}
+.cfo-profile-grid dd.neg{color:#be123c}
+.cfo-profile-note{margin:10px 0 0;font-size:11px;color:var(--cfo-mut)}
+@media (max-width:420px){.cfo-profile-grid{grid-template-columns:1fr 1fr}.cfo-plan-cta{width:100%}}
 @media (prefers-reduced-motion:reduce){.cfo-chat *,.cfo-chat *::before,.cfo-chat *::after{animation:none!important;transition:none!important}.cfo-chips button,.cfo-block,.cfo-brief-foot{opacity:1}}

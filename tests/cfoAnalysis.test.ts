@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildCfoHealthReport, cfoReviewPrompt, formatInr, formatInrShort, validateCfoInputs } from '../src/services/cfoAnalysis';
+import { buildCfoHealthReport, cfoPlanPrompt, cfoReviewPrompt, formatInr, formatInrShort, validateCfoInputs } from '../src/services/cfoAnalysis';
 import { cfoSystemPrompt } from '../server/aiGateway';
 
 describe('AI CFO health check', () => {
@@ -52,9 +52,20 @@ describe('AI CFO health check', () => {
 
   it('uses an India-first CFO system prompt with guardrails', () => {
     const prompt = cfoSystemPrompt({ language: 'hinglish' });
-    expect(prompt).toContain('ArthaMind AI CFO');
+    expect(prompt).toContain('ArthaMind CFO');
     expect(prompt).toContain('lakh/crore');
     expect(prompt).toContain('Roman Hindi');
     expect(prompt).toMatch(/Do not give buy\/sell\/hold/);
+  });
+
+  it('builds a personal plan prompt from intake answers and verified numbers', () => {
+    const profile = { name: 'Asha', age: '25–34', work: 'Salaried', monthlyIncome: 85000, monthlyExpenses: 55000, monthlyEmi: 8000, savings: 120000, dependents: '2', insurance: 'Health only', goal: 'Buy a home', goalYears: '3–5 years' };
+    const report = buildCfoHealthReport({ monthlyIncome: 85000, monthlyExpenses: 55000, monthlyEmi: 8000, emergencySavings: 120000 });
+    const prompt = cfoPlanPrompt(profile, report);
+    expect(prompt).toContain('PERSONAL CFO PLAN');
+    expect(prompt).toContain('name Asha');
+    expect(prompt).toContain('surplus ₹22,000/month');
+    expect(prompt).toContain('buy a home in 3–5 years');
+    expect(cfoSystemPrompt({})).toContain('PERSONAL CFO PLAN');
   });
 });

@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { WebSearchToggle } from '../ai/WebSearchToggle';
 import {
   BrainCircuit,
   CheckCircle2,
@@ -316,6 +317,7 @@ export const IncomeAIAssistant: React.FC<IncomeAIAssistantProps> = ({
           </div>
 
           <div className="border-t border-line bg-surface p-4">
+            <div className="mb-2"><WebSearchToggle/></div>
             <div className="flex items-end gap-2 rounded-2xl border border-line bg-canvas p-2 focus-within:border-interactive/50">
               <textarea
                 value={input}

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { WebSearchToggle } from '../ai/WebSearchToggle';
 import { AlertCircle, Calculator, Database, Globe2, Send, ShieldCheck, Sparkles } from 'lucide-react';
 import type { StructuredFinancialAnswer } from '../../types';
 import { StructuredFinancialAnswerView } from '../ai/StructuredFinancialAnswer';
@@ -126,6 +127,7 @@ export const ScenarioAssistantPanel: React.FC<ScenarioAssistantPanelProps> = ({
         <span className={`rounded-full border px-2.5 py-1 ${hasVerifiedResult ? 'border-success-fill/25 bg-success-soft text-success' : 'border-warning-fill/25 bg-warning-soft text-warning'}`}>{hasVerifiedResult ? 'Deterministic result calculated' : 'Assistant will calculate before analysis'}</span>
       </div>
 
+      <div className="mb-2"><WebSearchToggle/></div>
       <div className="flex flex-col gap-2 sm:flex-row">
         <textarea
           value={question}

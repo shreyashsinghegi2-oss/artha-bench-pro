@@ -135,31 +135,44 @@ const TABS: Array<{ id: TabId; label: string; icon: React.ComponentType<{ size?:
 ];
 const QUICK: Array<[string, React.ComponentType<{ size?: number }>]> = [['Tax', ReceiptText], ['SIP', Target], ['Insure', ShieldCheck], ['Wallet', Wallet]];
 
-/** Gold coin face: engraved rim text around the official mark. */
+/** Gold coin face: polished metal with a bevelled rim, engraved brand name and a specular highlight. */
 const CoinFace: React.FC<{ id: string }> = ({ id }) => <svg viewBox="0 0 120 120" aria-hidden="true">
   <defs>
-    <radialGradient id={`${id}-g`} cx="38%" cy="32%" r="75%"><stop offset="0" stopColor="#fbe7a1"/><stop offset=".45" stopColor="#e2b650"/><stop offset=".8" stopColor="#b98a2a"/><stop offset="1" stopColor="#8a6418"/></radialGradient>
-    <radialGradient id={`${id}-c`} cx="45%" cy="40%" r="70%"><stop offset="0" stopColor="#f3d27a"/><stop offset="1" stopColor="#c89a35"/></radialGradient>
+    <linearGradient id={`${id}-rim`} x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#fff4c2"/><stop offset=".22" stopColor="#f0c75a"/><stop offset=".5" stopColor="#9a6a12"/><stop offset=".72" stopColor="#f6d77a"/><stop offset="1" stopColor="#7a5410"/></linearGradient>
+    <radialGradient id={`${id}-g`} cx="36%" cy="30%" r="78%"><stop offset="0" stopColor="#fff1b8"/><stop offset=".35" stopColor="#f2c451"/><stop offset=".7" stopColor="#c8921f"/><stop offset="1" stopColor="#8f6310"/></radialGradient>
+    <radialGradient id={`${id}-c`} cx="42%" cy="36%" r="72%"><stop offset="0" stopColor="#ffe28a"/><stop offset=".6" stopColor="#dca63a"/><stop offset="1" stopColor="#b07c1c"/></radialGradient>
+    <radialGradient id={`${id}-spec`} cx="32%" cy="24%" r="38%"><stop offset="0" stopColor="#fffdf2" stopOpacity=".95"/><stop offset="1" stopColor="#fffdf2" stopOpacity="0"/></radialGradient>
     <path id={`${id}-t`} d="M60 60 m-44 0 a44 44 0 1 1 88 0 a44 44 0 1 1 -88 0"/>
   </defs>
-  <circle cx="60" cy="60" r="58" fill={`url(#${id}-g)`}/>
-  <circle cx="60" cy="60" r="55" fill="none" stroke="#8a6418" strokeWidth="1.5" strokeDasharray="1.2 2.2" opacity=".7"/>
-  <circle cx="60" cy="60" r="50" fill="none" stroke="#fff3c4" strokeWidth=".8" opacity=".6"/>
-  <text fontSize="7.2" fontWeight="800" letterSpacing="2.2" fill="#6b4d12" opacity=".85"><textPath href={`#${id}-t`}>ARTHAMIND · FINANCE · INTELLIGENCE · INNOVATION ·</textPath></text>
-  <circle cx="60" cy="60" r="36" fill={`url(#${id}-c)`} stroke="#a87c24" strokeWidth="1.5"/>
+  <circle cx="60" cy="60" r="59" fill={`url(#${id}-rim)`}/>
+  <circle cx="60" cy="60" r="54.5" fill={`url(#${id}-g)`}/>
+  <circle cx="60" cy="60" r="53" fill="none" stroke="#7a5410" strokeWidth="1.1" strokeDasharray="1 2.1" opacity=".75"/>
+  <text fontSize="7" fontWeight="900" letterSpacing="2.1" fill="#6b4a0c" opacity=".9"><textPath href={`#${id}-t`}>ARTHAMIND AI · ARTHA BENCH PRO · INDIA ·</textPath></text>
+  <circle cx="60" cy="60" r="36" fill={`url(#${id}-c)`} stroke="#8f6310" strokeWidth="1.4"/>
+  <circle cx="60" cy="60" r="34.5" fill="none" stroke="#fff3c4" strokeWidth=".8" opacity=".55"/>
+  <ellipse cx="46" cy="36" rx="30" ry="18" fill={`url(#${id}-spec)`}/>
 </svg>;
 
 // Coin intro, 4.4 s: drop spinning, bounce twice and settle (0–2.2 s); rest while the app loads
 // (2.2–3.4 s); flip once more with a small lift (3.4–4.4 s) and settle steady before Home opens.
 const COIN_TIMES = [0, 0.21, 0.29, 0.36, 0.43, 0.5, 0.773, 0.886, 1];
 const COIN_EASE = ['easeIn', 'easeOut', 'easeIn', 'easeOut', 'easeIn', 'linear', 'easeOut', 'easeIn'] as const;
-const CoinDrop: React.FC<{ animate: boolean }> = ({ animate }) => <div className="hp-coin-stage">
+const CoinDrop: React.FC<{ animate: boolean }> = ({ animate }) => { const coinRef = useRef<HTMLDivElement>(null); return <div className="hp-coin-stage">
   <div className="hp-coin-wrap">
     <motion.div className="hp-coin" initial={animate ? { y: -260, rotateY: 0 } : false}
+      onUpdate={(latest) => {
+        // Every half-turn the light sweeps across the face and the gold flares as it faces the viewer.
+        const r = Number(latest.rotateY ?? 0);
+        const el = coinRef.current; if (!el) return;
+        const phase = ((r % 180) + 180) % 180 / 180;
+        el.style.setProperty('--sweep', `${-70 + phase * 200}%`);
+        el.style.setProperty('--flare', `${Math.abs(Math.cos((r * Math.PI) / 180)) ** 6}`);
+      }}
+      ref={coinRef}
       animate={{ y: [-260, 0, -46, 0, -12, 0, 0, -26, 0], rotateY: [0, 1080, 1260, 1380, 1428, 1440, 1440, 1620, 1800] }}
       transition={{ duration: 4.4, times: COIN_TIMES, ease: [...COIN_EASE] }}>
-      <span className="hp-coin-face"><CoinFace id="coin-f"/><span className="hp-coin-mark"><ArthaMindLogoMark size={46} tone="ink" cut="#e6bd5c"/></span><i className="hp-coin-glint" aria-hidden="true"/></span>
-      <span className="hp-coin-face back"><CoinFace id="coin-b"/><span className="hp-coin-mark"><ArthaMindLogoMark size={46} tone="ink" cut="#e6bd5c"/></span></span>
+      <span className="hp-coin-face"><CoinFace id="coin-f"/><span className="hp-coin-mark"><ArthaMindLogoMark size={46} tone="ink" cut="#e6bd5c"/></span><i className="hp-coin-sweep" aria-hidden="true"/><i className="hp-coin-glint" aria-hidden="true"/></span>
+      <span className="hp-coin-face back"><CoinFace id="coin-b"/><span className="hp-coin-mark"><ArthaMindLogoMark size={46} tone="ink" cut="#e6bd5c"/></span><i className="hp-coin-sweep" aria-hidden="true"/></span>
     </motion.div>
     <motion.span className="hp-coin-shadow" initial={animate ? { scaleX: 0.2, opacity: 0 } : false}
       animate={{ scaleX: [0.2, 1, 0.55, 1, 0.85, 1, 1, 0.62, 1], opacity: [0, 0.55, 0.3, 0.55, 0.45, 0.55, 0.55, 0.32, 0.55] }}
@@ -172,7 +185,7 @@ const CoinDrop: React.FC<{ animate: boolean }> = ({ animate }) => <div className
     <span className="hp-coin-bar"><motion.i initial={animate ? { scaleX: 0 } : false} animate={{ scaleX: 1 }} transition={{ delay: animate ? 2.3 : 0, duration: 1.4, ease: [0.4, 0, 0.2, 1] }}/></span>
     <small>Loading your money dashboard…</small>
   </motion.div>
-</div>;
+</div>; };
 
 /** Demo NIFTY-style candles (deterministic), drawn left to right. */
 const CANDLES = (() => {

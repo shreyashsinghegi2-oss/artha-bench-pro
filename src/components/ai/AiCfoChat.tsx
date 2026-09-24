@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { ArrowRight, ArrowUp, BriefcaseBusiness, CircleAlert, ClipboardList, ListChecks, RotateCcw, ShieldAlert, Sparkles, UserRound } from 'lucide-react';
+import { WebSearchToggle } from './WebSearchToggle';
+import { ArrowRight, ArrowUp, BriefcaseBusiness, CircleAlert, ClipboardList, Globe, ListChecks, RotateCcw, ShieldAlert, Sparkles, UserRound } from 'lucide-react';
 import { askAiCfo, type CfoLanguage, type CfoReply, type CfoTurn } from '../../services/cfoApi';
 import { buildCfoHealthReport, cfoPlanPrompt, formatInr, type CfoHealthReport } from '../../services/cfoAnalysis';
 import { CFO_QUESTIONS, CfoIntake, type CfoProfile } from './CfoIntake';
@@ -86,7 +87,11 @@ const CfoAnswer: React.FC<{ message: Message; latest: boolean; suggestion: CfoSu
         <h4><ShieldAlert size={13}/>Watch-outs</h4>
         <ul>{risks.slice(0, 3).map((risk, index) => <li key={index}>{clean(risk)}</li>)}</ul>
       </section>}
-      <footer className="cfo-brief-foot" style={{ '--d': 3 } as React.CSSProperties}>
+      {!offline && (structured?.sources?.length ?? 0) > 0 && <section className="cfo-block cfo-block-sources" style={{ '--d': 3 } as React.CSSProperties}>
+        <h4><Globe size={13}/>Live sources used</h4>
+        <ul>{structured!.sources.slice(0, 6).map((src, index) => <li key={index}><span>{clean(src.name)}</span>{src.dataDate && <small>{clean(src.dataDate).slice(0, 25)}</small>}</li>)}</ul>
+      </section>}
+      <footer className="cfo-brief-foot" style={{ '--d': 4 } as React.CSSProperties}>
         {offline && <button type="button" className="cfo-link" onClick={onRetry}><RotateCcw size={13}/>Ask again</button>}
         {suggestion && <button type="button" className="cfo-open" onClick={suggestion.onOpen}>{suggestion.label}<ArrowRight size={13}/></button>}
         <span>Educational guidance, not personalised investment, tax or legal advice.</span>
@@ -199,6 +204,7 @@ export const AiCfoChat: React.FC<Props> = ({ suggestFor, externalPrompt, compact
         : <CfoAnswer key={message.id} message={message} latest={index === messages.length - 1} suggestion={message.prompt && suggestFor ? suggestFor(message.prompt) : null} onRetry={() => retry(message)}/>)}
       {busy && <div className="cfo-msg cfo-msg-ai cfo-thinking" role="status"><span className="cfo-dots" aria-hidden="true"><i/><i/><i/></span>{THINKING_STEPS[thinking]}</div>}
     </div>
+    <div className="cfo-web"><WebSearchToggle/></div>
     <form className="cfo-compose" onSubmit={(event) => { event.preventDefault(); void send(draft); }}>
       <textarea ref={input} value={draft} rows={1} disabled={intake} maxLength={4000} placeholder="Ask your AI CFO… e.g. Can I afford a ₹12 lakh car on ₹1.1 lakh salary?" aria-label="Ask your AI CFO"
         onChange={(event) => setDraft(event.target.value)}

@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { WebSearchToggle } from '../ai/WebSearchToggle';
 import { ArrowRight, BrainCircuit, ChevronDown, Send, ShieldCheck, Sparkles } from 'lucide-react';
 import { AppNavigationDestination } from '../../navigationTypes';
 import { useAuth } from '../../auth/AuthContext';
@@ -60,7 +61,8 @@ export const EmbeddedFinanceAdvisor: React.FC<Props> = ({ module, title, descrip
         {questions.map((item) => <button key={item} type="button" disabled={busy} onClick={() => void ask(item)} className="inline-flex items-center gap-1.5 rounded-xl border border-line bg-canvas px-3 py-2 text-left text-[10px] font-bold text-secondary transition hover:border-interactive/35 hover:text-ink disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-interactive">{item}<ArrowRight className="h-3 w-3" /></button>)}
       </div>
 
-      <div className="mt-4 flex gap-2">
+      <div className="mt-4"><WebSearchToggle/></div>
+      <div className="mt-2 flex gap-2">
         <textarea rows={2} value={question} onChange={(event) => setQuestion(event.target.value)} placeholder="Ask about the calculations, pressure points, missing data, or scenarios to review…" className="min-w-0 flex-1 resize-none rounded-xl border border-line-strong bg-canvas px-3 py-2.5 text-xs text-ink outline-none focus:border-interactive focus:ring-2 focus:ring-interactive/15" aria-label={`Ask ${title}`} />
         <button type="button" disabled={busy || !question.trim()} onClick={() => void ask()} className="min-w-12 rounded-xl bg-brand px-3 text-white disabled:opacity-40" aria-label="Send advisor question"><Send className="mx-auto h-4 w-4" /></button>
       </div>

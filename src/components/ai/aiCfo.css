@@ -93,3 +93,5 @@
 .cfo-profile-note{margin:10px 0 0;font-size:11px;color:var(--cfo-mut)}
 @media (max-width:420px){.cfo-profile-grid{grid-template-columns:1fr 1fr}.cfo-plan-cta{width:100%}}
 @media (prefers-reduced-motion:reduce){.cfo-chat *,.cfo-chat *::before,.cfo-chat *::after{animation:none!important;transition:none!important}.cfo-chips button,.cfo-block,.cfo-brief-foot{opacity:1}}
+.cfo-web{display:flex;justify-content:flex-start;padding:8px 10px 0;border-top:1px solid var(--cfo-bd);background:#fff}.cfo-web+.cfo-compose{border-top:0}
+.cfo-block-sources ul{list-style:none;margin:0;padding:0;display:grid;gap:4px}.cfo-block-sources li{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:var(--cfo-mut,#475569)}.cfo-block-sources li small{flex:none;color:#94a3b8;font-size:11px}

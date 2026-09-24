@@ -1,4 +1,5 @@
 import React from 'react';
+import { AssetIcon, assetKind } from './AssetIcon';
 
 /**
  * Company logo files supplied by the site owner (public/logos). Marks belong to their owners and are
@@ -38,9 +39,12 @@ export const companyLogoInText = (text: string): { symbol: string; src: string; 
   return hit && { symbol: hit[0], src: hit[1].src, name: hit[1].name };
 };
 
+/** True when a logo file or a drawn asset symbol (gold, oil, flags, crypto) exists for this symbol. */
+export const hasMarketMark = (symbol: string) => Boolean(companyLogoSrc(symbol) || assetKind(symbol));
+
 export const CompanyLogo: React.FC<{ symbol: string; size?: number; className?: string }> = ({ symbol, size = 28, className = '' }) => {
   const logo = LOGOS[logoKey(symbol)];
-  if (!logo) return null;
+  if (!logo) return assetKind(symbol) ? <AssetIcon symbol={symbol} size={size} className={className}/> : null;
   return <img src={logo.src} alt={`${logo.name} logo`} width={size} height={size} loading="lazy" decoding="async"
     className={`shrink-0 rounded-lg bg-white object-contain ${className}`.trim()} style={{ width: size, height: size }} />;
 };

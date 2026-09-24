@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion, useInView, useMotionValue, useReducedMotion, useSpring, useTransform } from 'motion/react';
-import { companyLogoSrc } from '../market/CompanyLogo';
-import { BarChart3, Bell, Bot, Globe2, Home, ReceiptText, ShieldCheck, Star, Target, Wallet } from 'lucide-react';
+import { CompanyLogo, companyLogoSrc, hasMarketMark } from '../market/CompanyLogo';
+import { BarChart3, Bell, BookOpen, Bot, Check, Home, LayoutGrid, Newspaper, ReceiptText, ShieldCheck, Sparkles, Star, Target, Wallet } from 'lucide-react';
 import { SUPPORTED_LANGUAGES } from '../LanguageSelector';
 import { LANDING_REVIEWS } from '../../data/landingReviews';
 import { buildMoneyCheck, type MoneyCheckInputs } from '../../services/moneyCheck';
@@ -77,7 +77,7 @@ const Portrait: React.FC<{ photoSrc?: string }> = ({ photoSrc }) => photoSrc
  * company's brand colour with its ticker initials.
  */
 type Row = { name: string; ticker: string; badge: string; color: string; value: number; change: number; decimals: number; logo?: string };
-const MARKETS: Record<'India' | 'US' | 'Forex' | 'Intraday', Row[]> = {
+const MARKETS: Record<'India' | 'US' | 'Gold & Oil' | 'Forex', Row[]> = {
   India: [
     { name: 'Reliance', ticker: 'RELIANCE', badge: 'RIL', color: '#0a3d91', value: 1412.5, change: 0.64, decimals: 1 },
     { name: 'TCS', ticker: 'TCS', badge: 'TCS', color: '#1f3b8c', value: 3380, change: -0.31, decimals: 1 },
@@ -88,15 +88,15 @@ const MARKETS: Record<'India' | 'US' | 'Forex' | 'Intraday', Row[]> = {
     { name: 'Microsoft', ticker: 'MSFT', badge: 'MSFT', color: '#0078d4', value: 512.3, change: 0.48, decimals: 2 },
     { name: 'NVIDIA', ticker: 'NVDA', badge: 'NVDA', color: '#76b900', value: 178.9, change: -0.27, decimals: 2 },
   ],
+  'Gold & Oil': [
+    { name: 'Gold', ticker: 'GOLD', badge: 'Au', color: '#b7791f', value: 2386.4, change: 0.54, decimals: 1 },
+    { name: 'Crude oil (WTI)', ticker: 'CL=F', badge: 'OIL', color: '#0b0f14', value: 78.62, change: -0.83, decimals: 2 },
+    { name: 'ONGC', ticker: 'ONGC', badge: 'ONGC', color: '#7c2d12', value: 268.4, change: -0.41, decimals: 1 },
+  ],
   Forex: [
     { name: 'US dollar', ticker: 'USD/INR', badge: '$', color: '#15803d', value: 86.42, change: 0.05, decimals: 2 },
     { name: 'Euro', ticker: 'EUR/INR', badge: '€', color: '#1d4ed8', value: 95.1, change: -0.12, decimals: 2 },
     { name: 'Pound', ticker: 'GBP/INR', badge: '£', color: '#7c2d12', value: 112.3, change: 0.09, decimals: 2 },
-  ],
-  Intraday: [
-    { name: 'NIFTY 50', ticker: 'NSE index', badge: 'N50', color: '#1e3a8a', value: 24850, change: 0.42, decimals: 1 },
-    { name: 'Infosys', ticker: 'INFY', badge: 'INFY', color: '#007cc3', value: 1542.7, change: 0.58, decimals: 1 },
-    { name: 'ICICI Bank', ticker: 'ICICIBANK', badge: 'IB', color: '#b02a30', value: 1421.2, change: 0.14, decimals: 1 },
   ],
 };
 const MARKET_TABS = Object.keys(MARKETS) as Array<keyof typeof MARKETS>;
@@ -122,12 +122,16 @@ const Price: React.FC<{ row: Row; run: boolean }> = ({ row, run }) => {
   return <b>{v.toLocaleString('en-IN', { minimumFractionDigits: row.decimals, maximumFractionDigits: row.decimals })}</b>;
 };
 
-const SCREENS = ['splash', 'home', 'markets', 'cfo', 'tax', 'language', 'people'] as const;
+// The tour walks through the app the way a user would: home, markets, a stock, the AI CFO and tutor,
+// news, tax, language and what people say.
+const SCREENS = ['splash', 'home', 'markets', 'stock', 'cfo', 'tutor', 'news', 'tax', 'language', 'people'] as const;
 type Screen = typeof SCREENS[number];
-const DURATION: Record<Screen, number> = { splash: 5400, home: 4600, markets: 5200, cfo: 3800, tax: 3400, language: 3800, people: 3400 };
-const TABS: Array<{ id: Screen; label: string; icon: React.ComponentType<{ size?: number }> }> = [
-  { id: 'home', label: 'Home', icon: Home }, { id: 'markets', label: 'Markets', icon: BarChart3 }, { id: 'cfo', label: 'AI CFO', icon: Bot },
-  { id: 'tax', label: 'Tax', icon: ReceiptText }, { id: 'language', label: 'Language', icon: Globe2 },
+const DURATION: Record<Screen, number> = { splash: 5400, home: 4600, markets: 5200, stock: 4800, cfo: 3800, tutor: 5000, news: 4800, tax: 3400, language: 4200, people: 3400 };
+type TabId = 'home' | 'markets' | 'ai' | 'news' | 'more';
+const TAB_OF: Record<Screen, TabId> = { splash: 'home', home: 'home', markets: 'markets', stock: 'markets', cfo: 'ai', tutor: 'ai', news: 'news', tax: 'more', language: 'more', people: 'more' };
+const TABS: Array<{ id: TabId; label: string; icon: React.ComponentType<{ size?: number }> }> = [
+  { id: 'home', label: 'Home', icon: Home }, { id: 'markets', label: 'Markets', icon: BarChart3 }, { id: 'ai', label: 'AI', icon: Bot },
+  { id: 'news', label: 'News', icon: Newspaper }, { id: 'more', label: 'More', icon: LayoutGrid },
 ];
 const QUICK: Array<[string, React.ComponentType<{ size?: number }>]> = [['Tax', ReceiptText], ['SIP', Target], ['Insure', ShieldCheck], ['Wallet', Wallet]];
 
@@ -206,7 +210,7 @@ const MarketPulse: React.FC<{ rows: Row[]; tab: string }> = ({ rows, tab }) => {
   const best = sorted[0], worst = sorted[sorted.length - 1];
   const pct = (v: number) => `${v >= 0 ? '+' : ''}${v.toFixed(2)}%`;
   return <div className="hp-card hp-pulse">
-    <div className="hp-pulse-head"><small>{tab} pulse · demo</small><b><span className="up">{up} up</span> · <span className="down">{rows.length - up} down</span></b></div>
+    <div className="hp-pulse-head"><small>{tab} pulse</small><b><span className="up">{up} up</span> · <span className="down">{rows.length - up} down</span></b></div>
     <span className="hp-breadth" aria-hidden="true"><i style={{ width: `${(up / rows.length) * 100}%` }}/></span>
     <div className="hp-movers">
       <span><small>Top gainer</small><b>{best.name}</b><em className={best.change >= 0 ? 'up' : 'down'}>{pct(best.change)}</em></span>
@@ -214,6 +218,40 @@ const MarketPulse: React.FC<{ rows: Row[]; tab: string }> = ({ rows, tab }) => {
     </div>
   </div>;
 };
+
+/** Demo one-month price path for the stock screen (deterministic). */
+const STOCK_SERIES = Array.from({ length: 36 }, (_, i) => 1352 + i * 1.7 + Math.sin(i * 0.62) * 9 + Math.cos(i * 0.27) * 6);
+const StockChart: React.FC<{ animate: boolean }> = ({ animate }) => {
+  const W = 240, H = 92, lo = Math.min(...STOCK_SERIES) - 4, hi = Math.max(...STOCK_SERIES) + 4;
+  const pts = STOCK_SERIES.map((v, i) => [(i / (STOCK_SERIES.length - 1)) * W, H - ((v - lo) / (hi - lo)) * H] as const);
+  const line = pts.map(([x, y], i) => `${i ? 'L' : 'M'}${x.toFixed(1)} ${y.toFixed(1)}`).join(' ');
+  const [lx, ly] = pts[pts.length - 1];
+  return <svg className="hp-stock-chart" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" aria-hidden="true">
+    <defs><linearGradient id="hp-stock-fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#10b981" stopOpacity=".28"/><stop offset="1" stopColor="#10b981" stopOpacity="0"/></linearGradient></defs>
+    {[0.33, 0.66].map((f) => <line key={f} x1="0" x2={W} y1={H * f} y2={H * f} stroke="#eef1f6" strokeDasharray="3 4"/>)}
+    <motion.path d={`${line} L${W} ${H} L0 ${H} Z`} fill="url(#hp-stock-fill)" initial={animate ? { opacity: 0 } : false} animate={{ opacity: 1 }} transition={{ delay: animate ? 0.7 : 0, duration: 0.6 }}/>
+    <motion.path d={line} fill="none" stroke="#059669" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" initial={animate ? { pathLength: 0 } : false} animate={{ pathLength: 1 }} transition={{ duration: 1.3, ease: 'easeOut' }}/>
+    <circle className="hp-candle-ping" cx={lx} cy={ly} r="3.2" fill="#10b981"/>
+  </svg>;
+};
+
+/** Illustrated news thumbnails (drawn, not photos). */
+const NewsThumb: React.FC<{ theme: 'bank' | 'chip' | 'oil' }> = ({ theme }) => {
+  const bg = { bank: ['#1e3a8a', '#0f766e'], chip: ['#312e81', '#7c3aed'], oil: ['#78350f', '#0b0f14'] }[theme];
+  return <svg className="hp-news-img" viewBox="0 0 64 64" aria-hidden="true">
+    <defs><linearGradient id={`hp-n-${theme}`} x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor={bg[0]}/><stop offset="1" stopColor={bg[1]}/></linearGradient></defs>
+    <rect width="64" height="64" rx="12" fill={`url(#hp-n-${theme})`}/>
+    {theme === 'bank' && <g fill="#fff"><path d="M14 26 L32 15 L50 26 Z" opacity=".95"/>{[18, 26, 34, 42].map((x) => <rect key={x} x={x} y="29" width="4" height="16" rx="1" opacity=".85"/>)}<rect x="13" y="47" width="38" height="4" rx="1"/><path d="M40 20 l7 -6 m0 0 h-5 m5 0 v5" stroke="#34c46f" strokeWidth="2.4" fill="none" strokeLinecap="round"/></g>}
+    {theme === 'chip' && <g><rect x="20" y="20" width="24" height="24" rx="4" fill="#fff" opacity=".95"/><rect x="26" y="26" width="12" height="12" rx="2" fill="#7c3aed"/>{[24, 30, 36].flatMap((v) => [<rect key={`t${v}`} x={v + 1} y="13" width="2" height="6" fill="#fff"/>, <rect key={`b${v}`} x={v + 1} y="45" width="2" height="6" fill="#fff"/>, <rect key={`l${v}`} x="13" y={v + 1} width="6" height="2" fill="#fff"/>, <rect key={`r${v}`} x="45" y={v + 1} width="6" height="2" fill="#fff"/>])}</g>}
+    {theme === 'oil' && <g><path d="M22 50 L28 20 H36 L42 50 Z" fill="none" stroke="#fde68a" strokeWidth="2.2"/><path d="M25 36 H39 M24 43 H40 M27 28 H37" stroke="#fde68a" strokeWidth="1.6"/><path d="M46 18 c0 0 -6 7 -6 11 a6 6 0 0 0 12 0 c0 -4 -6 -11 -6 -11z" fill="#f59e0b"/></g>}
+  </svg>;
+};
+
+const NEWS: Array<{ theme: 'bank' | 'chip' | 'oil'; source: string; time: string; title: string; tag: string; tone: 'up' | 'down' | 'flat'; logo?: string }> = [
+  { theme: 'bank', source: 'Markets desk', time: '12 min', title: 'Private banks lead as NIFTY 50 edges higher', tag: 'Banks ▲', tone: 'up', logo: 'HDFCBANK' },
+  { theme: 'chip', source: 'Tech wire', time: '38 min', title: 'Chip stocks slip after new export rules', tag: 'Tech ▼', tone: 'down', logo: 'NVDA' },
+  { theme: 'oil', source: 'Energy brief', time: '1 hr', title: 'Crude eases; oil marketers may see margin relief', tag: 'Energy ◆', tone: 'flat', logo: 'CL=F' },
+];
 
 /** App bar shown at the top of every screen after the splash. */
 const AppBar: React.FC<{ dark: boolean; photoSrc?: string }> = ({ dark, photoSrc }) => <div className={`hp-appbar ${dark ? 'dark' : ''}`}>
@@ -277,9 +315,9 @@ export const HeroPhone: React.FC<{ photoSrc?: string }> = ({ photoSrc }) => {
     return () => timers.forEach(window.clearTimeout);
   }, [running, screen]);
   useEffect(() => {
-    if (screen !== 'cfo') return;
+    if (screen !== 'cfo' && screen !== 'tutor') return;
     setChatStep(0);
-    const timers = [400, 1300, 2200].map((ms, k) => window.setTimeout(() => setChatStep(k + 1), ms));
+    const timers = (screen === 'tutor' ? [300, 1100, 1900, 3300] : [400, 1300, 2200]).map((ms, k) => window.setTimeout(() => setChatStep(k + 1), ms));
     return () => timers.forEach(window.clearTimeout);
   }, [screen]);
   useEffect(() => {
@@ -322,11 +360,25 @@ export const HeroPhone: React.FC<{ photoSrc?: string }> = ({ photoSrc }) => {
                 <div className="hp-head"><b>Markets</b><small>Demo feed · not live prices</small></div>
                 <div className="hp-seg" aria-hidden="true">{MARKET_TABS.map((t, i) => <span key={t} className={i === marketTab ? 'on' : ''}>{t}</span>)}</div>
                 <ul className="hp-rows">{feed[MARKET_TABS[marketTab]].map((row) => <li key={row.ticker}>
-                  <span className="hp-logo" style={{ background: row.color }}>{(row.logo ?? companyLogoSrc(row.ticker)) ? <img src={row.logo ?? companyLogoSrc(row.ticker)} alt=""/> : row.badge}</span>
+                  <span className={`hp-logo ${hasMarketMark(row.ticker) ? 'has-mark' : ''}`} style={{ background: row.color }}>{hasMarketMark(row.ticker) ? <CompanyLogo symbol={row.ticker} size={34}/> : row.badge}</span>
                   <span className="hp-rname"><b>{row.name}</b><small>{row.ticker}</small></span>
                   <span className="hp-rval"><Price row={row} run={animate}/><em className={row.change >= 0 ? 'up' : 'down'}>{row.change >= 0 ? '+' : ''}{row.change.toFixed(2)}%</em></span>
                 </li>)}</ul>
                 <MarketPulse rows={feed[MARKET_TABS[marketTab]]} tab={MARKET_TABS[marketTab]}/>
+              </>}
+
+              {screen === 'stock' && <>
+                <div className="hp-stock-head">
+                  <CompanyLogo symbol="RELIANCE" size={36}/>
+                  <span><b>Reliance Industries</b><small>RELIANCE · NSE · demo</small></span>
+                </div>
+                <div className="hp-stock-price"><b>₹<Count to={1412.5} run={animate} format={(v) => v.toLocaleString('en-IN', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}/></b><em className="up">+₹8.95 (+0.64%)</em></div>
+                <div className="hp-range" aria-hidden="true">{['1D', '1W', '1M', '1Y', '5Y'].map((r) => <span key={r} className={r === '1M' ? 'on' : ''}>{r}</span>)}</div>
+                <div className="hp-card hp-stock-card"><StockChart animate={animate}/></div>
+                <div className="hp-stats">{[['Open', '₹1,404'], ['Day high', '₹1,418'], ['Day low', '₹1,398'], ['52W range', '₹1,115–1,551']].map(([k, v]) => <span key={k}><small>{k}</small><b>{v}</b></span>)}</div>
+                <motion.div className="hp-card hp-insight" initial={animate ? { opacity: 0, y: 10 } : false} animate={{ opacity: 1, y: 0 }} transition={{ delay: animate ? 1.4 : 0 }}>
+                  <Sparkles size={13}/><p><b>AI read:</b> up on retail and Jio growth; weaker refining margins are the risk to watch.</p>
+                </motion.div>
               </>}
 
               {screen === 'cfo' && <>
@@ -342,6 +394,34 @@ export const HeroPhone: React.FC<{ photoSrc?: string }> = ({ photoSrc }) => {
                 <div className="hp-input" aria-hidden="true"><span>Ask in any language…</span><i><Bot size={13}/></i></div>
               </>}
 
+              {screen === 'tutor' && <>
+                <div className="hp-head"><b>AI Tutor</b><small>Learn with worked examples</small></div>
+                <div className="hp-card hp-lesson"><span className="hp-lesson-ico"><BookOpen size={14}/></span><div><small>Lesson 3 of 8 · Investing basics</small><b>Compounding and CAGR</b><span className="hp-lesson-bar"><motion.i initial={animate ? { width: 0 } : false} animate={{ width: '38%' }} transition={{ duration: 0.9 }}/></span></div></div>
+                <div className="hp-chat">
+                  {chatStep >= 1 && <motion.p className="hp-bubble me" initial={animate ? { opacity: 0, y: 8 } : false} animate={{ opacity: 1, y: 0 }}>What is CAGR?</motion.p>}
+                  {chatStep === 2 && <p className="hp-bubble ai typing" aria-hidden="true"><i/><i/><i/></p>}
+                  {chatStep >= 3 && <motion.div className="hp-bubble ai" initial={animate ? { opacity: 0, y: 8 } : false} animate={{ opacity: 1, y: 0 }}>
+                    <p>The yearly rate that turns a start value into an end value.</p>
+                    <code className="hp-formula">CAGR = (End ÷ Start)<sup>1/yrs</sup> − 1</code>
+                    <p className="hp-eg">₹1 L → ₹2 L in 6 years = <b>12.2% a year</b></p>
+                  </motion.div>}
+                </div>
+                {chatStep >= 4 && <motion.div className="hp-quiz" initial={animate ? { opacity: 0, y: 8 } : false} animate={{ opacity: 1, y: 0 }}>
+                  <small>Quick check · doubles in 6 years ≈ ?</small>
+                  <div><span>8%</span><span className="right"><Check size={11}/> 12%</span><span>18%</span></div>
+                </motion.div>}
+              </>}
+
+              {screen === 'news' && <>
+                <div className="hp-head"><b>News</b><small>Sample headlines · illustrations</small></div>
+                <div className="hp-chips" aria-hidden="true">{['For you', 'Markets', 'Economy', 'Companies'].map((c, i) => <span key={c} className={i === 0 ? 'on' : ''}>{c}</span>)}</div>
+                <ul className="hp-newslist">{NEWS.map((n, i) => <motion.li key={n.title} initial={animate ? { opacity: 0, y: 14 } : false} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 + i * 0.18 }}>
+                  <NewsThumb theme={n.theme}/>
+                  <div><small>{n.logo && <CompanyLogo symbol={n.logo} size={13}/>}{n.source} · {n.time}</small><b>{n.title}</b><em className={n.tone}>{n.tag}</em></div>
+                </motion.li>)}</ul>
+                <motion.div className="hp-card hp-insight" initial={animate ? { opacity: 0 } : false} animate={{ opacity: 1 }} transition={{ delay: animate ? 1.2 : 0 }}><Sparkles size={13}/><p><b>Research brief</b> ready: what happened, market impact and what to verify.</p></motion.div>
+              </>}
+
               {screen === 'tax' && <>
                 <div className="hp-head"><b>Tax · FY 2025-26</b><small>Example: ₹12 L salary, 80C + 80D used</small></div>
                 <div className="hp-card hp-bars">
@@ -352,16 +432,19 @@ export const HeroPhone: React.FC<{ photoSrc?: string }> = ({ photoSrc }) => {
               </>}
 
               {screen === 'language' && <>
-                <div className="hp-head"><b>Your language</b><small>The website, translated</small></div>
-                <div className="hp-lang">
-                  <span className="hp-lang-count"><b>{String(lang.index + 1).padStart(2, '0')}</b><small>/ {lang.total} languages</small></span>
-                  <AnimatePresence mode="popLayout" initial={false}>
-                    <motion.div key={lang.code} className="hp-lang-hello" initial={animate ? { opacity: 0, y: 12 } : false} animate={{ opacity: 1, y: 0 }} exit={animate ? { opacity: 0, y: -12 } : undefined} transition={{ duration: 0.2 }}>
-                      <b>{lang.greeting}</b><small>{lang.name}</small>
-                    </motion.div>
-                  </AnimatePresence>
+                <div className="hp-head"><b>Language</b><small>The whole app, translated</small></div>
+                <div className="hp-card hp-lang2">
+                  <div className="hp-lang2-top"><span className="hp-lang2-count"><b>{String(lang.index + 1).padStart(2, '0')}</b> / {lang.total}</span><small>languages</small></div>
+                  <div className="hp-lang2-hello" aria-hidden="true">
+                    <AnimatePresence mode="wait" initial={false}>
+                      <motion.div key={lang.code} initial={animate ? { opacity: 0, y: 10 } : false} animate={{ opacity: 1, y: 0 }} exit={animate ? { opacity: 0, y: -10 } : undefined} transition={{ duration: 0.16 }}>
+                        <b>{lang.greeting}</b><small>{lang.name}</small>
+                      </motion.div>
+                    </AnimatePresence>
+                  </div>
                   <span className="hp-lang-bar"><i style={{ transform: `scaleX(${(lang.index + 1) / lang.total})` }}/></span>
                 </div>
+                <div className="hp-lang-grid" aria-hidden="true">{SUPPORTED_LANGUAGES.slice(0, 12).map(([code, name], i) => <span key={code} className={i === lang.index ? 'on' : i < lang.index ? 'done' : ''}>{name}</span>)}</div>
                 <p className="hp-note">AI CFO replies in English, हिन्दी and Hinglish.</p>
               </>}
 
@@ -375,7 +458,7 @@ export const HeroPhone: React.FC<{ photoSrc?: string }> = ({ photoSrc }) => {
             </motion.div>
           </AnimatePresence>
 
-          {screen !== 'splash' && <nav className="hp-tabbar" aria-hidden="true">{TABS.map(({ id, label, icon: Icon }) => <span key={id} className={id === screen ? 'on' : ''}><Icon size={15}/>{label}</span>)}</nav>}
+          {screen !== 'splash' && <nav className="hp-tabbar" aria-hidden="true">{TABS.map(({ id, label, icon: Icon }) => <span key={id} className={id === TAB_OF[screen] ? 'on' : ''}><Icon size={15}/>{label}</span>)}</nav>}
           <span className="hp-homebar" aria-hidden="true"/>
           <span className="hp-glare" aria-hidden="true"/>
         </div>

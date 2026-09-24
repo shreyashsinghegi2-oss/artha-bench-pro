@@ -314,3 +314,17 @@ html:has(.connected-landing){scroll-behavior:smooth;scroll-padding-top:80px}
 .connected-landing #modules .cl-module:hover::before{transform:scaleX(1)}
 .connected-landing #modules .cl-module .cl-module-icon{background:linear-gradient(135deg,var(--acc),var(--acc2))!important;color:#fff!important;box-shadow:0 8px 18px -8px var(--acc)}
 .connected-landing #modules .cl-module:hover{border-color:color-mix(in srgb,var(--acc) 45%,white)}
+
+/* Zoom-in reveal: sections rise and scale up into place as they enter the viewport. */
+.cl-reveal-section{transform:translateY(36px) scale(.955);transform-origin:50% 0;transition:opacity .8s ease,transform .95s cubic-bezier(.16,.84,.24,1)}
+.cl-reveal-section.in{transform:none}
+/* Where the browser supports scroll-driven animation, headings zoom with the scroll position itself. */
+@supports (animation-timeline: view()){
+  @media (prefers-reduced-motion:no-preference){
+    .connected-landing .cl-section h2{animation:cl-h2-zoom linear backwards;animation-timeline:view();animation-range:entry 5% cover 32%}
+    .connected-landing .mk-card,.connected-landing .cl-card{animation:cl-card-zoom linear backwards;animation-timeline:view();animation-range:entry 0% cover 25%}
+  }
+}
+@keyframes cl-h2-zoom{from{transform:scale(.9);opacity:.15}to{transform:none;opacity:1}}
+@keyframes cl-card-zoom{from{transform:translateY(24px) scale(.94);opacity:.2}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){.cl-reveal-section{transform:none;transition:none}}

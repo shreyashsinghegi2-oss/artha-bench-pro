@@ -3,7 +3,7 @@ import { motion, useInView, useReducedMotion } from 'motion/react';
 import { BadgeCheck, Newspaper, ReceiptIndianRupee } from 'lucide-react';
 import './marketIntelligenceFlow.css';
 import { ArthaMindLogoMark } from '../branding/ArthaMindBrand';
-import { companyLogoSrc } from '../market/CompanyLogo';
+import { CompanyLogo } from '../market/CompanyLogo';
 
 /**
  * "Market Intelligence Flow": public signals travel into the ArthaMind reasoning core,
@@ -59,10 +59,10 @@ const Spark: React.FC<{ points: number[]; tone: 'up' | 'down'; play: boolean }> 
 
 const SignalCard: React.FC<{ id: string; play: boolean }> = ({ id, play }) => {
   switch (id) {
-    case 'nifty': return <><small><img className="mif-sig-logo" src={companyLogoSrc('NIFTY 50')} alt="" width={14} height={14}/>NIFTY 50 · Index</small><div className="mif-row"><b>23,329</b><span className="up">▲ 0.42%</span></div><Spark points={[3, 4, 3.6, 5, 4.6, 6, 5.8, 7]} tone="up" play={play}/></>;
-    case 'btc': return <><small>BTC/USDT · Crypto</small><div className="mif-row"><b>86,292</b><span className="up">▲ 1.14%</span></div><Spark points={[5, 4, 6, 5.5, 7, 6.2, 8, 7.6]} tone="up" play={play}/></>;
-    case 'gold': return <><small>Gold · COMEX</small><div className="mif-row"><b>$4,399.9</b><span className="up">▲ 0.54%</span></div><Spark points={[4, 4.5, 4.2, 5, 5.4, 5.1, 5.8, 6]} tone="up" play={play}/></>;
-    case 'fx': return <><small>USD/INR · FX</small><div className="mif-row"><b>₹95.58</b><span className="down">▼ 0.23%</span></div><Spark points={[7, 6.6, 6.8, 6, 5.6, 5.9, 5.2, 5]} tone="down" play={play}/></>;
+    case 'nifty': return <><small><CompanyLogo symbol="NIFTY 50" size={14} className="mif-sig-logo"/>NIFTY 50 · Index</small><div className="mif-row"><b>23,329</b><span className="up">▲ 0.42%</span></div><Spark points={[3, 4, 3.6, 5, 4.6, 6, 5.8, 7]} tone="up" play={play}/></>;
+    case 'btc': return <><small><CompanyLogo symbol="BTC/USDT" size={14} className="mif-sig-logo"/>BTC/USDT · Crypto</small><div className="mif-row"><b>86,292</b><span className="up">▲ 1.14%</span></div><Spark points={[5, 4, 6, 5.5, 7, 6.2, 8, 7.6]} tone="up" play={play}/></>;
+    case 'gold': return <><small><CompanyLogo symbol="GOLD" size={14} className="mif-sig-logo"/>Gold · COMEX</small><div className="mif-row"><b>$4,399.9</b><span className="up">▲ 0.54%</span></div><Spark points={[4, 4.5, 4.2, 5, 5.4, 5.1, 5.8, 6]} tone="up" play={play}/></>;
+    case 'fx': return <><small><CompanyLogo symbol="USD/INR" size={14} className="mif-sig-logo"/>USD/INR · FX</small><div className="mif-row"><b>₹95.58</b><span className="down">▼ 0.23%</span></div><Spark points={[7, 6.6, 6.8, 6, 5.6, 5.9, 5.2, 5]} tone="down" play={play}/></>;
     case 'txn': return <><small><ReceiptIndianRupee size={11} aria-hidden="true"/> Transactions</small><div className="mif-txn"><span>Salary credit</span><b className="up">+₹85,000</b></div><div className="mif-txn"><span>Home-loan EMI</span><b className="down">−₹28,000</b></div></>;
     default: return <><small><Newspaper size={11} aria-hidden="true"/> Market news</small><p className="mif-news">RBI holds repo rate; bond yields ease</p><span className="mif-src">Business wire · 12 min ago</span></>;
   }

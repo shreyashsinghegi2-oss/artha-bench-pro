@@ -1,4 +1,5 @@
 import React, { FormEvent, useEffect, useRef, useState } from 'react';
+import { WebSearchToggle } from '../ai/WebSearchToggle';
 import {
   ArrowUp, Bot, ChevronDown, Database, ExternalLink, LoaderCircle, LockKeyhole,
   ShieldCheck, Sparkles, Trash2, User, Wrench,
@@ -163,6 +164,7 @@ export const DashboardAssistant: React.FC<DashboardAssistantProps> = ({ snapshot
       <div className="border-t border-line bg-surface p-4 sm:p-5">
         {error && <div className="mb-3 rounded-xl border border-danger/25 bg-danger/10 px-3 py-2 text-[11px] leading-relaxed text-danger">{error}</div>}
         <div className="scrollbar-thin mb-3 flex gap-2 overflow-x-auto pb-1">{suggestions.slice(0, 4).map((suggestion) => <button key={suggestion} type="button" disabled={!ready || loading} onClick={() => void submitQuestion(suggestion)} className="shrink-0 rounded-full border border-line bg-subtle px-3 py-1.5 text-[10px] font-semibold text-secondary transition hover:border-interactive/40 hover:bg-interactive-soft hover:text-interactive disabled:opacity-45">{suggestion}</button>)}</div>
+        <div className="mb-2"><WebSearchToggle/></div>
         <form onSubmit={handleSubmit} className="relative">
           <label htmlFor="dashboard-assistant-question" className="sr-only">Ask ArthaMind AI about this dashboard</label>
           <textarea id="dashboard-assistant-question" value={question} onChange={(event) => setQuestion(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); void submitQuestion(question); } }} rows={3} maxLength={1200} disabled={!ready || loading} placeholder="Ask about public data or your explicitly enabled personal context…" className="w-full resize-none rounded-2xl border border-line-strong bg-surface px-4 py-3 pr-12 text-xs leading-5 text-ink outline-none placeholder:text-secondary focus:border-interactive focus:ring-2 focus:ring-interactive disabled:opacity-60" />

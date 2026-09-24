@@ -21,7 +21,7 @@ export const AuthGateView: React.FC<Props> = ({ returnTo, onCancel, onEmail }) =
 
         <div className="mt-6 grid overflow-hidden rounded-[30px] border border-line bg-surface shadow-xl lg:grid-cols-[0.9fr_1.1fr]">
           <section className="border-b border-line bg-[#07111F] p-7 text-white lg:border-b-0 lg:border-r lg:p-10">
-            <ArthaBenchLogo compact />
+            <ArthaBenchLogo compact onDark />
             <div className="mt-10 inline-flex items-center gap-2 rounded-full border border-teal-300/20 bg-teal-300/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-teal-200">
               <ShieldCheck className="h-3.5 w-3.5" /> Private workspace
             </div>

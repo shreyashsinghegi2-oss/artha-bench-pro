@@ -1,5 +1,6 @@
 import type { Request, Response } from 'express';
 import { withDateContext } from './dateContext';
+import { extractQuestion, groundSystemPrompt } from './liveGrounding';
 
 export const DEFAULT_NVIDIA_MODEL = 'nvidia/nemotron-3-ultra-550b-a55b';
 export const NVIDIA_BASE_URL = 'https://integrate.api.nvidia.com/v1';
@@ -37,7 +38,7 @@ export async function callNvidiaNemotron(userPrompt: string, history?: Array<{ r
         headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
           model,
-          messages: buildMessages(systemPrompt || 'You are ArthaBench NVIDIA Nemotron financial-learning assistant. Explain clearly, reason carefully, and never provide personalized buy/sell trading instructions. Never output JSON, code, API payloads or developer instructions.', userPrompt, history),
+          messages: buildMessages(await groundSystemPrompt(systemPrompt || 'You are ArthaBench NVIDIA Nemotron financial-learning assistant. Explain clearly, reason carefully, and never provide personalized buy/sell trading instructions. Never output JSON, code, API payloads or developer instructions.', extractQuestion(userPrompt)), userPrompt, history),
           temperature: 0.2,
           top_p: 0.7,
           max_tokens: 2_000,

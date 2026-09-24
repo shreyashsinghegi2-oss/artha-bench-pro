@@ -414,3 +414,16 @@
   -webkit-text-stroke:1.2px rgba(15,23,42,.055);text-stroke:1.2px rgba(15,23,42,.055);user-select:none}
 .hx-wordmark span{-webkit-text-stroke-color:rgba(31,143,78,.12)}
 @media (max-width:640px){.hx-wordmark{font-size:78px;bottom:-.1em}}
+/* Coin intro on black: a warm gold spotlight, rotation-linked light sweep and a flare as the face turns to camera */
+.hp-page.hp-splash{background:radial-gradient(70% 45% at 50% 40%,rgba(230,189,92,.16) 0%,rgba(230,189,92,0) 60%),radial-gradient(120% 90% at 50% 30%,#141416 0%,#060607 55%,#000 100%)}
+.hp-screen.is-dark:has(.hp-splash){background:#000}
+.hp-coin{--sweep:-70%;--flare:0}
+.hp-coin-face{box-shadow:0 0 0 1.5px #6b4a0c inset,0 0 0 1px rgba(255,236,170,.35),0 22px 36px -18px rgba(0,0,0,.9),0 0 calc(10px + var(--flare) * 26px) rgba(245,200,90,calc(.12 + var(--flare) * .45))}
+.hp-coin-sweep{position:absolute;inset:0;border-radius:50%;overflow:hidden;pointer-events:none;mix-blend-mode:screen}
+.hp-coin-sweep::before{content:"";position:absolute;top:-25%;bottom:-25%;left:var(--sweep);width:38%;transform:skewX(-20deg);background:linear-gradient(100deg,transparent 0%,rgba(255,248,214,.0) 20%,rgba(255,248,214,.85) 50%,rgba(255,248,214,0) 80%,transparent 100%);opacity:calc(.35 + var(--flare) * .65)}
+.hp-coin-title b{font-size:23px;background:linear-gradient(90deg,#fff 0%,#fff 40%,#f6d77a 50%,#fff 60%,#fff 100%);background-size:250% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:hp-title-shine 2.4s ease-in-out .3s 2}
+.hp-coin-title b em{-webkit-text-fill-color:#34c46f}
+.hp-coin-title small,.hp-coin-load small{color:#a3a3a3}
+@keyframes hp-title-shine{from{background-position:100% 0}to{background-position:0 0}}
+.hp-coin-shadow{background:radial-gradient(closest-side,rgba(230,189,92,.28),rgba(0,0,0,.0))}
+@media (prefers-reduced-motion:reduce){.hp-coin-title b{animation:none;color:#fff}}

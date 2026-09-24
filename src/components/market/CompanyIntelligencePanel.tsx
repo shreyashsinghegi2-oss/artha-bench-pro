@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { WebSearchToggle } from '../ai/WebSearchToggle';
 import {
   BarChart3,
   Bot,
@@ -517,6 +518,7 @@ export const CompanyIntelligencePanel: React.FC<CompanyIntelligencePanelProps> =
               <div className="mt-3 p-2.5 rounded-lg bg-danger-soft/40 border border-danger text-[10px] text-danger">{assistantError}</div>
             )}
 
+            <div className="mt-4"><WebSearchToggle/></div>
             <form onSubmit={handleAssistantSubmit} className="flex gap-2 mt-4 pt-4 border-t border-line">
               <input
                 value={assistantQuestion}

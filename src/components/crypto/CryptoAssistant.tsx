@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { WebSearchToggle } from '../ai/WebSearchToggle';
 import { Bot, Clipboard, LoaderCircle, Sparkles, Trash2 } from 'lucide-react';
 import { askCryptoAssistant } from '../../services/cryptoApi';
 import type { CryptoCandle, CryptoFeedStatus, CryptoInterval, CryptoSymbol } from './cryptoTypes';
@@ -169,7 +170,8 @@ export const CryptoAssistant: React.FC<CryptoAssistantProps> = ({ candle, symbol
             : answer ? <><Bot className="mb-2 h-4 w-4 text-interactive" /><StructuredCryptoAnswer text={answer} direction={direction} /></>
               : <p className="text-xs leading-5 text-secondary">{candle ? 'Choose an action for a structured explanation, purchase/avoid checklist, comparison framework, or conditional scenarios.' : 'Candle context is unavailable. Select a market and wait for verified candle data.'}</p>}
       </div>
-      <div className="mt-3 flex flex-wrap gap-2">
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <WebSearchToggle compact/>
         {ASSISTANT_ACTIONS.map((action) => <button key={action} type="button" disabled={!context || Boolean(pendingAction)} onClick={() => void submitAction(action)} className="rounded-full border border-line bg-subtle px-3 py-1.5 text-xs font-bold text-secondary hover:border-interactive/40 hover:text-interactive disabled:opacity-40">{pendingAction === action ? 'Loading…' : action}</button>)}
       </div>
       {answer ? <div className="mt-3 flex gap-3"><button type="button" onClick={() => void navigator.clipboard.writeText(answer)} className="inline-flex items-center gap-1 text-xs font-bold text-interactive"><Clipboard className="h-3.5 w-3.5" /> Copy response</button><button type="button" onClick={() => setAnswer('')} className="inline-flex items-center gap-1 text-xs font-bold text-secondary"><Trash2 className="h-3.5 w-3.5" /> Clear response</button></div> : null}

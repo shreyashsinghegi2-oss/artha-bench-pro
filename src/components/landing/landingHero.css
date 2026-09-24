@@ -405,3 +405,12 @@
 }
 @media (max-width:520px){.hp-quiz{display:none}}
 @media (max-width:520px){.hx-float.hx-float-a{left:50%;margin-left:-62px;top:18px}}
+/* Pure white hero with a quiet brand watermark: a faint mark on the left and an outlined wordmark
+   along the bottom edge. Both sit behind the content and never take pointer events. */
+.hx{--hx-bg:#ffffff;--hx-line:#eceef1}
+.hx-watermark{opacity:.028;filter:grayscale(1)}
+.hx-wordmark{position:absolute;left:50%;bottom:-0.18em;transform:translateX(-50%);z-index:0;pointer-events:none;white-space:nowrap;
+  font-size:clamp(90px,15vw,230px);font-weight:900;letter-spacing:-.04em;line-height:1;color:transparent;
+  -webkit-text-stroke:1.2px rgba(15,23,42,.055);text-stroke:1.2px rgba(15,23,42,.055);user-select:none}
+.hx-wordmark span{-webkit-text-stroke-color:rgba(31,143,78,.12)}
+@media (max-width:640px){.hx-wordmark{font-size:78px;bottom:-.1em}}

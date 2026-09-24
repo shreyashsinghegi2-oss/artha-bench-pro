@@ -57,7 +57,8 @@ export const LandingHero: React.FC<{ onSample: () => void; onExplore: () => void
   const item = (i: number) => (reduced ? {} : { initial: { opacity: 0, y: 12 }, animate: { opacity: 1, y: 0 }, transition: { delay: 0.08 + i * 0.1, duration: 0.45, ease: [0.2, 0.7, 0.2, 1] as [number, number, number, number] } });
 
   return <section className="hx" aria-labelledby="hx-title">
-    <div className="hx-watermark" aria-hidden="true"><ArthaMindLogoMark size={640} tone="ink" cut="#f7f6f2"/></div>
+    <div className="hx-watermark" aria-hidden="true"><ArthaMindLogoMark size={640} tone="ink" cut="#ffffff"/></div>
+    <div className="hx-wordmark" aria-hidden="true">ArthaMind <span>AI</span></div>
     <div className="hx-wrap">
       <div className="hx-copy">
         <motion.p className="hx-eyebrow" {...item(0)}>ArthaMind AI · personal finance and market research</motion.p>

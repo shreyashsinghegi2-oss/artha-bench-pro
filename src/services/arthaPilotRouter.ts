@@ -11,6 +11,8 @@ export const ARTHA_PILOT_RECENT_KEY='arthabench_artha_pilot_recent_v1';
 // Each pattern carries a weight: specific subjects (NIFTY, EMI, "what if") outrank generic verbs
 // ("explain", "open"), so "Explain why NIFTY moved" routes to markets rather than the tutor.
 const patterns:Array<{intent:ArthaPilotIntent;destination:AppNavigationDestination;label:string;status:string;terms:RegExp;weight:number}>= [
+  {intent:'calculation',destination:'money-planner',label:'Money Planner',status:'Allocating the amount step by step',terms:/\b(lump ?sum|bonus|where (should|do) i (put|invest)|how (should|do) i invest|allocate|allocation|planner)\b/gi,weight:4},
+  {intent:'calculation',destination:'my-dashboard',label:'Dashboard',status:'Opening your complete dashboard',terms:/\b(dashboard|net worth|total (investments?|savings|tax)|everything at a glance)\b/gi,weight:4},
   {intent:'calculation',destination:'emi-manager',label:'EMI Manager & calculator',status:'Applying the deterministic EMI formula',terms:/\b(emi|emis|loan|loans|interest rate|principal|tenure|compound interest|calculate my emi|calculate.*loan|calculation|formula|prepay|prepayment|foreclose)\b/gi,weight:3},
   {intent:'verify',destination:'evaluation-lab',label:'Evaluation Lab',status:'Preparing a verified evaluation',terms:/\b(verify|verification|check this|check if|fact check|is this answer|claim|reliable|trustworthy|proof|decision receipt)\b/gi,weight:3},
   {intent:'learning',destination:'tutor',label:'Financial Tutor',status:'Opening a learning session',terms:/\b(learn|explain|quiz|flashcard|flash cards|revision|revise|teach|lesson|study|practice|what is|meaning of)\b/gi,weight:1},

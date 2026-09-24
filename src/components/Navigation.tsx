@@ -2,7 +2,7 @@ import React from 'react';
 import {
   BarChart3, BookOpen, BrainCircuit, BriefcaseBusiness, Calculator,
   FlaskConical, GraduationCap, Home, Landmark, LineChart, Newspaper, Settings,
-  ShieldCheck, Sparkles, WalletCards, Zap,
+  ShieldCheck, Sparkles, WalletCards, Zap, LayoutDashboard, Coins, HeartPulse, CalendarClock,
 } from 'lucide-react';
 import { AppNavigationDestination } from '../navigationTypes';
 
@@ -17,11 +17,21 @@ type NavigationItem = {
   icon: React.ComponentType<{ className?: string }>;
 };
 
+const OVERVIEW_ITEMS: NavigationItem[] = [
+  { id: 'my-dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { id: 'overview', label: 'Home & report', icon: Home },
+];
+
+const PLAN_ITEMS: NavigationItem[] = [
+  { id: 'money-planner', label: 'Planner', icon: Coins },
+  { id: 'financial-health', label: 'Health score', icon: HeartPulse },
+];
+
 const MONEY_ITEMS: NavigationItem[] = [
-  { id: 'overview', label: 'Home', icon: Home },
   { id: 'income', label: 'Income & tax', icon: WalletCards },
   { id: 'expenses', label: 'Expenses', icon: Calculator },
-  { id: 'budgeting', label: 'Budgeting', icon: BriefcaseBusiness },
+  { id: 'budgeting', label: 'Budget', icon: BriefcaseBusiness },
+  { id: 'emi-manager', label: 'EMI & loans', icon: CalendarClock },
 ];
 
 const MARKET_ITEMS: NavigationItem[] = [
@@ -53,7 +63,7 @@ const SYSTEM_ITEMS: NavigationItem[] = [
   { id: 'settings', label: 'Settings', icon: Settings },
 ];
 
-export const NAVIGATION_ITEMS = [...MONEY_ITEMS, ...MARKET_ITEMS, ...LEARN_ITEMS, ...LAB_ITEMS, ...SYSTEM_ITEMS];
+export const NAVIGATION_ITEMS = [...OVERVIEW_ITEMS, ...PLAN_ITEMS, ...MONEY_ITEMS, ...MARKET_ITEMS, ...LEARN_ITEMS, ...LAB_ITEMS, ...SYSTEM_ITEMS];
 
 function NavigationGroup({
   title,
@@ -102,7 +112,9 @@ export const Navigation: React.FC<NavigationProps> = ({ currentDestination, onNa
       </div>
 
       <div className="dashboard-sidebar-groups">
-        <NavigationGroup title="My money" items={MONEY_ITEMS} currentDestination={currentDestination} onNavigate={onNavigate} />
+        <NavigationGroup title="Overview" items={OVERVIEW_ITEMS} currentDestination={currentDestination} onNavigate={onNavigate} />
+        <NavigationGroup title="Plan" items={PLAN_ITEMS} currentDestination={currentDestination} onNavigate={onNavigate} />
+        <NavigationGroup title="Track" items={MONEY_ITEMS} currentDestination={currentDestination} onNavigate={onNavigate} />
         <NavigationGroup title="Markets" items={MARKET_ITEMS} currentDestination={currentDestination} onNavigate={onNavigate} />
         <NavigationGroup title="Learn & ask" items={LEARN_ITEMS} currentDestination={currentDestination} onNavigate={onNavigate} />
         <details className="dashboard-nav-lab" open={LAB_ITEMS.some((item) => item.id === currentDestination) || undefined}>

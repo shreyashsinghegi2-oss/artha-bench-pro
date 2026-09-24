@@ -39,7 +39,7 @@ const LanguageBadge: React.FC = () => {
   const reduced = Boolean(useReducedMotion());
   const lang = useLanguageCycle(!reduced, 1100);
   return <div className="hx-lang" aria-label={`Available in ${lang.total} languages`}>
-    <span className="hx-lang-icon" aria-hidden="true"><Languages size={16}/></span>
+    <span className="hx-lang-icon" aria-hidden="true"><Languages size={12}/></span>
     <span className="hx-lang-num" aria-hidden="true">{String(lang.index + 1).padStart(2, '0')}<small>/{lang.total}</small></span>
     <span className="hx-lang-name" aria-hidden="true">
       <AnimatePresence mode="popLayout" initial={false}>

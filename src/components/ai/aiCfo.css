@@ -88,7 +88,7 @@
 .cfo-profile-grid div{border:1px solid var(--cfo-bd);border-radius:10px;padding:8px 10px;background:#fbfdfc;min-width:0}
 .cfo-profile-grid dt{font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--cfo-mut)}
 .cfo-profile-grid dd{margin:2px 0 0;font-weight:800;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
-.cfo-profile-grid dd.pos{color:var(--cfo-g)}
+.cfo-profile-grid dd.pos{color:#059669}
 .cfo-profile-grid dd.neg{color:#be123c}
 .cfo-profile-note{margin:10px 0 0;font-size:11px;color:var(--cfo-mut)}
 @media (max-width:420px){.cfo-profile-grid{grid-template-columns:1fr 1fr}.cfo-plan-cta{width:100%}}

@@ -101,7 +101,7 @@ const MARKETS: Record<'India' | 'US' | 'Gold & Oil' | 'Forex', Row[]> = {
 };
 const MARKET_TABS = Object.keys(MARKETS) as Array<keyof typeof MARKETS>;
 /** When the US, Forex and Intraday tabs open (ms into the markets screen). */
-const TAB_AT = [1900, 2900, 3900];
+const TAB_AT = [900, 1500, 2100];
 
 function useDemoFeed(active: boolean) {
   const [rows, setRows] = useState(MARKETS);
@@ -122,13 +122,13 @@ const Price: React.FC<{ row: Row; run: boolean }> = ({ row, run }) => {
   return <b>{v.toLocaleString('en-IN', { minimumFractionDigits: row.decimals, maximumFractionDigits: row.decimals })}</b>;
 };
 
-// The tour walks through the app the way a user would: home, markets, a stock, the AI CFO and tutor,
-// news, tax, language and what people say.
-const SCREENS = ['splash', 'home', 'markets', 'stock', 'cfo', 'tutor', 'news', 'tax', 'language', 'security', 'people'] as const;
-type Screen = typeof SCREENS[number];
-const DURATION: Record<Screen, number> = { splash: 5400, home: 4600, markets: 5200, stock: 4800, cfo: 3800, tutor: 5000, news: 4800, tax: 3400, language: 4200, security: 4600, people: 3400 };
+// The tour walks through the app the way a user would: home, the full dashboard, markets, a stock,
+// the AI CFO, news, tax, language and security. Kept short (about 25 s) so a visitor sees the whole loop.
+type Screen = 'splash' | 'home' | 'dashboard' | 'markets' | 'stock' | 'cfo' | 'tutor' | 'news' | 'tax' | 'language' | 'security' | 'people';
+const SCREENS: Screen[] = ['splash', 'home', 'dashboard', 'markets', 'stock', 'cfo', 'news', 'tax', 'language', 'security'];
+const DURATION: Record<Screen, number> = { splash: 2900, home: 2400, dashboard: 3600, markets: 2800, stock: 2300, cfo: 2500, tutor: 2600, news: 2200, tax: 2000, language: 2000, security: 2600, people: 2000 };
 type TabId = 'home' | 'markets' | 'ai' | 'news' | 'more';
-const TAB_OF: Record<Screen, TabId> = { splash: 'home', home: 'home', markets: 'markets', stock: 'markets', cfo: 'ai', tutor: 'ai', news: 'news', tax: 'more', language: 'more', security: 'more', people: 'more' };
+const TAB_OF: Record<Screen, TabId> = { splash: 'home', home: 'home', dashboard: 'home', markets: 'markets', stock: 'markets', cfo: 'ai', tutor: 'ai', news: 'news', tax: 'more', language: 'more', security: 'more', people: 'more' };
 const TABS: Array<{ id: TabId; label: string; icon: React.ComponentType<{ size?: number }> }> = [
   { id: 'home', label: 'Home', icon: Home }, { id: 'markets', label: 'Markets', icon: BarChart3 }, { id: 'ai', label: 'AI', icon: Bot },
   { id: 'news', label: 'News', icon: Newspaper }, { id: 'more', label: 'More', icon: LayoutGrid },
@@ -153,8 +153,8 @@ const CoinFace: React.FC<{ id: string }> = ({ id }) => <svg viewBox="0 0 120 120
   <ellipse cx="46" cy="36" rx="30" ry="18" fill={`url(#${id}-spec)`}/>
 </svg>;
 
-// Coin intro, 4.4 s: drop spinning, bounce twice and settle (0–2.2 s); rest while the app loads
-// (2.2–3.4 s); flip once more with a small lift (3.4–4.4 s) and settle steady before Home opens.
+// Coin intro, 2.6 s: drop spinning, bounce twice and settle; rest while the app loads; flip once
+// more with a small lift and settle steady before Home opens.
 const COIN_TIMES = [0, 0.21, 0.29, 0.36, 0.43, 0.5, 0.773, 0.886, 1];
 const COIN_EASE = ['easeIn', 'easeOut', 'easeIn', 'easeOut', 'easeIn', 'linear', 'easeOut', 'easeIn'] as const;
 const CoinDrop: React.FC<{ animate: boolean }> = ({ animate }) => { const coinRef = useRef<HTMLDivElement>(null); return <div className="hp-coin-stage">
@@ -170,19 +170,19 @@ const CoinDrop: React.FC<{ animate: boolean }> = ({ animate }) => { const coinRe
       }}
       ref={coinRef}
       animate={{ y: [-260, 0, -46, 0, -12, 0, 0, -26, 0], rotateY: [0, 1080, 1260, 1380, 1428, 1440, 1440, 1620, 1800] }}
-      transition={{ duration: 4.4, times: COIN_TIMES, ease: [...COIN_EASE] }}>
+      transition={{ duration: 2.6, times: COIN_TIMES, ease: [...COIN_EASE] }}>
       <span className="hp-coin-face"><CoinFace id="coin-f"/><span className="hp-coin-mark"><ArthaMindLogoMark size={46} tone="ink" cut="#e6bd5c"/></span><i className="hp-coin-sweep" aria-hidden="true"/><i className="hp-coin-glint" aria-hidden="true"/></span>
       <span className="hp-coin-face back"><CoinFace id="coin-b"/><span className="hp-coin-mark"><ArthaMindLogoMark size={46} tone="ink" cut="#e6bd5c"/></span><i className="hp-coin-sweep" aria-hidden="true"/></span>
     </motion.div>
     <motion.span className="hp-coin-shadow" initial={animate ? { scaleX: 0.2, opacity: 0 } : false}
       animate={{ scaleX: [0.2, 1, 0.55, 1, 0.85, 1, 1, 0.62, 1], opacity: [0, 0.55, 0.3, 0.55, 0.45, 0.55, 0.55, 0.32, 0.55] }}
-      transition={{ duration: 4.4, times: COIN_TIMES }}/>
+      transition={{ duration: 2.6, times: COIN_TIMES }}/>
   </div>
-  <motion.div className="hp-coin-title" initial={animate ? { opacity: 0, y: 10 } : false} animate={{ opacity: 1, y: 0 }} transition={{ delay: animate ? 2.25 : 0, duration: 0.4 }}>
+  <motion.div className="hp-coin-title" initial={animate ? { opacity: 0, y: 10 } : false} animate={{ opacity: 1, y: 0 }} transition={{ delay: animate ? 1.3 : 0, duration: 0.3 }}>
     <b>ArthaMind <em>AI</em></b><small>by Artha Bench Pro</small>
   </motion.div>
-  <motion.div className="hp-coin-load" initial={animate ? { opacity: 0 } : false} animate={{ opacity: animate ? [0, 1, 1, 0] : 1 }} transition={{ duration: 2.2, delay: animate ? 2.2 : 0, times: [0, 0.1, 0.8, 1] }}>
-    <span className="hp-coin-bar"><motion.i initial={animate ? { scaleX: 0 } : false} animate={{ scaleX: 1 }} transition={{ delay: animate ? 2.3 : 0, duration: 1.4, ease: [0.4, 0, 0.2, 1] }}/></span>
+  <motion.div className="hp-coin-load" initial={animate ? { opacity: 0 } : false} animate={{ opacity: animate ? [0, 1, 1, 0] : 1 }} transition={{ duration: 1.3, delay: animate ? 1.3 : 0, times: [0, 0.1, 0.8, 1] }}>
+    <span className="hp-coin-bar"><motion.i initial={animate ? { scaleX: 0 } : false} animate={{ scaleX: 1 }} transition={{ delay: animate ? 1.35 : 0, duration: 0.85, ease: [0.4, 0, 0.2, 1] }}/></span>
     <small>Loading your money dashboard…</small>
   </motion.div>
 </div>; };
@@ -274,6 +274,49 @@ const AppBar: React.FC<{ dark: boolean; photoSrc?: string }> = ({ dark, photoSrc
 </div>;
 
 
+/** Sample holdings for the dashboard screen (labelled sample, not a real portfolio). */
+const DASH_HOLDINGS: Array<{ name: string; change: number }> = [
+  { name: 'Nifty 50 index fund', change: 14.2 },
+  { name: 'Flexi cap fund', change: 11.6 },
+  { name: 'Small cap fund', change: -3.1 },
+];
+const DASH_MARKETS: Array<{ label: string; change: number }> = [
+  { label: 'NIFTY', change: 0.84 }, { label: 'SENSEX', change: 0.71 }, { label: 'GOLD', change: -0.32 }, { label: 'USD/INR', change: -0.12 },
+];
+
+/** A compact copy of the real Complete Dashboard: headline figures, cash flow, markets and holdings. */
+const DashboardScreen: React.FC<{ animate: boolean }> = ({ animate }) => {
+  const r = HERO_REPORT;
+  const expenses = HERO_SAMPLE.monthlyExpenses, emi = HERO_SAMPLE.monthlyEmi, save = Math.max(0, r.cashflow.surplus);
+  const total = expenses + emi + save || 1;
+  const fade = (i: number) => (animate ? { initial: { opacity: 0, y: 8 }, animate: { opacity: 1, y: 0 }, transition: { delay: 0.05 + i * 0.12, duration: 0.3 } } : {});
+  const grow = (w: number, i: number) => (animate ? { initial: { width: 0 }, animate: { width: `${w}%` }, transition: { delay: 0.35 + i * 0.1, duration: 0.6 } } : { style: { width: `${w}%` } });
+  const pctTxt = (v: number) => `${v >= 0 ? '+' : '−'}${Math.abs(v).toFixed(2)}%`;
+  return <>
+    <div className="hp-head"><b>Dashboard</b><small>Sample profile · demo prices</small></div>
+    <div className="hp-dash-tiles">
+      <motion.span {...fade(0)}><small>Net worth</small><b><Count to={r.netWorth} run={animate} format={inr} duration={700}/></b></motion.span>
+      <motion.span {...fade(1)} className="up"><small>Saved / month</small><b>+<Count to={r.cashflow.surplus} run={animate} format={inr} duration={700}/></b></motion.span>
+      <motion.span {...fade(2)}><small>Money health</small><b><Count to={r.health.score} run={animate} duration={700}/>/100</b></motion.span>
+      <motion.span {...fade(3)} className="up"><small>Tax saved</small><b>+{inr(r.tax.saving)}</b></motion.span>
+    </div>
+    <motion.div className="hp-card hp-dash-flow" {...fade(4)}>
+      <small>Monthly cash flow</small>
+      <div className="hp-dash-bar">
+        <motion.i className="c-exp" {...grow((expenses / total) * 100, 0)}/>
+        <motion.i className="c-emi" {...grow((emi / total) * 100, 1)}/>
+        <motion.i className="c-save" {...grow((save / total) * 100, 2)}/>
+      </div>
+      <div className="hp-dash-legend"><span><i className="c-exp"/>Spend</span><span><i className="c-emi"/>EMI</span><span><i className="c-save"/>Save</span></div>
+    </motion.div>
+    <motion.div className="hp-dash-mkts" {...fade(5)}>{DASH_MARKETS.map((m) => <span key={m.label} className={m.change >= 0 ? 'up' : 'down'}><small>{m.label}</small><b>{m.change >= 0 ? '▲' : '▼'} {pctTxt(m.change)}</b></span>)}</motion.div>
+    <motion.div className="hp-card hp-dash-hold" {...fade(6)}>
+      <small>Your funds · 1-year return</small>
+      <ul>{DASH_HOLDINGS.map((h) => <li key={h.name}><span>{h.name}</span><em className={h.change >= 0 ? 'up' : 'down'}>{pctTxt(h.change)}</em></li>)}</ul>
+    </motion.div>
+  </>;
+};
+
 export const HeroPhone: React.FC<{ photoSrc?: string }> = ({ photoSrc }) => {
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { amount: 0.2 });
@@ -330,7 +373,7 @@ export const HeroPhone: React.FC<{ photoSrc?: string }> = ({ photoSrc }) => {
   useEffect(() => {
     if (screen !== 'cfo' && screen !== 'tutor') return;
     setChatStep(0);
-    const timers = (screen === 'tutor' ? [300, 1100, 1900, 3300] : [400, 1300, 2200]).map((ms, k) => window.setTimeout(() => setChatStep(k + 1), ms));
+    const timers = (screen === 'tutor' ? [200, 700, 1200, 1900] : [150, 650, 1150]).map((ms, k) => window.setTimeout(() => setChatStep(k + 1), ms));
     return () => timers.forEach(window.clearTimeout);
   }, [screen]);
   useEffect(() => {
@@ -369,6 +412,8 @@ export const HeroPhone: React.FC<{ photoSrc?: string }> = ({ photoSrc }) => {
                 </div>
               </>}
 
+              {screen === 'dashboard' && <DashboardScreen animate={animate}/>}
+
               {screen === 'markets' && <>
                 <div className="hp-head"><b>Markets</b><small>Demo feed · not live prices</small></div>
                 <div className="hp-seg" aria-hidden="true">{MARKET_TABS.map((t, i) => <span key={t} className={i === marketTab ? 'on' : ''}>{t}</span>)}</div>
@@ -389,7 +434,7 @@ export const HeroPhone: React.FC<{ photoSrc?: string }> = ({ photoSrc }) => {
                 <div className="hp-range" aria-hidden="true">{['1D', '1W', '1M', '1Y', '5Y'].map((r) => <span key={r} className={r === '1M' ? 'on' : ''}>{r}</span>)}</div>
                 <div className="hp-card hp-stock-card"><StockChart animate={animate}/></div>
                 <div className="hp-stats">{[['Open', '₹1,404'], ['Day high', '₹1,418'], ['Day low', '₹1,398'], ['52W range', '₹1,115–1,551']].map(([k, v]) => <span key={k}><small>{k}</small><b>{v}</b></span>)}</div>
-                <motion.div className="hp-card hp-insight" initial={animate ? { opacity: 0, y: 10 } : false} animate={{ opacity: 1, y: 0 }} transition={{ delay: animate ? 1.4 : 0 }}>
+                <motion.div className="hp-card hp-insight" initial={animate ? { opacity: 0, y: 10 } : false} animate={{ opacity: 1, y: 0 }} transition={{ delay: animate ? 0.8 : 0 }}>
                   <Sparkles size={13}/><p><b>AI read:</b> up on retail and Jio growth; weaker refining margins are the risk to watch.</p>
                 </motion.div>
               </>}
@@ -428,11 +473,11 @@ export const HeroPhone: React.FC<{ photoSrc?: string }> = ({ photoSrc }) => {
               {screen === 'news' && <>
                 <div className="hp-head"><b>News</b><small>Sample headlines · illustrations</small></div>
                 <div className="hp-chips" aria-hidden="true">{['For you', 'Markets', 'Economy', 'Companies'].map((c, i) => <span key={c} className={i === 0 ? 'on' : ''}>{c}</span>)}</div>
-                <ul className="hp-newslist">{NEWS.map((n, i) => <motion.li key={n.title} initial={animate ? { opacity: 0, y: 14 } : false} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 + i * 0.18 }}>
+                <ul className="hp-newslist">{NEWS.map((n, i) => <motion.li key={n.title} initial={animate ? { opacity: 0, y: 14 } : false} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 + i * 0.1 }}>
                   <NewsThumb theme={n.theme}/>
                   <div><small>{n.logo && <CompanyLogo symbol={n.logo} size={13}/>}{n.source} · {n.time}</small><b>{n.title}</b><em className={n.tone}>{n.tag}</em></div>
                 </motion.li>)}</ul>
-                <motion.div className="hp-card hp-insight" initial={animate ? { opacity: 0 } : false} animate={{ opacity: 1 }} transition={{ delay: animate ? 1.2 : 0 }}><Sparkles size={13}/><p><b>Research brief</b> ready: what happened, market impact and what to verify.</p></motion.div>
+                <motion.div className="hp-card hp-insight" initial={animate ? { opacity: 0 } : false} animate={{ opacity: 1 }} transition={{ delay: animate ? 0.7 : 0 }}><Sparkles size={13}/><p><b>Research brief</b> ready: what happened, market impact and what to verify.</p></motion.div>
               </>}
 
               {screen === 'tax' && <>
@@ -473,10 +518,10 @@ export const HeroPhone: React.FC<{ photoSrc?: string }> = ({ photoSrc }) => {
                   [LockKeyhole, 'Everything sent is encrypted (HTTPS)'],
                   [KeyRound, 'Saved records open only for your account'],
                   [EyeOff, 'AI sees only the question you ask'],
-                ] as Array<[React.ComponentType<{ size?: number }>, string]>).map(([Icon, text], i) => <motion.li key={text} initial={animate ? { opacity: 0, x: 14 } : false} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.9 + i * 0.45 }}>
+                ] as Array<[React.ComponentType<{ size?: number }>, string]>).map(([Icon, text], i) => <motion.li key={text} initial={animate ? { opacity: 0, x: 14 } : false} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.4 + i * 0.25 }}>
                   <span><Icon size={12}/></span>{text}<Check size={11} className="hp-secure-ok"/>
                 </motion.li>)}</ul>
-                <motion.p className="hp-secure-note" initial={animate ? { opacity: 0 } : false} animate={{ opacity: 1 }} transition={{ delay: 2.9 }}>We never ask for bank passwords, PINs or OTPs.</motion.p>
+                <motion.p className="hp-secure-note" initial={animate ? { opacity: 0 } : false} animate={{ opacity: 1 }} transition={{ delay: 1.5 }}>We never ask for bank passwords, PINs or OTPs.</motion.p>
               </>}
 
               {screen === 'people' && <>

@@ -14,7 +14,7 @@ const inr = (v: number) => `${v < 0 ? '−' : ''}₹${Math.abs(Math.round(v)).to
 const pct = (v: number) => `${Math.round(v * 100)}%`;
 
 /** Pages that already carry their own dashboard, or are not about the user's money. */
-const SKIP = new Set<AppNavigationDestination>(['my-dashboard', 'overview', 'portfolio', 'tutor', 'account', 'settings', 'connections', 'methodology', 'go-pro', 'evaluation-lab', 'comparison', 'batch', 'reports', 'quick-check', 'learning']);
+const SKIP = new Set<AppNavigationDestination>(['retirement-planner', 'education-planner', 'job-switch-planner', 'my-dashboard', 'overview', 'portfolio', 'tutor', 'account', 'settings', 'connections', 'methodology', 'go-pro', 'evaluation-lab', 'comparison', 'batch', 'reports', 'quick-check', 'learning']);
 const MARKET_PAGES = new Set<AppNavigationDestination>(['markets', 'india-markets', 'us-markets', 'forex-markets', 'intraday-markets', 'market-watchlist', 'market-alerts', 'markets-learn', 'crypto', 'news', 'economy', 'dashboard']);
 
 function monthSpend() {

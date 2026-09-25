@@ -53,7 +53,7 @@ export const ConnectionsView: React.FC = () => {
             diagnostics.map((diag) => (
               <div
                 key={diag.id}
-                className="p-4 bg-canvas border border-line rounded-2xl flex items-center justify-between gap-4"
+                className="p-4 bg-canvas border border-line rounded-2xl flex flex-wrap items-center justify-between gap-4"
               >
                 <div className="flex items-center gap-3">
                   <Cpu className="w-5 h-5 text-interactive" />

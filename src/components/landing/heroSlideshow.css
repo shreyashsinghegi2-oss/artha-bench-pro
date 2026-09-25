@@ -1,14 +1,21 @@
 .hs{position:absolute;inset:0;z-index:0;overflow:hidden;background:#0b1422}
-.hs-slide{position:absolute;inset:0;opacity:0;transition:opacity 1.6s ease-in-out}
+.hs-slide{position:absolute;inset:0;opacity:0;transition:opacity 1.8s ease-in-out}
 .hs-slide.on{opacity:1}
 .hs-slide img{width:100%;height:100%;object-fit:cover;transform:scale(1.02);will-change:transform}
-.hs-slide.on img{animation:hs-zoom 9s ease-out forwards}
+.hs-slide.on img,.hs-slide.out img{animation:var(--hs-move) 10s linear forwards}
+.hs-m1{--hs-move:hs-m1}.hs-m2{--hs-move:hs-m2}.hs-m3{--hs-move:hs-m3}.hs-m4{--hs-move:hs-m4}
+.hs-slide.out{z-index:0}.hs-slide.on{z-index:1}
 .hs-paused .hs-slide img{animation-play-state:paused}
 /* Readable text on any photo: darker on the text side, a soft vignette, and a fade into the page below. */
 .hs-shade{position:absolute;inset:0;background:
   linear-gradient(90deg,rgba(4,10,20,.78) 0%,rgba(4,10,20,.55) 38%,rgba(4,10,20,.18) 70%,rgba(4,10,20,.1) 100%),
   linear-gradient(180deg,rgba(4,10,20,.35) 0%,rgba(4,10,20,0) 22%,rgba(4,10,20,0) 72%,rgba(4,10,20,.55) 100%)}
 @keyframes hs-zoom{from{transform:scale(1.02)}to{transform:scale(1.1)}}
+/* A slow drift for each photo: zoom in or out while panning a little, like a moving camera. */
+@keyframes hs-m1{from{transform:scale(1.04) translate3d(-1.2%,.6%,0)}to{transform:scale(1.14) translate3d(1.2%,-.6%,0)}}
+@keyframes hs-m2{from{transform:scale(1.14) translate3d(1%,0,0)}to{transform:scale(1.04) translate3d(-1%,.4%,0)}}
+@keyframes hs-m3{from{transform:scale(1.05) translate3d(0,1%,0)}to{transform:scale(1.13) translate3d(-.8%,-1%,0)}}
+@keyframes hs-m4{from{transform:scale(1.12) translate3d(-.8%,-.6%,0)}to{transform:scale(1.03) translate3d(.8%,.6%,0)}}
 @media (max-width:900px){.hs-shade{background:linear-gradient(180deg,rgba(4,10,20,.55) 0%,rgba(4,10,20,.38) 45%,rgba(4,10,20,.12) 72%,rgba(4,10,20,.5) 100%)}.hx-photo .hx-copy h1{text-shadow:0 2px 18px rgba(0,0,0,.45)}}
 @media (prefers-reduced-motion:reduce){.hs-slide{transition:none}.hs-slide.on img{animation:none}}
 /* Hero scene on the photos */

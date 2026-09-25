@@ -20,3 +20,10 @@ describe('offline snapshot', () => {
     expect(offlineSnapshot('What is CAGR?')).toBeNull();
   });
 });
+
+describe('offline snapshot in Hindi', () => {
+  it('understands Hindi words for salary, spending and EMI', () => {
+    const s = offlineSnapshot('मेरी सैलरी 50,000 महीना है, खर्च 30,000 और ईएमआई 5,000 है')!;
+    expect(s.lines.join(' ')).toContain('= ₹15,000');
+  });
+});

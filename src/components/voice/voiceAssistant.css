@@ -1,0 +1,55 @@
+.va-launch{position:fixed;left:18px;bottom:18px;z-index:60;display:inline-flex;align-items:center;gap:8px;padding:6px 16px 6px 6px;border:0;border-radius:999px;background:#0b0f14;color:#fff;font:700 13.5px/1 Inter,system-ui,sans-serif;box-shadow:0 10px 28px -10px rgba(2,6,23,.55);cursor:pointer;transition:transform .15s ease}
+.va-launch:hover{transform:translateY(-2px)}
+.va-launch-dot{display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#10b981,#0f9d8a);box-shadow:0 0 0 0 rgba(16,185,129,.55);animation:va-pulse 2.4s ease-out infinite}
+@keyframes va-pulse{0%{box-shadow:0 0 0 0 rgba(16,185,129,.5)}70%{box-shadow:0 0 0 12px rgba(16,185,129,0)}100%{box-shadow:0 0 0 0 rgba(16,185,129,0)}}
+.va-panel{position:fixed;left:18px;bottom:18px;z-index:120;width:min(400px,calc(100vw - 32px));max-height:min(720px,calc(100dvh - 36px));display:flex;flex-direction:column;gap:10px;padding:14px;border:1px solid var(--border-subtle,#e2e8f0);border-radius:22px;background:var(--bg-surface,#fff);color:var(--text-primary,#172033);box-shadow:0 24px 60px -20px rgba(2,6,23,.45);font-family:Inter,system-ui,sans-serif}
+.va-loading{font-size:13px;color:var(--text-secondary,#64748b)}
+.va-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.va-head b{display:block;font-size:15.5px}.va-head small{font-size:12px;color:var(--text-secondary,#64748b)}
+.va-icon{border:0;background:var(--bg-subtle,#f1f5f9);color:inherit;border-radius:10px;padding:6px;cursor:pointer}
+.va-langs{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;scrollbar-width:thin}
+.va-langs button{flex:none;border:1px solid var(--border-subtle,#e2e8f0);border-radius:999px;padding:5px 11px;background:var(--bg-surface,#fff);color:inherit;font:600 13px/1.2 inherit;cursor:pointer}
+.va-langs button.on{background:#0b0f14;border-color:#0b0f14;color:#fff}
+.va-log{flex:1;min-height:110px;overflow-y:auto;display:grid;align-content:start;gap:10px;padding:2px}
+.va-empty p{margin:0 0 8px;font-size:13px;line-height:1.5;color:var(--text-secondary,#64748b)}
+.va-samples{display:flex;flex-wrap:wrap;gap:6px}
+.va-samples button{border:1px dashed var(--border-strong,#cbd5e1);border-radius:12px;padding:6px 10px;background:none;color:inherit;font:600 12px/1.3 inherit;text-align:left;cursor:pointer}
+.va-samples button:hover{border-color:#0f9d8a;color:#0f9d8a}
+.va-turn{display:grid;gap:6px}
+.va-q{justify-self:end;max-width:85%;margin:0;padding:8px 12px;border-radius:14px 14px 4px 14px;background:#0f9d8a;color:#fff;font-size:13.5px;line-height:1.45}
+.va-a{max-width:92%;padding:10px 12px;border-radius:14px 14px 14px 4px;background:var(--bg-subtle,#f1f5f9);font-size:14.5px;line-height:1.6}
+.va-a p{margin:0;white-space:pre-wrap}
+.va-a footer{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:6px}
+.va-a footer button{display:inline-flex;align-items:center;gap:4px;border:0;background:none;padding:0;color:#0f9d8a;font:700 12px/1 inherit;cursor:pointer}
+.va-a footer button:disabled{opacity:.45;cursor:default}
+.va-tag{font-size:11px;font-weight:700;color:#92400e;background:#fffbeb;border-radius:999px;padding:2px 8px}
+.va-thinking{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-secondary,#64748b)}
+.va-spin{animation:va-rot 1s linear infinite}@keyframes va-rot{to{transform:rotate(360deg)}}
+.va-mic-row{display:flex;align-items:center;gap:14px;padding:6px 2px}
+.va-mic{position:relative;flex:none;display:grid;place-items:center;width:64px;height:64px;border:0;border-radius:50%;background:linear-gradient(135deg,#10b981,#0f766e);color:#fff;cursor:pointer;box-shadow:0 10px 24px -10px rgba(15,118,110,.8)}
+.va-mic:disabled{opacity:.5;cursor:default}
+.va-mic.listening{background:linear-gradient(135deg,#ef4444,#b91c1c)}
+.va-mic.speaking{background:linear-gradient(135deg,#0b0f14,#334155)}
+.va-ring{position:absolute;inset:0;border-radius:50%;border:2px solid currentColor;opacity:0;pointer-events:none}
+.va-mic.listening .va-ring,.va-mic.speaking .va-ring{color:#ef4444;animation:va-wave 1.6s ease-out infinite}
+.va-mic.speaking .va-ring{color:#10b981}
+.va-ring.r2{animation-delay:.8s!important}
+@keyframes va-wave{0%{transform:scale(1);opacity:.7}100%{transform:scale(1.7);opacity:0}}
+.va-status{display:grid;gap:3px;min-width:0;font-size:13px}
+.va-status span{color:var(--text-secondary,#64748b);overflow-wrap:anywhere}
+.va-status .va-err{color:#dc2626}
+.va-type{display:flex;gap:6px}
+.va-type input{flex:1;min-width:0;height:40px;padding:0 12px;border:1px solid var(--border-subtle,#e2e8f0);border-radius:12px;background:var(--bg-canvas,#f8fafc);color:inherit;font:14px inherit}
+.va-type button{width:40px;border:0;border-radius:12px;background:#0b0f14;color:#fff;cursor:pointer;display:grid;place-items:center}
+.va-type button:disabled{opacity:.4;cursor:default}
+.va-foot{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12px;color:var(--text-secondary,#64748b)}
+.va-foot select{margin-left:4px;border:1px solid var(--border-subtle,#e2e8f0);border-radius:8px;padding:2px 4px;background:var(--bg-surface,#fff);color:inherit;font:inherit}
+.va-foot button{display:inline-flex;align-items:center;gap:4px;border:0;background:none;color:inherit;font:600 12px inherit;cursor:pointer}
+.va-note{margin:0;padding:7px 10px;border-radius:10px;background:#fffbeb;color:#92400e;font-size:12px;line-height:1.45}
+.va-fine{margin:0;font-size:10.5px;line-height:1.4;color:var(--text-secondary,#64748b)}
+@media (max-width:640px){
+  .va-launch{left:12px;bottom:12px;padding:5px}
+  .va-launch-text{display:none}
+  .va-panel{left:0;right:0;bottom:0;width:100%;max-height:88dvh;border-radius:22px 22px 0 0;padding:14px 16px calc(14px + env(safe-area-inset-bottom))}
+}
+@media (prefers-reduced-motion:reduce){.va-launch-dot,.va-ring,.va-spin{animation:none!important}}

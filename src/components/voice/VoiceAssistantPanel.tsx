@@ -1,4 +1,6 @@
+import { ThinkingSteps } from '../ai/ThinkingSteps';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useDraggable } from '../../hooks/useDraggable';
 import { Download, Loader2, Mic, RotateCcw, Send, Square, Volume2, X } from 'lucide-react';
 import { askAiCfo, type CfoTurn } from '../../services/cfoApi';
 import { canListen, canSpeak, cloudSpeech, downloadBlob, listenOnce, pickVoice, playBlob, speak, stopAudio, stopSpeaking, VOICE_LANGUAGES, voicesReady, type VoiceLanguage } from '../../services/voice';
@@ -105,12 +107,13 @@ export default function VoiceAssistantPanel({ initialLanguage, onClose }: { init
       .catch((e: Error) => { setPhase('idle'); setError(e.message); });
   };
 
+  const drag = useDraggable<HTMLDivElement>('am-drag-voice-panel', { enabled: typeof window !== 'undefined' && window.matchMedia('(min-width: 641px)').matches });
   const stopAll = () => { stopListening.current(); stopPlayback.current(); stopAudio(); stopSpeaking(); setPhase('idle'); };
   const last = turns[turns.length - 1];
   const status = phase === 'listening' ? 'Listening… speak now' : phase === 'thinking' ? 'Thinking…' : phase === 'speaking' ? 'Speaking…' : listenOk ? 'Tap the mic and ask your question' : 'Type your question below';
 
-  return <div className="va-panel" role="dialog" aria-label="Voice money assistant">
-    <header className="va-head">
+  return <div ref={drag.ref} style={drag.style} className={`va-panel ${drag.dragging ? 'is-dragging' : ''}`} role="dialog" aria-label="Voice money assistant">
+    <header className="va-head va-drag" {...drag.handle} title="Drag to move">
       <div><b>Voice money assistant</b><small>Ask in your language. Answers in simple words.</small></div>
       <button type="button" className="va-icon" onClick={() => { stopAll(); onClose(); }} aria-label="Close voice assistant"><X size={18}/></button>
     </header>
@@ -135,7 +138,7 @@ export default function VoiceAssistantPanel({ initialLanguage, onClose }: { init
           </footer>
         </div>
       </div>)}
-      {phase === 'thinking' && <div className="va-thinking"><Loader2 size={16} className="va-spin"/> Preparing a simple answer in {lang.name}…</div>}
+      {phase === 'thinking' && <ThinkingSteps active compact/>}
     </div>
 
     <div className="va-mic-row">

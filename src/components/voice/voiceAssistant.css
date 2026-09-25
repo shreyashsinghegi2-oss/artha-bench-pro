@@ -53,3 +53,7 @@
   .va-panel{left:0;right:0;bottom:0;width:100%;max-height:88dvh;border-radius:22px 22px 0 0;padding:14px 16px calc(14px + env(safe-area-inset-bottom))}
 }
 @media (prefers-reduced-motion:reduce){.va-launch-dot,.va-ring,.va-spin{animation:none!important}}
+/* Drag to move. */
+.va-launch{touch-action:none}
+.va-launch.is-dragging{cursor:grabbing;transition:none;box-shadow:0 18px 40px -12px rgba(2,6,23,.6)}
+@media (min-width:641px){.va-drag{cursor:grab;touch-action:none;user-select:none}.va-panel.is-dragging .va-drag{cursor:grabbing}}

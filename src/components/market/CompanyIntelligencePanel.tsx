@@ -1,3 +1,5 @@
+import { MicButton } from '../ai/MicButton';
+import { ThinkingSteps } from '../ai/ThinkingSteps';
 import React, { useEffect, useMemo, useState } from 'react';
 import { WebSearchToggle } from '../ai/WebSearchToggle';
 import {
@@ -507,11 +509,7 @@ export const CompanyIntelligencePanel: React.FC<CompanyIntelligencePanelProps> =
                   );
                 })
               )}
-              {assistantLoading && (
-                <div className="flex items-center text-[11px] font-medium text-interactive">
-                  <RefreshCw className="w-3 h-3 animate-spin mr-2" /> Analyzing the loaded company evidence…
-                </div>
-              )}
+              <ThinkingSteps active={assistantLoading} compact/>
             </div>
 
             {assistantError && (
@@ -527,6 +525,7 @@ export const CompanyIntelligencePanel: React.FC<CompanyIntelligencePanelProps> =
                 maxLength={1200}
                 className="min-w-0 flex-1 bg-surface border border-line-strong rounded-xl px-3.5 py-3 text-xs text-ink placeholder:text-secondary focus:outline-none focus:border-interactive focus:ring-2 focus:ring-interactive"
               />
+              <MicButton onText={setAssistantQuestion} disabled={assistantLoading}/>
               <button
                 type="submit"
                 disabled={assistantLoading || !assistantQuestion.trim()}

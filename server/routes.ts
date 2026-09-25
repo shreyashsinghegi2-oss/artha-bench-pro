@@ -56,6 +56,7 @@ import { candleTtlMs, findInstrument, getTerminalCandles, getTerminalSnapshot, T
 
 import { fundDetail, fundsByIsin, searchFunds } from './mutualFundService';
 import { synthesize, translateText, VOICE_LANGS } from './voiceService';
+import { readWebPage } from './webReader';
 import { createRateLimiter } from './rateLimiter';
 
 const voiceLimiter = createRateLimiter({ windowMs: 60_000, max: 30, message: 'Too many voice requests. Please wait a minute.' });
@@ -92,6 +93,15 @@ async function sendSpeech(res: Response, text: string, lang: string, rateRaw: un
 apiRouter.post('/voice/tts', voiceLimiter, (req: Request, res: Response) => { const { text, lang } = voiceBody(req); void sendSpeech(res, text, lang, req.body?.rate); });
 // For <audio src> and quick checks: /api/voice/tts?lang=hi&text=...
 apiRouter.get('/voice/tts', voiceLimiter, (req: Request, res: Response) => { void sendSpeech(res, String(req.query.text ?? '').trim().slice(0, 600), String(req.query.lang ?? '').toLowerCase(), req.query.rate); });
+
+// ---------------- Web page reader (public pages only) ----------------
+const readerLimiter = createRateLimiter({ windowMs: 60_000, max: 12, message: 'Too many links at once. Please wait a minute.' });
+apiRouter.get('/web/read', readerLimiter, async (req: Request, res: Response) => {
+  const url = String(req.query.url ?? '').slice(0, 2000);
+  if (!url) return res.status(400).json({ error: 'Send a link to read.' });
+  try { res.json(await readWebPage(url)); }
+  catch (e) { res.status(422).json({ error: e instanceof Error ? e.message : 'This page could not be read.' }); }
+});
 
 // ---------------- Mutual funds (official AMFI NAVs) ----------------
 apiRouter.get('/mf/search', async (req: Request, res: Response) => {

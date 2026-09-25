@@ -38,3 +38,10 @@
 @media (max-width:1200px){.lv-tiles{grid-template-columns:repeat(3,minmax(0,1fr))}.lv-grid{grid-template-columns:1fr 1fr}.lv-grid>:last-child{grid-column:1/-1}}
 @media (max-width:640px){.lv-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}.lv-grid{grid-template-columns:1fr}.lv-tile b{font-size:16px}}
 @media (prefers-reduced-motion:reduce){.lv-spin{animation:none}.lv-tile{transition:none}}
+.lv-sip{display:grid;gap:6px;padding:10px;border-radius:12px;background:var(--bg-canvas)}
+.lv-sip-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:12.5px;color:var(--text-secondary)}
+.lv-sip-row input{width:84px;height:30px;padding:0 8px;border:1px solid var(--border-subtle);border-radius:8px;background:var(--bg-surface);color:var(--text-primary);font:700 13px inherit}
+.lv-sip-row button{height:28px;padding:0 9px;border:1px solid var(--border-subtle);border-radius:999px;background:var(--bg-surface);color:var(--text-secondary);font:700 11.5px inherit;cursor:pointer}
+.lv-sip-row button.on{background:#0b0f14;border-color:#0b0f14;color:#fff}
+.lv-sip p{margin:0;font-size:13px;line-height:1.5}
+.lv-sip b.up{color:#059669}.lv-sip b.down{color:#dc2626}

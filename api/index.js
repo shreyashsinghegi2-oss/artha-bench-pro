@@ -1133,6 +1133,299 @@ ${systemPrompt2}`;
 // server/liveGrounding.ts
 import { AsyncLocalStorage } from "node:async_hooks";
 
+// server/webReader.ts
+import { lookup } from "node:dns/promises";
+import { isIP } from "node:net";
+var MAX_BYTES = 15e5;
+var MAX_REDIRECTS = 3;
+function isPrivateAddress(ip) {
+  if (isIP(ip) === 4) {
+    const [a, b] = ip.split(".").map(Number);
+    return a === 0 || a === 10 || a === 127 || a === 100 && b >= 64 && b <= 127 || a === 169 && b === 254 || a === 172 && b >= 16 && b <= 31 || a === 192 && b === 168 || a === 192 && b === 0 || a === 198 && (b === 18 || b === 19) || a >= 224;
+  }
+  const v = ip.toLowerCase();
+  if (v.startsWith("::ffff:")) return isPrivateAddress(v.slice(7));
+  return v === "::" || v === "::1" || v.startsWith("fc") || v.startsWith("fd") || v.startsWith("fe8") || v.startsWith("fe9") || v.startsWith("fea") || v.startsWith("feb") || v.startsWith("ff");
+}
+async function assertPublic(url) {
+  if (url.protocol !== "https:" && url.protocol !== "http:") throw new Error("Only web links (http or https) can be read.");
+  if (url.username || url.password) throw new Error("Links with passwords cannot be read.");
+  if (url.port && !["80", "443", "8080", "8443"].includes(url.port)) throw new Error("This link uses an unusual port and cannot be read.");
+  const host = url.hostname.replace(/^\[|\]$/g, "");
+  if (/^(localhost|.*\.local|.*\.internal|metadata\.google\.internal)$/i.test(host)) throw new Error("This address cannot be read.");
+  const addrs = isIP(host) ? [{ address: host }] : await lookup(host, { all: true, verbatim: true });
+  if (!addrs.length || addrs.some((a) => isPrivateAddress(a.address))) throw new Error("This address cannot be read.");
+}
+var ENTITIES = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: " ", rsquo: "\u2019", lsquo: "\u2018", rdquo: "\u201D", ldquo: "\u201C", ndash: "\u2013", mdash: "\u2014", hellip: "\u2026", rupee: "\u20B9" };
+var decode = (s) => s.replace(/&(#x?[0-9a-f]+|[a-z]+);/gi, (m, e) => {
+  if (e[0] === "#") {
+    const n = e[1].toLowerCase() === "x" ? parseInt(e.slice(2), 16) : parseInt(e.slice(1), 10);
+    return Number.isFinite(n) && n > 0 && n < 1114112 ? String.fromCodePoint(n) : "";
+  }
+  return ENTITIES[e.toLowerCase()] ?? m;
+});
+function htmlToText(html) {
+  const title = decode(html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] ?? "").replace(/\s+/g, " ").trim();
+  const description = decode(html.match(/<meta[^>]+name=["']description["'][^>]*content=["']([^"']*)["']/i)?.[1] ?? html.match(/<meta[^>]+property=["']og:description["'][^>]*content=["']([^"']*)["']/i)?.[1] ?? "").trim();
+  const body = html.replace(/<(script|style|noscript|svg|iframe|template|head)[\s\S]*?<\/\1>/gi, " ").replace(/<(nav|footer|header|aside|form)[\s\S]*?<\/\1>/gi, " ").replace(/<!--[\s\S]*?-->/g, " ").replace(/<\/(p|div|li|h[1-6]|tr|section|article|br)>/gi, "\n").replace(/<br\s*\/?>/gi, "\n").replace(/<td[^>]*>/gi, " | ").replace(/<[^>]+>/g, " ");
+  const text = decode(body).split("\n").map((l) => l.replace(/\s+/g, " ").trim()).filter((l) => l.length > 2).join("\n");
+  return { title, description, text };
+}
+async function readWebPage(raw) {
+  let url;
+  try {
+    url = new URL(raw.trim());
+  } catch {
+    throw new Error("That does not look like a web link.");
+  }
+  for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
+    await assertPublic(url);
+    const res = await fetch(url, { redirect: "manual", signal: AbortSignal.timeout(1e4), headers: { "User-Agent": "Mozilla/5.0 (compatible; ArthaMindReader/1.0; +https://artha-bench-pro.vercel.app)", Accept: "text/html,text/plain,application/json;q=0.9,*/*;q=0.5" } });
+    if (res.status >= 300 && res.status < 400) {
+      const loc = res.headers.get("location");
+      if (!loc) throw new Error("The page redirected without a destination.");
+      url = new URL(loc, url);
+      continue;
+    }
+    if (!res.ok) throw new Error(`The page answered with HTTP ${res.status}.`);
+    const type = (res.headers.get("content-type") || "").toLowerCase();
+    if (!/text\/html|text\/plain|application\/(json|xhtml)/.test(type)) throw new Error("Only web pages and text can be read (not files or images).");
+    const reader = res.body?.getReader();
+    const chunks = [];
+    let size = 0;
+    while (reader) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      size += value.length;
+      if (size > MAX_BYTES) {
+        await reader.cancel();
+        break;
+      }
+      chunks.push(value);
+    }
+    const bodyText = new TextDecoder().decode(Buffer.concat(chunks));
+    const parsed = type.includes("html") ? htmlToText(bodyText) : { title: url.hostname, description: "", text: bodyText.replace(/\s+\n/g, "\n").trim() };
+    return { url: url.toString(), title: parsed.title || url.hostname, description: parsed.description, text: parsed.text.slice(0, 12e3), retrievedAt: (/* @__PURE__ */ new Date()).toISOString() };
+  }
+  throw new Error("The page redirected too many times.");
+}
+var linksIn = (text) => [...new Set(text.match(/https?:\/\/[^\s<>"')\]]+/gi) ?? [])].map((u) => u.replace(/[.,;:!?]+$/, "")).slice(0, 2);
+
+// src/data/fundClass.ts
+function assetClassFor(category, name = "") {
+  const c2 = `${category} ${name}`.toLowerCase();
+  if (/gold|silver|commodit/.test(c2)) return "Gold & commodities";
+  if (/hybrid|balanced|asset allocation|arbitrage|equity savings|multi asset/.test(c2)) return "Hybrid";
+  if (/equity|elss|tax saver|index|etf|large ?cap|mid ?cap|small ?cap|large (&|and) mid|flexi|multi ?cap|focused|value|contra|dividend yield|sectoral|thematic|nifty|sensex|top 100|top 200|bluechip|blue chip|opportunities|infrastructure|pharma|banking (&|and) financial services|technology|consumption/.test(c2)) return "Equity";
+  if (/debt|liquid|overnight|money market|gilt|bond|duration|credit risk|banking and psu|floater|income|fixed maturity|fmp/.test(c2)) return "Debt";
+  return "Other";
+}
+
+// server/mutualFundService.ts
+var AMFI_URLS = [process.env.AMFI_NAV_URL, "https://www.amfiindia.com/spages/NAVAll.txt", "https://portal.amfiindia.com/spages/NAVAll.txt"].filter(Boolean);
+var MFAPI_URL = (process.env.MFAPI_BASE_URL || "https://api.mfapi.in").replace(/\/$/, "");
+var AMFI_TTL_MS = 6 * 60 * 60 * 1e3;
+var HISTORY_TTL_MS = 3 * 60 * 60 * 1e3;
+function isoDate(d) {
+  const m = d.trim().match(/^(\d{1,2})-([A-Za-z]{3}|\d{2})-(\d{4})$/);
+  if (!m) return d.trim();
+  const months = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+  const mm = /\d/.test(m[2]) ? m[2] : String(months.indexOf(m[2].toLowerCase()) + 1).padStart(2, "0");
+  return `${m[3]}-${mm}-${m[1].padStart(2, "0")}`;
+}
+function parseAmfiNav(text) {
+  const out = [];
+  let category = "", house = "";
+  for (const raw of text.split(/\r?\n/)) {
+    const line = raw.trim();
+    if (!line || line.startsWith("Scheme Code;")) continue;
+    const parts = line.split(";");
+    if (parts.length >= 6 && /^\d+$/.test(parts[0])) {
+      const nav = Number(parts[4]);
+      if (!Number.isFinite(nav) || nav <= 0) continue;
+      const isin = (s) => /^INF[A-Z0-9]{9}$/.test(s.trim()) ? s.trim() : null;
+      out.push({ code: parts[0], isinGrowth: isin(parts[1]), isinReinvest: isin(parts[2]), name: parts[3].trim(), nav, navDate: isoDate(parts[5]), category, house, assetClass: assetClassFor(category, parts[3]) });
+    } else if (/schemes?\s*\(/i.test(line)) {
+      category = line.replace(/^.*?\((.*)\)\s*$/, "$1").trim() || line;
+    } else if (parts.length === 1) {
+      house = line;
+    }
+  }
+  return out;
+}
+var amfiCache = null;
+var amfiLoading = null;
+async function amfiSchemes() {
+  if (amfiCache && Date.now() - amfiCache.at < AMFI_TTL_MS) return amfiCache;
+  if (amfiLoading) return amfiLoading;
+  amfiLoading = (async () => {
+    try {
+      const problems = [];
+      let list = [];
+      for (const url of AMFI_URLS) {
+        try {
+          const res = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0 (compatible; ArthaMind/1.0)", Accept: "text/plain,*/*" }, redirect: "follow", signal: AbortSignal.timeout(15e3) });
+          const text = await res.text();
+          if (!res.ok) {
+            problems.push(`${new URL(url).host}: HTTP ${res.status}`);
+            continue;
+          }
+          list = parseAmfiNav(text);
+          if (list.length >= 1e3) break;
+          problems.push(`${new URL(url).host}: ${list.length} rows from ${text.length} bytes, starts "${text.slice(0, 80).replace(/\s+/g, " ")}"`);
+        } catch (e) {
+          problems.push(`${new URL(url).host}: ${e instanceof Error ? e.message : "failed"}`);
+        }
+      }
+      if (list.length < 1e3) throw new Error(`AMFI NAV file unavailable (${problems.join("; ")}).`);
+      const byCode = new Map(list.map((s) => [s.code, s]));
+      const byIsin = /* @__PURE__ */ new Map();
+      for (const s of list) {
+        if (s.isinGrowth) byIsin.set(s.isinGrowth, s);
+        if (s.isinReinvest) byIsin.set(s.isinReinvest, s);
+      }
+      amfiCache = { at: Date.now(), list, byCode, byIsin };
+      return amfiCache;
+    } catch (error) {
+      if (amfiCache) return amfiCache;
+      throw error;
+    } finally {
+      amfiLoading = null;
+    }
+  })();
+  return amfiLoading;
+}
+var normal = (s) => s.toLowerCase().replace(/[^a-z0-9 ]+/g, " ").replace(/\s+/g, " ").trim();
+function searchSchemes(list, query, limit = 20) {
+  const words = normal(query).split(" ").filter((w) => w.length >= 2);
+  if (!words.length) return [];
+  const hits = list.filter((s) => {
+    const n = normal(`${s.name} ${s.house}`);
+    return words.every((w) => n.includes(w));
+  });
+  const rank = (s) => (/direct/i.test(s.name) ? 0 : 2) + (/growth/i.test(s.name) ? 0 : 1);
+  return hits.sort((a, b) => rank(a) - rank(b) || a.name.length - b.name.length).slice(0, limit);
+}
+async function searchFunds(query, limit = 20) {
+  const q = query.trim().slice(0, 80);
+  if (q.length < 2) return { results: [], source: "AMFI" };
+  try {
+    const { list } = await amfiSchemes();
+    return { results: searchSchemes(list, q, limit), source: "AMFI daily NAV file" };
+  } catch (amfiError) {
+    const res = await fetch(`${MFAPI_URL}/mf/search?q=${encodeURIComponent(q)}`, { headers: { Accept: "application/json" }, signal: AbortSignal.timeout(1e4) }).catch(() => null);
+    if (!res?.ok) throw amfiError;
+    const rows = await res.json();
+    const results = rows.slice(0, 200).map((r) => ({ code: String(r.schemeCode), name: r.schemeName, house: "", category: "", assetClass: assetClassFor("", r.schemeName), isinGrowth: null, isinReinvest: null, nav: 0, navDate: "" }));
+    return { results: searchSchemes(results, q, limit), source: "mfapi.in (AMFI data)" };
+  }
+}
+async function fundsByIsin(items) {
+  const out = {};
+  const list = items.slice(0, 60);
+  for (let i = 0; i < list.length; i += 6) {
+    const batch = list.slice(i, i + 6);
+    const found = await Promise.all(batch.map((it) => matchFund(it.isin, it.name ?? "").catch(() => null)));
+    batch.forEach((it, j) => {
+      out[it.isin.toUpperCase()] = found[j];
+    });
+  }
+  return out;
+}
+var historyCache = /* @__PURE__ */ new Map();
+function schemeFromMeta(code, meta, last) {
+  if (!meta?.scheme_name) return null;
+  const category = (meta.scheme_category || "").replace(/^.*?Scheme\s*-\s*/i, (m) => m).trim();
+  return { code, name: meta.scheme_name, house: meta.fund_house || "", category, assetClass: assetClassFor(category, meta.scheme_name), isinGrowth: meta.isin_growth || null, isinReinvest: meta.isin_div_reinvestment || null, nav: last?.nav ?? 0, navDate: last?.date ?? "" };
+}
+async function mfapiScheme(code, latestOnly = false) {
+  const res = await fetch(`${MFAPI_URL}/mf/${code}${latestOnly ? "/latest" : ""}`, { headers: { Accept: "application/json" }, signal: AbortSignal.timeout(1e4) });
+  if (!res.ok) throw new Error(`mfapi HTTP ${res.status}`);
+  const body = await res.json();
+  const points = (body.data ?? []).map((d) => ({ date: isoDate(d.date), nav: Number(d.nav) })).filter((p) => Number.isFinite(p.nav) && p.nav > 0).reverse();
+  return { meta: body.meta ?? null, points };
+}
+function thinHistory(points) {
+  if (points.length < 400) return points;
+  const cutoff = new Date(new Date(points[points.length - 1].date).getTime() - 366 * 864e5).toISOString().slice(0, 10);
+  const out = [];
+  let lastWeek = "";
+  for (const p of points) {
+    if (p.date >= cutoff) {
+      out.push(p);
+      continue;
+    }
+    const d = new Date(p.date);
+    const week = `${d.getUTCFullYear()}-${Math.floor((d.getTime() / 864e5 + 4) / 7)}`;
+    if (week !== lastWeek) {
+      out.push(p);
+      lastWeek = week;
+    }
+  }
+  return out;
+}
+async function fundDetail(code) {
+  if (!/^\d{3,8}$/.test(code)) throw new Error("Invalid scheme code.");
+  const amfi = await amfiSchemes().catch(() => null);
+  let cached = historyCache.get(code);
+  if (!cached || Date.now() - cached.at > HISTORY_TTL_MS) {
+    try {
+      const { meta, points } = await mfapiScheme(code);
+      cached = { at: Date.now(), points, meta };
+      historyCache.set(code, cached);
+      if (historyCache.size > 300) historyCache.delete(historyCache.keys().next().value);
+    } catch {
+      const a = amfi?.byCode.get(code);
+      cached = { at: Date.now(), points: a ? [{ date: a.navDate, nav: a.nav }] : [], meta: null };
+    }
+  }
+  const last = cached.points[cached.points.length - 1];
+  const scheme = amfi?.byCode.get(code) ?? schemeFromMeta(code, cached.meta, last);
+  if (!scheme && !cached.points.length) throw new Error("Scheme not found.");
+  return { scheme, history: thinHistory(cached.points), returns: trailingReturns(cached.points), sources: [amfi ? "AMFI (official NAVs)" : "mfapi.in (AMFI NAV data)"] };
+}
+async function matchFund(isin, name) {
+  const id = isin.trim().toUpperCase();
+  const amfi = await amfiSchemes().catch(() => null);
+  if (amfi) return amfi.byIsin.get(id) ?? null;
+  const words = name.replace(/\(.*?\)/g, " ").replace(/[^A-Za-z0-9 ]+/g, " ").split(/\s+/).filter((w) => w.length > 1 && !/^(fund|plan|option|the|of)$/i.test(w)).slice(0, 5).join(" ");
+  if (!words) return null;
+  const res = await fetch(`${MFAPI_URL}/mf/search?q=${encodeURIComponent(words)}`, { headers: { Accept: "application/json" }, signal: AbortSignal.timeout(1e4) }).catch(() => null);
+  if (!res?.ok) return null;
+  const rows = (await res.json()).slice(0, 12);
+  const direct = /direct/i.test(name), growth = !/idcw|dividend/i.test(name);
+  rows.sort((a, b) => Number(/direct/i.test(b.schemeName) === direct) - Number(/direct/i.test(a.schemeName) === direct) || Number(!/idcw|dividend/i.test(b.schemeName) === growth) - Number(!/idcw|dividend/i.test(a.schemeName) === growth));
+  for (const r of rows.slice(0, 6)) {
+    try {
+      const { meta, points } = await mfapiScheme(String(r.schemeCode), true);
+      if (meta && (meta.isin_growth === id || meta.isin_div_reinvestment === id)) return schemeFromMeta(String(r.schemeCode), meta, points[points.length - 1]);
+    } catch {
+    }
+  }
+  return null;
+}
+function trailingReturns(points) {
+  if (points.length < 2) return {};
+  const last = points[points.length - 1];
+  const at = (days) => {
+    const target = new Date(new Date(last.date).getTime() - days * 864e5).toISOString().slice(0, 10);
+    let found;
+    for (const p of points) {
+      if (p.date <= target) found = p;
+      else break;
+    }
+    return found;
+  };
+  const out = {};
+  for (const [label, days] of [["1M", 30], ["6M", 182], ["1Y", 365], ["3Y", 1095], ["5Y", 1826]]) {
+    const p = at(days);
+    if (!p) continue;
+    const years = days / 365;
+    out[label] = years <= 1 ? last.nav / p.nav - 1 : (last.nav / p.nav) ** (1 / years) - 1;
+  }
+  return out;
+}
+
 // src/data/indiaMarketUniverse.ts
 var c = (id, officialName, displayName, providerSymbol, sector, industry, officialWebsite) => ({ id, officialName, displayName, providerSymbol, exchange: "NSE", sector, industry, officialWebsite, providerSupport: "configured" });
 var INDIA_MARKET_UNIVERSE = [
@@ -2214,7 +2507,7 @@ async function checkNewsProviderDiagnostic() {
 var clean = (v) => v.replace(/<[^>]+>/g, " ").replace(/&[a-z]+;/gi, " ").replace(/\s+/g, " ").trim();
 var sentences = (v) => clean(v).split(/(?<=[.!?])\s+(?=[A-Z0-9“"'‘])/).map((s) => s.trim()).filter((s) => s.length > 25);
 var uniq = (list, key = (t) => String(t)) => list.filter((t, i) => list.findIndex((o) => key(o) === key(t)) === i);
-var ENTITIES = [
+var ENTITIES2 = [
   { re: /\bReliance\b/i, name: "Reliance Industries", type: "company", symbol: "RELIANCE" },
   { re: /\bTCS\b|Tata Consultancy/i, name: "TCS", type: "company", symbol: "TCS" },
   { re: /\bHDFC Bank\b/i, name: "HDFC Bank", type: "company", symbol: "HDFCBANK" },
@@ -2378,7 +2671,7 @@ function buildRuleBasedNewsBrief(input, now = /* @__PURE__ */ new Date()) {
   const text = `${title}. ${summaryText}`;
   const topics = TOPICS.filter((t) => t.re.test(text));
   const primary = topics[0];
-  const entities = uniq(ENTITIES.filter((e) => e.re.test(text)).map(({ name, type, symbol }) => ({ name, type, symbol })), (e) => e.name).slice(0, 6);
+  const entities = uniq(ENTITIES2.filter((e) => e.re.test(text)).map(({ name, type, symbol }) => ({ name, type, symbol })), (e) => e.name).slice(0, 6);
   const figures = extractFigures(text);
   const { sentiment, strength } = scoreSentiment(text);
   const body = sentences(summaryText).filter((s) => s.toLowerCase() !== title.toLowerCase());
@@ -3308,6 +3601,47 @@ var cache2 = /* @__PURE__ */ new Map();
 var CACHE_MS = 6e4;
 var istNow = () => (/* @__PURE__ */ new Date()).toLocaleString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
 var fmt = (v) => v.toLocaleString("en-IN", { maximumFractionDigits: v < 10 ? 4 : 2 });
+var FUND_HOUSES = /\b(hdfc|sbi|icici(?: prudential)?|axis|parag parikh|ppfas|nippon(?: india)?|kotak|mirae(?: asset)?|uti|quant|dsp|tata|aditya birla(?: sun life)?|motilal oswal|franklin(?: india| templeton)?|canara robeco|bandhan|edelweiss|invesco(?: india)?|hsbc|pgim(?: india)?|sundaram|mahindra manulife|navi|zerodha|groww|whiteoak|360 one|bajaj finserv|jm financial|lic|baroda bnp paribas|union|samco|old bridge|helios|quantum)\b/i;
+var FUND_WORD = /\b(fund|mutual funds?|nav|sip|scheme|elss|index fund|etf)\b/i;
+var FUND_STOP = new Set("what is the of should i invest in for a an my how are was were today now current latest nav returns return sip mutual fund funds scheme good bad better best me tell about to and or vs with price value performance".split(" "));
+function fundQueryFrom(q) {
+  if (!FUND_WORD.test(q)) return null;
+  const m = q.match(FUND_HOUSES);
+  if (!m || m.index === void 0) return null;
+  const words = q.slice(m.index).toLowerCase().replace(/[^a-z0-9& ]+/g, " ").split(/\s+/).filter((w) => w && !FUND_STOP.has(w));
+  const out = words.slice(0, 5).join(" ");
+  return out.split(" ").length >= 2 ? out : null;
+}
+async function fundContext(q) {
+  const query = fundQueryFrom(q);
+  if (!query) return { lines: [], sources: [] };
+  const { results } = await searchFunds(query, 3);
+  const pick = results[0];
+  if (!pick) return { lines: [`Mutual fund data: no scheme matched "${query}"; ask the user for the exact fund name.`], sources: [] };
+  const d = await fundDetail(pick.code);
+  const last = d.history[d.history.length - 1];
+  const r = d.returns;
+  const pc = (k, label) => r[k] !== void 0 ? `${label} ${(r[k] * 100).toFixed(1)}%` : "";
+  const name = d.scheme?.name ?? pick.name;
+  const line = `- ${name}${d.scheme?.category ? ` [${d.scheme.category}]` : ""}: NAV \u20B9${last?.nav} on ${last?.date}; returns ${[pc("1Y", "1 year"), pc("3Y", "3 years (a year)"), pc("5Y", "5 years (a year)")].filter(Boolean).join(", ")}. Source: ${d.sources.join(", ")}. Past returns do not guarantee future returns.`;
+  return { lines: ["Mutual fund data (official NAVs):", line], sources: [{ name: `AMFI NAV: ${name.slice(0, 80)}`, dataDate: last?.date ?? "", freshness: "end of day", kind: "fund" }] };
+}
+async function pageContext(q) {
+  const links = linksIn(q);
+  if (!links.length) return { lines: [], sources: [] };
+  const lines = [];
+  const sources = [];
+  for (const link of links) {
+    try {
+      const p = await readWebPage(link);
+      lines.push(`Web page the user shared \u2014 "${p.title}" (${p.url}), read ${p.retrievedAt}:`, p.text.slice(0, 2600));
+      sources.push({ name: `Page: ${p.title.slice(0, 90)}`, dataDate: p.retrievedAt, freshness: "read now", url: p.url, kind: "page" });
+    } catch (e) {
+      lines.push(`Web page ${link} could not be read (${e instanceof Error ? e.message : "error"}); tell the user and do not guess its contents.`);
+    }
+  }
+  return { lines, sources };
+}
 async function gatherLiveContext(query, mode = "auto") {
   const q = query.replace(/\s+/g, " ").trim().slice(0, 600);
   if (!q) return { text: "", sources: [] };
@@ -3317,10 +3651,12 @@ async function gatherLiveContext(query, mode = "auto") {
   const instruments = detectInstruments(q);
   const wantNews = NEWSY.test(q) || instruments.length > 0 && /\bwhy|move|fell|rose|up|down\b/i.test(q);
   const wantWeb = shouldSearchWeb(q, mode);
-  const [quotes, news, web] = await Promise.all([
+  const [quotes, news, web, page, fund] = await Promise.all([
     Promise.all(instruments.map((i) => withTimeout(getMarketQuote(i.symbol).then((r) => ({ i, quote: r.quote })), 3500))),
     wantNews ? withTimeout(getBusinessNews(instruments[0]?.label ?? q.split(" ").slice(0, 6).join(" "), "business", "india"), 4e3) : Promise.resolve(null),
-    wantWeb ? withTimeout(webSearch(q), 7e3) : Promise.resolve(null)
+    wantWeb ? withTimeout(webSearch(q), 7e3) : Promise.resolve(null),
+    withTimeout(pageContext(query.slice(0, 2e3)), 11e3),
+    withTimeout(fundContext(q), 8e3)
   ]);
   const lines = [];
   const sources = [];
@@ -3351,6 +3687,14 @@ async function gatherLiveContext(query, mode = "auto") {
     });
   } else if (wantWeb) {
     lines.push("Web search: no results could be retrieved; do not state current figures you cannot verify.");
+  }
+  if (page?.lines.length) {
+    lines.push(...page.lines);
+    sources.push(...page.sources);
+  }
+  if (fund?.lines.length) {
+    lines.push(...fund.lines);
+    sources.push(...fund.sources);
   }
   const formulas = rankPassages(q, [], 2).flatMap((h) => h.kind === "formula" && h.score > 2.5 && h.entry.formula ? [h.entry] : []);
   if (formulas.length) {
@@ -5951,221 +6295,6 @@ async function getTerminalSnapshot() {
   return snapshotInflight;
 }
 
-// src/data/fundClass.ts
-function assetClassFor(category, name = "") {
-  const c2 = `${category} ${name}`.toLowerCase();
-  if (/gold|silver|commodit/.test(c2)) return "Gold & commodities";
-  if (/hybrid|balanced|asset allocation|arbitrage|equity savings|multi asset/.test(c2)) return "Hybrid";
-  if (/equity|elss|tax saver|index|etf|large ?cap|mid ?cap|small ?cap|large (&|and) mid|flexi|multi ?cap|focused|value|contra|dividend yield|sectoral|thematic|nifty|sensex|top 100|top 200|bluechip|blue chip|opportunities|infrastructure|pharma|banking (&|and) financial services|technology|consumption/.test(c2)) return "Equity";
-  if (/debt|liquid|overnight|money market|gilt|bond|duration|credit risk|banking and psu|floater|income|fixed maturity|fmp/.test(c2)) return "Debt";
-  return "Other";
-}
-
-// server/mutualFundService.ts
-var AMFI_URLS = [process.env.AMFI_NAV_URL, "https://www.amfiindia.com/spages/NAVAll.txt", "https://portal.amfiindia.com/spages/NAVAll.txt"].filter(Boolean);
-var MFAPI_URL = (process.env.MFAPI_BASE_URL || "https://api.mfapi.in").replace(/\/$/, "");
-var AMFI_TTL_MS = 6 * 60 * 60 * 1e3;
-var HISTORY_TTL_MS = 3 * 60 * 60 * 1e3;
-function isoDate(d) {
-  const m = d.trim().match(/^(\d{1,2})-([A-Za-z]{3}|\d{2})-(\d{4})$/);
-  if (!m) return d.trim();
-  const months = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
-  const mm = /\d/.test(m[2]) ? m[2] : String(months.indexOf(m[2].toLowerCase()) + 1).padStart(2, "0");
-  return `${m[3]}-${mm}-${m[1].padStart(2, "0")}`;
-}
-function parseAmfiNav(text) {
-  const out = [];
-  let category = "", house = "";
-  for (const raw of text.split(/\r?\n/)) {
-    const line = raw.trim();
-    if (!line || line.startsWith("Scheme Code;")) continue;
-    const parts = line.split(";");
-    if (parts.length >= 6 && /^\d+$/.test(parts[0])) {
-      const nav = Number(parts[4]);
-      if (!Number.isFinite(nav) || nav <= 0) continue;
-      const isin = (s) => /^INF[A-Z0-9]{9}$/.test(s.trim()) ? s.trim() : null;
-      out.push({ code: parts[0], isinGrowth: isin(parts[1]), isinReinvest: isin(parts[2]), name: parts[3].trim(), nav, navDate: isoDate(parts[5]), category, house, assetClass: assetClassFor(category, parts[3]) });
-    } else if (/schemes?\s*\(/i.test(line)) {
-      category = line.replace(/^.*?\((.*)\)\s*$/, "$1").trim() || line;
-    } else if (parts.length === 1) {
-      house = line;
-    }
-  }
-  return out;
-}
-var amfiCache = null;
-var amfiLoading = null;
-async function amfiSchemes() {
-  if (amfiCache && Date.now() - amfiCache.at < AMFI_TTL_MS) return amfiCache;
-  if (amfiLoading) return amfiLoading;
-  amfiLoading = (async () => {
-    try {
-      const problems = [];
-      let list = [];
-      for (const url of AMFI_URLS) {
-        try {
-          const res = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0 (compatible; ArthaMind/1.0)", Accept: "text/plain,*/*" }, redirect: "follow", signal: AbortSignal.timeout(15e3) });
-          const text = await res.text();
-          if (!res.ok) {
-            problems.push(`${new URL(url).host}: HTTP ${res.status}`);
-            continue;
-          }
-          list = parseAmfiNav(text);
-          if (list.length >= 1e3) break;
-          problems.push(`${new URL(url).host}: ${list.length} rows from ${text.length} bytes, starts "${text.slice(0, 80).replace(/\s+/g, " ")}"`);
-        } catch (e) {
-          problems.push(`${new URL(url).host}: ${e instanceof Error ? e.message : "failed"}`);
-        }
-      }
-      if (list.length < 1e3) throw new Error(`AMFI NAV file unavailable (${problems.join("; ")}).`);
-      const byCode = new Map(list.map((s) => [s.code, s]));
-      const byIsin = /* @__PURE__ */ new Map();
-      for (const s of list) {
-        if (s.isinGrowth) byIsin.set(s.isinGrowth, s);
-        if (s.isinReinvest) byIsin.set(s.isinReinvest, s);
-      }
-      amfiCache = { at: Date.now(), list, byCode, byIsin };
-      return amfiCache;
-    } catch (error) {
-      if (amfiCache) return amfiCache;
-      throw error;
-    } finally {
-      amfiLoading = null;
-    }
-  })();
-  return amfiLoading;
-}
-var normal = (s) => s.toLowerCase().replace(/[^a-z0-9 ]+/g, " ").replace(/\s+/g, " ").trim();
-function searchSchemes(list, query, limit = 20) {
-  const words = normal(query).split(" ").filter((w) => w.length >= 2);
-  if (!words.length) return [];
-  const hits = list.filter((s) => {
-    const n = normal(`${s.name} ${s.house}`);
-    return words.every((w) => n.includes(w));
-  });
-  const rank = (s) => (/direct/i.test(s.name) ? 0 : 2) + (/growth/i.test(s.name) ? 0 : 1);
-  return hits.sort((a, b) => rank(a) - rank(b) || a.name.length - b.name.length).slice(0, limit);
-}
-async function searchFunds(query, limit = 20) {
-  const q = query.trim().slice(0, 80);
-  if (q.length < 2) return { results: [], source: "AMFI" };
-  try {
-    const { list } = await amfiSchemes();
-    return { results: searchSchemes(list, q, limit), source: "AMFI daily NAV file" };
-  } catch (amfiError) {
-    const res = await fetch(`${MFAPI_URL}/mf/search?q=${encodeURIComponent(q)}`, { headers: { Accept: "application/json" }, signal: AbortSignal.timeout(1e4) }).catch(() => null);
-    if (!res?.ok) throw amfiError;
-    const rows = await res.json();
-    const results = rows.slice(0, 200).map((r) => ({ code: String(r.schemeCode), name: r.schemeName, house: "", category: "", assetClass: assetClassFor("", r.schemeName), isinGrowth: null, isinReinvest: null, nav: 0, navDate: "" }));
-    return { results: searchSchemes(results, q, limit), source: "mfapi.in (AMFI data)" };
-  }
-}
-async function fundsByIsin(items) {
-  const out = {};
-  const list = items.slice(0, 60);
-  for (let i = 0; i < list.length; i += 6) {
-    const batch = list.slice(i, i + 6);
-    const found = await Promise.all(batch.map((it) => matchFund(it.isin, it.name ?? "").catch(() => null)));
-    batch.forEach((it, j) => {
-      out[it.isin.toUpperCase()] = found[j];
-    });
-  }
-  return out;
-}
-var historyCache = /* @__PURE__ */ new Map();
-function schemeFromMeta(code, meta, last) {
-  if (!meta?.scheme_name) return null;
-  const category = (meta.scheme_category || "").replace(/^.*?Scheme\s*-\s*/i, (m) => m).trim();
-  return { code, name: meta.scheme_name, house: meta.fund_house || "", category, assetClass: assetClassFor(category, meta.scheme_name), isinGrowth: meta.isin_growth || null, isinReinvest: meta.isin_div_reinvestment || null, nav: last?.nav ?? 0, navDate: last?.date ?? "" };
-}
-async function mfapiScheme(code, latestOnly = false) {
-  const res = await fetch(`${MFAPI_URL}/mf/${code}${latestOnly ? "/latest" : ""}`, { headers: { Accept: "application/json" }, signal: AbortSignal.timeout(1e4) });
-  if (!res.ok) throw new Error(`mfapi HTTP ${res.status}`);
-  const body = await res.json();
-  const points = (body.data ?? []).map((d) => ({ date: isoDate(d.date), nav: Number(d.nav) })).filter((p) => Number.isFinite(p.nav) && p.nav > 0).reverse();
-  return { meta: body.meta ?? null, points };
-}
-function thinHistory(points) {
-  if (points.length < 400) return points;
-  const cutoff = new Date(new Date(points[points.length - 1].date).getTime() - 366 * 864e5).toISOString().slice(0, 10);
-  const out = [];
-  let lastWeek = "";
-  for (const p of points) {
-    if (p.date >= cutoff) {
-      out.push(p);
-      continue;
-    }
-    const d = new Date(p.date);
-    const week = `${d.getUTCFullYear()}-${Math.floor((d.getTime() / 864e5 + 4) / 7)}`;
-    if (week !== lastWeek) {
-      out.push(p);
-      lastWeek = week;
-    }
-  }
-  return out;
-}
-async function fundDetail(code) {
-  if (!/^\d{3,8}$/.test(code)) throw new Error("Invalid scheme code.");
-  const amfi = await amfiSchemes().catch(() => null);
-  let cached = historyCache.get(code);
-  if (!cached || Date.now() - cached.at > HISTORY_TTL_MS) {
-    try {
-      const { meta, points } = await mfapiScheme(code);
-      cached = { at: Date.now(), points, meta };
-      historyCache.set(code, cached);
-      if (historyCache.size > 300) historyCache.delete(historyCache.keys().next().value);
-    } catch {
-      const a = amfi?.byCode.get(code);
-      cached = { at: Date.now(), points: a ? [{ date: a.navDate, nav: a.nav }] : [], meta: null };
-    }
-  }
-  const last = cached.points[cached.points.length - 1];
-  const scheme = amfi?.byCode.get(code) ?? schemeFromMeta(code, cached.meta, last);
-  if (!scheme && !cached.points.length) throw new Error("Scheme not found.");
-  return { scheme, history: thinHistory(cached.points), returns: trailingReturns(cached.points), sources: [amfi ? "AMFI (official NAVs)" : "mfapi.in (AMFI NAV data)"] };
-}
-async function matchFund(isin, name) {
-  const id = isin.trim().toUpperCase();
-  const amfi = await amfiSchemes().catch(() => null);
-  if (amfi) return amfi.byIsin.get(id) ?? null;
-  const words = name.replace(/\(.*?\)/g, " ").replace(/[^A-Za-z0-9 ]+/g, " ").split(/\s+/).filter((w) => w.length > 1 && !/^(fund|plan|option|the|of)$/i.test(w)).slice(0, 5).join(" ");
-  if (!words) return null;
-  const res = await fetch(`${MFAPI_URL}/mf/search?q=${encodeURIComponent(words)}`, { headers: { Accept: "application/json" }, signal: AbortSignal.timeout(1e4) }).catch(() => null);
-  if (!res?.ok) return null;
-  const rows = (await res.json()).slice(0, 12);
-  const direct = /direct/i.test(name), growth = !/idcw|dividend/i.test(name);
-  rows.sort((a, b) => Number(/direct/i.test(b.schemeName) === direct) - Number(/direct/i.test(a.schemeName) === direct) || Number(!/idcw|dividend/i.test(b.schemeName) === growth) - Number(!/idcw|dividend/i.test(a.schemeName) === growth));
-  for (const r of rows.slice(0, 6)) {
-    try {
-      const { meta, points } = await mfapiScheme(String(r.schemeCode), true);
-      if (meta && (meta.isin_growth === id || meta.isin_div_reinvestment === id)) return schemeFromMeta(String(r.schemeCode), meta, points[points.length - 1]);
-    } catch {
-    }
-  }
-  return null;
-}
-function trailingReturns(points) {
-  if (points.length < 2) return {};
-  const last = points[points.length - 1];
-  const at = (days) => {
-    const target = new Date(new Date(last.date).getTime() - days * 864e5).toISOString().slice(0, 10);
-    let found;
-    for (const p of points) {
-      if (p.date <= target) found = p;
-      else break;
-    }
-    return found;
-  };
-  const out = {};
-  for (const [label, days] of [["1M", 30], ["6M", 182], ["1Y", 365], ["3Y", 1095], ["5Y", 1826]]) {
-    const p = at(days);
-    if (!p) continue;
-    const years = days / 365;
-    out[label] = years <= 1 ? last.nav / p.nav - 1 : (last.nav / p.nav) ** (1 / years) - 1;
-  }
-  return out;
-}
-
 // server/voiceService.ts
 var VOICE_LANGS = {
   en: { name: "English", tts: "en", cloud: "en-IN" },
@@ -6344,6 +6473,16 @@ apiRouter.post("/voice/tts", voiceLimiter, (req, res) => {
 });
 apiRouter.get("/voice/tts", voiceLimiter, (req, res) => {
   void sendSpeech(res, String(req.query.text ?? "").trim().slice(0, 600), String(req.query.lang ?? "").toLowerCase(), req.query.rate);
+});
+var readerLimiter = createRateLimiter({ windowMs: 6e4, max: 12, message: "Too many links at once. Please wait a minute." });
+apiRouter.get("/web/read", readerLimiter, async (req, res) => {
+  const url = String(req.query.url ?? "").slice(0, 2e3);
+  if (!url) return res.status(400).json({ error: "Send a link to read." });
+  try {
+    res.json(await readWebPage(url));
+  } catch (e) {
+    res.status(422).json({ error: e instanceof Error ? e.message : "This page could not be read." });
+  }
 });
 apiRouter.get("/mf/search", async (req, res) => {
   try {

@@ -39,7 +39,7 @@ function observeCountUps(root: HTMLElement, reduce: boolean): () => void {
 /**
  * Adds `.in` to staggered groups; each child receives a `--stagger` index for CSS delays.
  * Groups rendered later (news and market cards arrive after a fetch) are picked up by a
- * MutationObserver, so late content still gets its reveal.
+ * MutationObserver, so late content still gets its reveal. Late `.cl-reveal` blocks too.
  */
 function observeStaggerGroups(root: HTMLElement, reduce: boolean): () => void {
   const index = (group: HTMLElement) => Array.from(group.children).forEach((child, i) => (child as HTMLElement).style.setProperty('--stagger', String(i)));
@@ -49,8 +49,10 @@ function observeStaggerGroups(root: HTMLElement, reduce: boolean): () => void {
     io?.unobserve(entry.target);
   }), { rootMargin: '0px 0px -10% 0px', threshold: 0.1 });
   const bound = new WeakSet<Element>();
-  const scan = () => root.querySelectorAll<HTMLElement>('[data-stagger]').forEach((group) => {
-    index(group);
+  // Lazily mounted sections (`.cl-reveal-section`) arrive after the first scan, so they are
+  // picked up here too; otherwise they would stay at opacity 0.
+  const scan = () => root.querySelectorAll<HTMLElement>('[data-stagger], .cl-reveal, .cl-reveal-section').forEach((group) => {
+    if (group.hasAttribute('data-stagger')) index(group);
     if (bound.has(group)) return;
     bound.add(group);
     if (io) io.observe(group); else group.classList.add('in');

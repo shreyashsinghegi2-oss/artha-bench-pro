@@ -20,7 +20,10 @@
 .hx-photo .hx-btn-primary{background:#10b981!important;border-color:#10b981!important;color:#04130d!important}
 .hx-photo .hx-btn-secondary{background:rgba(255,255,255,.12)!important;border-color:rgba(255,255,255,.55)!important;color:#fff!important;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
 @media (max-width:980px){.hx-scene{margin-top:-44px;padding:72px 0 48px;min-height:0}}
-/* Short two-line headline in green. */
-.hx-photo .hx-copy h1.hx-one.hx-short{white-space:nowrap;font-size:clamp(24px,3.1vw,46px);line-height:1.06;letter-spacing:-.03em;font-weight:800;max-width:none;color:#4ade80;text-shadow:0 3px 24px rgba(0,0,0,.45)}
-.hx-photo .hx-copy h1.hx-one.hx-short span{color:#bbf7d0}
-@media (max-width:980px){.hx-photo .hx-copy h1.hx-one.hx-short{white-space:normal;font-size:clamp(22px,6.3vw,44px)}.hx-photo .hx-copy{min-width:0}}
+/* Two-line headline: a clean white lead-in, then the promise in a mint-to-gold gradient
+   (growth and wealth) that stays readable on every photo. */
+.hx-photo .hx-copy h1.hx-one.hx-short{font-size:clamp(30px,3.7vw,54px);line-height:1.04;letter-spacing:-.025em;font-weight:800;max-width:none;color:#f8fafc;text-shadow:0 3px 24px rgba(0,0,0,.45)}
+.hx-photo .hx-copy h1.hx-one.hx-short span{background:linear-gradient(92deg,#6ee7b7 0%,#a7f3d0 45%,#fde68a 100%);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none;filter:drop-shadow(0 3px 14px rgba(0,0,0,.45));display:block;margin-top:10px;font-size:.52em;line-height:1.25;letter-spacing:-.01em;font-weight:700;max-width:24ch;text-wrap:balance}
+@media (max-width:980px){.hx-photo .hx-copy h1.hx-one.hx-short{font-size:clamp(32px,9.4vw,52px)}.hx-photo .hx-copy h1.hx-one.hx-short span{font-size:.56em}.hx-photo .hx-copy{min-width:0}}
+.hx-why{display:inline-flex;align-items:center;gap:6px;margin-top:18px;color:#d1fae5;font-size:14.5px;font-weight:700;text-decoration:none;border-bottom:1px solid rgba(209,250,229,.45);padding-bottom:2px;text-shadow:0 1px 10px rgba(0,0,0,.5)}
+.hx-why:hover{color:#fff;border-color:#fff}

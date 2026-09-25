@@ -1,10 +1,13 @@
 import React, { useMemo, useState } from 'react';
-import { ArrowRight, Bot, Loader2, RotateCcw, SkipForward } from 'lucide-react';
+import { ArrowRight, Bot, RotateCcw, SkipForward } from 'lucide-react';
 import type { AppNavigationDestination } from '../../navigationTypes';
 import type { StructuredFinancialAnswer } from '../../types';
 import { buildPagePrompt, guideFor } from '../../data/assistantGuides';
 import { StructuredFinancialAnswerView } from './StructuredFinancialAnswer';
 import { WebSearchToggle } from './WebSearchToggle';
+import { MicButton } from './MicButton';
+import { ThinkingSteps } from './ThinkingSteps';
+import { ListenBar } from '../voice/ListenBar';
 import './pageAssistant.css';
 
 interface Reply { structured: StructuredFinancialAnswer | null; text: string; offline: boolean; sources: string[] }
@@ -85,14 +88,15 @@ export const PageAssistant: React.FC<{ destination: AppNavigationDestination; sn
     {turns.map((t, i) => <div key={i} className="pa-turn">
       <p className="pa-you">{t.q}</p>
       {t.reply.offline && <p className="pa-offline">AI is offline right now; this is a basic answer.</p>}
-      {t.reply.structured ? <StructuredFinancialAnswerView answer={t.reply.structured} compact/> : <p className="pa-text">{t.reply.text}</p>}
+      {t.reply.structured ? <StructuredFinancialAnswerView answer={t.reply.structured} compact/> : <><p className="pa-text">{t.reply.text}</p><ListenBar text={t.reply.text} compact/></>}
     </div>)}
 
-    {busy && <p className="pa-busy"><Loader2 size={15} className="pa-spin"/> Reading this page and thinking…</p>}
+    <ThinkingSteps active={busy} compact/>
     {error && <p className="pa-error" role="alert">{error}</p>}
 
     {(doneAsking || turns.length > 0) && <form className="pa-form" onSubmit={(e) => { e.preventDefault(); void send(draft); }}>
       <input value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Ask about this page, or paste any link to analyse…" aria-label="Ask the assistant" maxLength={600} disabled={busy}/>
+      <MicButton onText={setDraft} onFinal={(t) => void send(t)} disabled={busy}/>
       <button type="submit" disabled={!draft.trim() || busy}>Ask</button>
     </form>}
     <div className="pa-foot"><WebSearchToggle compact/><small>Education only, not investment advice.</small></div>

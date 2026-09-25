@@ -1,0 +1,34 @@
+.lp{background:linear-gradient(180deg,#f7fbf9 0%,#fff 100%)}
+.lp h2{max-width:22ch}
+.lp-lead{max-width:760px;margin:14px 0 0;font-size:17px;line-height:1.65;color:#334155}
+.lp-goals{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:34px}
+.lp-goal{padding:22px;border-radius:20px;background:#fff;border:1px solid #e3ece8;box-shadow:0 14px 34px -26px rgba(15,23,42,.35);opacity:0;transform:translateY(16px);transition:opacity .5s ease calc(var(--i)*.1s),transform .5s ease calc(var(--i)*.1s),box-shadow .25s}
+.lp-goal:hover{box-shadow:0 24px 48px -26px rgba(5,150,105,.45)}
+.lp-goal-icon{display:inline-grid;place-items:center;width:44px;height:44px;border-radius:14px;background:#ecfdf5;color:#047857}
+.lp-goal h3{margin:14px 0 6px;font-size:18px;color:#0f172a}
+.lp-goal p{margin:0;font-size:14px;line-height:1.6;color:#475569}
+.lp-sub{margin:48px 0 18px;font-size:22px;color:#0f172a}
+.lp-flow{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px;position:relative}
+.lp-flow::before{content:"";position:absolute;left:22px;right:22px;top:22px;height:2px;background:linear-gradient(90deg,#10b981,#a7f3d0);transform-origin:left;transform:scaleX(0);transition:transform 1.4s cubic-bezier(.2,.7,.2,1) .2s}
+.lp-flow li{position:relative;display:flex;flex-direction:column;gap:12px;opacity:0;transform:translateY(14px);transition:opacity .45s ease calc(.3s + var(--i)*.22s),transform .45s ease calc(.3s + var(--i)*.22s)}
+.lp-step{position:relative;display:inline-grid;place-items:center;width:46px;height:46px;border-radius:50%;background:#047857;color:#fff;box-shadow:0 0 0 6px #ecfdf5}
+.lp-step em{position:absolute;right:-6px;top:-6px;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;background:#fff;color:#047857;border:1px solid #a7f3d0;font:800 11px/1 inherit;font-style:normal}
+.lp-flow b{display:block;font-size:15px;color:#0f172a}
+.lp-flow p{margin:6px 0 0;font-size:13px;line-height:1.55;color:#475569}
+.lp-lists{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:40px}
+.lp-list{padding:20px;border-radius:18px;background:#fff;border:1px solid #e3ece8}
+.lp-list h3{display:flex;align-items:center;gap:8px;margin:0 0 10px;font-size:16px}
+.lp-list.yes h3{color:#047857}.lp-list.no h3{color:#b91c1c}
+.lp-list ul{margin:0;padding-left:18px;display:grid;gap:6px;font-size:14px;color:#334155}
+.lp-ctas{display:flex;flex-wrap:wrap;gap:12px;margin-top:32px}
+.lp-btn{display:inline-flex;align-items:center;gap:8px;height:48px;padding:0 22px;border-radius:14px;border:1px solid #cbd5e1;background:#fff;color:#0f172a;font:700 15px/1 inherit;cursor:pointer}
+.lp-btn.primary{background:#059669;border-color:#059669;color:#fff}
+.lp-btn:hover{filter:brightness(.97)}
+.lp.lp-on .lp-goal,.lp.lp-on .lp-flow li{opacity:1;transform:none}
+.lp.lp-on .lp-flow::before{transform:scaleX(1)}
+@media (max-width:980px){.lp-goals{grid-template-columns:1fr}.lp-flow{grid-template-columns:1fr;gap:18px}.lp-flow::before{left:22px;right:auto;top:22px;bottom:22px;width:2px;height:auto;transform-origin:top;transform:scaleY(0)}.lp.lp-on .lp-flow::before{transform:scaleY(1)}.lp-flow li{flex-direction:row;align-items:flex-start;gap:16px}.lp-step{flex:none}.lp-lists{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){.lp-goal,.lp-flow li,.lp-flow::before{opacity:1;transform:none;transition:none}}
+/* "Why ArthaMind" stands out in the top navigation as a button. */
+.cl-links a[href="#purpose"]{padding:8px 14px;border-radius:999px;background:#ecfdf5;color:#047857;font-weight:800;box-shadow:inset 0 0 0 1px #a7f3d0}
+.cl-links a[href="#purpose"]::after{display:none}
+.cl-links a[href="#purpose"]:hover{background:#d1fae5}

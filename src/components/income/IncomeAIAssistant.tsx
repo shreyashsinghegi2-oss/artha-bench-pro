@@ -1,3 +1,5 @@
+import { MicButton } from '../ai/MicButton';
+import { ThinkingSteps } from '../ai/ThinkingSteps';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { WebSearchToggle } from '../ai/WebSearchToggle';
 import {
@@ -303,11 +305,7 @@ export const IncomeAIAssistant: React.FC<IncomeAIAssistantProps> = ({
               ))
             )}
 
-            {isThinking ? (
-              <div className="mr-auto inline-flex items-center gap-2 rounded-2xl border border-line bg-surface px-4 py-3 text-sm font-semibold text-secondary shadow-sm">
-                <RefreshCw className="h-4 w-4 animate-spin text-interactive" /> Reviewing the recorded income context…
-              </div>
-            ) : null}
+            <ThinkingSteps active={isThinking}/>
             {error ? (
               <div className="flex items-start gap-2 rounded-xl border border-danger/25 bg-danger-soft p-3 text-sm text-danger">
                 <CircleAlert className="mt-0.5 h-4 w-4 shrink-0" /> {error}
@@ -334,6 +332,7 @@ export const IncomeAIAssistant: React.FC<IncomeAIAssistantProps> = ({
                 className="min-h-[52px] flex-1 resize-none bg-transparent px-2 py-2 text-sm text-ink outline-none placeholder:text-secondary/70"
                 aria-label="Ask Artha Income AI"
               />
+              <MicButton onText={setInput} disabled={isThinking}/>
               <button
                 type="button"
                 onClick={() => void sendQuestion()}

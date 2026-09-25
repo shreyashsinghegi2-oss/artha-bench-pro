@@ -5,6 +5,8 @@ import { ArrowRight, BrainCircuit, ChevronDown, Send, ShieldCheck, Sparkles } fr
 import { AppNavigationDestination } from '../../navigationTypes';
 import { useAuth } from '../../auth/AuthContext';
 import { askTutorAI } from '../../services/learningApi';
+import { MicButton } from '../ai/MicButton';
+import { ThinkingSteps } from '../ai/ThinkingSteps';
 
 type AdvisorMessage = { id: string; role: 'user' | 'assistant'; text: string; at: string };
 
@@ -65,6 +67,7 @@ export const EmbeddedFinanceAdvisor: React.FC<Props> = ({ module, title, descrip
       <div className="mt-4"><WebSearchToggle/></div>
       <div className="mt-2 flex gap-2">
         <textarea rows={2} value={question} onChange={(event) => setQuestion(event.target.value)} placeholder="Ask about the calculations, pressure points, missing data, or scenarios to review…" className="min-w-0 flex-1 resize-none rounded-xl border border-line-strong bg-canvas px-3 py-2.5 text-xs text-ink outline-none focus:border-interactive focus:ring-2 focus:ring-interactive/15" aria-label={`Ask ${title}`} />
+        <MicButton onText={setQuestion} onFinal={(t) => void ask(t)} disabled={busy}/>
         <button type="button" disabled={busy || !question.trim()} onClick={() => void ask()} className="min-w-12 rounded-xl bg-brand px-3 text-white disabled:opacity-40" aria-label="Send advisor question"><Send className="mx-auto h-4 w-4" /></button>
       </div>
 
@@ -72,7 +75,7 @@ export const EmbeddedFinanceAdvisor: React.FC<Props> = ({ module, title, descrip
         {messages.map((message) => message.role === 'user'
           ? <div key={message.id} className="ml-8 rounded-xl bg-interactive-soft p-3 text-xs leading-5 text-ink"><div className="mb-1 text-[9px] font-black uppercase">You</div>{message.text}</div>
           : <article key={message.id} className="rounded-xl border border-line bg-surface p-3 text-xs leading-5 text-secondary"><div className="mb-2 flex items-center gap-2 text-[9px] font-black uppercase tracking-wider text-interactive"><Sparkles className="h-3 w-3" /> ArthaMind advisor</div><div className="whitespace-pre-wrap">{message.text}</div><ListenBar compact text={message.text}/></article>)}
-        {busy && <div className="rounded-xl border border-line bg-surface p-3 text-xs text-secondary">ArthaMind is analyzing the supplied recorded evidence…</div>}
+        <ThinkingSteps active={busy} compact/>
       </div>}
 
       <details className="mt-4 rounded-xl border border-line bg-canvas p-3 text-[9px] leading-4 text-secondary">

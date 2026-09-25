@@ -1,3 +1,5 @@
+import { MicButton } from '../ai/MicButton';
+import { ThinkingSteps } from '../ai/ThinkingSteps';
 import React, { useEffect, useState } from 'react';
 import { WebSearchToggle } from '../ai/WebSearchToggle';
 import { AlertCircle, Calculator, Database, Globe2, Send, ShieldCheck, Sparkles } from 'lucide-react';
@@ -138,6 +140,7 @@ export const ScenarioAssistantPanel: React.FC<ScenarioAssistantPanelProps> = ({
           className="min-h-[84px] flex-1 resize-y rounded-2xl border border-line bg-canvas px-3.5 py-3 text-xs leading-5 text-ink outline-none focus:border-interactive"
           placeholder="Ask ArthaMind to calculate, explain, compare assumptions, or connect the result to verified context..."
         />
+        <MicButton onText={setQuestion} disabled={loading}/>
         <button
           type="button"
           onClick={() => void analyze()}
@@ -148,6 +151,7 @@ export const ScenarioAssistantPanel: React.FC<ScenarioAssistantPanelProps> = ({
         </button>
       </div>
 
+      <ThinkingSteps active={loading} compact/>
       {error && <div className="flex items-start gap-2 rounded-xl border border-danger bg-danger-soft p-3 text-xs text-danger"><AlertCircle className="mt-0.5 h-4 w-4 shrink-0" /> {error}</div>}
 
       {response && (

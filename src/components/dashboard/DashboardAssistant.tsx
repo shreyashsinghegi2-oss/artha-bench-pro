@@ -1,3 +1,5 @@
+import { MicButton } from '../ai/MicButton';
+import { ThinkingSteps } from '../ai/ThinkingSteps';
 import React, { FormEvent, useEffect, useRef, useState } from 'react';
 import { WebSearchToggle } from '../ai/WebSearchToggle';
 import {
@@ -157,7 +159,7 @@ export const DashboardAssistant: React.FC<DashboardAssistantProps> = ({ snapshot
             </div>
           </div>
         ))}
-        {loading && <div className="flex items-center gap-2.5 text-xs text-secondary"><div className="flex h-7 w-7 items-center justify-center rounded-lg border border-interactive/30 bg-interactive/10 text-interactive"><LoaderCircle className="h-3.5 w-3.5 animate-spin" /></div>Reading enabled evidence and context…</div>}
+        <ThinkingSteps active={loading} compact/>
         <div ref={messagesEndRef} />
       </div>
 
@@ -168,6 +170,7 @@ export const DashboardAssistant: React.FC<DashboardAssistantProps> = ({ snapshot
         <form onSubmit={handleSubmit} className="relative">
           <label htmlFor="dashboard-assistant-question" className="sr-only">Ask ArthaMind AI about this dashboard</label>
           <textarea id="dashboard-assistant-question" value={question} onChange={(event) => setQuestion(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); void submitQuestion(question); } }} rows={3} maxLength={1200} disabled={!ready || loading} placeholder="Ask about public data or your explicitly enabled personal context…" className="w-full resize-none rounded-2xl border border-line-strong bg-surface px-4 py-3 pr-12 text-xs leading-5 text-ink outline-none placeholder:text-secondary focus:border-interactive focus:ring-2 focus:ring-interactive disabled:opacity-60" />
+          <MicButton className="absolute bottom-3 right-14" onText={setQuestion} disabled={!ready || loading}/>
           <button type="submit" disabled={!ready || loading || !question.trim()} aria-label="Send dashboard question" className="absolute bottom-3 right-3 flex h-8 w-8 items-center justify-center rounded-xl bg-brand text-brand-foreground hover:text-white transition hover:bg-brand-hover disabled:opacity-40"><ArrowUp className="h-4 w-4" /></button>
         </form>
         <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-[9px] text-secondary"><div className="flex items-center gap-1.5"><ShieldCheck className="h-3 w-3 text-success" />Educational analysis only — not investment, tax, legal, or financial advice.</div><button type="button" onClick={() => onNavigate('tutor')} className="inline-flex items-center gap-1 font-semibold text-interactive">Open full tutor <ExternalLink className="h-3 w-3" /></button></div>

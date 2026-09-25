@@ -6,6 +6,8 @@ import { askAiCfo, type CfoLanguage, type CfoReply, type CfoTurn } from '../../s
 import { buildCfoHealthReport, cfoPlanPrompt, formatInr, type CfoHealthReport } from '../../services/cfoAnalysis';
 import { CFO_QUESTIONS, CfoIntake, type CfoProfile } from './CfoIntake';
 import './aiCfo.css';
+import { MicButton } from './MicButton';
+import { ThinkingSteps } from './ThinkingSteps';
 
 export const CFO_STARTER_PROMPTS = [
   'Old vs new tax regime for a ₹18,00,000 salary',
@@ -204,13 +206,14 @@ export const AiCfoChat: React.FC<Props> = ({ suggestFor, externalPrompt, compact
         : message.role === 'user'
         ? <div key={message.id} className="cfo-msg cfo-msg-user">{message.text}</div>
         : <CfoAnswer key={message.id} message={message} latest={index === messages.length - 1} suggestion={message.prompt && suggestFor ? suggestFor(message.prompt) : null} onRetry={() => retry(message)}/>)}
-      {busy && <div className="cfo-msg cfo-msg-ai cfo-thinking" role="status"><span className="cfo-dots" aria-hidden="true"><i/><i/><i/></span>{THINKING_STEPS[thinking]}</div>}
+      {busy && <div className="cfo-msg cfo-msg-ai cfo-thinking-steps" role="status"><ThinkingSteps active compact/></div>}
     </div>
     <div className="cfo-web"><WebSearchToggle/></div>
     <form className="cfo-compose" onSubmit={(event) => { event.preventDefault(); void send(draft); }}>
       <textarea ref={input} value={draft} rows={1} disabled={intake} maxLength={4000} placeholder="Ask your AI CFO… e.g. Can I afford a ₹12,00,000 car on ₹1,10,000 salary?" aria-label="Ask your AI CFO"
         onChange={(event) => setDraft(event.target.value)}
         onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); void send(draft); } }}/>
+      <MicButton onText={setDraft} onFinal={(t) => void send(t)} disabled={busy || intake}/>
       <button type="submit" disabled={!draft.trim() || busy} aria-label="Send question"><ArrowUp size={17}/></button>
     </form>
   </div>;

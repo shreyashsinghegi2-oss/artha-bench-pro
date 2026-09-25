@@ -62,11 +62,12 @@ export const LandingHero: React.FC<{ onSample: () => void; onExplore: () => void
     <HeroSlideshow/>
     <div className="hx-wrap">
       <div className="hx-copy">
-        <motion.h1 id="hx-title" className="hx-one hx-short" {...item(0)}>Your AI money manager.<br/><span>Every rupee, planned.</span></motion.h1>
+        <motion.h1 id="hx-title" className="hx-one hx-short" {...item(0)}>Financial intelligence <span>that grows your money and secures your future.</span></motion.h1>
         <motion.div className="hx-ctas" {...item(1)}>
           <button type="button" className="hx-btn hx-btn-primary" onClick={onSample}>Try a sample analysis <ArrowRight size={16} aria-hidden="true"/></button>
           <button type="button" className="hx-btn hx-btn-secondary" onClick={onExplore}>Explore the workspace</button>
         </motion.div>
+        <motion.a className="hx-why" href="#purpose" {...item(1.5)}>What is ArthaMind for? See how it works <ArrowRight size={14} aria-hidden="true"/></motion.a>
       </div>
 
       <motion.div className="hx-stage" {...item(2)}>

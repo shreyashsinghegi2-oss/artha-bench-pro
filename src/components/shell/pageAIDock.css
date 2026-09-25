@@ -13,3 +13,16 @@
   .pai-panel{height:auto;max-height:90dvh;border-radius:22px 22px 0 0;animation:none}
 }
 @media (prefers-reduced-motion:reduce){.pai-panel{animation:none}.pai-launch{transition:none}}
+/* Drag to move: the launch button and, on larger screens, the panel itself. On desktop the panel
+   floats without a dimmed backdrop so the page underneath stays readable and usable. */
+.pai-launch{touch-action:none}
+.pai-launch.is-dragging{cursor:grabbing;transition:none;transform:none;box-shadow:0 18px 40px -12px rgba(2,6,23,.55)}
+.pai-grip{display:none}
+@media (min-width:721px){
+  .pai-sheet{background:transparent;pointer-events:none;padding:84px 18px 18px;align-items:flex-start}
+  .pai-panel{pointer-events:auto;height:calc(100dvh - 102px);border-radius:22px;border:1px solid var(--border-subtle);box-shadow:0 30px 70px -24px rgba(2,6,23,.45)}
+  .pai-panel.is-dragging{transition:none;opacity:.96}
+  .pai-grip{display:flex;align-items:center;justify-content:center;gap:6px;margin:-4px 36px 8px 0;padding:6px;border-radius:12px;color:var(--text-secondary);font-size:11.5px;font-weight:600;cursor:grab;touch-action:none;user-select:none}
+  .pai-grip:hover{background:var(--bg-subtle)}
+  .pai-panel.is-dragging .pai-grip{cursor:grabbing}
+}

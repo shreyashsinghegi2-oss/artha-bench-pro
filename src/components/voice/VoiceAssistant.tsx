@@ -1,5 +1,6 @@
 import React, { lazy, Suspense, useEffect, useState } from 'react';
 import { Mic } from 'lucide-react';
+import { useDraggable } from '../../hooks/useDraggable';
 import { currentPageLanguage, onPageLanguage } from '../LanguageSelector';
 import { VOICE_LANGUAGES, voiceLanguageFor } from '../../services/voice';
 import './voiceAssistant.css';
@@ -18,9 +19,10 @@ export const VoiceAssistant: React.FC = () => {
   }, []);
   // Follow the site language when it has a voice; Hindi otherwise, since most users speak it.
   const initial = voiceLanguageFor(site) ?? VOICE_LANGUAGES[0];
+  const drag = useDraggable<HTMLButtonElement>('am-drag-voice-launch');
 
   return <>
-    {!open && <button type="button" className="va-launch" onClick={() => setOpen(true)} aria-label="Ask by voice">
+    {!open && <button ref={drag.ref} style={drag.style} {...drag.handle} type="button" className={`va-launch ${drag.dragging ? 'is-dragging' : ''}`} onClick={() => setOpen(true)} aria-label="Ask by voice (drag to move)" title="Drag to move">
       <span className="va-launch-dot"><Mic size={18}/></span><span className="va-launch-text">Ask by voice</span>
     </button>}
     {open && <Suspense fallback={<div className="va-panel va-loading">Opening voice assistant…</div>}>

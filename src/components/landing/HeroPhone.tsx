@@ -123,10 +123,10 @@ const Price: React.FC<{ row: Row; run: boolean }> = ({ row, run }) => {
 };
 
 // The tour walks through the app the way a user would: home, the full dashboard, markets, a stock,
-// the AI CFO, news, tax, language and security. Kept short (about 25 s) so a visitor sees the whole loop.
+// the AI CFO, news, tax, language and security. Kept short (about 28 s) so a visitor sees the whole loop.
 type Screen = 'splash' | 'home' | 'dashboard' | 'markets' | 'stock' | 'cfo' | 'tutor' | 'news' | 'tax' | 'language' | 'security' | 'people';
 const SCREENS: Screen[] = ['splash', 'home', 'dashboard', 'markets', 'stock', 'cfo', 'news', 'tax', 'language', 'security'];
-const DURATION: Record<Screen, number> = { splash: 2900, home: 2400, dashboard: 3600, markets: 2800, stock: 2300, cfo: 2500, tutor: 2600, news: 2200, tax: 2000, language: 2000, security: 2600, people: 2000 };
+const DURATION: Record<Screen, number> = { splash: 5600, home: 2400, dashboard: 3600, markets: 2800, stock: 2300, cfo: 2500, tutor: 2600, news: 2200, tax: 2000, language: 2000, security: 2600, people: 2000 };
 type TabId = 'home' | 'markets' | 'ai' | 'news' | 'more';
 const TAB_OF: Record<Screen, TabId> = { splash: 'home', home: 'home', dashboard: 'home', markets: 'markets', stock: 'markets', cfo: 'ai', tutor: 'ai', news: 'news', tax: 'more', language: 'more', security: 'more', people: 'more' };
 const TABS: Array<{ id: TabId; label: string; icon: React.ComponentType<{ size?: number }> }> = [
@@ -153,7 +153,7 @@ const CoinFace: React.FC<{ id: string }> = ({ id }) => <svg viewBox="0 0 120 120
   <ellipse cx="46" cy="36" rx="30" ry="18" fill={`url(#${id}-spec)`}/>
 </svg>;
 
-// Coin intro, 2.6 s: drop spinning, bounce twice and settle; rest while the app loads; flip once
+// Coin intro, 4.8 s: drop spinning, bounce twice and settle; rest while the app loads; flip once
 // more with a small lift and settle steady before Home opens.
 const COIN_TIMES = [0, 0.21, 0.29, 0.36, 0.43, 0.5, 0.773, 0.886, 1];
 const COIN_EASE = ['easeIn', 'easeOut', 'easeIn', 'easeOut', 'easeIn', 'linear', 'easeOut', 'easeIn'] as const;
@@ -170,19 +170,19 @@ const CoinDrop: React.FC<{ animate: boolean }> = ({ animate }) => { const coinRe
       }}
       ref={coinRef}
       animate={{ y: [-260, 0, -46, 0, -12, 0, 0, -26, 0], rotateY: [0, 1080, 1260, 1380, 1428, 1440, 1440, 1620, 1800] }}
-      transition={{ duration: 2.6, times: COIN_TIMES, ease: [...COIN_EASE] }}>
+      transition={{ duration: 4.8, times: COIN_TIMES, ease: [...COIN_EASE] }}>
       <span className="hp-coin-face"><CoinFace id="coin-f"/><span className="hp-coin-mark"><ArthaMindLogoMark size={46} tone="ink" cut="#e6bd5c"/></span><i className="hp-coin-sweep" aria-hidden="true"/><i className="hp-coin-glint" aria-hidden="true"/></span>
       <span className="hp-coin-face back"><CoinFace id="coin-b"/><span className="hp-coin-mark"><ArthaMindLogoMark size={46} tone="ink" cut="#e6bd5c"/></span><i className="hp-coin-sweep" aria-hidden="true"/></span>
     </motion.div>
     <motion.span className="hp-coin-shadow" initial={animate ? { scaleX: 0.2, opacity: 0 } : false}
       animate={{ scaleX: [0.2, 1, 0.55, 1, 0.85, 1, 1, 0.62, 1], opacity: [0, 0.55, 0.3, 0.55, 0.45, 0.55, 0.55, 0.32, 0.55] }}
-      transition={{ duration: 2.6, times: COIN_TIMES }}/>
+      transition={{ duration: 4.8, times: COIN_TIMES }}/>
   </div>
-  <motion.div className="hp-coin-title" initial={animate ? { opacity: 0, y: 10 } : false} animate={{ opacity: 1, y: 0 }} transition={{ delay: animate ? 1.3 : 0, duration: 0.3 }}>
+  <motion.div className="hp-coin-title" initial={animate ? { opacity: 0, y: 10 } : false} animate={{ opacity: 1, y: 0 }} transition={{ delay: animate ? 2.45 : 0, duration: 0.45 }}>
     <b>ArthaMind <em>AI</em></b><small>by Artha Bench Pro</small>
   </motion.div>
-  <motion.div className="hp-coin-load" initial={animate ? { opacity: 0 } : false} animate={{ opacity: animate ? [0, 1, 1, 0] : 1 }} transition={{ duration: 1.3, delay: animate ? 1.3 : 0, times: [0, 0.1, 0.8, 1] }}>
-    <span className="hp-coin-bar"><motion.i initial={animate ? { scaleX: 0 } : false} animate={{ scaleX: 1 }} transition={{ delay: animate ? 1.35 : 0, duration: 0.85, ease: [0.4, 0, 0.2, 1] }}/></span>
+  <motion.div className="hp-coin-load" initial={animate ? { opacity: 0 } : false} animate={{ opacity: animate ? [0, 1, 1, 0] : 1 }} transition={{ duration: 2.4, delay: animate ? 2.4 : 0, times: [0, 0.1, 0.8, 1] }}>
+    <span className="hp-coin-bar"><motion.i initial={animate ? { scaleX: 0 } : false} animate={{ scaleX: 1 }} transition={{ delay: animate ? 2.5 : 0, duration: 1.6, ease: [0.4, 0, 0.2, 1] }}/></span>
     <small>Loading your money dashboard…</small>
   </motion.div>
 </div>; };

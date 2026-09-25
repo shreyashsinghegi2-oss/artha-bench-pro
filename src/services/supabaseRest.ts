@@ -75,12 +75,22 @@ function authHeaders(token?: string): HeadersInit {
   return headers;
 }
 
+/** Supabase error text rewritten so people know what to do next. */
+function friendlyAuthError(raw: string): string {
+  if (/invalid login credentials/i.test(raw)) return 'That email and password do not match an account. Check the password, use "Forgot password?" to reset it, or create a free account if you have not signed up yet. If you first signed up with Google, use the Google button.';
+  if (/user already registered/i.test(raw)) return 'An account with this email already exists. Sign in instead, or reset your password.';
+  if (/password should be at least/i.test(raw)) return 'Please choose a password of at least 8 characters.';
+  if (/rate limit|too many requests/i.test(raw)) return 'Too many attempts. Please wait a minute and try again.';
+  if (/invalid api key|no api key/i.test(raw)) return 'Sign-in is temporarily unavailable (service key problem). Please try again shortly.';
+  return raw;
+}
+
 async function requestJSON<T>(url: string, init?: RequestInit): Promise<T> {
   const response = await fetch(url, init);
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) {
-    const message = payload?.msg || payload?.message || payload?.error_description || payload?.error || `Request failed (${response.status})`;
-    throw new Error(message);
+    const raw = String(payload?.msg || payload?.message || payload?.error_description || payload?.error || `Request failed (${response.status})`);
+    throw new Error(friendlyAuthError(raw));
   }
   return payload as T;
 }

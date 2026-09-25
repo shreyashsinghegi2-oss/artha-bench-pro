@@ -58,3 +58,15 @@
 @media (max-width:1100px){.td-grid{grid-template-columns:1fr}}
 @media (max-width:760px){.td-kpis{grid-template-columns:1fr 1fr}}
 @media (prefers-reduced-motion:reduce){.td-kpi,.td-card,.td-lessons li,.td-book{animation:none}.td-cover,.td-lessons button{transition:none}}
+/* Course header: level, length, outcome, progress, next lesson and final quiz. */
+.td-course{display:grid;gap:8px;padding:14px;border-radius:14px;border:1px solid color-mix(in srgb,var(--c) 30%,var(--border-subtle));background:linear-gradient(160deg,color-mix(in srgb,var(--c) 8%,var(--bg-surface)),var(--bg-surface) 70%)}
+.td-course-top{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px}
+.td-course-top b{font-size:15px;color:var(--text-primary)}
+.td-level{padding:2px 9px;border-radius:999px;font-size:10.5px;font-weight:800}
+.td-level.beginner{background:#d1fae5;color:#047857}.td-level.intermediate{background:#dbeafe;color:#1d4ed8}.td-level.advanced{background:#ede9fe;color:#6d28d9}
+.td-meta{font-size:11.5px;color:var(--text-secondary)}
+.td-course p{margin:0;font-size:13px;line-height:1.5;color:var(--text-primary)}
+.td-course-actions{display:flex;flex-wrap:wrap;gap:8px}
+.td-course-actions button{height:34px;padding:0 12px;border-radius:10px;border:1px solid var(--border-subtle);background:var(--bg-surface);color:var(--text-primary);font-size:12.5px;font-weight:700;cursor:pointer;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.td-course-actions button.primary{background:var(--c);border-color:var(--c);color:#fff}
+.td-done{font-size:13px;font-weight:800;color:#047857}

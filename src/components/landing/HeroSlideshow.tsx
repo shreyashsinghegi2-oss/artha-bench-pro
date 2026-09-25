@@ -1,21 +1,15 @@
 import React, { useEffect, useRef, useState } from 'react';
 import './heroSlideshow.css';
 
-// Ordered like one day in the mountains: sunrise, morning, bright midday, afternoon, dusk.
-// Each photo drifts in its own direction (zoom + pan) so the loop feels like a moving camera.
+// Two photos only: a warm sunrise peak and a bright blue-sky summit, crossfading with a slow drift.
 const SLIDES = [
   { src: '/hero/mountain-6', alt: 'A knife-edge snow peak glowing at sunrise', pos: '55% 40%', move: 'hs-m1' },
-  { src: '/hero/mountain-1', alt: 'Snow peaks above a sea of clouds at sunrise', pos: '30% 40%', move: 'hs-m2' },
-  { src: '/hero/mountain-4', alt: 'Frost-covered trees and golden clouds over a winter ridge', pos: '50% 35%', move: 'hs-m3' },
-  { src: '/hero/mountain-3', alt: 'Rocky snow-capped peaks under a clear blue sky', pos: '45% 35%', move: 'hs-m4' },
-  { src: '/hero/mountain-7', alt: 'A pyramid-shaped peak under white clouds and blue sky', pos: '55% 45%', move: 'hs-m1' },
-  { src: '/hero/mountain-5', alt: 'A still crater lake reflecting cliffs, clouds and pines', pos: '50% 50%', move: 'hs-m2' },
-  { src: '/hero/mountain-2', alt: 'Pink alpenglow over snowy mountains and a forest at dusk', pos: '50% 45%', move: 'hs-m3' },
+  { src: '/hero/mountain-7', alt: 'A pyramid-shaped peak under white clouds and blue sky', pos: '55% 45%', move: 'hs-m2' },
 ];
 const HOLD_MS = 6500;
 
 /**
- * Hero background: seven mountain photos crossfading in a loop, each slowly zooming (Ken Burns).
+ * Hero background: two mountain photos crossfading in a loop, each slowly zooming (Ken Burns).
  * The first loads with high priority; the others only after the page is idle. Phones get smaller
  * files. Pauses off-screen and in background tabs; people who prefer reduced motion see one still.
  */

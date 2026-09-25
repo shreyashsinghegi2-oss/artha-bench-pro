@@ -334,16 +334,7 @@ export const HeroPhone: React.FC<{ photoSrc?: string }> = ({ photoSrc }) => {
   const lang = useLanguageCycle(running && screen === 'language', 420);
   const r = HERO_REPORT;
 
-  // 3D tilt that follows the pointer; the tour keeps running underneath it.
-  const mx = useMotionValue(0), my = useMotionValue(0);
-  const rotY = useSpring(useTransform(mx, [-0.5, 0.5], [-14, 14]), { stiffness: 140, damping: 16 });
-  const rotX = useSpring(useTransform(my, [-0.5, 0.5], [10, -10]), { stiffness: 140, damping: 16 });
-  const onMove = (e: React.PointerEvent) => {
-    if (reduced || e.pointerType === 'touch') return;
-    const b = ref.current?.getBoundingClientRect(); if (!b) return;
-    mx.set((e.clientX - b.left) / b.width - 0.5); my.set((e.clientY - b.top) / b.height - 0.5);
-  };
-  const onLeave = () => { mx.set(0); my.set(0); };
+  // The phone stays steady: no pointer tilt, so touching or hovering never moves it.
 
   useEffect(() => {
     const onVis = () => setPageVisible(document.visibilityState === 'visible');
@@ -385,8 +376,8 @@ export const HeroPhone: React.FC<{ photoSrc?: string }> = ({ photoSrc }) => {
   const time = clock.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: false });
   const dark = screen === 'splash' || screen === 'home';
 
-  return <div ref={ref} className="hp" onPointerMove={onMove} onPointerLeave={onLeave} role="img" aria-label="ArthaMind app preview on a phone: sample profile and demo market feed">
-    <motion.div className="hp-device" style={reduced ? undefined : { rotateX: rotX, rotateY: rotY }}>
+  return <div ref={ref} className="hp" role="img" aria-label="ArthaMind app preview on a phone: sample profile and demo market feed">
+    <motion.div className="hp-device">
       <span className="hp-btn hp-btn-action" aria-hidden="true"/><span className="hp-btn hp-btn-up" aria-hidden="true"/><span className="hp-btn hp-btn-down" aria-hidden="true"/><span className="hp-btn hp-btn-power" aria-hidden="true"/>
       <div className="hp-bezel">
         <div className={`hp-screen ${dark ? 'is-dark' : ''}`}>

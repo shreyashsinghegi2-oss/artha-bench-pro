@@ -24,6 +24,9 @@ export const SUPPORTED_LANGUAGES = [
   ['ja', '日本語'],
 ] as const;
 
+/** English names, shown next to each native name so the menu stays readable in any language. */
+const ENGLISH_NAME: Record<string, string> = { en: 'English', hi: 'Hindi', mr: 'Marathi', gu: 'Gujarati', bn: 'Bengali', ta: 'Tamil', te: 'Telugu', kn: 'Kannada', ml: 'Malayalam', pa: 'Punjabi', ur: 'Urdu', or: 'Odia', as: 'Assamese', es: 'Spanish', fr: 'French', de: 'German', ar: 'Arabic', pt: 'Portuguese', it: 'Italian', ja: 'Japanese' };
+
 type GoogleTranslateElementConstructor = new (
   options: { pageLanguage: string; includedLanguages: string; autoDisplay: boolean },
   element: HTMLElement,
@@ -241,7 +244,7 @@ export const LanguageSelector: React.FC<{ compact?: boolean }> = ({ compact = fa
   const currentName = SUPPORTED_LANGUAGES.find(([code]) => code === language)?.[1] || 'English';
 
   return (
-    <div className="relative flex items-center" title={`Language: ${currentName}`}>
+    <div className="relative flex items-center notranslate" translate="no" title={`Language: ${currentName}`}>
       <Languages
         className="pointer-events-none absolute left-2.5 h-4 w-4 text-secondary"
         aria-hidden="true"
@@ -250,6 +253,7 @@ export const LanguageSelector: React.FC<{ compact?: boolean }> = ({ compact = fa
         Select language
       </label>
       <select
+        translate="no"
         id="artha-global-language"
         value={language}
         onChange={(event) => change(event.target.value)}
@@ -259,7 +263,7 @@ export const LanguageSelector: React.FC<{ compact?: boolean }> = ({ compact = fa
       >
         {SUPPORTED_LANGUAGES.map(([code, name]) => (
           <option key={code} value={code}>
-            {name}
+            {code === 'en' ? name : `${name} · ${ENGLISH_NAME[code]}`}
           </option>
         ))}
       </select>

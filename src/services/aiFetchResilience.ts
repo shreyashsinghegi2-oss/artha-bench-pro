@@ -1,3 +1,4 @@
+import { buildUserContext, useMyDataEnabled } from './userContext';
 import { logFromRequestBody } from './questionLog';
 import { buildFallbackStructuredAnswer, buildGroundedFallbackAnswer } from './reliableTutor';
 import { getWebSearchMode } from '../components/ai/WebSearchToggle';
@@ -177,6 +178,10 @@ export function installAiFetchResilience() {
       headers.set('x-artha-web-search', getWebSearchMode());
       init = { ...originalInit, headers };
       logFromRequestBody(originalInit?.body, path);
+      // With the user's consent, attach one summary of their data from every feature.
+      if (useMyDataEnabled() && typeof originalInit?.body === 'string') {
+        try { const body = JSON.parse(originalInit.body); const ctx = buildUserContext(); if (ctx && body && typeof body === 'object') init = { ...init, body: JSON.stringify({ ...body, userProfile: ctx }) }; } catch { /* not JSON */ }
+      }
     }
     const isFallbackPath = FALLBACK_PATHS.has(path);
     try {

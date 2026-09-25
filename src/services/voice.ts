@@ -174,7 +174,8 @@ export async function translateFor(text: string, code: string): Promise<string> 
 
 /** MP3 voice note for the text, generated on the server (no installed voice needed). */
 export async function cloudSpeech(text: string, code: string, rate = 1): Promise<Blob> {
-  const res = await fetch('/api/voice/tts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: speakableText(text).slice(0, 3000), lang: shortCode(code), rate }) });
+  const res = await fetch('/api/voice/tts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: speakableText(text).slice(0, 3000), lang: shortCode(code), rate: 1 }) });
+  void rate; // speed is applied on playback (playBlob), so downloads stay at natural speed
   if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.error || 'Voice is unavailable right now.'); }
   const blob = await res.blob();
   if (!blob.size) throw new Error('Voice is unavailable right now.');
@@ -182,11 +183,21 @@ export async function cloudSpeech(text: string, code: string, rate = 1): Promise
 }
 
 let currentAudio: HTMLAudioElement | null = null;
-/** Play an audio blob; stops anything already playing. Resolves when it ends or is stopped. */
-export function playBlob(blob: Blob, onEnd?: () => void): () => void {
+const SPEED_KEY = 'arthamind-voice-rate';
+/** The listening speed chosen anywhere in the app (0.75× to 1.75×). */
+export function voiceSpeed(): number { try { const v = Number(localStorage.getItem(SPEED_KEY)); return v >= 0.5 && v <= 2 ? v : 1; } catch { return 1; } }
+export function setVoiceSpeed(v: number) { try { localStorage.setItem(SPEED_KEY, String(v)); } catch { /* ignore */ } if (currentAudio) currentAudio.playbackRate = v; }
+export const SPEEDS: Array<[number, string]> = [[0.75, 'Slow'], [1, 'Normal'], [1.25, 'Fast'], [1.5, 'Faster'], [1.75, 'Fastest']];
+/**
+ * Play an audio blob at the chosen speed (applied in the browser, so every voice and provider
+ * honours it, pitch preserved); stops anything already playing. Changing speed mid-play applies at once.
+ */
+export function playBlob(blob: Blob, onEnd?: () => void, rate = voiceSpeed()): () => void {
   stopAudio();
   const url = URL.createObjectURL(blob);
   const audio = new Audio(url);
+  audio.playbackRate = rate;
+  (audio as HTMLAudioElement & { preservesPitch?: boolean }).preservesPitch = true;
   currentAudio = audio;
   const finish = () => { if (currentAudio === audio) currentAudio = null; onEnd?.(); };
   audio.onended = finish; audio.onerror = finish;

@@ -7,6 +7,7 @@ import { EMI_RECORDS_CHANGED_EVENT, loadEmiRecords } from '../../services/emiSto
 import { loadIncomeSources } from '../../services/incomeStorage';
 import { loadExpenses } from '../../services/personalFinanceStorage';
 import './featureStats.css';
+import { EvaluationHub, EVALUATION_DESTINATIONS } from '../evaluation/EvaluationHub';
 
 type Tone = 'good' | 'warn' | 'bad' | 'info';
 interface Stat { label: string; value: string; note?: string; tone: Tone }
@@ -14,7 +15,7 @@ const inr = (v: number) => `${v < 0 ? '−' : ''}₹${Math.abs(Math.round(v)).to
 const pct = (v: number) => `${Math.round(v * 100)}%`;
 
 /** Pages that already carry their own dashboard, or are not about the user's money. */
-const SKIP = new Set<AppNavigationDestination>(['retirement-planner', 'education-planner', 'job-switch-planner', 'my-dashboard', 'overview', 'portfolio', 'tutor', 'account', 'settings', 'connections', 'methodology', 'go-pro', 'evaluation-lab', 'comparison', 'batch', 'reports', 'quick-check', 'learning']);
+const SKIP = new Set<AppNavigationDestination>(['platform-guide', 'retirement-planner', 'education-planner', 'job-switch-planner', 'my-dashboard', 'overview', 'portfolio', 'tutor', 'account', 'settings', 'connections', 'methodology', 'go-pro', 'evaluation-lab', 'comparison', 'batch', 'reports', 'quick-check', 'learning']);
 const MARKET_PAGES = new Set<AppNavigationDestination>(['markets', 'india-markets', 'us-markets', 'forex-markets', 'intraday-markets', 'market-watchlist', 'market-alerts', 'markets-learn', 'crypto', 'news', 'economy', 'dashboard']);
 
 function monthSpend() {
@@ -98,6 +99,7 @@ export const FeatureStats: React.FC<{ destination: AppNavigationDestination; onN
   useEffect(() => onMoneyProfileChange(setProfile), []);
   useEffect(() => { const on = () => setTick((t) => t + 1); window.addEventListener(EMI_RECORDS_CHANGED_EVENT, on); window.addEventListener('storage', on); return () => { window.removeEventListener(EMI_RECORDS_CHANGED_EVENT, on); window.removeEventListener('storage', on); }; }, []);
   const d = useMemo(() => { if (!profile) return null; try { return buildCompleteDashboard({ profile, loans: loadEmiRecords(), income: loadIncomeSources(), expenses: loadExpenses() }); } catch { return null; } }, [profile, tick, destination]); // eslint-disable-line react-hooks/exhaustive-deps
+  if (EVALUATION_DESTINATIONS.has(destination)) return <EvaluationHub destination={destination} onNavigate={onNavigate}/>;
   if (SKIP.has(destination)) return null;
   if (MARKET_PAGES.has(destination)) return <MarketStats/>;
   if (!d) return <section className="fs fs-empty"><span>Set up your money profile once and every page shows your own numbers here, colour-coded.</span><button type="button" onClick={() => onNavigate('overview')}>Set up in 2 minutes <ArrowRight size={13}/></button></section>;

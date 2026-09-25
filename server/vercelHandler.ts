@@ -8,7 +8,7 @@ import { evaluationComparisonRouter } from './evaluationComparisonRoutes';
 import { freeMarketRouter } from './freeMarketRoutes';
 import { handleNvidiaTutor } from './nvidiaService';
 import { handleNewsImage } from './newsImageProxy';
-import { groundingMiddleware, liveSourceStatus } from './liveGrounding';
+import { groundingMiddleware, stripUserProfile, liveSourceStatus } from './liveGrounding';
 
 const app = express();
 /** Assistant endpoints that answer with live market data, news and web search. */
@@ -16,6 +16,7 @@ const GROUNDED_AI_PATHS = new Set(['/ai/chat', '/ai/tutor', '/tutor', '/nvidia-t
 app.disable('x-powered-by');
 app.use(express.json({ limit: '2mb' }));
 app.get('/api/news/image', handleNewsImage);
+app.use('/api', stripUserProfile);
 app.use('/api', (req, res, next) => (GROUNDED_AI_PATHS.has(req.path) ? groundingMiddleware(req, res, next) : next()));
 app.get('/api/ai/live-sources', (_req, res) => { res.json(liveSourceStatus()); });
 // Health of the sign-in service (no secrets): is the Supabase project reachable, and does it accept email sign-up?

@@ -2,6 +2,7 @@ import React from 'react';
 import {Calculator,CheckCircle2,ShieldAlert,Database,Lightbulb} from 'lucide-react';
 import {StructuredFinancialAnswer} from '../../types';
 import {RichFinancialText} from './RichFinancialText';
+import {ListenBar} from '../voice/ListenBar';
 
 export const StructuredFinancialAnswerView:React.FC<{answer:StructuredFinancialAnswer;disclaimer?:string;compact?:boolean}>=({answer,disclaimer='Educational material only. Verify consequential financial, tax, legal or investment decisions with an appropriate official source.',compact=false})=>{
  const clean=(v:string)=>v.replace(/\\\[|\\\]|```/g,'').replace(/^\s*#+\s*/gm,'').replace(/\\#/g,'#').replace(/\\text\{([^}]*)\}/g,'$1').trim();
@@ -17,6 +18,7 @@ export const StructuredFinancialAnswerView:React.FC<{answer:StructuredFinancialA
    {answer.keyTakeaways?.length>0&&<section className="rounded-xl border border-interactive/20 p-3"><div className="text-[10px] font-extrabold uppercase tracking-wider text-interactive">Key takeaway</div>{answer.keyTakeaways.map((x,i)=><div key={i} className="mt-1"><RichFinancialText value={clean(x)}/></div>)}</section>}
    {answer.sources?.length>0&&<section className="rounded-xl border border-line p-3"><div className="mb-2 flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-wider text-secondary"><Database className="h-3.5 w-3.5"/>Sources</div><div className="flex flex-wrap gap-2">{answer.sources.map((s,i)=><span key={i} className="rounded-lg border border-line bg-subtle px-2 py-1 text-[10px] text-secondary"><b className="text-ink">{clean(s.name)}</b>{s.dataDate?` · ${s.dataDate}`:''}{s.freshness?` · ${s.freshness}`:''}</span>)}</div></section>}
    {answer.risks?.length>0&&<section className="rounded-xl border border-warning/20 bg-warning-soft p-3"><div className="mb-1 flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-wider"><ShieldAlert className="h-3.5 w-3.5"/>Worth knowing</div>{answer.risks.map((x,i)=><div key={i} className="text-xs text-secondary">{clean(x)}</div>)}</section>}
+   <ListenBar compact={compact} text={[direct,...(answer.keyTakeaways??[]).map(clean),...(answer.risks??[]).slice(0,2).map(clean)].filter(Boolean).join('\n')}/>
    <div className="border-t border-line pt-3 text-[10px] text-secondary">{disclaimer}</div>
   </div>
  </article>;

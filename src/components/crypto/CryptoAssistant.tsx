@@ -1,3 +1,4 @@
+import { ListenBar } from '../voice/ListenBar';
 import React, { useMemo, useState } from 'react';
 import { WebSearchToggle } from '../ai/WebSearchToggle';
 import { Bot, Clipboard, LoaderCircle, Sparkles, Trash2 } from 'lucide-react';
@@ -167,7 +168,7 @@ export const CryptoAssistant: React.FC<CryptoAssistantProps> = ({ candle, symbol
       <div className="mt-3 max-h-[480px] overflow-y-auto rounded-2xl border border-line bg-canvas p-3">
         {pendingAction ? <span className="flex items-center gap-2 text-sm text-secondary"><LoaderCircle className="h-4 w-4 animate-spin" /> Preparing a structured explanation…</span>
           : error ? <p className="rounded-xl border border-danger/25 bg-danger/5 p-3 text-xs leading-5 text-danger">{error}</p>
-            : answer ? <><Bot className="mb-2 h-4 w-4 text-interactive" /><StructuredCryptoAnswer text={answer} direction={direction} /></>
+            : answer ? <><Bot className="mb-2 h-4 w-4 text-interactive" /><StructuredCryptoAnswer text={answer} direction={direction} /><ListenBar compact text={answer}/></>
               : <p className="text-xs leading-5 text-secondary">{candle ? 'Choose an action for a structured explanation, purchase/avoid checklist, comparison framework, or conditional scenarios.' : 'Candle context is unavailable. Select a market and wait for verified candle data.'}</p>}
       </div>
       <div className="mt-3 flex flex-wrap items-center gap-2">

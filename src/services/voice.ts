@@ -159,3 +159,45 @@ export function speak(text: string, voice: SpeechSynthesisVoice, rate = 0.95, on
 }
 
 export const stopSpeaking = () => { if (canSpeak()) window.speechSynthesis.cancel(); };
+
+// ---------------- Server voice (works on every device) ----------------
+
+/** Two-letter code used by the server voice routes, e.g. 'hi-IN' → 'hi'. */
+export const shortCode = (code: string) => code.split('-')[0];
+
+export async function translateFor(text: string, code: string): Promise<string> {
+  const res = await fetch('/api/voice/translate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: text.slice(0, 3000), lang: shortCode(code) }) });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || !data.text) throw new Error(data.error || 'Translation is unavailable right now.');
+  return String(data.text);
+}
+
+/** MP3 voice note for the text, generated on the server (no installed voice needed). */
+export async function cloudSpeech(text: string, code: string, rate = 1): Promise<Blob> {
+  const res = await fetch('/api/voice/tts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: speakableText(text).slice(0, 3000), lang: shortCode(code), rate }) });
+  if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.error || 'Voice is unavailable right now.'); }
+  const blob = await res.blob();
+  if (!blob.size) throw new Error('Voice is unavailable right now.');
+  return blob;
+}
+
+let currentAudio: HTMLAudioElement | null = null;
+/** Play an audio blob; stops anything already playing. Resolves when it ends or is stopped. */
+export function playBlob(blob: Blob, onEnd?: () => void): () => void {
+  stopAudio();
+  const url = URL.createObjectURL(blob);
+  const audio = new Audio(url);
+  currentAudio = audio;
+  const finish = () => { if (currentAudio === audio) currentAudio = null; onEnd?.(); };
+  audio.onended = finish; audio.onerror = finish;
+  void audio.play().catch(finish);
+  return () => { audio.pause(); finish(); };
+}
+export const stopAudio = () => { if (currentAudio) { currentAudio.pause(); currentAudio = null; } stopSpeaking(); };
+
+export function downloadBlob(blob: Blob, name: string) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 10_000);
+}

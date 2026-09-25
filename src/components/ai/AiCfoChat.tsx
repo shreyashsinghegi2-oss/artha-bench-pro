@@ -1,3 +1,4 @@
+import { ListenBar } from '../voice/ListenBar';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { WebSearchToggle } from './WebSearchToggle';
 import { ArrowRight, ArrowUp, BriefcaseBusiness, CircleAlert, ClipboardList, Globe, ListChecks, RotateCcw, ShieldAlert, Sparkles, UserRound } from 'lucide-react';
@@ -97,6 +98,7 @@ const CfoAnswer: React.FC<{ message: Message; latest: boolean; suggestion: CfoSu
         <span>Educational guidance, not personalised investment, tax or legal advice.</span>
       </footer>
     </div>}
+  {done && bottomLine && <ListenBar compact text={[bottomLine, ...actions.map(clean)].join('\n')}/>}
   </article>;
 };
 

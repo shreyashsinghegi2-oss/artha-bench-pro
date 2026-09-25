@@ -55,8 +55,43 @@ import { CRYPTO_INTERVALS, CRYPTO_SYMBOLS } from '../src/components/crypto/crypt
 import { candleTtlMs, findInstrument, getTerminalCandles, getTerminalSnapshot, TERMINAL_INTERVALS } from './marketTerminal';
 
 import { fundDetail, fundsByIsin, searchFunds } from './mutualFundService';
+import { synthesize, translateText, VOICE_LANGS } from './voiceService';
+import { createRateLimiter } from './rateLimiter';
+
+const voiceLimiter = createRateLimiter({ windowMs: 60_000, max: 30, message: 'Too many voice requests. Please wait a minute.' });
 
 export const apiRouter = Router();
+
+// ---------------- Voice: translation and speech audio in Indian languages ----------------
+const voiceBody = (req: Request) => {
+  const text = typeof req.body?.text === 'string' ? req.body.text.trim().slice(0, 3000) : '';
+  const lang = typeof req.body?.lang === 'string' ? req.body.lang.trim().toLowerCase() : '';
+  return { text, lang, ok: Boolean(text) && lang in VOICE_LANGS };
+};
+apiRouter.post('/voice/translate', voiceLimiter, async (req: Request, res: Response) => {
+  const { text, lang, ok } = voiceBody(req);
+  if (!ok) return res.status(400).json({ error: 'Send text and a supported language code.' });
+  try { res.json(await translateText(text, lang)); }
+  catch { res.status(503).json({ error: 'Translation is unavailable right now. Please try again.' }); }
+});
+async function sendSpeech(res: Response, text: string, lang: string, rateRaw: unknown) {
+  if (!text || !(lang in VOICE_LANGS)) return res.status(400).json({ error: 'Send text and a supported language code.' });
+  const rate = Math.min(1.3, Math.max(0.7, Number(rateRaw) || 1));
+  try {
+    const { audio, provider } = await synthesize(text, lang, rate);
+    res.setHeader('Content-Type', 'audio/mpeg');
+    res.setHeader('Content-Length', String(audio.length));
+    res.setHeader('X-Voice-Provider', provider);
+    res.setHeader('Cache-Control', 'private, max-age=3600');
+    return res.send(audio);
+  } catch (error) {
+    console.warn('TTS failed:', error instanceof Error ? error.message : error);
+    return res.status(503).json({ error: 'Voice is unavailable right now. Please try again.' });
+  }
+}
+apiRouter.post('/voice/tts', voiceLimiter, (req: Request, res: Response) => { const { text, lang } = voiceBody(req); void sendSpeech(res, text, lang, req.body?.rate); });
+// For <audio src> and quick checks: /api/voice/tts?lang=hi&text=...
+apiRouter.get('/voice/tts', voiceLimiter, (req: Request, res: Response) => { void sendSpeech(res, String(req.query.text ?? '').trim().slice(0, 600), String(req.query.lang ?? '').toLowerCase(), req.query.rate); });
 
 // ---------------- Mutual funds (official AMFI NAVs) ----------------
 apiRouter.get('/mf/search', async (req: Request, res: Response) => {

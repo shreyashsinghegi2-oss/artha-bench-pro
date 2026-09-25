@@ -1,3 +1,4 @@
+import { ListenBar } from '../voice/ListenBar';
 import React, { useMemo, useState } from 'react';
 import { WebSearchToggle } from '../ai/WebSearchToggle';
 import { ArrowRight, BrainCircuit, ChevronDown, Send, ShieldCheck, Sparkles } from 'lucide-react';
@@ -70,7 +71,7 @@ export const EmbeddedFinanceAdvisor: React.FC<Props> = ({ module, title, descrip
       {messages.length > 0 && <div className="mt-4 max-h-[440px] space-y-3 overflow-y-auto rounded-2xl border border-line bg-canvas p-3" aria-live="polite">
         {messages.map((message) => message.role === 'user'
           ? <div key={message.id} className="ml-8 rounded-xl bg-interactive-soft p-3 text-xs leading-5 text-ink"><div className="mb-1 text-[9px] font-black uppercase">You</div>{message.text}</div>
-          : <article key={message.id} className="rounded-xl border border-line bg-surface p-3 text-xs leading-5 text-secondary"><div className="mb-2 flex items-center gap-2 text-[9px] font-black uppercase tracking-wider text-interactive"><Sparkles className="h-3 w-3" /> ArthaMind advisor</div><div className="whitespace-pre-wrap">{message.text}</div></article>)}
+          : <article key={message.id} className="rounded-xl border border-line bg-surface p-3 text-xs leading-5 text-secondary"><div className="mb-2 flex items-center gap-2 text-[9px] font-black uppercase tracking-wider text-interactive"><Sparkles className="h-3 w-3" /> ArthaMind advisor</div><div className="whitespace-pre-wrap">{message.text}</div><ListenBar compact text={message.text}/></article>)}
         {busy && <div className="rounded-xl border border-line bg-surface p-3 text-xs text-secondary">ArthaMind is analyzing the supplied recorded evidence…</div>}
       </div>}
 

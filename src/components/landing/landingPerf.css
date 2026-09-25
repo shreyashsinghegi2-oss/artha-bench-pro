@@ -1,0 +1,19 @@
+/* Landing performance: loaded last so it can switch off costly effects.
+   1) Sections far from the screen are not rendered until they come near (content-visibility).
+      Sections with sticky children (phone tour, money check) are left alone.
+   2) Blur-heavy decoration and frosted glass are replaced by solid fills on phones, where they
+      cost the most, and the per-element blur on reveal is removed everywhere. */
+.connected-landing main > section:not(.hx):not(#phone-tour):not(#money-check):not(.ps-section),
+.connected-landing main > .cl-section,
+.connected-landing main > div:not(.cl-stat-strip):not(.cl-marquee) {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 900px;
+}
+.connected-landing .additive-scroll-reveal { filter: none !important; }
+.connected-landing .cl-header { transition: box-shadow .2s ease; }
+@media (max-width: 900px), (pointer: coarse) {
+  .connected-landing .cl-header { background: rgba(255,255,255,.97) !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+  .connected-landing .cl-aurora, .connected-landing .hero-orb, .connected-landing .hx-glow, .connected-landing .hx-ring { display: none !important; }
+  .connected-landing [class*='glass'], .connected-landing .ps-appbar { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+  .connected-landing .cl-card, .connected-landing .rv-card, .connected-landing .mk-card { box-shadow: 0 6px 16px -10px rgba(15,23,42,.25) !important; }
+}

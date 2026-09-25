@@ -4,6 +4,7 @@ import { ArrowRight, BadgeIndianRupee, BarChart3, Bot, Calculator, Check, Gradua
 import { HeroPhone, HERO_REPORT, useLanguageCycle } from './HeroPhone';
 import { ArthaMindLogoMark } from '../branding/ArthaMindBrand';
 import './landingHero.css';
+import { NatureBackdrop } from './NatureBackdrop';
 
 /** The ecosystem at a glance: every chip is a real part of the product. */
 const ECOSYSTEM: Array<[string, React.ComponentType<{ size?: number }>]> = [
@@ -56,22 +57,15 @@ export const LandingHero: React.FC<{ onSample: () => void; onExplore: () => void
   const reduced = useReducedMotion();
   const item = (i: number) => (reduced ? {} : { initial: { opacity: 0, y: 12 }, animate: { opacity: 1, y: 0 }, transition: { delay: 0.08 + i * 0.1, duration: 0.45, ease: [0.2, 0.7, 0.2, 1] as [number, number, number, number] } });
 
-  return <section className="hx" aria-labelledby="hx-title">
-    <div className="hx-watermark" aria-hidden="true"><ArthaMindLogoMark size={640} tone="ink" cut="#ffffff"/></div>
-    <div className="hx-wordmark" aria-hidden="true">ArthaMind <span>AI</span></div>
+  return <section className="hx hx-nature" aria-labelledby="hx-title">
+    <NatureBackdrop/>
     <div className="hx-wrap">
       <div className="hx-copy">
-        <motion.p className="hx-eyebrow" {...item(0)}>ArthaMind AI · personal finance and market research</motion.p>
-        <motion.h1 id="hx-title" {...item(1)}>Plan your money. Track the markets. <span>Check every answer.</span></motion.h1>
-        <motion.p className="hx-lead" {...item(2)}>One place to build a money plan from your own numbers, choose the right tax regime, follow Indian and global markets, and ask an AI CFO. Every answer shows its calculation, sources and what to verify.</motion.p>
-        <motion.ul className="hx-eco" {...item(3)} aria-label="What is included">
-          {ECOSYSTEM.map(([label, Icon]) => <li key={label}><Icon size={15}/>{label}</li>)}
-        </motion.ul>
-        <motion.div className="hx-ctas" {...item(4)}>
+        <motion.h1 id="hx-title" className="hx-one" {...item(0)}>ArthaMind is your AI money manager: it reads your income, spending, loans and investments, <span>does the maths, and tells you what to do next, in your own language.</span></motion.h1>
+        <motion.div className="hx-ctas" {...item(1)}>
           <button type="button" className="hx-btn hx-btn-primary" onClick={onSample}>Try a sample analysis <ArrowRight size={16} aria-hidden="true"/></button>
           <button type="button" className="hx-btn hx-btn-secondary" onClick={onExplore}>Explore the workspace</button>
         </motion.div>
-        <motion.p className="hx-trust" {...item(5)}>Sources visible <span aria-hidden="true">·</span> Assumptions stated <span aria-hidden="true">·</span> Educational use, not investment advice</motion.p>
       </div>
 
       <motion.div className="hx-stage" {...item(2)}>

@@ -1,0 +1,32 @@
+.ls{background:radial-gradient(90% 70% at 50% 0%,#0f3d33 0%,#07110f 60%,#050807 100%);color:#e8f5f0}
+.ls h2{color:#fff}.ls .cl-sub{color:#a7c4bb}.ls .cl-eyebrow{color:#6ee7b7}
+.ls-flow{display:grid;grid-template-columns:1fr 60px 1fr 60px 1fr 60px 1fr;align-items:stretch;margin-top:34px}
+.ls-stage{display:grid;align-content:start;gap:8px;padding:20px 18px;border-radius:20px;background:rgba(255,255,255,.04);border:1px solid rgba(110,231,183,.18);opacity:0;transform:translateY(14px);animation:ls-in .6s ease-out forwards paused;animation-delay:calc(var(--i) * .25s)}
+.ls-on .ls-stage{animation-play-state:running}
+.ls:not(.ls-on) .ls-packet{animation-play-state:paused}
+.ls-icon{display:grid;place-items:center;width:46px;height:46px;border-radius:14px;background:linear-gradient(135deg,#10b981,#0f766e);color:#fff;box-shadow:0 10px 24px -12px rgba(16,185,129,.9)}
+.ls-stage b{font-size:16px;color:#fff}
+.ls-stage p{margin:0;font-size:13.5px;line-height:1.6;color:#a7c4bb}
+.ls-link{position:relative;align-self:center;height:2px;background:repeating-linear-gradient(90deg,rgba(110,231,183,.55) 0 6px,transparent 6px 12px)}
+.ls-packet{position:absolute;top:50%;left:0;display:grid;place-items:center;width:22px;height:22px;margin-top:-11px;border-radius:50%;background:#f3d98b;color:#0b0f14;box-shadow:0 0 14px rgba(243,217,139,.8);animation:ls-move 2.4s ease-in-out infinite}
+.ls-maths{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px;margin:30px auto 0;padding:14px 18px;border-radius:16px;background:rgba(255,255,255,.04);border:1px dashed rgba(110,231,183,.3);font-size:13px;color:#d1fae5}
+.ls-maths span{display:inline-flex;align-items:center;gap:6px}
+.ls-maths em{font-style:normal;color:#6ee7b7}
+.ls-calc{padding:4px 10px;border-radius:8px;background:#0b0f14;font-family:ui-monospace,Menlo,monospace;font-size:12px;color:#f3d98b}
+.ls-lists{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:26px}
+.ls-list{padding:18px;border-radius:18px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)}
+.ls-list h3{display:flex;align-items:center;gap:8px;margin:0 0 10px;font-size:15px;color:#fff}
+.ls-list.never h3 svg{color:#f87171}.ls-list.always h3 svg{color:#34d399}.ls-list.you h3 svg{color:#f3d98b}
+.ls-list ul{margin:0;padding-left:18px;display:grid;gap:6px;font-size:13.5px;line-height:1.5;color:#c9ddd6}
+.ls-list li svg{display:inline;vertical-align:-2px;margin-right:4px}
+.ls-fine{margin:22px 0 0;font-size:12px;line-height:1.6;color:#8fb3a8;text-align:center}
+@keyframes ls-in{to{opacity:1;transform:none}}
+@keyframes ls-move{0%{left:0;opacity:0}15%{opacity:1}85%{opacity:1}100%{left:calc(100% - 22px);opacity:0}}
+@media (max-width:980px){
+  .ls-flow{grid-template-columns:1fr;gap:0}
+  .ls-link{justify-self:center;width:2px;height:40px;background:repeating-linear-gradient(180deg,rgba(110,231,183,.55) 0 6px,transparent 6px 12px)}
+  .ls-packet{left:50%!important;margin-left:-11px;top:0;margin-top:0;animation:ls-move-v 2.4s ease-in-out infinite}
+  .ls-lists{grid-template-columns:1fr}
+}
+@keyframes ls-move-v{0%{top:0;opacity:0}15%{opacity:1}85%{opacity:1}100%{top:calc(100% - 22px);opacity:0}}
+@media (prefers-reduced-motion:reduce){.ls-stage{opacity:1;transform:none;animation:none}.ls-packet{animation:none}}

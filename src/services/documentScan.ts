@@ -51,7 +51,7 @@ export function scanText(text: string): ScanResult {
   } else {
     const gross = findAmount(lines, /gross (earnings|salary|pay)|total earnings|gross total/i);
     if (gross) {
-      // A payslip is monthly; a figure above ₹20 lakh is almost certainly already annual.
+      // A payslip is monthly; a figure above ₹20,00,000 is almost certainly already annual.
       const annual = gross.value > 2_000_000 ? gross.value : gross.value * 12;
       suggestions.push({ field: 'annualSalary', value: annual, label: gross.value > 2_000_000 ? 'Annual gross salary' : 'Annual salary (monthly gross × 12)', evidence: gross.line });
     }

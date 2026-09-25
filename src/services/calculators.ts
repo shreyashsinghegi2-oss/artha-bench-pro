@@ -31,7 +31,7 @@ export function annualDepositFutureValue(yearly: number, annual: number, years: 
   return r2(yearly * (((1 + annual) ** years - 1) / annual) * (1 + annual));
 }
 
-/** PPF: 15-year lock-in, deposits capped at ₹1.5 lakh a year. */
+/** PPF: 15-year lock-in, deposits capped at ₹1,50,000 a year. */
 export function ppfMaturity(yearly: number, annual: number = DEFAULT_RATES.ppf, years = 15) {
   const deposit = Math.min(Math.max(0, yearly), 150_000);
   const maturity = annualDepositFutureValue(deposit, annual, years);

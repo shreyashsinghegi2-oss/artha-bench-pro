@@ -36,11 +36,11 @@ describe('AI CFO health check', () => {
     expect(() => buildCfoHealthReport({ monthlyIncome: Number.NaN, monthlyExpenses: 0, monthlyEmi: 0, emergencySavings: 0 })).toThrow();
   });
 
-  it('formats rupees with Indian grouping, lakh and crore', () => {
+  it('formats rupees in full with Indian grouping, never abbreviated', () => {
     expect(formatInr(1_250_000)).toBe('₹12,50,000');
     expect(formatInr(-5_000)).toBe('−₹5,000');
-    expect(formatInrShort(1_250_000)).toBe('₹12.5 lakh');
-    expect(formatInrShort(24_000_000)).toBe('₹2.4 crore');
+    expect(formatInrShort(1_250_000)).toBe('₹12,50,000');
+    expect(formatInrShort(24_000_000)).toBe('₹2,40,00,000');
   });
 
   it('hands verified numbers to the AI CFO prompt', () => {
@@ -53,7 +53,8 @@ describe('AI CFO health check', () => {
   it('uses an India-first CFO system prompt with guardrails', () => {
     const prompt = cfoSystemPrompt({ language: 'hinglish' });
     expect(prompt).toContain('ArthaMind CFO');
-    expect(prompt).toContain('lakh/crore');
+    expect(prompt).toContain('₹12,00,000');
+    expect(prompt).toContain('never abbreviate amounts');
     expect(prompt).toContain('Roman Hindi');
     expect(prompt).toMatch(/Do not give buy\/sell\/hold/);
   });

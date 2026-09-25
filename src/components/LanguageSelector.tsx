@@ -40,13 +40,53 @@ declare global {
   }
 }
 
-function setEnglishCookie() {
-  document.cookie = 'googtrans=/en/en;path=/;max-age=31536000';
+/** Remove the googtrans cookie on every scope Google may have written it to (path, host, parent domain). */
+function clearGoogleCookies() {
+  const expired = 'expires=Thu, 01 Jan 1970 00:00:00 GMT';
+  const host = window.location.hostname;
+  const parts = host.split('.');
+  const domains = ['', host, `.${host}`];
+  if (parts.length > 2) domains.push(`.${parts.slice(-2).join('.')}`);
+  for (const domain of domains) {
+    document.cookie = `googtrans=;${expired};path=/${domain ? `;domain=${domain}` : ''}`;
+  }
 }
 
 function setGoogleLanguageCookie(code: string) {
+  clearGoogleCookies();
   document.cookie = `googtrans=/en/${code};path=/;max-age=31536000`;
 }
+
+const isPageTranslated = () => {
+  const html = document.documentElement;
+  return html.classList.contains('translated-ltr') || html.classList.contains('translated-rtl');
+};
+
+/** Ask Google Translate to show the original English page, without reloading. */
+function restoreOriginal() {
+  // The hidden Google banner is a same-origin iframe with a "Show original" button.
+  for (const frame of Array.from(document.querySelectorAll<HTMLIFrameElement>('iframe.goog-te-banner-frame, iframe.skiptranslate, iframe[id$=".container"]'))) {
+    try {
+      const button = frame.contentDocument?.querySelector<HTMLElement>('[id$=".restore"], button[id*="restore"]');
+      if (button) { button.click(); return true; }
+    } catch { /* cross-origin frame: try the next approach */ }
+  }
+  // Fallback: choosing the empty option in Google's own selector also restores the original.
+  const select = document.querySelector<HTMLSelectElement>('.goog-te-combo');
+  if (select) {
+    select.value = '';
+    select.dispatchEvent(new Event('change', { bubbles: true }));
+    return true;
+  }
+  return false;
+}
+
+// One language for the whole page, shared by every selector (header, menu, landing), so a selector
+// that remounts shows the language the page is really in and "English" is always a real change.
+let pageLanguage = 'en';
+let booted = false;
+const listeners = new Set<(code: string) => void>();
+const setPageLanguage = (code: string) => { pageLanguage = code; listeners.forEach((fn) => fn(code)); };
 
 function applyGoogleLanguage(code: string) {
   const select = document.querySelector<HTMLSelectElement>('.goog-te-combo');
@@ -107,14 +147,22 @@ function ensureGoogleTranslateWidget() {
 }
 
 export const LanguageSelector: React.FC<{ compact?: boolean }> = ({ compact = false }) => {
-  // Landing language is intentionally ephemeral: every fresh load starts in English.
-  const [language, setLanguage] = useState('en');
+  // Every fresh load starts in English; after that all selectors share the page's language.
+  const [language, setLanguage] = useState(pageLanguage);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    listeners.add(setLanguage);
+    setLanguage(pageLanguage);
+    return () => { listeners.delete(setLanguage); };
+  }, []);
 
+  useEffect(() => {
+    if (typeof window === 'undefined' || booted) return;
+    booted = true;
+
+    // Every fresh load starts in English.
     window.localStorage.removeItem('artha-bench-global-language');
-    setEnglishCookie();
+    clearGoogleCookies();
     document.documentElement.lang = 'en';
 
     const style = document.createElement('style');
@@ -155,17 +203,22 @@ export const LanguageSelector: React.FC<{ compact?: boolean }> = ({ compact = fa
         window.clearInterval(timer);
       }
     }, 300);
-
-    return () => {
-      window.clearInterval(timer);
-      observer.disconnect();
-      style.remove();
-    };
+    // Style, script and observer live for the whole page: other selectors rely on them.
   }, []);
 
   const change = (code: string) => {
-    setLanguage(code);
+    setPageLanguage(code);
     document.documentElement.lang = code;
+
+    if (code === 'en') {
+      clearGoogleCookies();
+      // Restore the original page now; retry while Google finishes, and reload once only if the
+      // page is still translated after that (the cookie is already cleared, so it loads in English).
+      [0, 250, 700].forEach((delay) => window.setTimeout(() => { if (isPageTranslated()) restoreOriginal(); hideGoogleChrome(); }, delay));
+      window.setTimeout(() => { if (isPageTranslated() && pageLanguage === 'en') window.location.reload(); }, 1600);
+      return;
+    }
+
     setGoogleLanguageCookie(code);
     ensureGoogleTranslateWidget();
 
@@ -174,6 +227,7 @@ export const LanguageSelector: React.FC<{ compact?: boolean }> = ({ compact = fa
     const attempts = [0, 200, 500, 900, 1500, 2200];
     attempts.forEach((delay) => {
       window.setTimeout(() => {
+        if (pageLanguage !== code) return; // the user has already picked another language
         ensureGoogleTranslateWidget();
         applyGoogleLanguage(code);
         hideGoogleChrome();

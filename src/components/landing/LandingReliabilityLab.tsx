@@ -10,7 +10,7 @@ import './reliabilityLab.css';
 
 const QUESTION = 'What happens to my savings if inflation rises?';
 // ₹1,00,000 at 4% after tax = ₹1,04,000; ÷ 1.06 for 6% inflation = ₹98,113 in today's money.
-const ANSWER = 'If prices rise faster than your return, your money buys less. With 6% inflation, ₹1 lakh earning 4% after tax is worth about ₹98,100 in today’s money after a year.';
+const ANSWER = 'If prices rise faster than your return, your money buys less. With 6% inflation, ₹1,00,000 earning 4% after tax is worth about ₹98,100 in today’s money after a year.';
 
 const CHECKS: Array<{ name: string; ok: boolean; note: string }> = [
   { name: 'Reasoning', ok: true, note: 'Logic holds' },

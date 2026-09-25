@@ -9,14 +9,9 @@ import { loadExpenses } from '../../services/personalFinanceStorage';
 import type { AppNavigationDestination } from '../../navigationTypes';
 import './workspaceDash.css';
 
-/** ₹ with Indian grouping, or a short lakh/crore form for tiles. */
-export const inr = (v: number) => `₹${Math.round(v).toLocaleString('en-IN')}`;
-export const shortInr = (v: number) => {
-  const a = Math.abs(v), sign = v < 0 ? '−' : '';
-  if (a >= 1e7) return `${sign}₹${(a / 1e7).toFixed(a >= 1e9 ? 0 : 2)} Cr`;
-  if (a >= 1e5) return `${sign}₹${(a / 1e5).toFixed(a >= 1e7 ? 0 : 1)} L`;
-  return `${sign}₹${Math.round(a).toLocaleString('en-IN')}`;
-};
+/** ₹ with Indian grouping (12,00,000). Amounts are always shown in full, never as k, L or Cr. */
+export const inr = (v: number) => `${v < 0 ? '−' : ''}₹${Math.abs(Math.round(v)).toLocaleString('en-IN')}`;
+export const shortInr = inr;
 const pct = (v: number) => `${Math.round(v * 100)}%`;
 const SOURCE: Record<FigureSource, string> = { profile: 'From your setup', loans: 'From your EMI records', income: 'From your income records', expenses: 'From your expenses', calculated: 'Calculated' };
 

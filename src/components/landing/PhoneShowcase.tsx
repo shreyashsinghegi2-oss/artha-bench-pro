@@ -5,12 +5,7 @@ import './phoneShowcase.css';
 import { ArthaMindLogoMark } from '../branding/ArthaMindBrand';
 
 const inr = (v: number) => `₹${Math.round(v).toLocaleString('en-IN')}`;
-const short = (v: number) => {
-  const a = Math.abs(v);
-  if (a >= 1e7) return `₹${(v / 1e7).toFixed(2)} Cr`;
-  if (a >= 1e5) return `₹${(v / 1e5).toFixed(1)} L`;
-  return inr(v);
-};
+const short = inr;
 
 /**
  * Scroll-driven phone: the page scrolls, the phone stays pinned and its screen scrolls through
@@ -118,7 +113,7 @@ export const PhoneShowcase: React.FC<{ onTry: () => void }> = ({ onTry }) => {
             </div>
             <div className="ps-tabs" aria-hidden="true">{['Health', 'Tax', 'Freedom', 'Cover'].map((t, i) => <span key={t} className={i === active ? 'on' : ''}>{t}</span>)}</div>
           </motion.div>
-          <p className="ps-sample">Sample profile: age 29, ₹18 L salary, one dependant. Figures are calculated, not illustrative guesses.</p>
+          <p className="ps-sample">Sample profile: age 29, ₹18,00,000 salary, one dependant. Figures are calculated, not illustrative guesses.</p>
         </div>
       </div>
     </div>

@@ -8,7 +8,7 @@ import './moneyCheck.css';
 type Field = { key: keyof MoneyCheckInputs; label: string; hint: string; money?: boolean };
 const MAIN: Field[] = [
   { key: 'age', label: 'Your age', hint: 'Years' },
-  { key: 'annualSalary', label: 'Annual salary (before tax)', hint: 'e.g. 18 lakh', money: true },
+  { key: 'annualSalary', label: 'Annual salary (before tax)', hint: 'e.g. 12,00,000', money: true },
   { key: 'monthlyExpenses', label: 'Monthly spending', hint: 'Excluding EMIs', money: true },
   { key: 'monthlyEmi', label: 'Monthly EMIs', hint: '0 if none', money: true },
   { key: 'liquidSavings', label: 'Cash & FDs', hint: 'Bank, FDs, liquid funds', money: true },
@@ -19,13 +19,13 @@ const MORE: Field[] = [
   { key: 'termCover', label: 'Term insurance cover', hint: 'Sum assured', money: true },
   { key: 'healthCover', label: 'Health insurance cover', hint: 'Family floater + top-up', money: true },
   { key: 'section80C', label: '80C invested this year', hint: 'EPF, PPF, ELSS, LIC… (max 1.5 L)', money: true },
-  { key: 'section80D', label: '80D health premium', hint: 'Premium paid (max 25k)', money: true },
+  { key: 'section80D', label: '80D health premium', hint: 'Premium paid (max 25,000)', money: true },
   { key: 'retireAge', label: 'Retire at age', hint: 'Default 60' },
-  { key: 'goalAmountToday', label: 'A goal, in today’s ₹', hint: 'e.g. 25 lakh home down payment', money: true },
+  { key: 'goalAmountToday', label: 'A goal, in today’s ₹', hint: 'e.g. 25,00,000 home down payment', money: true },
   { key: 'goalYears', label: 'Goal in how many years', hint: 'Years' },
 ];
 
-const START: Record<string, string> = { age: '30', annualSalary: '15 lakh', monthlyExpenses: '45k', monthlyEmi: '12k', liquidSavings: '2 lakh', investments: '5 lakh', retireAge: '60' };
+const START: Record<string, string> = { age: '30', annualSalary: '12,00,000', monthlyExpenses: '20,000', monthlyEmi: '5,000', liquidSavings: '1,20,200', investments: '60,000', retireAge: '60' };
 
 export const MoneyCheck: React.FC<{ onAsk: (prompt: string) => void }> = ({ onAsk }) => {
   const reduced = useReducedMotion();
@@ -40,7 +40,7 @@ export const MoneyCheck: React.FC<{ onAsk: (prompt: string) => void }> = ({ onAs
     for (const f of [...MAIN, ...MORE]) {
       const raw = values[f.key] ?? '';
       const n = f.money ? parseMoney(raw) : raw.trim() ? Number(raw) : 0;
-      if (!Number.isFinite(n) || n < 0) { bad = `Check “${f.label}”. Use numbers like 85000, 85k or 1.2 lakh.`; continue; }
+      if (!Number.isFinite(n) || n < 0) { bad = `Check “${f.label}”. Use numbers like 85,000 or 1,20,000.`; continue; }
       out[f.key] = n;
     }
     const built = { ...out, dependants, retireAge: out.retireAge || 60 } as unknown as MoneyCheckInputs;

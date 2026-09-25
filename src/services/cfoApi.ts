@@ -16,7 +16,7 @@ const MAX_HISTORY = 8;
 const TIMEOUT_MS = 45_000;
 
 /** Asks the ArthaMind AI CFO (server task "cfo") with the recent conversation for context. */
-export async function askAiCfo(prompt: string, history: CfoTurn[] = [], language: CfoLanguage = 'english'): Promise<CfoReply> {
+export async function askAiCfo(prompt: string, history: CfoTurn[] = [], language: CfoLanguage = 'english', options: { replyLanguage?: string; voice?: boolean } = {}): Promise<CfoReply> {
   const trimmed = prompt.trim();
   if (!trimmed) throw new Error('Type a question for your AI CFO.');
   const controller = new AbortController();
@@ -30,7 +30,7 @@ export async function askAiCfo(prompt: string, history: CfoTurn[] = [], language
         prompt: trimmed.slice(0, 4000),
         task: 'cfo',
         history: history.slice(-MAX_HISTORY).map((turn) => ({ role: turn.role, content: turn.content.slice(0, 4000) })).filter((turn) => turn.content.trim()),
-        context: { country: 'India', currency: 'INR', language, detail: 'detailed' },
+        context: { country: 'India', currency: 'INR', language, detail: options.voice ? 'short' : 'detailed', ...options },
       }),
     });
     const data = await response.json().catch(() => ({}));

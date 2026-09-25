@@ -87,6 +87,9 @@ let pageLanguage = 'en';
 let booted = false;
 const listeners = new Set<(code: string) => void>();
 const setPageLanguage = (code: string) => { pageLanguage = code; listeners.forEach((fn) => fn(code)); };
+/** The language the page is shown in now (e.g. 'hi'), and a way to follow changes. */
+export const currentPageLanguage = () => pageLanguage;
+export const onPageLanguage = (fn: (code: string) => void) => { listeners.add(fn); return () => { listeners.delete(fn); }; };
 
 function applyGoogleLanguage(code: string) {
   const select = document.querySelector<HTMLSelectElement>('.goog-te-combo');

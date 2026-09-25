@@ -23,15 +23,15 @@ function find(prompt: string, words: string): { value: number; yearly: boolean }
   const value = readAmount(m[1]);
   if (value === null || value <= 0) return null;
   const tail = `${m[2] || ''} ${m[0]}`.toLowerCase();
-  return { value, yearly: /\b(a|per|every|each)\s+(year|annum)|yearly|annual|p\.?a\.?|\/\s?yr|ctc|lpa/.test(tail) };
+  return { value, yearly: /\b(a|per|every|each)\s+(year|annum)|yearly|annual|p\.?a\.?|\/\s?yr|ctc|lpa|सालाना|साल/.test(tail) };
 }
 
 export interface OfflineSnapshot { lines: string[]; takeaways: string[] }
 
 export function offlineSnapshot(prompt: string): OfflineSnapshot | null {
-  const income = find(prompt, 'earn|earning|salary|income|ctc|take[- ]home|make');
-  const spend = find(prompt, 'spend|spending|expenses?|expenditure');
-  const emi = find(prompt, 'emis?|loan repayment');
+  const income = find(prompt, 'earn|earning|salary|income|ctc|take[- ]home|make|सैलरी|वेतन|तनख्वाह|कमाई|आय|पगार');
+  const spend = find(prompt, 'spend|spending|expenses?|expenditure|खर्च|खर्चा');
+  const emi = find(prompt, 'emis?|loan repayment|ईएमआई|किस्त');
   if (!income) return null;
   const monthlyIncome = income.yearly ? income.value / 12 : income.value;
   const monthlySpend = spend ? (spend.yearly ? spend.value / 12 : spend.value) : null;

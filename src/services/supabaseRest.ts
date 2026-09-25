@@ -67,11 +67,12 @@ export function isSupabaseConfigured(): boolean {
 
 function authHeaders(token?: string): HeadersInit {
   const { anonKey } = config();
-  return {
-    apikey: anonKey,
-    Authorization: `Bearer ${token || anonKey}`,
-    'Content-Type': 'application/json',
-  };
+  // Publishable keys (sb_publishable_…) are not JWTs: they go in the apikey header only. The
+  // Authorization header carries a user's access token, or the legacy JWT anon key.
+  const headers: Record<string, string> = { apikey: anonKey, 'Content-Type': 'application/json' };
+  if (token) headers.Authorization = `Bearer ${token}`;
+  else if (!anonKey.startsWith('sb_')) headers.Authorization = `Bearer ${anonKey}`;
+  return headers;
 }
 
 async function requestJSON<T>(url: string, init?: RequestInit): Promise<T> {

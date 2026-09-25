@@ -8569,6 +8569,17 @@ app.use("/api", (req, res, next) => GROUNDED_AI_PATHS.has(req.path) ? groundingM
 app.get("/api/ai/live-sources", (_req, res) => {
   res.json(liveSourceStatus());
 });
+app.get("/api/auth/status", async (_req, res) => {
+  const url = (process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || "https://agjbvoosukxfvrritgto.supabase.co").replace(/\/$/, "");
+  const key = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || "sb_publishable_KOdXB7LW5Ho5hDjsi3GMiw_xdogy5oR";
+  try {
+    const r = await fetch(`${url}/auth/v1/settings`, { headers: { apikey: key }, signal: AbortSignal.timeout(8e3) });
+    const body = await r.json().catch(() => ({}));
+    res.json({ reachable: true, status: r.status, project: new URL(url).hostname.split(".")[0], keyType: key.startsWith("sb_") ? "publishable" : "jwt", emailEnabled: body?.external?.email ?? null, signupDisabled: body?.disable_signup ?? null, autoConfirm: body?.mailer_autoconfirm ?? null, error: r.ok ? null : body?.message || body?.msg || body?.error || null });
+  } catch (e) {
+    res.json({ reachable: false, error: e instanceof Error ? e.message : "unreachable" });
+  }
+});
 app.post("/api/nvidia-tutor", handleNvidiaTutor);
 app.use("/api", aiRouter);
 app.use("/api", apiRouter);

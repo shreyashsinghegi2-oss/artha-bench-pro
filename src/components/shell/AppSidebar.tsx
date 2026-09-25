@@ -2,8 +2,7 @@ import React, { useEffect, useState } from 'react';
 import {
   Activity, AlertTriangle, Bell, BookOpen, Bot, Briefcase, CalendarClock, ChevronDown, ChevronsLeft, ChevronsRight, Coins, Crown, DollarSign, FileBarChart2,
   FlaskConical, Gauge, GraduationCap, HeartPulse, Home, Landmark, LayoutDashboard, LineChart, Lock, Menu, Newspaper, PieChart, Plug, ReceiptText,
-  Settings, Sparkles, Star, Timer, TrendingUp, User, WalletCards, Waves, X,
-} from 'lucide-react';
+  Settings, Sparkles, Star, Timer, TrendingUp, User, WalletCards, Waves, X, Sunset, BriefcaseBusiness } from 'lucide-react';
 import type { AppNavigationDestination } from '../../navigationTypes';
 import { pathForDestination, PRIVATE_FINANCE_DESTINATIONS } from '../../appRoutes';
 import './appSidebar.css';
@@ -20,10 +19,15 @@ export const NAV_GROUPS: Group[] = [
   ] },
   { title: 'Money', items: [
     { id: 'portfolio', label: 'Portfolio & net worth', icon: PieChart },
-    { id: 'money-planner', label: 'Invest a lump sum', icon: Coins },
     { id: 'financial-health', label: 'Health score', icon: HeartPulse },
     { id: 'decision-replay', label: 'What-if', icon: Sparkles },
     { id: 'financial-twin', label: 'Ripple Twin', icon: Waves },
+  ] },
+  { title: 'Plan', items: [
+    { id: 'retirement-planner', label: 'Retirement planner', icon: Sunset },
+    { id: 'education-planner', label: 'Child education', icon: GraduationCap },
+    { id: 'job-switch-planner', label: 'Job switch', icon: BriefcaseBusiness },
+    { id: 'money-planner', label: 'Invest a lump sum', icon: Coins },
   ] },
   { title: 'Track', items: [
     { id: 'income', label: 'Income & tax', icon: WalletCards },

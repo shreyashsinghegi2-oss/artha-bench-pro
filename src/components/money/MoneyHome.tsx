@@ -69,9 +69,6 @@ export const MoneyHome: React.FC<{ onNavigate: (destination: AppNavigationDestin
   const cfoRef = useRef<HTMLElement>(null);
 
   useEffect(() => onMoneyProfileChange(setProfile), []);
-  // The name bar and section tabs stay fixed at the top; they compact once the page scrolls.
-  const [stuck, setStuck] = useState(false);
-  useEffect(() => { const on = () => setStuck(window.scrollY > 60); on(); window.addEventListener('scroll', on, { passive: true }); return () => window.removeEventListener('scroll', on); }, []);
   const report = useMemo(() => {
     if (!profile) return null;
     try { return buildMoneyCheck(profile); } catch { return null; }
@@ -103,7 +100,7 @@ export const MoneyHome: React.FC<{ onNavigate: (destination: AppNavigationDestin
   const runway = report ? (Number.isFinite(report.runwayMonths) ? (report.runwayMonths >= 24 ? `${(report.runwayMonths / 12).toFixed(1)} years` : `${report.runwayMonths.toFixed(1)} months`) : 'No outgoings') : '';
 
   return <div className="mh">
-    <div className={`mh-sticky ${stuck ? 'is-stuck' : ''}`}>
+    <div className="mh-sticky" data-keep-clear>
     <header className="mh-head">
       <div>
         <small className="mh-kicker">Home</small>

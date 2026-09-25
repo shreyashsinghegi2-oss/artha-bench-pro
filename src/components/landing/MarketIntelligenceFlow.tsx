@@ -14,8 +14,9 @@ import { CompanyLogo } from '../market/CompanyLogo';
 type Phase = 'idle' | 'enter' | 'flow' | 'verify' | 'compare' | 'risk' | 'explain' | 'answer' | 'exit';
 const ORDER: Phase[] = ['idle', 'enter', 'flow', 'verify', 'compare', 'risk', 'explain', 'answer', 'exit'];
 // Seconds at which each phase starts; the full loop is 10.8s.
-const SCHEDULE: Array<[Phase, number]> = [['enter', 0.1], ['flow', 1.5], ['verify', 2.4], ['compare', 4.0], ['risk', 5.4], ['explain', 6.6], ['answer', 7.6], ['exit', 10.2]];
-const LOOP_SECONDS = 10.8;
+// About twice as fast as before: the whole question → verified answer story plays in 6.5 s.
+const SCHEDULE: Array<[Phase, number]> = [['enter', 0.1], ['flow', 0.8], ['verify', 1.35], ['compare', 2.1], ['risk', 2.8], ['explain', 3.4], ['answer', 4.0], ['exit', 6.0]];
+const LOOP_SECONDS = 6.5;
 const at = (phase: Phase, from: Phase) => ORDER.indexOf(phase) >= ORDER.indexOf(from);
 
 const STATUS: Partial<Record<Phase, { text: string; tone: 'blue' | 'emerald' | 'amber' }>> = {
@@ -53,7 +54,7 @@ const Spark: React.FC<{ points: number[]; tone: 'up' | 'down'; play: boolean }> 
   const min = Math.min(...points), max = Math.max(...points);
   const d = points.map((p, i) => `${i ? 'L' : 'M'}${(i / (points.length - 1)) * 60},${16 - ((p - min) / (max - min || 1)) * 14}`).join(' ');
   return <svg className={`mif-spark ${tone}`} viewBox="0 0 60 18" aria-hidden="true">
-    <motion.path d={d} fill="none" stroke="currentColor" strokeWidth="1.4" initial={{ pathLength: 0 }} animate={{ pathLength: play ? 1 : 0 }} transition={{ duration: 1.1, ease: [0.2, 0.7, 0.2, 1] }}/>
+    <motion.path d={d} fill="none" stroke="currentColor" strokeWidth="1.4" initial={{ pathLength: 0 }} animate={{ pathLength: play ? 1 : 0 }} transition={{ duration: 0.6, ease: [0.2, 0.7, 0.2, 1] }}/>
   </svg>;
 };
 
@@ -105,10 +106,10 @@ export const MarketIntelligenceFlow: React.FC = () => {
         </defs>
         {SIGNALS.map((s, i) => <g key={s.id}>
           <path d={pathFor(s)} className="mif-track"/>
-          <motion.path d={pathFor(s)} stroke="url(#mif-blue)" strokeWidth="1.4" fill="none" initial={{ pathLength: 0, opacity: 0 }} animate={{ pathLength: visible ? 1 : 0, opacity: visible ? 1 : 0 }} transition={{ duration: 0.9, delay: visible ? 0.35 + i * 0.12 : 0, ease: [0.2, 0.7, 0.2, 1] }}/>
+          <motion.path d={pathFor(s)} stroke="url(#mif-blue)" strokeWidth="1.4" fill="none" initial={{ pathLength: 0, opacity: 0 }} animate={{ pathLength: visible ? 1 : 0, opacity: visible ? 1 : 0 }} transition={{ duration: 0.5, delay: visible ? 0.35 + i * 0.12 : 0, ease: [0.2, 0.7, 0.2, 1] }}/>
           {flowing && <motion.path key={`${s.id}-${cycle}`} d={pathFor(s)} className="mif-packet" fill="none" strokeWidth="2.4" strokeLinecap="round"
             initial={{ pathLength: 0.07, pathOffset: 0, opacity: 0 }} animate={{ pathOffset: [0, 0.93], opacity: [0, 1, 1, 0] }}
-            transition={{ duration: 1.5, delay: i * 0.22, ease: [0.45, 0, 0.2, 1], repeat: 1, repeatDelay: 1.6 }}/>}
+            transition={{ duration: 0.8, delay: i * 0.12, ease: [0.45, 0, 0.2, 1], repeat: 1, repeatDelay: 0.6 }}/>}
         </g>)}
         <motion.path d={`M${CORE.x + 78},${CORE.y} C${CORE.x + 130},${CORE.y} ${CORE.x + 110},${CORE.y} 700,${CORE.y}`} stroke="#34d399" strokeWidth="1.4" fill="none" strokeOpacity=".6"
           initial={{ pathLength: 0 }} animate={{ pathLength: answered ? 1 : 0 }} transition={{ duration: 0.6, ease: [0.2, 0.7, 0.2, 1] }}/>
@@ -118,14 +119,14 @@ export const MarketIntelligenceFlow: React.FC = () => {
         style={{ left: `${(s.x / 1000) * 100}%`, top: `${(s.y / 540) * 100}%`, width: `${(CARD_W / 1000) * 100}%` }}
         initial={{ opacity: 0, x: s.from.x, y: s.from.y }}
         animate={visible ? { opacity: 1, x: 0, y: 0 } : { opacity: 0, x: s.from.x * 0.4, y: s.from.y * 0.4 }}
-        transition={{ ...spring, delay: visible ? i * 0.14 : 0 }}>
+        transition={{ ...spring, delay: visible ? i * 0.08 : 0 }}>
         <SignalCard id={s.id} play={visible}/>
       </motion.div>)}
 
       <div className="mif-core-wrap" style={{ left: `${(CORE.x / 1000) * 100}%`, top: `${(CORE.y / 540) * 100}%` }}>
-        <motion.div className="mif-core" animate={{ scale: at(phase, 'verify') && !answered && phase !== 'exit' ? [1, 1.05, 1] : 1 }} transition={{ duration: 1.4, repeat: at(phase, 'verify') && !answered ? Infinity : 0, ease: 'easeInOut' }}>
+        <motion.div className="mif-core" animate={{ scale: at(phase, 'verify') && !answered && phase !== 'exit' ? [1, 1.05, 1] : 1 }} transition={{ duration: 0.8, repeat: at(phase, 'verify') && !answered ? Infinity : 0, ease: 'easeInOut' }}>
           <span className={`mif-ring r1 ${flowing ? 'spin' : ''}`}/><span className={`mif-ring r2 ${flowing ? 'spin' : ''}`}/>
-          <motion.span className="mif-pulse" animate={{ opacity: at(phase, 'verify') && phase !== 'exit' ? [0, 0.55, 0] : 0, scale: [0.9, 1.25] }} transition={{ duration: 1.4, repeat: at(phase, 'verify') && !answered ? Infinity : 0 }}/>
+          <motion.span className="mif-pulse" animate={{ opacity: at(phase, 'verify') && phase !== 'exit' ? [0, 0.55, 0] : 0, scale: [0.9, 1.25] }} transition={{ duration: 0.8, repeat: at(phase, 'verify') && !answered ? Infinity : 0 }}/>
           <div className="mif-hex"><ArthaMindLogoMark size={30} tone="light" cut="#0b2e22" className="mif-hex-logo"/><b>ArthaMind</b><small>Intelligence</small></div>
         </motion.div>
         <ul className="mif-steps">{CORE_STEPS.map((step) => <li key={step.label} className={phase === step.phase ? 'on' : at(phase, step.phase) && phase !== 'exit' ? 'done' : ''}>{at(phase, step.phase) && phase !== step.phase && phase !== 'exit' ? '✓ ' : ''}{step.label}</li>)}</ul>
@@ -141,7 +142,7 @@ export const MarketIntelligenceFlow: React.FC = () => {
         <header><span>ArthaBench answer</span><em><BadgeCheck size={12}/> Inspectable</em></header>
         <p>Market momentum is positive, but volatility remains elevated.</p>
         <div className="mif-conf"><span>Confidence</span><b>87%</b></div>
-        <div className="mif-meter"><motion.i initial={{ scaleX: 0 }} animate={{ scaleX: answered ? 0.87 : 0 }} transition={{ duration: 1, delay: 0.25, ease: [0.2, 0.7, 0.2, 1] }}/></div>
+        <div className="mif-meter"><motion.i initial={{ scaleX: 0 }} animate={{ scaleX: answered ? 0.87 : 0 }} transition={{ duration: 0.6, delay: 0.25, ease: [0.2, 0.7, 0.2, 1] }}/></div>
         <footer><span>6 verified sources</span><span className="amber">1 risk flag: FX weakness</span></footer>
       </motion.div>
     </div>

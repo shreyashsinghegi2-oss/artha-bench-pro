@@ -2,6 +2,18 @@ import { useCallback, useEffect, useRef, useState, type CSSProperties, type Mous
 
 interface Offset { x: number; y: number }
 
+/** Bars a floating button may not cover: the app and landing headers and pinned name/section bars. */
+const KEEP_CLEAR = 'header.sticky, .cl-nav, .cl-header, .mh-sticky, .wd-nav, [data-keep-clear]';
+function keepClearBottom(): number {
+  let bottom = 0;
+  document.querySelectorAll<HTMLElement>(KEEP_CLEAR).forEach((el) => {
+    const r = el.getBoundingClientRect();
+    // Only bars pinned near the top of the screen count.
+    if (r.height > 0 && r.top < 140 && getComputedStyle(el).position.match(/sticky|fixed/)) bottom = Math.max(bottom, r.bottom);
+  });
+  return bottom;
+}
+
 const read = (key: string): Offset => {
   try {
     const v = JSON.parse(localStorage.getItem(key) || 'null') as Offset | null;
@@ -25,14 +37,15 @@ export function useDraggable<T extends HTMLElement>(storageKey: string, options:
   const dragged = useRef(false);
   const [dragging, setDragging] = useState(false);
 
-  /** Keeps at least 8px of the element inside the viewport. */
+  /** Keeps the element inside the viewport and below any bar that must stay visible. */
   const clamp = useCallback((next: Offset): Offset => {
     const el = ref.current;
     if (!el) return next;
     const r = el.getBoundingClientRect();
     const baseLeft = r.left - current.current.x, baseTop = r.top - current.current.y;
     const minX = 8 - baseLeft, maxX = window.innerWidth - 8 - r.width - baseLeft;
-    const minY = 8 - baseTop, maxY = window.innerHeight - 8 - r.height - baseTop;
+    // Never over the app header, the logo or a pinned name/section bar: those must stay visible.
+    const minY = keepClearBottom() + 8 - baseTop, maxY = window.innerHeight - 8 - r.height - baseTop;
     return { x: Math.min(Math.max(next.x, minX), Math.max(minX, maxX)), y: Math.min(Math.max(next.y, minY), Math.max(minY, maxY)) };
   }, []);
 
@@ -41,8 +54,12 @@ export function useDraggable<T extends HTMLElement>(storageKey: string, options:
     if (!enabled) return;
     const fit = () => setOffset((o) => { const c = clamp(o); return c.x === o.x && c.y === o.y ? o : c; });
     const id = window.requestAnimationFrame(fit);
+    // Pinned bars can appear while scrolling (e.g. the Home name bar), so re-check then too.
+    let raf = 0;
+    const onScroll = () => { if (!raf) raf = window.requestAnimationFrame(() => { raf = 0; fit(); }); };
     window.addEventListener('resize', fit);
-    return () => { window.cancelAnimationFrame(id); window.removeEventListener('resize', fit); };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => { window.cancelAnimationFrame(id); if (raf) window.cancelAnimationFrame(raf); window.removeEventListener('resize', fit); window.removeEventListener('scroll', onScroll); };
   }, [enabled, clamp]);
 
   const onPointerDown = useCallback((e: ReactPointerEvent) => {

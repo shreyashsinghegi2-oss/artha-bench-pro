@@ -82,7 +82,7 @@ export function isYahooFinanceProvider(provider: string) {
 
 function safeYahooSymbol(symbol: string) {
   const normalized = symbol.trim().toUpperCase();
-  if (!/^[A-Z0-9^][A-Z0-9.^=_-]{0,39}$/.test(normalized)) {
+  if (!/^[A-Z0-9^][A-Z0-9.^=_&-]{0,39}$/.test(normalized)) {
     throw new Error('Invalid Yahoo Finance symbol.');
   }
   return normalized;

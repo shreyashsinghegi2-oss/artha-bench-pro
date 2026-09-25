@@ -54,7 +54,37 @@ import { answerCryptoQuestion, getCryptoKlines, getCryptoMarkets } from './crypt
 import { CRYPTO_INTERVALS, CRYPTO_SYMBOLS } from '../src/components/crypto/cryptoTypes';
 import { candleTtlMs, findInstrument, getTerminalCandles, getTerminalSnapshot, TERMINAL_INTERVALS } from './marketTerminal';
 
+import { fundDetail, fundsByIsin, searchFunds } from './mutualFundService';
+
 export const apiRouter = Router();
+
+// ---------------- Mutual funds (official AMFI NAVs) ----------------
+apiRouter.get('/mf/search', async (req: Request, res: Response) => {
+  try {
+    const q = String(req.query.q ?? '').slice(0, 80);
+    const { results, source } = await searchFunds(q, Math.min(30, Number(req.query.limit) || 20));
+    res.setHeader('Cache-Control', 'public, s-maxage=1800, stale-while-revalidate=21600');
+    res.json({ results, source });
+  } catch (error) {
+    res.status(503).json({ error: 'Mutual fund data is unavailable right now. Please try again shortly.', detail: error instanceof Error ? error.message : undefined });
+  }
+});
+apiRouter.get('/mf/scheme/:code', async (req: Request, res: Response) => {
+  try {
+    const detail = await fundDetail(String(req.params.code));
+    res.setHeader('Cache-Control', 'public, s-maxage=1800, stale-while-revalidate=21600');
+    res.json(detail);
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : 'Unavailable';
+    res.status(/invalid|not found/i.test(msg) ? 404 : 503).json({ error: msg });
+  }
+});
+apiRouter.post('/mf/isin', async (req: Request, res: Response) => {
+  const isins = Array.isArray(req.body?.isins) ? (req.body.isins as unknown[]).filter((i): i is string => typeof i === 'string' && /^INF[A-Z0-9]{9}$/i.test(i.trim())) : [];
+  if (!isins.length) return res.status(400).json({ error: 'Send a list of mutual fund ISINs.' });
+  try { res.json({ funds: await fundsByIsin(isins) }); }
+  catch { res.status(503).json({ error: 'Mutual fund data is unavailable right now.' }); }
+});
 
 // Simple in-memory rate limiter
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
@@ -180,7 +210,7 @@ const scenarioAssistantSchema = z.object({
   question: z.string().min(3).max(1200),
   profile: z.enum(['US', 'India', 'Global']).default('US'),
   currency: z.enum(['USD', 'INR', 'EUR', 'GBP']).default('USD'),
-  companySymbol: z.string().trim().max(20).regex(/^[A-Za-z0-9][A-Za-z0-9.:_-]*$/).optional().or(z.literal('')),
+  companySymbol: z.string().trim().max(20).regex(/^[A-Za-z0-9][A-Za-z0-9.:_&-]*$/).optional().or(z.literal('')),
   useExternalContext: z.boolean().default(true),
   inputs: z.record(z.string(), z.union([z.number().finite(), z.string().max(120), z.boolean()])),
 });
@@ -198,7 +228,7 @@ const dashboardAssistantSchema = z.object({
     .optional(),
   snapshot: z.object({
     capturedAt: z.string().max(64),
-    selectedSymbol: z.string().min(1).max(20).regex(/^[A-Za-z0-9][A-Za-z0-9.:_-]*$/),
+    selectedSymbol: z.string().min(1).max(20).regex(/^[A-Za-z0-9][A-Za-z0-9.:_&-]*$/),
     selectedRange: z.enum(['1d', '1w', '1m', '3m', '6m', '1y']),
     selectedCountry: z.enum(['us', 'india']),
     quotes: z
@@ -1133,7 +1163,7 @@ apiRouter.get('/company/intelligence', async (req: Request, res: Response, next:
   try {
     const parsed = z
       .object({
-        symbol: z.string().min(1).max(20).regex(/^[A-Za-z0-9][A-Za-z0-9.:_-]*$/),
+        symbol: z.string().min(1).max(20).regex(/^[A-Za-z0-9][A-Za-z0-9.:_&-]*$/),
       })
       .safeParse(req.query);
 
@@ -1158,7 +1188,7 @@ apiRouter.post('/company/assistant', async (req: Request, res: Response, next: N
   try {
     const parsed = z
       .object({
-        symbol: z.string().min(1).max(20).regex(/^[A-Za-z0-9][A-Za-z0-9.:_-]*$/),
+        symbol: z.string().min(1).max(20).regex(/^[A-Za-z0-9][A-Za-z0-9.:_&-]*$/),
         question: z.string().min(3).max(1200),
         history: z
           .array(

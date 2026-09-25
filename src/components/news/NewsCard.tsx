@@ -22,11 +22,11 @@ export const NewsCard: React.FC<NewsCardProps> = ({ article }) => {
   const handleExplain = () => { setOpen((v) => !v); void load(); };
 
   return (
-    <div className="bg-surface border border-line hover:border-interactive/40 rounded-3xl p-5 shadow-sm space-y-4 flex flex-col justify-between overflow-hidden transition-all">
+    <div className="bg-surface border border-line rounded-3xl p-5 shadow-sm space-y-4 flex flex-col justify-between overflow-hidden transition-all">
       <div>
         <div className="relative w-full h-40 rounded-2xl overflow-hidden mb-3 bg-canvas">
           {article.imageUrl && !imageFailed ? (
-            <img src={article.imageUrl} alt={article.title} referrerPolicy="no-referrer" onError={() => setImageFailed(true)} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+            <img src={article.imageUrl} alt={article.title} referrerPolicy="no-referrer" onError={() => setImageFailed(true)} className="w-full h-full object-cover group- transition-transform duration-500" />
           ) : (
             <div className={`w-full h-full ${getCategorySurface()} flex items-center justify-center`}><Newspaper className="w-12 h-12 opacity-55" aria-hidden="true" /></div>
           )}

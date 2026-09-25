@@ -2807,12 +2807,12 @@ function decodeXml(value) {
 function stripHtml(value) {
   return decodeXml(value).replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
 }
-function extractTag(block, tag) {
-  const match = block.match(new RegExp(`<${tag}(?:\\s[^>]*)?>([\\s\\S]*?)</${tag}>`, "i"));
+function extractTag(block, tag2) {
+  const match = block.match(new RegExp(`<${tag2}(?:\\s[^>]*)?>([\\s\\S]*?)</${tag2}>`, "i"));
   return match ? decodeXml(match[1]) : "";
 }
-function extractAttribute(block, tag, attribute) {
-  const match = block.match(new RegExp(`<${tag}\\b[^>]*\\b${attribute}=["']([^"']+)["'][^>]*>`, "i"));
+function extractAttribute(block, tag2, attribute) {
+  const match = block.match(new RegExp(`<${tag2}\\b[^>]*\\b${attribute}=["']([^"']+)["'][^>]*>`, "i"));
   return match ? decodeXml(match[1]) : "";
 }
 function safeHttpUrl(value) {
@@ -3620,40 +3620,57 @@ async function brave(q, key) {
   return (j.web?.results ?? []).map((x) => ({ title: strip(x.title ?? ""), url: x.url ?? "", snippet: strip(x.description ?? "").slice(0, 400), source: "Brave web search" }));
 }
 async function serper(q, key) {
-  const r = await fetch("https://google.serper.dev/search", { method: "POST", headers: { "X-API-KEY": key, "Content-Type": "application/json" }, body: JSON.stringify({ q, gl: "in", num: 5 }), signal: AbortSignal.timeout(6e3) });
+  const r = await fetch("https://google.serper.dev/search", { method: "POST", headers: { "X-API-KEY": key, "Content-Type": "application/json" }, body: JSON.stringify({ q, gl: "in", hl: "en", num: 6, tbs: /\b(today|latest|current|now|this (week|month|year))\b/i.test(q) ? "qdr:m" : void 0 }), signal: AbortSignal.timeout(6e3) });
   if (!r.ok) throw new Error(`Serper ${r.status}`);
   const j = await r.json();
   return (j.organic ?? []).map((x) => ({ title: strip(x.title ?? ""), url: x.link ?? "", snippet: strip(x.snippet ?? "").slice(0, 400), source: "Google results via Serper" }));
 }
-async function wikipedia(q) {
-  const r = await fetch(`https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(q)}&format=json&srlimit=3&origin=*`, { headers: { "User-Agent": "ArthaMindAI/1.0 (education)" }, signal: AbortSignal.timeout(5e3) });
-  if (!r.ok) throw new Error(`Wikipedia ${r.status}`);
-  const j = await r.json();
-  return (j.query?.search ?? []).map((x) => ({ title: x.title, url: `https://en.wikipedia.org/wiki/${encodeURIComponent(x.title.replace(/ /g, "_"))}`, snippet: strip(x.snippet), source: "Wikipedia" }));
+var decode2 = (s) => strip(s.replace(/<!\[CDATA\[|\]\]>/g, ""));
+var tag = (xml, name) => xml.match(new RegExp(`<${name}[^>]*>([\\s\\S]*?)</${name}>`))?.[1] ?? "";
+function googleQuery(q) {
+  const cleaned = q.replace(/https?:\/\/\S+/g, " ").replace(/\b(please|kindly|can you|could you|tell me|i want to know|explain to me|hey|hi)\b/gi, " ").replace(/[^\p{L}\p{N}&%.₹$\- ]+/gu, " ").replace(/\s+/g, " ").trim();
+  return cleaned.split(" ").slice(0, 16).join(" ");
+}
+async function googleNews(q) {
+  const r = await fetch(`https://news.google.com/rss/search?q=${encodeURIComponent(googleQuery(q))}&hl=en-IN&gl=IN&ceid=IN:en`, { headers: { "User-Agent": "Mozilla/5.0 (ArthaMindAI; +https://artha-bench-pro.vercel.app)" }, signal: AbortSignal.timeout(6e3) });
+  if (!r.ok) throw new Error(`Google News ${r.status}`);
+  const xml = await r.text();
+  const items = [...xml.matchAll(/<item>([\s\S]*?)<\/item>/g)].slice(0, 10).map((m) => {
+    const it = m[1];
+    const source = decode2(tag(it, "source"));
+    const title = decode2(tag(it, "title")).replace(new RegExp(`\\s+-\\s+${source.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`), "");
+    const date = new Date(decode2(tag(it, "pubDate")));
+    return { title, url: decode2(tag(it, "link")), date, source };
+  }).filter((x) => x.title && x.url);
+  items.sort((a, b) => (b.date.getTime() || 0) - (a.date.getTime() || 0));
+  return items.slice(0, 6).map((x) => {
+    const when = Number.isFinite(x.date.getTime()) ? x.date.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Kolkata" }) : "date unknown";
+    return { title: x.title, url: x.url, snippet: `${x.title} (${x.source || "publisher"}, published ${when})`, source: `Google News \xB7 ${x.source || "publisher"}` };
+  });
 }
 async function duckduckgo(q) {
-  const r = await fetch(`https://api.duckduckgo.com/?q=${encodeURIComponent(q)}&format=json&no_html=1&skip_disambig=1`, { signal: AbortSignal.timeout(5e3) });
+  const r = await fetch(`https://api.duckduckgo.com/?q=${encodeURIComponent(googleQuery(q))}&format=json&no_html=1&skip_disambig=1`, { signal: AbortSignal.timeout(5e3) });
   if (!r.ok) throw new Error(`DuckDuckGo ${r.status}`);
   const j = await r.json();
-  return j.AbstractText ? [{ title: j.Heading || q, url: j.AbstractURL || "https://duckduckgo.com", snippet: j.AbstractText.slice(0, 400), source: `${j.AbstractSource || "DuckDuckGo"} (instant answer)` }] : [];
+  return j.AbstractText ? [{ title: j.Heading || q, url: j.AbstractURL || "https://duckduckgo.com", snippet: `Background (may be out of date): ${j.AbstractText.slice(0, 300)}`, source: `${j.AbstractSource || "DuckDuckGo"} (background)` }] : [];
 }
 async function webSearch(query) {
   const q = query.slice(0, 300);
   const keyed = [
+    ["Google (Serper)", process.env.SERPER_API_KEY?.trim(), serper],
     ["Tavily", process.env.TAVILY_API_KEY?.trim(), tavily],
-    ["Brave", process.env.BRAVE_SEARCH_API_KEY?.trim(), brave],
-    ["Serper", process.env.SERPER_API_KEY?.trim(), serper]
+    ["Brave", process.env.BRAVE_SEARCH_API_KEY?.trim(), brave]
   ];
   for (const [name, key, fn] of keyed) {
     if (!key) continue;
     try {
-      const results = await fn(q, key);
+      const results = await fn(googleQuery(q) || q, key);
       if (results.length) return { provider: name, results };
     } catch {
     }
   }
-  const [ddg, wiki] = await Promise.all([withTimeout(duckduckgo(q), 5e3), withTimeout(wikipedia(q), 5e3)]);
-  return { provider: "Keyless (DuckDuckGo + Wikipedia)", results: [...ddg ?? [], ...wiki ?? []].slice(0, 4) };
+  const [news, ddg] = await Promise.all([withTimeout(googleNews(q), 6500), withTimeout(duckduckgo(q), 5e3)]);
+  return { provider: "Google News (live, newest first)", results: [...news ?? [], ...(ddg ?? []).slice(0, 1)].slice(0, 6) };
 }
 var cache2 = /* @__PURE__ */ new Map();
 var CACHE_MS = 6e4;
@@ -3759,7 +3776,7 @@ async function gatherLiveContext(query, mode = "auto") {
     lines.push("Verified formulas (ArthaMind formula book, checked by automated tests):");
     for (const e of formulas) lines.push(`- ${e.title}: ${e.formula}${e.example ? ` \xB7 e.g. ${e.example.inputs} \u2192 ${e.example.result}` : ""}`);
   }
-  const text = lines.length ? `LIVE CONTEXT retrieved ${istNow()} IST. Treat these as the current facts for this answer. Quote figures exactly with their source and time; if the question needs something not listed here, say you could not verify it live. Search results can be wrong or dated: prefer official sources (RBI, SEBI, Income Tax Department, NSE, BSE, PIB) when they disagree.
+  const text = lines.length ? `LIVE CONTEXT retrieved ${istNow()} IST. Treat these as the current facts for this answer. Quote figures exactly with their source and time; if the question needs something not listed here, say you could not verify it live. Web results are listed newest first with their publish dates: for "who is" / "current" / "latest" questions, answer from the most recent dated result and name it with its date; never answer current facts from memory or encyclopaedias. Search results can be wrong or dated: prefer official sources (RBI, SEBI, Income Tax Department, NSE, BSE, PIB) when they disagree.
 ${lines.join("\n")}` : "";
   const value = { text, sources };
   cache2.set(key, { at: Date.now(), value });
@@ -3795,7 +3812,7 @@ ${text}` : styled;
   }
 }
 function liveSourceStatus() {
-  const web = process.env.TAVILY_API_KEY?.trim() ? "Tavily" : process.env.BRAVE_SEARCH_API_KEY?.trim() ? "Brave Search" : process.env.SERPER_API_KEY?.trim() ? "Google via Serper" : "DuckDuckGo + Wikipedia (keyless)";
+  const web = process.env.SERPER_API_KEY?.trim() ? "Google via Serper" : process.env.TAVILY_API_KEY?.trim() ? "Tavily" : process.env.BRAVE_SEARCH_API_KEY?.trim() ? "Brave Search" : "Google News (keyless)";
   return {
     webSearch: { provider: web, keyed: !web.includes("keyless") },
     marketData: process.env.TWELVE_DATA_API_KEY?.trim() ? "Yahoo Finance + Twelve Data" : "Yahoo Finance (delayed)",
@@ -5293,10 +5310,10 @@ function decodeHtml(value) {
 function extractMetaImage(html, pageUrl) {
   const tags = html.match(/<meta\b[^>]*>/gi) || [];
   const wanted = /* @__PURE__ */ new Set(["og:image", "og:image:secure_url", "twitter:image", "twitter:image:src"]);
-  for (const tag of tags) {
-    const property = decodeHtml(tag.match(/\b(?:property|name)\s*=\s*["']([^"']+)["']/i)?.[1] || "").toLowerCase();
+  for (const tag2 of tags) {
+    const property = decodeHtml(tag2.match(/\b(?:property|name)\s*=\s*["']([^"']+)["']/i)?.[1] || "").toLowerCase();
     if (!wanted.has(property)) continue;
-    const content = decodeHtml(tag.match(/\bcontent\s*=\s*["']([^"']+)["']/i)?.[1] || "").trim();
+    const content = decodeHtml(tag2.match(/\bcontent\s*=\s*["']([^"']+)["']/i)?.[1] || "").trim();
     if (content) {
       try {
         return new URL(content, pageUrl).toString();
@@ -8581,6 +8598,15 @@ app.use("/api", stripUserProfile);
 app.use("/api", (req, res, next) => GROUNDED_AI_PATHS.has(req.path) ? groundingMiddleware(req, res, next) : next());
 app.get("/api/ai/live-sources", (_req, res) => {
   res.json(liveSourceStatus());
+});
+app.get("/api/ai/web-search", async (req, res) => {
+  const q = String(req.query.q ?? "").slice(0, 200).trim();
+  if (!q) return res.status(400).json({ error: "Add ?q=your question" });
+  try {
+    res.json({ query: q, retrievedAt: (/* @__PURE__ */ new Date()).toISOString(), ...await webSearch(q) });
+  } catch {
+    res.status(502).json({ error: "Web search is unavailable right now." });
+  }
 });
 app.get("/api/auth/status", async (_req, res) => {
   const url = (process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || "https://agjbvoosukxfvrritgto.supabase.co").replace(/\/$/, "");

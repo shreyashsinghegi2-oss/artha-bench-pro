@@ -257,7 +257,7 @@ export const LanguageSelector: React.FC<{ compact?: boolean }> = ({ compact = fa
         id="artha-global-language"
         value={language}
         onChange={(event) => change(event.target.value)}
-        className={`appearance-none rounded-xl border border-line bg-surface pl-8 pr-7 text-xs font-bold text-ink outline-none transition hover:border-interactive/50 focus:border-interactive focus:ring-2 focus:ring-interactive/20 ${
+        className={`appearance-none rounded-xl border border-line bg-surface pl-8 pr-7 text-xs font-bold text-ink outline-none transition focus:border-interactive focus:ring-2 focus:ring-interactive/20 ${
           compact ? 'h-9 w-[120px]' : 'h-10 w-[150px]'
         }`}
       >

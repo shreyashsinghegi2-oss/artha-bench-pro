@@ -1,8 +1,9 @@
 import React, { useMemo, useState } from 'react';
-import { ArrowRight, Bot, RotateCcw, SkipForward } from 'lucide-react';
+import { ArrowRight, RotateCcw, SkipForward } from 'lucide-react';
+import { AssistantLogo } from './AssistantLogo';
 import type { AppNavigationDestination } from '../../navigationTypes';
 import type { StructuredFinancialAnswer } from '../../types';
-import { buildPagePrompt, guideFor } from '../../data/assistantGuides';
+import { buildPagePrompt, expertFor, expertName, guideFor } from '../../data/assistantGuides';
 import { StructuredFinancialAnswerView } from './StructuredFinancialAnswer';
 import { WebSearchToggle } from './WebSearchToggle';
 import { MicButton } from './MicButton';
@@ -53,7 +54,7 @@ export const PageAssistant: React.FC<{ destination: AppNavigationDestination; sn
     if (!q || busy) return;
     setBusy(true); setError(''); setDraft('');
     try {
-      const prompt = buildPagePrompt(title ?? guide.title, snapshot(), answers, q);
+      const prompt = buildPagePrompt(title ?? guide.title, snapshot(), answers, q, expertFor(destination));
       const history = turns.flatMap((t) => [{ role: 'user' as const, content: t.q }, { role: 'assistant' as const, content: t.reply.text.slice(0, 1500) }]);
       const reply = await askPage(prompt, guide.task, history);
       setTurns((t) => [...t, { q, reply }]);
@@ -65,10 +66,10 @@ export const PageAssistant: React.FC<{ destination: AppNavigationDestination; sn
   // The first question can be sent straight from the "goal" answer.
   const goal = answers.find(([k]) => /what would you like/i.test(k))?.[1];
 
-  return <section className="pa" aria-label={`${guide.title} assistant`}>
+  return <section className="pa" aria-label={expertName(destination)}>
     <header className="pa-head">
-      <span className="pa-icon"><Bot size={18}/></span>
-      <div><b>{guide.title} assistant</b><small>{guide.intro}</small></div>
+      <AssistantLogo size={34}/>
+      <div><b>{expertName(destination)}</b><small>{guide.intro}</small></div>
       {(answers.length > 0 || turns.length > 0) && <button type="button" className="pa-reset" onClick={() => { setStep(0); setAnswers([]); setTurns([]); setError(''); }}><RotateCcw size={13}/> Start over</button>}
     </header>
 

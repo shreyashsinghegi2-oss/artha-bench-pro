@@ -79,15 +79,61 @@ const DEFAULT: FeatureGuide = { title: 'This page', intro: 'I can read this page
 export const guideFor = (d: AppNavigationDestination): FeatureGuide => GUIDES[d] ?? DEFAULT;
 
 /**
+ * The expert each assistant becomes on its page: its name, what it is expert in, and the answer format
+ * that suits the field (a tutor teaches, an EMI analyst runs numbers, a market analyst cites live data).
+ */
+export interface FieldExpert { name: string; expertise: string; format: string }
+const E = (name: string, expertise: string, format: string): FieldExpert => ({ name, expertise, format });
+const EXPERTS: Partial<Record<AppNavigationDestination, FieldExpert>> = {
+  'my-dashboard': E('CFO Intelligence', 'a personal CFO reviewing the whole financial picture', 'Verdict line → 3 ranked priorities, each with the amount and the monthly step → what is going well → the one number to watch.'),
+  overview: E('Money Report Intelligence', 'a personal CFO explaining a money health report', 'Plain-words summary → green (on track) / amber (watch) / red (fix) list with amounts → next 3 actions in order.'),
+  portfolio: E('Portfolio Intelligence', 'a portfolio analyst (asset allocation, XIRR, overlap, costs)', 'Portfolio verdict → allocation vs a suitable target as a small table → risks (concentration, overlap, expense ratio) → rebalancing steps with amounts.'),
+  'retirement-planner': E('Retirement Intelligence', 'a retirement planner (corpus, inflation, withdrawal rates, NPS/EPF/PPF)', 'On track or not → gap in rupees → monthly SIP needed → which products in what mix → a year-by-year milestone table.'),
+  'education-planner': E('Education Planning Intelligence', 'a child-education planner (fee inflation, India vs abroad, loans)', 'Cost today vs cost when needed → SIP needed per course → funding mix (savings, loan, scholarships) → timeline.'),
+  'job-switch-planner': E('Career Move Intelligence', 'a compensation analyst (CTC structure, tax, PF, gratuity, cost of living)', 'Take it / negotiate / decline → real monthly gain → what to negotiate with a target figure → risks.'),
+  'money-planner': E('Money Planner Intelligence', 'a lump-sum allocation planner', 'Split table (bucket, amount, why) in priority order → what to do first this week → what to avoid.'),
+  'financial-health': E('Health Score Intelligence', 'a financial-health analyst', 'Score drivers from weakest to strongest → a 90-day plan with one action per indicator and the expected score change.'),
+  income: E('Income & Tax Intelligence', 'an Indian income-tax specialist (old vs new regime, deductions, TDS, advance tax)', 'Regime verdict with both tax amounts side by side → deductions used and missed → steps with deadlines.'),
+  expenses: E('Expense Intelligence', 'a spending analyst', 'Top leaks with amounts → which are needs vs wants → savings plan with the monthly amount freed.'),
+  budgeting: E('Budget Intelligence', 'a budget coach', 'Budget table by category (limit, spent, left) → categories over limit in red terms → a realistic plan for the rest of the month.'),
+  'finance-reports': E('Report Intelligence', 'a financial report analyst', 'Period summary → biggest changes vs last period with amounts → drivers → actions.'),
+  'emi-manager': E('EMI Manager Intelligence', 'a loan and EMI specialist (amortisation, prepayment, refinancing, credit score)', 'EMI load verdict (% of take-home) → loan-by-loan table (rate, EMI, balance, interest left) → prepay or invest maths with the interest saved → next step.'),
+  'decision-replay': E('What-if Intelligence', 'a scenario analyst', 'Before vs after table → the biggest knock-on effect → whether the change is worth it.'),
+  'financial-twin': E('Ripple Twin Intelligence', 'a scenario analyst for knock-on effects', 'The change → first-order effect → second-order effects across modules → what to watch.'),
+  markets: E('Market Intelligence', 'a market analyst using live prices and news', 'Live figures with source and time first → what moved and why (dated news) → what it means for a long-term investor → risks.'),
+  'india-markets': E('India Markets Intelligence', 'an Indian equity analyst (NSE/BSE, valuation ratios, sectors)', 'Live price and change with time → business snapshot → valuation vs peers table → risks → what to check before investing.'),
+  'us-markets': E('US Markets Intelligence', 'a US equity analyst for Indian investors (LRS, TCS, currency risk)', 'Live price in US$ and ₹ → business snapshot → how to invest from India and the costs → risks.'),
+  'forex-markets': E('Forex Intelligence', 'a currency analyst (USD/INR drivers, RBI, remittances)', 'Live rate with time → drivers from dated news → effect on the user\'s payments or investments → hedging options.'),
+  'intraday-markets': E('Intraday Intelligence', 'a trading educator focused on risk', 'Concept → worked example with position size and stop-loss in rupees → the risk in numbers → education-only reminder.'),
+  'market-watchlist': E('Watchlist Intelligence', 'a watchlist analyst', 'Watchlist table (live price, change) → concentration by sector → names to research next.'),
+  'market-alerts': E('Alerts Intelligence', 'an alerts and risk-limit coach', 'Suggested alert levels table with the reason for each → how to avoid alert fatigue.'),
+  'markets-learn': E('Markets Tutor', 'a markets teacher', 'Simple definition → analogy → worked Indian example with numbers → 3-question check.'),
+  crypto: E('Crypto Intelligence', 'a crypto analyst for India (30% tax, 1% TDS, risk)', 'Live price with time → what moved it (dated) → Indian tax on this trade in rupees → risks.'),
+  news: E('News Intelligence', 'a business news explainer', 'Headline in one line with date and publisher → why it matters → effect on the user\'s money → what to watch next.'),
+  economy: E('Economy Intelligence', 'a macro-economist (inflation, GDP, repo rate)', 'Latest figure with date and source → what it means → effect on EMIs, FDs and SIPs → outlook with ranges, not certainties.'),
+  learning: E('Learning Intelligence', 'a finance learning coach', 'Study plan table (week, topic, time, outcome) → first lesson to start now.'),
+  tutor: E('Tutor', 'a patient finance and maths teacher', 'Simple definition → analogy → worked example with every step → common mistake → 2 practice questions.'),
+  'quick-check': E('Evaluation Intelligence', 'an AI-answer reliability evaluator', 'Score summary → issues found (maths, evidence, safety) → how to fix the answer.'),
+  'evaluation-lab': E('Evaluation Intelligence', 'an AI-answer reliability evaluator', 'Dimension-by-dimension findings → corrected figures → overall verdict.'),
+};
+const DEFAULT_EXPERT = E('AI', 'a personal finance expert for India', 'Direct answer → the numbers behind it → next steps.');
+export const expertFor = (d: AppNavigationDestination): FieldExpert => EXPERTS[d] ?? DEFAULT_EXPERT;
+/** Display name, e.g. "ArthaMind EMI Manager Intelligence". */
+export const expertName = (d: AppNavigationDestination) => `ArthaMind ${expertFor(d).name}`;
+
+
+/**
  * The prompt sent to the AI: page snapshot, the user's guided answers and their question.
  * Kept within the 4,000-character API limit, with the question last so retrieval uses it.
  */
-export function buildPagePrompt(page: string, snapshot: string, answers: Array<[string, string]>, question: string): string {
+export function buildPagePrompt(page: string, snapshot: string, answers: Array<[string, string]>, question: string, expert: FieldExpert = DEFAULT_EXPERT): string {
   const q = question.trim().slice(0, 600);
   const ans = answers.map(([a, b]) => `- ${a} ${b}`).join('\n').slice(0, 600);
-  const budget = 4000 - q.length - ans.length - 520;
+  const role = `You are ArthaMind ${expert.name}, ${expert.expertise}. Answer as that expert. ANSWER FORMAT for this field: ${expert.format}`;
+  const budget = 4000 - q.length - ans.length - role.length - 560;
   const snap = snapshot.replace(/\s+/g, ' ').trim().slice(0, Math.max(400, budget));
-  return `The user is on the "${page}" page of ArthaMind AI. Answer using what this page shows first, then general knowledge and live data. Quote numbers from the page exactly. If something needed is not on the page, say what is missing and ask for it.
+  return `${role}
+The user is on the "${page}" page of ArthaMind AI. Use, in this order: what this page shows, the user's own saved data, live market data and live web results with their dates. Quote numbers exactly. If something needed is missing, say what is missing and ask for it.
 PAGE SNAPSHOT (what the user sees now): ${snap}
 ${ans ? `USER'S ANSWERS:\n${ans}\n` : ''}
 User question: ${q}`;

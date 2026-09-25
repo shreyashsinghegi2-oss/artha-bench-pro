@@ -1,4 +1,5 @@
 import { MicButton } from '../ai/MicButton';
+import { AssistantLogo } from '../ai/AssistantLogo';
 import { ThinkingSteps } from '../ai/ThinkingSteps';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { WebSearchToggle } from '../ai/WebSearchToggle';
@@ -222,7 +223,7 @@ export const IncomeAIAssistant: React.FC<IncomeAIAssistantProps> = ({
           <div className="max-w-3xl">
             <div className="flex flex-wrap items-center gap-2">
               <span className="inline-flex items-center gap-1.5 rounded-full border border-interactive/25 bg-surface px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-interactive">
-                <BrainCircuit className="h-3.5 w-3.5" /> Artha AI · Income Intelligence
+                <AssistantLogo size={18}/> ArthaMind Income &amp; Tax Intelligence
               </span>
               <span className="inline-flex items-center gap-1.5 rounded-full border border-success-fill/25 bg-success-soft px-2.5 py-1 text-[10px] font-bold text-success">
                 <ShieldCheck className="h-3.5 w-3.5" /> Workspace-grounded
@@ -243,7 +244,7 @@ export const IncomeAIAssistant: React.FC<IncomeAIAssistantProps> = ({
                 className={`min-h-11 rounded-xl border px-3 py-2 text-xs font-bold transition-all ${
                   mode === value
                     ? 'border-interactive bg-interactive text-white shadow-sm'
-                    : 'border-line bg-surface text-secondary hover:border-interactive/40 hover:text-ink'
+                    : 'border-line bg-surface text-secondary hover:text-ink'
                 }`}
               >
                 {label}
@@ -271,7 +272,7 @@ export const IncomeAIAssistant: React.FC<IncomeAIAssistantProps> = ({
                       key={prompt}
                       type="button"
                       onClick={() => void sendQuestion(prompt)}
-                      className="rounded-xl border border-line bg-surface p-3 text-left text-xs font-semibold leading-5 text-secondary transition-all hover:border-interactive/40 hover:text-ink"
+                      className="rounded-xl border border-line bg-surface p-3 text-left text-xs font-semibold leading-5 text-secondary transition-all hover:text-ink"
                     >
                       {prompt}
                     </button>
@@ -363,7 +364,7 @@ export const IncomeAIAssistant: React.FC<IncomeAIAssistantProps> = ({
                 key={question}
                 type="button"
                 onClick={() => void sendQuestion(question)}
-                className="w-full rounded-xl border border-line bg-canvas p-3 text-left text-xs font-semibold leading-5 text-secondary hover:border-interactive/40 hover:text-ink"
+                className="w-full rounded-xl border border-line bg-canvas p-3 text-left text-xs font-semibold leading-5 text-secondary hover:text-ink"
               >
                 {question}
               </button>

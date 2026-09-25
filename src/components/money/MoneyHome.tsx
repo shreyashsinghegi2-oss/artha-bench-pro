@@ -156,7 +156,7 @@ export const MoneyHome: React.FC<{ onNavigate: (destination: AppNavigationDestin
               <header><span className="mh-area-icon"><Icon size={18}/></span><div><small>0{i + 1}</small><b>{area.title}</b></div></header>
               <p>{area.line(report)}</p>
               <ul>{area.links.map((link) => <li key={link.label}>
-                <button type="button" onClick={() => ('to' in link ? onNavigate(link.to) : askWithContext(link.ask))}>{link.label}<span>{'to' in link ? 'Open' : 'Ask AI'} <ArrowRight size={13}/></span></button>
+                <button type="button" onClick={() => ('to' in link ? onNavigate(link.to) : askWithContext(link.ask))}>{link.label}<span>{'to' in link ? 'Open' : 'Ask ArthaMind AI'} <ArrowRight size={13}/></span></button>
               </li>)}</ul>
             </motion.article>;
           })}

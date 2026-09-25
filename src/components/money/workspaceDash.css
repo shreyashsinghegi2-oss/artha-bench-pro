@@ -8,9 +8,9 @@
 .wd-head p{margin:0;max-width:680px;font-size:14px;line-height:1.55;color:var(--mut)}
 .wd-head-actions{display:flex;gap:8px;flex-wrap:wrap}
 .wd-btn{display:inline-flex;align-items:center;gap:6px;height:38px;padding:0 14px;border:1px solid var(--bd);border-radius:11px;background:var(--sf);color:var(--ink);font:inherit;font-size:13px;font-weight:700;cursor:pointer;transition:border-color .2s,transform .2s}
-.wd-btn:hover{border-color:var(--g);transform:translateY(-1px)}
+.wd-btn:hover{}
 .wd-btn.primary{background:#0b0f14;border-color:#0b0f14;color:#fff}
-.wd-btn.primary:hover{background:var(--g);border-color:var(--g)}
+.wd-btn.primary:hover{background:var(--g)}
 
 /* KPI tiles */
 .wd-tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:14px}
@@ -90,13 +90,13 @@
 .wd-actions span{font-size:12.5px;line-height:1.5;color:var(--mut)}
 .wd-quick{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:auto}
 .wd-quick button{display:flex;flex-direction:column;align-items:center;gap:5px;padding:10px 4px;border:1px solid var(--bd);border-radius:12px;background:var(--cv);color:var(--ink);font:inherit;font-size:11.5px;font-weight:700;cursor:pointer}
-.wd-quick button:hover{border-color:var(--g);color:var(--g)}
+.wd-quick button:hover{color:var(--g)}
 .wd-foot{margin:6px 0 0;font-size:11.5px;line-height:1.5;color:var(--mut)}
 
 /* Empty state */
 .wd-empty{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;max-width:820px}
 .wd-empty-card{display:grid;gap:6px;justify-items:start;text-align:left;padding:20px;border:1px solid var(--bd);border-radius:18px;background:var(--sf);color:var(--ink);font:inherit;cursor:pointer;transition:border-color .2s,transform .2s}
-.wd-empty-card:hover{border-color:var(--g);transform:translateY(-2px)}
+.wd-empty-card:hover{}
 .wd-empty-card.primary{background:#0b0f14;color:#fff;border-color:#0b0f14}
 .wd-empty-card b{font-size:15px}.wd-empty-card span{font-size:13px;opacity:.8}
 .wd-empty-card em{font-style:normal;display:inline-flex;align-items:center;gap:5px;margin-top:6px;font-size:12.5px;font-weight:800;color:var(--gl)}
@@ -148,7 +148,7 @@
 .wd{--tone-good:#059669;--tone-bad:#dc2626;--tone-warn:#d97706;--tone-info:#2563eb}
 .wd .good{--tone:var(--tone-good)}.wd .bad{--tone:var(--tone-bad)}.wd .warn{--tone:var(--tone-warn)}.wd .info{--tone:var(--tone-info)}
 .wd-tile{border-color:color-mix(in srgb,var(--tone,var(--bd)) 22%,var(--bd));background:linear-gradient(180deg,color-mix(in srgb,var(--tone,transparent) 6%,var(--sf)) 0%,var(--sf) 60%);transition:transform .2s,box-shadow .2s}
-.wd-tile:hover{transform:translateY(-2px);box-shadow:0 14px 30px -20px color-mix(in srgb,var(--tone,#0f172a) 60%,transparent)}
+.wd-tile:hover{}
 .wd-tile::before{width:4px;background:var(--tone,var(--bd))}
 .wd-tile.info::before{background:var(--tone-info)}
 .wd-tile .wd-tile-ico{background:color-mix(in srgb,var(--tone,var(--g)) 13%,transparent);color:var(--tone,var(--g))}
@@ -158,7 +158,7 @@
 .wd-signals span::before{content:"";width:10px;height:10px;border-radius:3px;background:var(--tone)}
 .wd-card{position:relative;overflow:hidden;border-color:color-mix(in srgb,var(--tone,var(--bd)) 25%,var(--bd));transition:box-shadow .2s,transform .2s}
 .wd-card::before{content:"";position:absolute;left:0;right:0;top:0;height:4px;background:var(--tone,transparent)}
-.wd-card:hover{box-shadow:0 18px 40px -26px color-mix(in srgb,var(--tone,#0f172a) 70%,transparent)}
+.wd-card:hover{}
 .wd-card>header{align-items:center}
 .wd-card>header .wd-sub{flex-basis:100%;margin-top:-4px}
 .wd-status{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:999px;font-size:10.5px;font-weight:800;letter-spacing:.03em;color:var(--tone);background:color-mix(in srgb,var(--tone) 12%,transparent);border:1px solid color-mix(in srgb,var(--tone) 30%,transparent)}
@@ -200,7 +200,7 @@
 .wd-ai{margin-bottom:14px;background:linear-gradient(135deg,color-mix(in srgb,#2563eb 6%,var(--sf)),var(--sf) 55%)}
 .wd-ai-quick{display:flex;flex-wrap:wrap;gap:8px}
 .wd-ai-quick button{padding:8px 13px;border-radius:999px;border:1px solid var(--bd);background:var(--sf);color:var(--ink);font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;transition:border-color .15s,background .15s}
-.wd-ai-quick button:hover:not(:disabled){border-color:#2563eb;background:#eff6ff}
+.wd-ai-quick button:hover:not(:disabled){background:#eff6ff}
 .wd-ai-quick button.primary{background:#2563eb;border-color:#2563eb;color:#fff}
 .wd-ai-quick button:disabled{opacity:.5;cursor:default}
 .wd-markets{margin-top:6px;padding-top:18px;border-top:1px dashed var(--bd)}

@@ -38,12 +38,20 @@ describe('live grounding', () => {
     expect(keyed.results[0]).toMatchObject({ url: 'https://rbi.org.in', snippet: 'Repo rate unchanged' });
 
     vi.stubEnv('TAVILY_API_KEY', '');
-    vi.stubGlobal('fetch', vi.fn(async (url: string) => String(url).includes('wikipedia')
-      ? new Response(JSON.stringify({ query: { search: [{ title: 'Repo rate', snippet: 'The <b>repo rate</b> is…' }] } }), { status: 200 })
-      : new Response(JSON.stringify({ AbstractText: '' }), { status: 200 })));
-    const keyless = await webSearch('repo rate');
-    expect(keyless.provider).toMatch(/Keyless/);
-    expect(keyless.results[0]).toMatchObject({ title: 'Repo rate', snippet: 'The repo rate is…', source: 'Wikipedia' });
+    const rss = `<rss><channel>
+      <item><title>RBI keeps repo rate at 5.5% - Business Standard</title><link>https://example.com/new</link><pubDate>Wed, 01 Oct 2026 06:00:00 GMT</pubDate><source url="https://bs.com">Business Standard</source></item>
+      <item><title>Repo rate explained - Mint</title><link>https://example.com/old</link><pubDate>Mon, 02 Jun 2025 06:00:00 GMT</pubDate><source url="https://mint.com">Mint</source></item>
+    </channel></rss>`;
+    const keylessFetch = vi.fn(async (url: string) => String(url).includes('news.google.com')
+      ? new Response(rss, { status: 200 })
+      : new Response(JSON.stringify({ AbstractText: '' }), { status: 200 }));
+    vi.stubGlobal('fetch', keylessFetch);
+    const keyless = await webSearch('please tell me the latest repo rate?');
+    expect(keyless.provider).toMatch(/Google News/);
+    expect(String(keylessFetch.mock.calls[0][0])).toContain('q=the%20latest%20repo%20rate');
+    expect(keyless.results[0]).toMatchObject({ title: 'RBI keeps repo rate at 5.5%', url: 'https://example.com/new', source: 'Google News · Business Standard' });
+    expect(keyless.results[0].snippet).toContain('published');
+    expect(keyless.results.some((r) => /wikipedia/i.test(r.source))).toBe(false);
   });
 });
 

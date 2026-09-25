@@ -215,7 +215,7 @@ export const IncomeView: React.FC = () => {
               <h2 className="text-xl font-black text-ink">Income sources</h2>
               <p className="mt-1 text-sm text-secondary">Edit details as your financial situation changes.</p>
             </div>
-            <button type="button" onClick={openCreateForm} className="inline-flex items-center justify-center gap-2 rounded-xl border border-brand/25 bg-brand-soft px-4 py-2 text-sm font-bold text-brand-hover hover:border-brand/50">
+            <button type="button" onClick={openCreateForm} className="inline-flex items-center justify-center gap-2 rounded-xl border border-brand/25 bg-brand-soft px-4 py-2 text-sm font-bold text-brand-hover">
               <Plus className="h-4 w-4" /> New source
             </button>
           </header>
@@ -246,7 +246,7 @@ export const IncomeView: React.FC = () => {
                       </div>
                     </div>
                     <div className="flex gap-2 md:justify-end">
-                      <button type="button" onClick={() => { setEditingSource(source); setFormOpen(true); }} className="inline-flex items-center gap-1.5 rounded-xl border border-line px-3 py-2 text-xs font-bold text-secondary hover:border-interactive/40 hover:text-ink"><Pencil className="h-3.5 w-3.5" /> Edit</button>
+                      <button type="button" onClick={() => { setEditingSource(source); setFormOpen(true); }} className="inline-flex items-center gap-1.5 rounded-xl border border-line px-3 py-2 text-xs font-bold text-secondary hover:text-ink"><Pencil className="h-3.5 w-3.5" /> Edit</button>
                       <button type="button" onClick={() => handleDelete(source)} className="inline-flex items-center gap-1.5 rounded-xl border border-danger/20 px-3 py-2 text-xs font-bold text-danger hover:bg-danger-soft"><Trash2 className="h-3.5 w-3.5" /> Delete</button>
                     </div>
                   </article>

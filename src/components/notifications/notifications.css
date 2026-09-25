@@ -1,6 +1,6 @@
 .nb-root{position:relative;display:inline-flex}
 .nb-bell{position:relative;display:inline-grid;place-items:center;width:36px;height:36px;border-radius:12px;border:1px solid var(--border-subtle);background:var(--bg-surface);color:var(--text-primary);cursor:pointer}
-.nb-bell:hover{border-color:#10b981}
+.nb-bell:hover{}
 .nb-count{position:absolute;top:-6px;right:-6px;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:#dc2626;color:#fff;font:800 10px/18px Inter,system-ui,sans-serif;text-align:center;box-shadow:0 0 0 2px var(--bg-surface);animation:nb-pop .3s ease-out}
 @keyframes nb-pop{from{transform:scale(.4)}}
 .nb-panel{position:absolute;right:0;top:calc(100% + 10px);z-index:80;width:min(380px,calc(100vw - 24px));max-height:min(560px,calc(100dvh - 90px));display:flex;flex-direction:column;border:1px solid var(--border-subtle);border-radius:18px;background:var(--bg-surface);box-shadow:0 30px 70px -24px rgba(15,23,42,.35);overflow:hidden;animation:nb-in .18s ease-out}

@@ -189,7 +189,7 @@ export const ScenariosView: React.FC = () => {
             <button type="button" onClick={() => void runCalculator()} disabled={loading} className="inline-flex items-center gap-2 rounded-xl bg-brand px-6 py-2.5 text-xs font-bold text-brand-foreground transition-colors hover:bg-brand-hover hover:text-white disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 focus:ring-offset-canvas">
               <Calculator className="h-4 w-4" /> {loading ? 'Calculating & verifying…' : 'Calculate'}
             </button>
-            <button type="button" onClick={() => assistantRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })} className="inline-flex items-center gap-2 rounded-xl border border-interactive/30 bg-interactive-soft px-4 py-2.5 text-xs font-bold text-interactive hover:border-interactive">
+            <button type="button" onClick={() => assistantRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })} className="inline-flex items-center gap-2 rounded-xl border border-interactive/30 bg-interactive-soft px-4 py-2.5 text-xs font-bold text-interactive">
               <Sparkles className="h-4 w-4" /> Ask ArthaMind
             </button>
           </div>

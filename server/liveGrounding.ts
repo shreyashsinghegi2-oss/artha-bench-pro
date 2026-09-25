@@ -5,8 +5,8 @@
  *   - market quotes (indices, Indian and US stocks, gold, crude, currencies, crypto) via the market-data
  *     provider already used by the app,
  *   - business headlines via the news provider,
- *   - web search results (Tavily, Brave or Serper when a key is configured; Wikipedia and DuckDuckGo
- *     Instant Answers as keyless fallbacks) when the question needs current or outside information.
+ *   - web search results, Google first (Serper when a key is configured, else keyless Google News with
+ *     publish dates; Tavily or Brave when configured) when the question needs current or outside information.
  * The facts are added to the system prompt with their source and timestamp, and the sources are kept
  * for the response, so answers can cite what they used and say plainly when something is unverified.
  *
@@ -151,38 +151,63 @@ async function brave(q: string, key: string): Promise<WebResult[]> {
   return (j.web?.results ?? []).map((x) => ({ title: strip(x.title ?? ''), url: x.url ?? '', snippet: strip(x.description ?? '').slice(0, 400), source: 'Brave web search' }));
 }
 async function serper(q: string, key: string): Promise<WebResult[]> {
-  const r = await fetch('https://google.serper.dev/search', { method: 'POST', headers: { 'X-API-KEY': key, 'Content-Type': 'application/json' }, body: JSON.stringify({ q, gl: 'in', num: 5 }), signal: AbortSignal.timeout(6000) });
+  const r = await fetch('https://google.serper.dev/search', { method: 'POST', headers: { 'X-API-KEY': key, 'Content-Type': 'application/json' }, body: JSON.stringify({ q, gl: 'in', hl: 'en', num: 6, tbs: /\b(today|latest|current|now|this (week|month|year))\b/i.test(q) ? 'qdr:m' : undefined }), signal: AbortSignal.timeout(6000) });
   if (!r.ok) throw new Error(`Serper ${r.status}`);
   const j = await r.json() as { organic?: Array<{ title?: string; link?: string; snippet?: string }> };
   return (j.organic ?? []).map((x) => ({ title: strip(x.title ?? ''), url: x.link ?? '', snippet: strip(x.snippet ?? '').slice(0, 400), source: 'Google results via Serper' }));
 }
-async function wikipedia(q: string): Promise<WebResult[]> {
-  const r = await fetch(`https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(q)}&format=json&srlimit=3&origin=*`, { headers: { 'User-Agent': 'ArthaMindAI/1.0 (education)' }, signal: AbortSignal.timeout(5000) });
-  if (!r.ok) throw new Error(`Wikipedia ${r.status}`);
-  const j = await r.json() as { query?: { search?: Array<{ title: string; snippet: string }> } };
-  return (j.query?.search ?? []).map((x) => ({ title: x.title, url: `https://en.wikipedia.org/wiki/${encodeURIComponent(x.title.replace(/ /g, '_'))}`, snippet: strip(x.snippet), source: 'Wikipedia' }));
-}
-async function duckduckgo(q: string): Promise<WebResult[]> {
-  const r = await fetch(`https://api.duckduckgo.com/?q=${encodeURIComponent(q)}&format=json&no_html=1&skip_disambig=1`, { signal: AbortSignal.timeout(5000) });
-  if (!r.ok) throw new Error(`DuckDuckGo ${r.status}`);
-  const j = await r.json() as { AbstractText?: string; AbstractURL?: string; Heading?: string; AbstractSource?: string };
-  return j.AbstractText ? [{ title: j.Heading || q, url: j.AbstractURL || 'https://duckduckgo.com', snippet: j.AbstractText.slice(0, 400), source: `${j.AbstractSource || 'DuckDuckGo'} (instant answer)` }] : [];
+const decode = (s: string) => strip(s.replace(/<!\[CDATA\[|\]\]>/g, ''));
+const tag = (xml: string, name: string) => xml.match(new RegExp(`<${name}[^>]*>([\\s\\S]*?)</${name}>`))?.[1] ?? '';
+
+/** Search words for Google: drop filler so the query reads like something a person types into Google. */
+export function googleQuery(q: string): string {
+  const cleaned = q.replace(/https?:\/\/\S+/g, ' ').replace(/\b(please|kindly|can you|could you|tell me|i want to know|explain to me|hey|hi)\b/gi, ' ').replace(/[^\p{L}\p{N}&%.₹$\- ]+/gu, ' ').replace(/\s+/g, ' ').trim();
+  return cleaned.split(' ').slice(0, 16).join(' ');
 }
 
-/** Web search with the best configured provider, falling back to keyless sources. */
+/** Google News search (keyless RSS): current, dated headlines from the publishers Google indexes, newest first. */
+async function googleNews(q: string): Promise<WebResult[]> {
+  const r = await fetch(`https://news.google.com/rss/search?q=${encodeURIComponent(googleQuery(q))}&hl=en-IN&gl=IN&ceid=IN:en`, { headers: { 'User-Agent': 'Mozilla/5.0 (ArthaMindAI; +https://artha-bench-pro.vercel.app)' }, signal: AbortSignal.timeout(6000) });
+  if (!r.ok) throw new Error(`Google News ${r.status}`);
+  const xml = await r.text();
+  const items = [...xml.matchAll(/<item>([\s\S]*?)<\/item>/g)].slice(0, 10).map((m) => {
+    const it = m[1];
+    const source = decode(tag(it, 'source'));
+    const title = decode(tag(it, 'title')).replace(new RegExp(`\\s+-\\s+${source.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`), '');
+    const date = new Date(decode(tag(it, 'pubDate')));
+    return { title, url: decode(tag(it, 'link')), date, source };
+  }).filter((x) => x.title && x.url);
+  items.sort((a, b) => (b.date.getTime() || 0) - (a.date.getTime() || 0));
+  return items.slice(0, 6).map((x) => {
+    const when = Number.isFinite(x.date.getTime()) ? x.date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Kolkata' }) : 'date unknown';
+    return { title: x.title, url: x.url, snippet: `${x.title} (${x.source || 'publisher'}, published ${when})`, source: `Google News · ${x.source || 'publisher'}` };
+  });
+}
+async function duckduckgo(q: string): Promise<WebResult[]> {
+  const r = await fetch(`https://api.duckduckgo.com/?q=${encodeURIComponent(googleQuery(q))}&format=json&no_html=1&skip_disambig=1`, { signal: AbortSignal.timeout(5000) });
+  if (!r.ok) throw new Error(`DuckDuckGo ${r.status}`);
+  const j = await r.json() as { AbstractText?: string; AbstractURL?: string; Heading?: string; AbstractSource?: string };
+  // Instant answers often quote Wikipedia; they are kept only as background, never as the latest fact.
+  return j.AbstractText ? [{ title: j.Heading || q, url: j.AbstractURL || 'https://duckduckgo.com', snippet: `Background (may be out of date): ${j.AbstractText.slice(0, 300)}`, source: `${j.AbstractSource || 'DuckDuckGo'} (background)` }] : [];
+}
+
+/**
+ * Web search, Google first: Google results via Serper when SERPER_API_KEY is set, then Tavily or Brave,
+ * then keyless Google News (dated, newest first). Wikipedia is not used as a source of current facts.
+ */
 export async function webSearch(query: string): Promise<{ provider: string; results: WebResult[] }> {
   const q = query.slice(0, 300);
   const keyed: Array<[string, string | undefined, (q: string, k: string) => Promise<WebResult[]>]> = [
+    ['Google (Serper)', process.env.SERPER_API_KEY?.trim(), serper],
     ['Tavily', process.env.TAVILY_API_KEY?.trim(), tavily],
     ['Brave', process.env.BRAVE_SEARCH_API_KEY?.trim(), brave],
-    ['Serper', process.env.SERPER_API_KEY?.trim(), serper],
   ];
   for (const [name, key, fn] of keyed) {
     if (!key) continue;
-    try { const results = await fn(q, key); if (results.length) return { provider: name, results }; } catch { /* try the next provider */ }
+    try { const results = await fn(googleQuery(q) || q, key); if (results.length) return { provider: name, results }; } catch { /* try the next provider */ }
   }
-  const [ddg, wiki] = await Promise.all([withTimeout(duckduckgo(q), 5000), withTimeout(wikipedia(q), 5000)]);
-  return { provider: 'Keyless (DuckDuckGo + Wikipedia)', results: [...(ddg ?? []), ...(wiki ?? [])].slice(0, 4) };
+  const [news, ddg] = await Promise.all([withTimeout(googleNews(q), 6500), withTimeout(duckduckgo(q), 5000)]);
+  return { provider: 'Google News (live, newest first)', results: [...(news ?? []), ...(ddg ?? []).slice(0, 1)].slice(0, 6) };
 }
 
 // ---------- Context assembly ----------
@@ -302,7 +327,7 @@ export async function gatherLiveContext(query: string, mode: WebSearchMode = 'au
   }
 
   const text = lines.length
-    ? `LIVE CONTEXT retrieved ${istNow()} IST. Treat these as the current facts for this answer. Quote figures exactly with their source and time; if the question needs something not listed here, say you could not verify it live. Search results can be wrong or dated: prefer official sources (RBI, SEBI, Income Tax Department, NSE, BSE, PIB) when they disagree.\n${lines.join('\n')}`
+    ? `LIVE CONTEXT retrieved ${istNow()} IST. Treat these as the current facts for this answer. Quote figures exactly with their source and time; if the question needs something not listed here, say you could not verify it live. Web results are listed newest first with their publish dates: for "who is" / "current" / "latest" questions, answer from the most recent dated result and name it with its date; never answer current facts from memory or encyclopaedias. Search results can be wrong or dated: prefer official sources (RBI, SEBI, Income Tax Department, NSE, BSE, PIB) when they disagree.\n${lines.join('\n')}`
     : '';
   const value = { text, sources };
   cache.set(key, { at: Date.now(), value });
@@ -334,7 +359,7 @@ export async function groundSystemPrompt(systemPrompt: string, userPrompt: strin
 
 /** Which live sources are connected (no secrets), for the chat UI's source indicator. */
 export function liveSourceStatus() {
-  const web = process.env.TAVILY_API_KEY?.trim() ? 'Tavily' : process.env.BRAVE_SEARCH_API_KEY?.trim() ? 'Brave Search' : process.env.SERPER_API_KEY?.trim() ? 'Google via Serper' : 'DuckDuckGo + Wikipedia (keyless)';
+  const web = process.env.SERPER_API_KEY?.trim() ? 'Google via Serper' : process.env.TAVILY_API_KEY?.trim() ? 'Tavily' : process.env.BRAVE_SEARCH_API_KEY?.trim() ? 'Brave Search' : 'Google News (keyless)';
   return {
     webSearch: { provider: web, keyed: !web.includes('keyless') },
     marketData: process.env.TWELVE_DATA_API_KEY?.trim() ? 'Yahoo Finance + Twelve Data' : 'Yahoo Finance (delayed)',

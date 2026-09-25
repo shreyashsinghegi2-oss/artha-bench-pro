@@ -4,7 +4,7 @@ import { ArrowRight, BadgeIndianRupee, BarChart3, Bot, Calculator, Check, Gradua
 import { HeroPhone, HERO_REPORT, useLanguageCycle } from './HeroPhone';
 import { ArthaMindLogoMark } from '../branding/ArthaMindBrand';
 import './landingHero.css';
-import { NatureBackdrop } from './NatureBackdrop';
+import { HeroSlideshow } from './HeroSlideshow';
 
 /** The ecosystem at a glance: every chip is a real part of the product. */
 const ECOSYSTEM: Array<[string, React.ComponentType<{ size?: number }>]> = [
@@ -57,8 +57,9 @@ export const LandingHero: React.FC<{ onSample: () => void; onExplore: () => void
   const reduced = useReducedMotion();
   const item = (i: number) => (reduced ? {} : { initial: { opacity: 0, y: 12 }, animate: { opacity: 1, y: 0 }, transition: { delay: 0.08 + i * 0.1, duration: 0.45, ease: [0.2, 0.7, 0.2, 1] as [number, number, number, number] } });
 
-  return <section className="hx hx-nature" aria-labelledby="hx-title">
-    <NatureBackdrop/>
+  return <section className="hx hx-nature hx-photo" aria-labelledby="hx-title">
+    <div className="hx-scene">
+    <HeroSlideshow/>
     <div className="hx-wrap">
       <div className="hx-copy">
         <motion.h1 id="hx-title" className="hx-one" {...item(0)}>ArthaMind is your AI money manager: it reads your income, spending, loans and investments, <span>does the maths, and tells you what to do next, in your own language.</span></motion.h1>
@@ -78,6 +79,8 @@ export const LandingHero: React.FC<{ onSample: () => void; onExplore: () => void
           <span><small>Example tax saved</small><b>{inr(HERO_REPORT.tax.saving)}</b></span>
         </div>
       </motion.div>
+    </div>
+
     </div>
 
     <div className="hx-offer" aria-labelledby="hx-offer-title">

@@ -7,11 +7,11 @@ import { CFO_QUESTIONS, CfoIntake, type CfoProfile } from './CfoIntake';
 import './aiCfo.css';
 
 export const CFO_STARTER_PROMPTS = [
-  'Old vs new tax regime for a ₹18 lakh salary',
-  'Should I prepay my ₹40 lakh home loan or invest?',
+  'Old vs new tax regime for a ₹18,00,000 salary',
+  'Should I prepay my ₹40,00,000 home loan or invest?',
   'Build a budget for ₹85,000 take-home',
   'How big should my emergency fund be?',
-  'Plan a ₹50 lakh house down payment in 5 years',
+  'Plan a ₹50,00,000 house down payment in 5 years',
   'My EMIs are 45% of salary. What should I do?',
 ];
 
@@ -206,7 +206,7 @@ export const AiCfoChat: React.FC<Props> = ({ suggestFor, externalPrompt, compact
     </div>
     <div className="cfo-web"><WebSearchToggle/></div>
     <form className="cfo-compose" onSubmit={(event) => { event.preventDefault(); void send(draft); }}>
-      <textarea ref={input} value={draft} rows={1} disabled={intake} maxLength={4000} placeholder="Ask your AI CFO… e.g. Can I afford a ₹12 lakh car on ₹1.1 lakh salary?" aria-label="Ask your AI CFO"
+      <textarea ref={input} value={draft} rows={1} disabled={intake} maxLength={4000} placeholder="Ask your AI CFO… e.g. Can I afford a ₹12,00,000 car on ₹1,10,000 salary?" aria-label="Ask your AI CFO"
         onChange={(event) => setDraft(event.target.value)}
         onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); void send(draft); } }}/>
       <button type="submit" disabled={!draft.trim() || busy} aria-label="Send question"><ArrowUp size={17}/></button>

@@ -6,12 +6,8 @@ import '../landing/moneyCheck.css';
 
 export const pct = (rate: number) => `${Math.round(rate * 1000) / 10}%`;
 export const inr = (v: number) => `${v < 0 ? '−' : ''}₹${Math.abs(Math.round(v)).toLocaleString('en-IN')}`;
-export const shortInr = (v: number) => {
-  const a = Math.abs(v), s = v < 0 ? '−' : '';
-  if (a >= 1e7) return `${s}₹${(a / 1e7).toFixed(2)} Cr`;
-  if (a >= 1e5) return `${s}₹${(a / 1e5).toFixed(1)} L`;
-  return inr(v);
-};
+/** Full ₹ amount with Indian grouping; we never abbreviate to k, L or Cr. */
+export const shortInr = inr;
 /** Accepts 85000, 85,000, 85k, 1.2 lakh, 1 cr. Empty → 0; unreadable → NaN. */
 export const parseMoney = (value: string) => {
   const clean = value.replace(/[₹,\s]/g, '').toLowerCase();
@@ -48,12 +44,12 @@ export const MoneyReportView: React.FC<{ report: MoneyCheckReport; onAsk?: () =>
     <div><small>Money health</small><b>{report.health.status}</b><p>{report.health.summary}</p></div>
   </div>
   <div className="mc-tiles">
-    <Tile i={0} label="Better tax regime" value={report.tax.better === 'same' ? 'Same either way' : `${report.tax.better === 'new' ? 'New' : 'Old'} · saves ${shortInr(report.tax.saving)}`} sub={`Old ${shortInr(report.tax.oldRegimeTax)} · New ${shortInr(report.tax.newRegimeTax)}`} how="Both regimes use FY 2025-26 slabs, the standard deduction, the section 87A rebate and 4% cess. Your 80C, 80D and NPS amounts count only under the old regime, within their caps. Surcharge applies above ₹50 lakh; HRA and home-loan interest are not included."/>
+    <Tile i={0} label="Better tax regime" value={report.tax.better === 'same' ? 'Same either way' : `${report.tax.better === 'new' ? 'New' : 'Old'} · saves ${shortInr(report.tax.saving)}`} sub={`Old ${shortInr(report.tax.oldRegimeTax)} · New ${shortInr(report.tax.newRegimeTax)}`} how="Both regimes use FY 2025-26 slabs, the standard deduction, the section 87A rebate and 4% cess. Your 80C, 80D and NPS amounts count only under the old regime, within their caps. Surcharge applies above ₹50,00,000; HRA and home-loan interest are not included."/>
     <Tile i={1} label="Monthly take-home" value={inr(report.tax.monthlyTakeHome)} sub={`Surplus ${inr(report.cashflow.surplus)}/mo`} tone={report.cashflow.surplus < 0 ? 'neg' : undefined} how="Annual salary minus the lower of the two tax figures, divided by 12. Employee PF and professional tax are not deducted, so your payslip may be slightly lower."/>
     <Tile i={2} label="Freedom number" value={shortInr(report.freedom.corpusNeeded)} sub={`SIP ${inr(report.freedom.monthlySipNeeded)}/mo${report.freedom.freedomAge ? ` · free by ${report.freedom.freedomAge}` : ''}`} how={`Today's spending grown at ${pct(MONEY_CHECK_ASSUMPTIONS.inflation)} inflation to retirement, then funded to age ${MONEY_CHECK_ASSUMPTIONS.lifeExpectancy} with a ${pct(MONEY_CHECK_ASSUMPTIONS.postRetirementReturn)} return while it keeps rising with inflation. Investments grow at ${pct(MONEY_CHECK_ASSUMPTIONS.preRetirementReturn)} before retirement. 'Free by' assumes you invest your whole monthly surplus.`}/>
     <Tile i={3} label="Emergency fund" value={report.emergency.gap > 0 ? `Gap ${shortInr(report.emergency.gap)}` : 'Covered'} sub={`Target ${shortInr(report.emergency.target)} · ${Number.isFinite(report.emergency.months) ? report.emergency.months.toFixed(1) : '∞'} months now`} tone={report.emergency.gap > 0 ? 'neg' : 'pos'} how="Six months of spending plus EMIs, kept in cash, sweep FDs or liquid funds. 'Months now' is your cash and FDs divided by monthly spending plus EMIs."/>
     <Tile i={4} label="Term insurance" value={report.protection.termGap > 0 ? `Gap ${shortInr(report.protection.termGap)}` : report.protection.termCoverNeeded > 0 ? 'Covered' : 'Not essential now'} sub={`Need ${shortInr(report.protection.termCoverNeeded)}`} tone={report.protection.termGap > 0 ? 'neg' : 'pos'} how={`Present value of your household's spending until retirement (rising ${pct(MONEY_CHECK_ASSUMPTIONS.inflation)} a year, discounted at ${pct(MONEY_CHECK_ASSUMPTIONS.protectionDiscountRate)}), plus loans outstanding, minus the cash and investments your family could use. Zero when nobody depends on your income.`}/>
-    <Tile i={5} label="Health insurance" value={report.protection.healthGap > 0 ? `Gap ${shortInr(report.protection.healthGap)}` : 'Covered'} sub={`Suggested ${shortInr(report.protection.healthCoverSuggested)}`} tone={report.protection.healthGap > 0 ? 'neg' : 'pos'} how="A rule of thumb for city hospital costs: ₹10 lakh for up to two people, ₹15 lakh for three or four, ₹20 lakh for five or more. A super top-up is the cheapest way to add cover."/>
+    <Tile i={5} label="Health insurance" value={report.protection.healthGap > 0 ? `Gap ${shortInr(report.protection.healthGap)}` : 'Covered'} sub={`Suggested ${shortInr(report.protection.healthCoverSuggested)}`} tone={report.protection.healthGap > 0 ? 'neg' : 'pos'} how="A rule of thumb for city hospital costs: ₹10,00,000 for up to two people, ₹15,00,000 for three or four, ₹20,00,000 for five or more. A super top-up is the cheapest way to add cover."/>
     <Tile i={6} label="Net worth" value={shortInr(report.netWorth)} tone={report.netWorth < 0 ? 'neg' : undefined} how="Cash and FDs plus investments, minus loans outstanding. Property and gold are not included."/>
     {report.goal && <Tile i={7} label="Your goal" value={`${shortInr(report.goal.futureCost)} then`} sub={`SIP ${inr(report.goal.monthlySip)}/mo`} how={`Today's cost grown at ${pct(MONEY_CHECK_ASSUMPTIONS.inflation)} a year, and the monthly SIP that reaches it at a ${pct(MONEY_CHECK_ASSUMPTIONS.preRetirementReturn)} return.`}/>}
   </div>

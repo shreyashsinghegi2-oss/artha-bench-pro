@@ -76,7 +76,7 @@ export const CfoIntake: React.FC<{ onComplete: (profile: CfoProfile) => void; on
     event?.preventDefault();
     if (question.kind === 'money') {
       const amount = parseMoney(draft);
-      if (!Number.isFinite(amount) || amount < 0 || (!question.allowZero && amount === 0)) { setError('Please enter an amount like 85000, 85k or 1.2 lakh.'); return; }
+      if (!Number.isFinite(amount) || amount < 0 || (!question.allowZero && amount === 0)) { setError('Please enter an amount like 85,000 or 1,20,000.'); return; }
       answer(amount, rupees(amount));
     } else if (question.kind === 'text') {
       answer(draft.trim().slice(0, 40), draft.trim() || 'Skipped');

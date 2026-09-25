@@ -1193,7 +1193,8 @@ apiRouter.post('/company/assistant', async (req: Request, res: Response, next: N
     const symbol = parsed.data.symbol.toUpperCase();
     const [company, quoteResult] = await Promise.all([
       fetchFinnhubCompanyIntelligence(symbol),
-      getMarketQuote(symbol),
+      // A missing quote must not stop the company explanation: the profile and metrics still answer most questions.
+      getMarketQuote(symbol).catch(() => null),
     ]);
 
     if (company.status !== 'connected') {
@@ -1207,9 +1208,9 @@ apiRouter.post('/company/assistant', async (req: Request, res: Response, next: N
       fundamentalMetrics: company.metrics,
       recentEarnings: company.earnings,
       analystRecommendationCounts: company.recommendations,
-      marketQuote: quoteResult.quote,
+      marketQuote: quoteResult?.quote ?? 'Quote unavailable right now; do not state a current price.',
       dataRetrievedAt: company.retrievedAt,
-      dataProviders: ['Finnhub', quoteResult.quote.providerName],
+      dataProviders: quoteResult ? ['Finnhub', quoteResult.quote.providerName] : ['Finnhub'],
     };
 
     const systemPrompt = `You are the ArthaBench Company AI Assistant, a careful financial educator and evidence-grounded company-analysis explainer.

@@ -2728,7 +2728,7 @@ var KNOWLEDGE = [
     title: "CAGR (compound annual growth rate)",
     summary: "The steady yearly rate that takes a starting value to an ending value, ignoring the ups and downs in between.",
     formula: "CAGR = (End \xF7 Start)^(1/years) \u2212 1",
-    example: { inputs: "\u20B91 lakh grows to \u20B92 lakh in 6 years", result: pct(F.cagr(1, 2, 6)), value: F.cagr(1, 2, 6) },
+    example: { inputs: "\u20B91,00,000 grows to \u20B92,00,000 in 6 years", result: pct(F.cagr(1, 2, 6)), value: F.cagr(1, 2, 6) },
     notes: ["CAGR suits a single lump sum. For SIPs or irregular cash flows use XIRR."],
     keywords: ["cagr", "compound annual growth rate", "annualised return", "growth rate"],
     reference: "Standard definition used by AMFI and fund factsheets for point-to-point returns."
@@ -2759,7 +2759,7 @@ var KNOWLEDGE = [
     title: "Future cost of a goal (inflation)",
     summary: "Today\u2019s price grown by inflation to the year you need it.",
     formula: "Future cost = Cost today \xD7 (1 + inflation)^years",
-    example: { inputs: "\u20B910 lakh goal, 6% inflation, 10 years", result: inr(F.futureCost(1e6, 0.06, 10)), value: F.futureCost(1e6, 0.06, 10) },
+    example: { inputs: "\u20B910,00,000 goal, 6% inflation, 10 years", result: inr(F.futureCost(1e6, 0.06, 10)), value: F.futureCost(1e6, 0.06, 10) },
     keywords: ["inflation", "future value of goal", "goal planning", "cost in future"],
     reference: "Standard compounding applied to prices."
   },
@@ -2769,7 +2769,7 @@ var KNOWLEDGE = [
     title: "Present value",
     summary: "What a future amount is worth today at a given rate.",
     formula: "PV = FV \xF7 (1 + r)^t",
-    example: { inputs: "\u20B910 lakh received in 10 years, 8% rate", result: inr(F.presentValue(1e6, 0.08, 10)), value: F.presentValue(1e6, 0.08, 10) },
+    example: { inputs: "\u20B910,00,000 received in 10 years, 8% rate", result: inr(F.presentValue(1e6, 0.08, 10)), value: F.presentValue(1e6, 0.08, 10) },
     keywords: ["present value", "pv", "discounting", "time value of money"],
     reference: "Standard TVM formula."
   },
@@ -2802,7 +2802,7 @@ var KNOWLEDGE = [
     title: "SIP needed for a target",
     summary: "The monthly amount required to reach a goal by a date.",
     formula: "P = Target \xF7 ([((1 + i)^n \u2212 1) \xF7 i] \xD7 (1 + i))",
-    example: { inputs: "\u20B91 crore in 15 years at 12%", result: `${inr(F.sipForTarget(1e7, 0.12, 180))} a month`, value: F.sipForTarget(1e7, 0.12, 180) },
+    example: { inputs: "\u20B91,00,00,000 in 15 years at 12%", result: `${inr(F.sipForTarget(1e7, 0.12, 180))} a month`, value: F.sipForTarget(1e7, 0.12, 180) },
     keywords: ["sip needed", "goal sip", "how much to invest monthly", "target corpus"],
     reference: "Rearranged SIP future-value formula."
   },
@@ -2830,8 +2830,8 @@ var KNOWLEDGE = [
     chapter: "Tax (India)",
     title: "Capital gains tax on equity and mutual funds",
     summary: "Tax on profit when you sell investments, from 23 July 2024.",
-    notes: ["Listed equity and equity mutual funds: short-term (held 12 months or less) taxed at 20%.", "Long-term (held more than 12 months) taxed at 12.5% on gains above \u20B91.25 lakh a year.", "Debt mutual funds bought on or after 1 April 2023: gains added to income and taxed at your slab rate.", "Add 4% health and education cess (and surcharge where it applies)."],
-    example: { inputs: "\u20B93 lakh long-term equity gain in a year", result: `${inr((3e5 - 125e3) * 0.125)} before cess (12.5% of \u20B91.75 lakh)`, value: (3e5 - 125e3) * 0.125 },
+    notes: ["Listed equity and equity mutual funds: short-term (held 12 months or less) taxed at 20%.", "Long-term (held more than 12 months) taxed at 12.5% on gains above \u20B91,25,000 a year.", "Debt mutual funds bought on or after 1 April 2023: gains added to income and taxed at your slab rate.", "Add 4% health and education cess (and surcharge where it applies)."],
+    example: { inputs: "\u20B93,00,000 long-term equity gain in a year", result: `${inr((3e5 - 125e3) * 0.125)} before cess (12.5% of \u20B91,75,000)`, value: (3e5 - 125e3) * 0.125 },
     keywords: ["capital gains", "ltcg", "stcg", "tax on mutual funds", "tax on shares", "equity tax"],
     reference: "Income-tax Act sections 111A and 112A as amended by the Finance (No. 2) Act 2024."
   },
@@ -2842,8 +2842,8 @@ var KNOWLEDGE = [
     title: "EMI (equated monthly instalment)",
     summary: "The fixed monthly payment that repays a loan with interest over its tenure.",
     formula: "EMI = P \xD7 i \xD7 (1 + i)^n \xF7 [(1 + i)^n \u2212 1],  i = annual rate \xF7 12, n = months",
-    example: { inputs: "\u20B910 lakh at 9% for 20 years", result: `${inr(F.emi(1e6, 0.09, 240))} a month; total interest ${inr(F.emi(1e6, 0.09, 240) * 240 - 1e6)}`, value: F.emi(1e6, 0.09, 240) },
-    notes: ["In month 1 of this loan, interest is \u20B97,500 (\u20B910 lakh \xD7 0.75%) and only about \u20B91,497 repays principal; the split shifts towards principal over time.", "Keep total EMIs under 30\u201340% of take-home pay."],
+    example: { inputs: "\u20B910,00,000 at 9% for 20 years", result: `${inr(F.emi(1e6, 0.09, 240))} a month; total interest ${inr(F.emi(1e6, 0.09, 240) * 240 - 1e6)}`, value: F.emi(1e6, 0.09, 240) },
+    notes: ["In month 1 of this loan, interest is \u20B97,500 (\u20B910,00,000 \xD7 0.75%) and only about \u20B91,497 repays principal; the split shifts towards principal over time.", "Keep total EMIs under 30\u201340% of take-home pay."],
     keywords: ["emi", "loan emi", "home loan", "car loan", "personal loan", "instalment"],
     reference: "Standard reducing-balance annuity formula used by Indian banks."
   },
@@ -2871,9 +2871,9 @@ var KNOWLEDGE = [
     chapter: "Tax (India)",
     title: "New tax regime, FY 2025-26",
     summary: "The default regime: lower slab rates, few deductions.",
-    formula: "Slabs on taxable income: 0\u20134 L nil; 4\u20138 L 5%; 8\u201312 L 10%; 12\u201316 L 15%; 16\u201320 L 20%; 20\u201324 L 25%; above 24 L 30%",
-    example: { inputs: "\u20B915 lakh salary", working: "Taxable = 15,00,000 \u2212 75,000 standard deduction = 14,25,000", result: `${inr(newTax15L)} + 4% cess = ${inr(newTax15L * 1.04)}`, value: newTax15L },
-    notes: ["Standard deduction \u20B975,000 for salaried and pensioners.", "Section 87A rebate up to \u20B960,000 when taxable income is \u20B912 lakh or less, so salary up to \u20B912.75 lakh pays no tax (marginal relief just above).", "Employer NPS contribution up to 14% of basic + DA is deductible (80CCD(2))."],
+    formula: "Slabs on taxable income: \u20B90\u20134,00,000 nil; \u20B94,00,001\u20138,00,000 5%; \u20B98,00,001\u201312,00,000 10%; \u20B912,00,001\u201316,00,000 15%; \u20B916,00,001\u201320,00,000 20%; \u20B920,00,001\u201324,00,000 25%; above \u20B924,00,000 30%",
+    example: { inputs: "\u20B915,00,000 salary", working: "Taxable = 15,00,000 \u2212 75,000 standard deduction = 14,25,000", result: `${inr(newTax15L)} + 4% cess = ${inr(newTax15L * 1.04)}`, value: newTax15L },
+    notes: ["Standard deduction \u20B975,000 for salaried and pensioners.", "Section 87A rebate up to \u20B960,000 when taxable income is \u20B912,00,000 or less, so salary up to \u20B912,75,000 pays no tax (marginal relief just above).", "Employer NPS contribution up to 14% of basic + DA is deductible (80CCD(2))."],
     keywords: ["new regime", "new tax regime", "tax slabs", "income tax", "87a rebate", "tax calculation"],
     reference: "Finance Act 2025, section 115BAC; Income Tax Department FY 2025-26 guidance."
   },
@@ -2882,9 +2882,9 @@ var KNOWLEDGE = [
     chapter: "Tax (India)",
     title: "Old tax regime, FY 2025-26",
     summary: "Higher slab rates but allows deductions such as 80C, 80D, HRA and home-loan interest.",
-    formula: "Slabs (below 60): 0\u20132.5 L nil; 2.5\u20135 L 5%; 5\u201310 L 20%; above 10 L 30%",
-    example: { inputs: "\u20B915 lakh salary, \u20B91.5 lakh 80C, \u20B925,000 80D", working: "Taxable = 15,00,000 \u2212 50,000 \u2212 1,50,000 \u2212 25,000 = 12,75,000", result: `${inr(oldTax15L)} + 4% cess = ${inr(oldTax15L * 1.04)}`, value: oldTax15L },
-    notes: ["Standard deduction \u20B950,000.", "Section 87A rebate up to \u20B912,500 when taxable income is \u20B95 lakh or less.", "Seniors (60+) have a \u20B93 lakh nil slab; super seniors (80+) \u20B95 lakh.", "Compare both regimes every year; the ArthaMind tax tool does this for you."],
+    formula: "Slabs (below 60): \u20B90\u20132,50,000 nil; \u20B92,50,001\u20135,00,000 5%; \u20B95,00,001\u201310,00,000 20%; above \u20B910,00,000 30%",
+    example: { inputs: "\u20B915,00,000 salary, \u20B91,50,000 80C, \u20B925,000 80D", working: "Taxable = 15,00,000 \u2212 50,000 \u2212 1,50,000 \u2212 25,000 = 12,75,000", result: `${inr(oldTax15L)} + 4% cess = ${inr(oldTax15L * 1.04)}`, value: oldTax15L },
+    notes: ["Standard deduction \u20B950,000.", "Section 87A rebate up to \u20B912,500 when taxable income is \u20B95,00,000 or less.", "Seniors (60+) have a \u20B93,00,000 nil slab; super seniors (80+) \u20B95,00,000.", "Compare both regimes every year; the ArthaMind tax tool does this for you."],
     keywords: ["old regime", "old tax regime", "80c", "deductions", "hra", "tax comparison"],
     reference: "Income-tax Act first schedule; Finance Act 2025."
   },
@@ -2893,7 +2893,7 @@ var KNOWLEDGE = [
     chapter: "Tax (India)",
     title: "Main deductions (old regime)",
     summary: "Limits most salaried people use.",
-    notes: ["80C: up to \u20B91.5 lakh (EPF, PPF, ELSS, life premium, principal on home loan, children\u2019s tuition).", "80D: health insurance up to \u20B925,000 for self and family (\u20B950,000 if 60+), plus up to \u20B925,000 / \u20B950,000 for parents.", "80CCD(1B): extra \u20B950,000 for your own NPS contribution.", "Section 24(b): up to \u20B92 lakh home-loan interest on a self-occupied house.", "Most of these are not available in the new regime."],
+    notes: ["80C: up to \u20B91,50,000 (EPF, PPF, ELSS, life premium, principal on home loan, children\u2019s tuition).", "80D: health insurance up to \u20B925,000 for self and family (\u20B950,000 if 60+), plus up to \u20B925,000 / \u20B950,000 for parents.", "80CCD(1B): extra \u20B950,000 for your own NPS contribution.", "Section 24(b): up to \u20B92,00,000 home-loan interest on a self-occupied house.", "Most of these are not available in the new regime."],
     keywords: ["80c", "80d", "80ccd", "nps deduction", "home loan interest", "section 24", "deductions"],
     reference: "Income-tax Act chapter VI-A and section 24(b)."
   },
@@ -2935,7 +2935,7 @@ var KNOWLEDGE = [
     title: "Return on equity (ROE)",
     summary: "Profit generated for each rupee of shareholders\u2019 money.",
     formula: "ROE = Net profit \xF7 Average shareholders\u2019 equity",
-    example: { inputs: "Net profit \u20B9180 crore, equity \u20B91,200 crore", result: "15%", value: 180 / 1200 },
+    example: { inputs: "Net profit \u20B91,80,00,00,000, equity \u20B912,00,00,00,000", result: "15%", value: 180 / 1200 },
     keywords: ["roe", "return on equity", "profitability"],
     reference: "Standard ratio (DuPont analysis)."
   },
@@ -2955,7 +2955,7 @@ var KNOWLEDGE = [
     title: "Debt-to-equity",
     summary: "How much the company borrows compared with its own capital.",
     formula: "D/E = Total debt \xF7 Shareholders\u2019 equity",
-    example: { inputs: "Debt \u20B9800 crore, equity \u20B91,000 crore", result: "0.8", value: 0.8 },
+    example: { inputs: "Debt \u20B98,00,00,00,000, equity \u20B910,00,00,00,000", result: "0.8", value: 0.8 },
     keywords: ["debt to equity", "d/e", "leverage"],
     reference: "Standard ratio."
   },
@@ -2975,7 +2975,7 @@ var KNOWLEDGE = [
     title: "Interest coverage",
     summary: "How many times operating profit covers interest cost.",
     formula: "Interest coverage = EBIT \xF7 Interest expense",
-    example: { inputs: "EBIT \u20B9240 crore, interest \u20B960 crore", result: "4.0\xD7", value: 4 },
+    example: { inputs: "EBIT \u20B92,40,00,00,000, interest \u20B960,00,00,000", result: "4.0\xD7", value: 4 },
     keywords: ["interest coverage", "ebit", "solvency"],
     reference: "Standard ratio."
   },
@@ -3068,7 +3068,7 @@ var KNOWLEDGE = [
     chapter: "Personal finance rules",
     title: "Term and health cover",
     summary: "Protect the family before investing for growth.",
-    notes: ["Term cover: roughly 10\u201315\xD7 annual income, or enough to fund family expenses to your retirement age plus loans, minus existing savings.", "Health cover: at least \u20B910 lakh for a family in a metro; a super top-up adds cover cheaply.", "Avoid mixing insurance and investment (endowment/ULIP) unless you understand the costs."],
+    notes: ["Term cover: roughly 10\u201315\xD7 annual income, or enough to fund family expenses to your retirement age plus loans, minus existing savings.", "Health cover: at least \u20B910,00,000 for a family in a metro; a super top-up adds cover cheaply.", "Avoid mixing insurance and investment (endowment/ULIP) unless you understand the costs."],
     keywords: ["term insurance", "life cover", "health insurance", "human life value", "hlv"],
     reference: "IRDAI consumer education; common planning practice."
   },
@@ -3348,21 +3348,25 @@ ${lines.join("\n")}` : "";
   if (cache2.size > 300) cache2.delete(cache2.keys().next().value);
   return value;
 }
+var NUMBER_STYLE = "NUMBER STYLE: write every rupee amount in full with Indian digit grouping (\u20B912,00,000; \u20B91,20,200; \u20B95,000). Never abbreviate amounts as k, K, L, lakh, Cr, crore, M or bn.";
 async function groundSystemPrompt(systemPrompt2, userPrompt) {
   const state = store.getStore();
   if (!state) return systemPrompt2;
   const mode = state.mode;
+  const styled = `${systemPrompt2}
+
+${NUMBER_STYLE}`;
   try {
     const { text, sources } = await gatherLiveContext(userPrompt, mode);
     if (!state.used) {
       state.sources.push(...sources);
       state.used = true;
     }
-    return text ? `${systemPrompt2}
+    return text ? `${styled}
 
-${text}` : systemPrompt2;
+${text}` : styled;
   } catch {
-    return systemPrompt2;
+    return styled;
   }
 }
 function liveSourceStatus() {
@@ -4126,7 +4130,7 @@ var LEARNING_TRACKS = [
             objective: "Calculate gross income, net income, fixed/variable expenses, and current net worth.",
             explanationSeed: "Net worth is the total value of what you own (assets) minus what you owe (liabilities).",
             keyConcepts: ["Gross Income", "Net Income", "Assets", "Liabilities", "Net Worth"],
-            examplePrompt: "How do I calculate my net worth if I have $10k savings, $5k car loan, and $2k credit card balance?",
+            examplePrompt: "How do I calculate my net worth if I have \u20B910,00,000 savings, \u20B95,00,000 car loan, and \u20B920,000 credit card balance?",
             practiceActivity: "List top 3 monthly expenses and calculate cash flow buffer.",
             knowledgeCheck: {
               id: "kc-pf-m1-l1",
@@ -4197,7 +4201,7 @@ var LEARNING_TRACKS = [
             objective: "Compare mathematical (Avalanche) and psychological (Snowball) debt elimination strategies.",
             explanationSeed: "Avalanche targets highest interest rates first; Snowball targets smallest balances first.",
             keyConcepts: ["Debt Avalanche", "Debt Snowball", "APR", "Interest Savings"],
-            examplePrompt: "Compare Avalanche vs Snowball for $3k credit card @ 22% APR and $8k loan @ 7% APR.",
+            examplePrompt: "Compare Avalanche vs Snowball for \u20B930,000 credit card @ 36% APR and \u20B98,00,000 loan @ 11% APR.",
             practiceActivity: "Order sample debt list by interest rate vs balance.",
             knowledgeCheck: {
               id: "kc-pf-m2-l2",
@@ -4374,7 +4378,7 @@ var LEARNING_TRACKS = [
             objective: "Calculate exact position sizes based on account risk tolerance (e.g., 1% max loss per trade).",
             explanationSeed: "Position size = (Account Balance \xD7 Risk %) / (Entry Price - Stop Loss Price).",
             keyConcepts: ["Fixed Percentage Risk", "Stop-Loss Distance", "Position Units"],
-            examplePrompt: "Calculate share position size for $50k account, 1% risk ($500), Entry $100, Stop $95.",
+            examplePrompt: "Calculate share position size for \u20B95,00,000 account, 1% risk (\u20B95,000), entry \u20B91,000, stop \u20B9950.",
             practiceActivity: "Units = $500 / ($100 - $95) = 100 shares.",
             knowledgeCheck: {
               id: "kc-tr-m1-l2",
@@ -6879,7 +6883,8 @@ apiRouter.post("/company/assistant", async (req, res, next) => {
     const symbol = parsed.data.symbol.toUpperCase();
     const [company, quoteResult] = await Promise.all([
       fetchFinnhubCompanyIntelligence(symbol),
-      getMarketQuote(symbol)
+      // A missing quote must not stop the company explanation: the profile and metrics still answer most questions.
+      getMarketQuote(symbol).catch(() => null)
     ]);
     if (company.status !== "connected") {
       return res.status(503).json({
@@ -6891,9 +6896,9 @@ apiRouter.post("/company/assistant", async (req, res, next) => {
       fundamentalMetrics: company.metrics,
       recentEarnings: company.earnings,
       analystRecommendationCounts: company.recommendations,
-      marketQuote: quoteResult.quote,
+      marketQuote: quoteResult?.quote ?? "Quote unavailable right now; do not state a current price.",
       dataRetrievedAt: company.retrievedAt,
-      dataProviders: ["Finnhub", quoteResult.quote.providerName]
+      dataProviders: quoteResult ? ["Finnhub", quoteResult.quote.providerName] : ["Finnhub"]
     };
     const systemPrompt2 = `You are the ArthaBench Company AI Assistant, a careful financial educator and evidence-grounded company-analysis explainer.
 
@@ -7141,6 +7146,57 @@ async function handleNvidiaTutor(req, res) {
   }
 }
 
+// server/offlineSnapshot.ts
+var inr2 = (v) => `${v < 0 ? "\u2212" : ""}\u20B9${Math.abs(Math.round(v)).toLocaleString("en-IN")}`;
+function readAmount(raw) {
+  const m = raw.replace(/[₹,\s]/g, "").toLowerCase().match(/^(\d+(?:\.\d+)?)(k|l|lakh|lakhs|lac|cr|crore|crores)?$/);
+  if (!m) return null;
+  const unit = m[2];
+  return Number(m[1]) * (unit === "k" ? 1e3 : unit?.startsWith("l") ? 1e5 : unit?.startsWith("c") ? 1e7 : 1);
+}
+var AMOUNT = String.raw`₹?\s?(\d[\d,]*(?:\.\d+)?\s?(?:k|lakhs?|lac|l|crores?|cr)?)\b`;
+function find(prompt, words) {
+  const after = new RegExp(`(?:${words})[^.\\d\u20B9]{0,25}${AMOUNT}([^.]{0,18})`, "i").exec(prompt);
+  const before = new RegExp(`${AMOUNT}([^.\\d]{0,18})(?:${words})`, "i").exec(prompt);
+  const m = after || before;
+  if (!m) return null;
+  const value = readAmount(m[1]);
+  if (value === null || value <= 0) return null;
+  const tail = `${m[2] || ""} ${m[0]}`.toLowerCase();
+  return { value, yearly: /\b(a|per|every|each)\s+(year|annum)|yearly|annual|p\.?a\.?|\/\s?yr|ctc|lpa/.test(tail) };
+}
+function offlineSnapshot(prompt) {
+  const income = find(prompt, "earn|earning|salary|income|ctc|take[- ]home|make");
+  const spend = find(prompt, "spend|spending|expenses?|expenditure");
+  const emi = find(prompt, "emis?|loan repayment");
+  if (!income) return null;
+  const monthlyIncome = income.yearly ? income.value / 12 : income.value;
+  const monthlySpend = spend ? spend.yearly ? spend.value / 12 : spend.value : null;
+  const monthlyEmi = emi ? emi.yearly ? emi.value / 12 : emi.value : 0;
+  const lines = [`Monthly income: ${inr2(monthlyIncome)}${income.yearly ? ` (${inr2(income.value)} a year \xF7 12, before tax)` : ""}.`];
+  const takeaways = [];
+  if (monthlyEmi) {
+    const load = monthlyEmi / monthlyIncome;
+    lines.push(`EMI load: ${inr2(monthlyEmi)} is ${(load * 100).toFixed(1)}% of monthly income (a common comfort limit is 40% of take-home).`);
+    if (load > 0.4) takeaways.push("Bring EMIs under 40% of take-home before taking any new loan; prepay the costliest loan first.");
+  }
+  if (monthlySpend !== null) {
+    const surplus = monthlyIncome - monthlySpend - monthlyEmi;
+    const rate = surplus / monthlyIncome;
+    lines.push(`Monthly surplus: ${inr2(monthlyIncome)} \u2212 ${inr2(monthlySpend)} spending${monthlyEmi ? ` \u2212 ${inr2(monthlyEmi)} EMI` : ""} = ${inr2(surplus)} (savings rate ${(rate * 100).toFixed(1)}%, before tax).`);
+    const buffer = (monthlySpend + monthlyEmi) * 6;
+    lines.push(`Emergency fund target: 6 \xD7 ${inr2(monthlySpend + monthlyEmi)} monthly outgo = ${inr2(buffer)}.`);
+    if (surplus > 0) {
+      takeaways.push(`Build the emergency fund of ${inr2(buffer)} first, in a savings account, FD or liquid fund.`);
+      takeaways.push("Get term life cover if anyone depends on you, and health cover for the family.");
+      takeaways.push(`Then automate a monthly SIP from the surplus of ${inr2(surplus)}, after setting aside tax.`);
+    } else {
+      takeaways.push("Spending and EMIs exceed income: list every expense and cut until the surplus is positive.");
+    }
+  }
+  return { lines, takeaways };
+}
+
 // server/aiGateway.ts
 var requestId = () => `ai-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 function inferTask(prompt, ctx) {
@@ -7154,7 +7210,7 @@ function inferTask(prompt, ctx) {
 }
 function cfoSystemPrompt(c2) {
   const language = c2.language === "hinglish" ? "natural Roman Hindi mixed with simple English" : c2.language === "hindi" ? "simple Hindi (Devanagari)" : "clear, warm, plain English";
-  return `You are ArthaMind CFO, a calm, experienced personal finance adviser for Indian households, freelancers and small businesses. Respond in ${language}. Default currency is INR: write amounts as \u20B9 with Indian digit grouping (\u20B91,25,000) and use lakh/crore for large values. Think like a CFO: cash flow first, then debt and EMIs, emergency runway and insurance, tax efficiency (old vs new regime, 80C/80D/NPS where relevant), then goals and investments.
+  return `You are ArthaMind CFO, a calm, experienced personal finance adviser for Indian households, freelancers and small businesses. Respond in ${language}. Default currency is INR: write every amount in full as \u20B9 with Indian digit grouping (\u20B912,00,000, \u20B91,20,200, \u20B95,000); never abbreviate amounts as k, K, L, lakh, Cr or crore. Think like a CFO: cash flow first, then debt and EMIs, emergency runway and insurance, tax efficiency (old vs new regime, 80C/80D/NPS where relevant), then goals and investments.
 Voice: talk to one person, the way a trusted adviser would across the table. Use "you" and short sentences. Explain any jargon in a few words the first time (for example "emergency runway, meaning how many months your savings would last"). Be specific and kind; acknowledge what is already going well before what needs work. Do not use filler or robotic phrases such as "As an AI", "Certainly!", "Great question", "I hope this helps", "delve" or "in today's fast-paced world". No emojis.
 Structure every answer as a CFO brief using the JSON fields:
 - title: "CFO brief: <topic>" (max 8 words after the colon). For a request containing "PERSONAL CFO PLAN" use exactly "Your personal CFO plan".
@@ -7204,6 +7260,7 @@ async function runAiGateway(request) {
   const fallback = createFallbackStructuredFinancialAnswer(request.prompt, live.text ? `The AI models are unavailable right now, so here is what the live sources show for your question. Read them directly; nothing below has been interpreted by AI.
 ${live.text}` : "The live AI providers are temporarily unavailable. A safe educational fallback is being shown instead.");
   if (live.sources.length) fallback.sources = live.sources;
+  applyOfflineDetail(fallback, request.prompt, live.text);
   return { ok: false, requestId: id, answer: fallback.directAnswer, structuredAnswer: fallback, provider: "Local fallback", model: "ArthaBench", fallbackUsed: true, latencyMs: Date.now() - started, error: "AI providers temporarily unavailable", sanitizedProviderError: lastError.replace(/Bearer\s+\S+/gi, "Bearer [redacted]") };
 }
 async function liveFallbackContext(prompt) {
@@ -7214,6 +7271,18 @@ async function liveFallbackContext(prompt) {
   } catch {
     return { text: "", sources: [] };
   }
+}
+function applyOfflineDetail(answer, prompt, liveText) {
+  const snap = offlineSnapshot(prompt);
+  const liveLines = liveText.split("\n").map((l) => l.replace(/^-\s*/, "").trim()).filter(Boolean);
+  const steps = [];
+  if (snap) steps.push({ title: "Your numbers (calculated, not AI)", explanation: snap.lines.join(" ") });
+  if (liveLines.length) steps.push({ title: "What the live sources and formula book show", explanation: liveLines.join(" \xB7 ") });
+  if (!steps.length) return;
+  answer.title = snap ? "Your numbers, worked out offline" : answer.title;
+  answer.directAnswer = snap ? `The AI models are unavailable right now, so here is plain arithmetic on the numbers you gave. ${snap.lines[snap.lines.length > 2 ? 2 : 0]}` : "The AI models are unavailable right now, so here is what the live sources show for your question. Nothing below has been interpreted by AI.";
+  answer.steps = snap ? steps : [...steps, ...answer.steps].slice(0, 5);
+  if (snap?.takeaways.length) answer.keyTakeaways = snap.takeaways;
 }
 
 // server/rateLimiter.ts

@@ -233,16 +233,20 @@ export async function gatherLiveContext(query: string, mode: WebSearchMode = 'au
  * Adds live context for `userPrompt` to a system prompt. Used by every model call. Only the first call
  * in a request gathers context; later calls in the same request reuse the collected sources.
  */
+/** House number style for every assistant: users of all backgrounds read full amounts more easily than shorthand. */
+export const NUMBER_STYLE = 'NUMBER STYLE: write every rupee amount in full with Indian digit grouping (₹12,00,000; ₹1,20,200; ₹5,000). Never abbreviate amounts as k, K, L, lakh, Cr, crore, M or bn.';
+
 export async function groundSystemPrompt(systemPrompt: string, userPrompt: string): Promise<string> {
   const state = store.getStore();
   if (!state) return systemPrompt;
   const mode = state.mode;
+  const styled = `${systemPrompt}\n\n${NUMBER_STYLE}`;
   try {
     const { text, sources } = await gatherLiveContext(userPrompt, mode);
     if (!state.used) { state.sources.push(...sources); state.used = true; }
-    return text ? `${systemPrompt}\n\n${text}` : systemPrompt;
+    return text ? `${styled}\n\n${text}` : styled;
   } catch {
-    return systemPrompt;
+    return styled;
   }
 }
 

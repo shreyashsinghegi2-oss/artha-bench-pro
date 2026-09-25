@@ -397,10 +397,10 @@ export const HeroPhone: React.FC<{ photoSrc?: string }> = ({ photoSrc }) => {
               {screen === 'cfo' && <>
                 <div className="hp-head"><b>AI CFO</b><small>Answers with the working shown</small></div>
                 <div className="hp-chat">
-                  {chatStep >= 1 && <motion.p className="hp-bubble me" initial={animate ? { opacity: 0, y: 8 } : false} animate={{ opacity: 1, y: 0 }}>Old or new tax regime on a ₹12 L salary?</motion.p>}
+                  {chatStep >= 1 && <motion.p className="hp-bubble me" initial={animate ? { opacity: 0, y: 8 } : false} animate={{ opacity: 1, y: 0 }}>Old or new tax regime on a ₹12,00,000 salary?</motion.p>}
                   {chatStep === 2 && <p className="hp-bubble ai typing" aria-hidden="true"><i/><i/><i/></p>}
                   {chatStep >= 3 && <motion.div className="hp-bubble ai" initial={animate ? { opacity: 0, y: 8 } : false} animate={{ opacity: 1, y: 0 }}>
-                    <p><b>New regime</b> saves <b>{inr(r.tax.saving)}</b> a year with ₹1.75 L of 80C + 80D.</p>
+                    <p><b>New regime</b> saves <b>{inr(r.tax.saving)}</b> a year with ₹1,75,000 of 80C + 80D.</p>
                     <div className="hp-src"><span>87A rebate</span><span>FY 25-26 slabs</span><span>Verify with Form 16</span></div>
                   </motion.div>}
                 </div>
@@ -416,7 +416,7 @@ export const HeroPhone: React.FC<{ photoSrc?: string }> = ({ photoSrc }) => {
                   {chatStep >= 3 && <motion.div className="hp-bubble ai" initial={animate ? { opacity: 0, y: 8 } : false} animate={{ opacity: 1, y: 0 }}>
                     <p>The yearly rate that turns a start value into an end value.</p>
                     <code className="hp-formula">CAGR = (End ÷ Start)<sup>1/yrs</sup> − 1</code>
-                    <p className="hp-eg">₹1 L → ₹2 L in 6 years = <b>12.2% a year</b></p>
+                    <p className="hp-eg">₹1,00,000 → ₹2,00,000 in 6 years = <b>12.2% a year</b></p>
                   </motion.div>}
                 </div>
                 {chatStep >= 4 && <motion.div className="hp-quiz" initial={animate ? { opacity: 0, y: 8 } : false} animate={{ opacity: 1, y: 0 }}>
@@ -436,7 +436,7 @@ export const HeroPhone: React.FC<{ photoSrc?: string }> = ({ photoSrc }) => {
               </>}
 
               {screen === 'tax' && <>
-                <div className="hp-head"><b>Tax · FY 2025-26</b><small>Example: ₹12 L salary, 80C + 80D used</small></div>
+                <div className="hp-head"><b>Tax · FY 2025-26</b><small>Example: ₹12,00,000 salary, 80C + 80D used</small></div>
                 <div className="hp-card hp-bars">
                   <div><span>Old</span><i><motion.b initial={animate ? { width: 0 } : false} animate={{ width: '100%' }} transition={{ duration: 0.9 }}/></i><em><Count to={r.tax.oldRegimeTax} run={animate} format={inr}/></em></div>
                   <div className="win"><span>New</span><i><motion.b initial={animate ? { width: 0 } : false} animate={{ width: `${Math.max(3, (r.tax.newRegimeTax / Math.max(1, r.tax.oldRegimeTax)) * 100)}%` }} transition={{ duration: 0.9 }}/></i><em><Count to={r.tax.newRegimeTax} run={animate} format={inr}/></em></div>

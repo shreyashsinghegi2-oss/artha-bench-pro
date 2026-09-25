@@ -49,11 +49,11 @@ const CALCS: Calc[] = [
     { key: 'months', label: 'Months', kind: 'number', value: () => 24 },
   ], run: (v) => { const m = rdMaturity(v.monthly, v.rate, v.months); return { headline: inr(m), label: 'Maturity value', rows: [['Deposited', inr(v.monthly * v.months)], ['Interest', inr(m - v.monthly * v.months)]], formula: 'Each instalment × (1 + rate ÷ 4)^(4 × months remaining ÷ 12), added up.' }; } },
   { id: 'ppf', name: 'PPF', group: 'Save safely', blurb: '15-year, tax-free government scheme.', fields: [
-    { key: 'yearly', label: 'Yearly deposit (max ₹1.5 L)', kind: 'money', value: (p) => Math.min(150_000, p?.section80C || 150_000) },
+    { key: 'yearly', label: 'Yearly deposit (max ₹1,50,000)', kind: 'money', value: (p) => Math.min(150_000, p?.section80C || 150_000) },
     { key: 'rate', label: 'PPF rate', kind: 'pct', value: () => DEFAULT_RATES.ppf },
   ], run: (v) => { const r = ppfMaturity(v.yearly, v.rate); return { headline: shortInr(r.maturity), label: 'Value after 15 years', rows: [['Invested', inr(r.invested)], ['Tax-free interest', inr(r.interest)]], formula: 'Deposits at the start of each year, compounded yearly for 15 years.', note: RATES_NOTE }; } },
   { id: 'ssy', name: 'Sukanya Samriddhi', group: 'Save safely', blurb: 'For a daughter’s education or marriage.', fields: [
-    { key: 'yearly', label: 'Yearly deposit (₹250 to ₹1.5 L)', kind: 'money', value: () => 100_000 },
+    { key: 'yearly', label: 'Yearly deposit (₹250 to ₹1,50,000)', kind: 'money', value: () => 100_000 },
     { key: 'rate', label: 'SSY rate', kind: 'pct', value: () => DEFAULT_RATES.ssy },
   ], run: (v) => { const r = ssyMaturity(v.yearly, v.rate); return { headline: shortInr(r.maturity), label: 'Value at maturity (21 years)', rows: [['Invested over 15 years', inr(r.invested)], ['Tax-free interest', inr(r.interest)]], formula: 'Yearly deposits for 15 years, then the balance keeps compounding until year 21.', note: RATES_NOTE }; } },
   { id: 'nsc', name: 'NSC', group: 'Save safely', blurb: '5-year National Savings Certificate.', fields: [
@@ -130,7 +130,7 @@ const CalcPanel: React.FC<{ calc: Calc; profile: MoneyProfile | null; onBack: ()
           <dl>{out.rows.map(([k, v]) => <div key={k}><dt>{k}</dt><dd>{v}</dd></div>)}</dl>
           <p className="ch-formula"><strong>How:</strong> {out.formula}</p>
           {out.note && <p className="ch-note">{out.note}</p>}
-        </> : <p className="ch-note">Check “{bad?.label}”. Use numbers like 85000, 85k or 1.2 lakh.</p>}
+        </> : <p className="ch-note">Check “{bad?.label}”. Use numbers like 85,000 or 1,20,000.</p>}
       </div>
     </div>
   </div>;

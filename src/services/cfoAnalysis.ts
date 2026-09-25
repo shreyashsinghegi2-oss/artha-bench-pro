@@ -53,13 +53,8 @@ export function formatInr(value: number): string {
   return `${sign}₹${Math.abs(Math.round(value)).toLocaleString('en-IN')}`;
 }
 
-/** ₹12,50,000 → "₹12.5 lakh", ₹2,40,00,000 → "₹2.4 crore". */
+/** Kept for callers; amounts are shown in full with Indian grouping (₹12,50,000), never abbreviated. */
 export function formatInrShort(value: number): string {
-  const abs = Math.abs(value);
-  const sign = value < 0 ? '−' : '';
-  const trim = (n: number) => n.toFixed(n >= 100 ? 0 : 1).replace(/\.0$/, '');
-  if (abs >= 1e7) return `${sign}₹${trim(abs / 1e7)} crore`;
-  if (abs >= 1e5) return `${sign}₹${trim(abs / 1e5)} lakh`;
   return formatInr(value);
 }
 

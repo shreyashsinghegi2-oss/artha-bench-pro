@@ -36,7 +36,7 @@ export const ArthaMindHeroVisual: React.FC = () => (
               const up = close < open;
               const top = Math.min(open, close);
               const height = Math.max(5, Math.abs(close - open));
-              return <g key={x} className="artha-hero-candle" style={{ animationDelay: `${0.25 + index * 0.07}s` }}><line x1={x} x2={x} y1={high} y2={low} stroke={up ? '#0F766E' : '#B4535A'} strokeWidth="1.5" /><rect x={x - 5} y={top} width="10" height={height} rx="1.5" fill={up ? '#2A9D8F' : '#C96A70'} /></g>;
+              return <g key={x} className="artha-hero-candle" style={{ animationDelay: `${0.25 + index * 0.07}s` }}><line x1={x} x2={x} y1={high} y2={low} stroke={up ? '#059669' : '#DC2626'} strokeWidth="1.5" /><rect x={x - 5} y={top} width="10" height={height} rx="1.5" fill={up ? '#10B981' : '#EF4444'} /></g>;
             })}
           </g>
           <path className="artha-hero-price-line" d="M332 78 H430" fill="none" stroke="#0F766E" strokeWidth="1.4" strokeDasharray="4 5" />

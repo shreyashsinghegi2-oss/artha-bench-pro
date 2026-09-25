@@ -34,3 +34,8 @@
 .tb-panel header{display:flex;justify-content:space-between;align-items:center;padding:4px 6px 8px}
 .tb-panel header button{border:0;background:var(--bg-subtle);border-radius:10px;padding:6px;color:inherit;cursor:pointer}
 .tb-panel .sb-nav{overflow-y:auto}
+/* An opened feature fills the whole area beside the sidebar: no leftover rail margin and no
+   centred max-width column. Paragraph widths inside stay capped for readability. */
+.ws-main.app-workspace-main{margin-left:0}
+.ws-main .page-enter>*{max-width:none!important;margin-left:0!important;margin-right:0!important}
+@media (min-width:1024px){.ws-main .page-enter>*{padding-left:32px!important;padding-right:32px!important}}

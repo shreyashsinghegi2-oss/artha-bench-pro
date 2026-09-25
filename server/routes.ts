@@ -80,9 +80,13 @@ apiRouter.get('/mf/scheme/:code', async (req: Request, res: Response) => {
   }
 });
 apiRouter.post('/mf/isin', async (req: Request, res: Response) => {
-  const isins = Array.isArray(req.body?.isins) ? (req.body.isins as unknown[]).filter((i): i is string => typeof i === 'string' && /^INF[A-Z0-9]{9}$/i.test(i.trim())) : [];
-  if (!isins.length) return res.status(400).json({ error: 'Send a list of mutual fund ISINs.' });
-  try { res.json({ funds: await fundsByIsin(isins) }); }
+  const raw = Array.isArray(req.body?.items) ? req.body.items as unknown[] : [];
+  const items = raw.flatMap((i) => {
+    const o = i as { isin?: unknown; name?: unknown };
+    return typeof o?.isin === 'string' && /^INF[A-Z0-9]{9}$/i.test(o.isin.trim()) ? [{ isin: o.isin.trim(), name: typeof o.name === 'string' ? o.name.slice(0, 160) : '' }] : [];
+  });
+  if (!items.length) return res.status(400).json({ error: 'Send mutual fund ISINs with their names.' });
+  try { res.json({ funds: await fundsByIsin(items) }); }
   catch { res.status(503).json({ error: 'Mutual fund data is unavailable right now.' }); }
 });
 

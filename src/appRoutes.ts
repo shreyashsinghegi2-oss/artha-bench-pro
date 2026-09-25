@@ -11,6 +11,7 @@ const financePaths: Partial<Record<AppNavigationDestination, string>> = {
   overview: '/finance/overview',
   'my-dashboard': '/finance/dashboard',
   'money-planner': '/finance/planner',
+  portfolio: '/finance/portfolio',
   'financial-health': '/finance/health',
   income: '/finance/income',
   expenses: '/finance/expenses',

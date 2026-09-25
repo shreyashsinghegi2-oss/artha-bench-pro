@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { ArrowRight, BadgeIndianRupee, CalendarClock, Coins, Gauge, Landmark, PiggyBank, ReceiptText, ShieldCheck, Sparkles, Target, TrendingUp, Wallet } from 'lucide-react';
+import { ArrowRight, PieChart, BadgeIndianRupee, CalendarClock, Coins, Gauge, Landmark, PiggyBank, ReceiptText, ShieldCheck, Sparkles, Target, TrendingUp, Wallet } from 'lucide-react';
 import { SAMPLE_MONEY_CHECK } from '../../services/moneyCheck';
 import { loadMoneyProfile, onMoneyProfileChange, saveMoneyProfile, type MoneyProfile } from '../../services/moneyProfile';
 import { buildCompleteDashboard, type Figure, type FigureSource } from '../../services/completeDashboard';
@@ -163,6 +163,7 @@ export const CompleteDashboardView: React.FC<{ onNavigate: (d: AppNavigationDest
         <div className="wd-quick">
           <button type="button" onClick={() => onNavigate('expenses')}><ReceiptText size={14}/> Expenses</button>
           <button type="button" onClick={() => onNavigate('budgeting')}><Target size={14}/> Budget</button>
+          <button type="button" onClick={() => onNavigate('portfolio')}><PieChart size={14}/> Portfolio</button>
           <button type="button" onClick={() => onNavigate('money-planner')}><Coins size={14}/> Planner</button>
           <button type="button" onClick={() => onNavigate('financial-health')}><ShieldCheck size={14}/> Health</button>
         </div>

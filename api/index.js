@@ -5951,19 +5951,21 @@ async function getTerminalSnapshot() {
   return snapshotInflight;
 }
 
+// src/data/fundClass.ts
+function assetClassFor(category, name = "") {
+  const c2 = `${category} ${name}`.toLowerCase();
+  if (/gold|silver|commodit/.test(c2)) return "Gold & commodities";
+  if (/hybrid|balanced|asset allocation|arbitrage|equity savings|multi asset/.test(c2)) return "Hybrid";
+  if (/equity|elss|tax saver|index|etf|large ?cap|mid ?cap|small ?cap|large (&|and) mid|flexi|multi ?cap|focused|value|contra|dividend yield|sectoral|thematic|nifty|sensex|top 100|top 200|bluechip|blue chip|opportunities|infrastructure|pharma|banking (&|and) financial services|technology|consumption/.test(c2)) return "Equity";
+  if (/debt|liquid|overnight|money market|gilt|bond|duration|credit risk|banking and psu|floater|income|fixed maturity|fmp/.test(c2)) return "Debt";
+  return "Other";
+}
+
 // server/mutualFundService.ts
 var AMFI_URLS = [process.env.AMFI_NAV_URL, "https://www.amfiindia.com/spages/NAVAll.txt", "https://portal.amfiindia.com/spages/NAVAll.txt"].filter(Boolean);
 var MFAPI_URL = (process.env.MFAPI_BASE_URL || "https://api.mfapi.in").replace(/\/$/, "");
 var AMFI_TTL_MS = 6 * 60 * 60 * 1e3;
 var HISTORY_TTL_MS = 3 * 60 * 60 * 1e3;
-function assetClassFor(category, name = "") {
-  const c2 = `${category} ${name}`.toLowerCase();
-  if (/gold|silver|commodit/.test(c2)) return "Gold & commodities";
-  if (/hybrid|balanced|asset allocation|arbitrage|equity savings|multi asset/.test(c2)) return "Hybrid";
-  if (/equity|elss|index|etf|large cap|mid cap|small cap|flexi|multi cap|focused|value|contra|dividend yield|sectoral|thematic|nifty|sensex/.test(c2)) return "Equity";
-  if (/debt|liquid|overnight|money market|gilt|bond|duration|credit risk|banking and psu|floater|income|fixed maturity|fmp/.test(c2)) return "Debt";
-  return "Other";
-}
 function isoDate(d) {
   const m = d.trim().match(/^(\d{1,2})-([A-Za-z]{3}|\d{2})-(\d{4})$/);
   if (!m) return d.trim();
@@ -6058,33 +6060,89 @@ async function searchFunds(query, limit = 20) {
     return { results: searchSchemes(results, q, limit), source: "mfapi.in (AMFI data)" };
   }
 }
-async function fundsByIsin(isins) {
-  const { byIsin } = await amfiSchemes();
+async function fundsByIsin(items) {
   const out = {};
-  for (const i of isins.slice(0, 200)) out[i] = byIsin.get(i.trim().toUpperCase()) ?? null;
+  const list = items.slice(0, 60);
+  for (let i = 0; i < list.length; i += 6) {
+    const batch = list.slice(i, i + 6);
+    const found = await Promise.all(batch.map((it) => matchFund(it.isin, it.name ?? "").catch(() => null)));
+    batch.forEach((it, j) => {
+      out[it.isin.toUpperCase()] = found[j];
+    });
+  }
   return out;
 }
 var historyCache = /* @__PURE__ */ new Map();
-async function fundDetail(code) {
-  if (!/^\d{3,8}$/.test(code)) throw new Error("Invalid scheme code.");
-  const { byCode } = await amfiSchemes().catch(() => ({ byCode: /* @__PURE__ */ new Map() }));
-  const scheme = byCode.get(code) ?? null;
-  let points = historyCache.get(code);
-  if (!points || Date.now() - points.at > HISTORY_TTL_MS) {
-    try {
-      const res = await fetch(`${MFAPI_URL}/mf/${code}`, { headers: { Accept: "application/json" }, signal: AbortSignal.timeout(1e4) });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const body = await res.json();
-      const pts = (body.data ?? []).map((d) => ({ date: isoDate(d.date), nav: Number(d.nav) })).filter((p) => Number.isFinite(p.nav) && p.nav > 0).reverse();
-      points = { at: Date.now(), points: pts };
-      historyCache.set(code, points);
-      if (historyCache.size > 300) historyCache.delete(historyCache.keys().next().value);
-    } catch {
-      points = { at: Date.now(), points: scheme ? [{ date: scheme.navDate, nav: scheme.nav }] : [] };
+function schemeFromMeta(code, meta, last) {
+  if (!meta?.scheme_name) return null;
+  const category = (meta.scheme_category || "").replace(/^.*?Scheme\s*-\s*/i, (m) => m).trim();
+  return { code, name: meta.scheme_name, house: meta.fund_house || "", category, assetClass: assetClassFor(category, meta.scheme_name), isinGrowth: meta.isin_growth || null, isinReinvest: meta.isin_div_reinvestment || null, nav: last?.nav ?? 0, navDate: last?.date ?? "" };
+}
+async function mfapiScheme(code, latestOnly = false) {
+  const res = await fetch(`${MFAPI_URL}/mf/${code}${latestOnly ? "/latest" : ""}`, { headers: { Accept: "application/json" }, signal: AbortSignal.timeout(1e4) });
+  if (!res.ok) throw new Error(`mfapi HTTP ${res.status}`);
+  const body = await res.json();
+  const points = (body.data ?? []).map((d) => ({ date: isoDate(d.date), nav: Number(d.nav) })).filter((p) => Number.isFinite(p.nav) && p.nav > 0).reverse();
+  return { meta: body.meta ?? null, points };
+}
+function thinHistory(points) {
+  if (points.length < 400) return points;
+  const cutoff = new Date(new Date(points[points.length - 1].date).getTime() - 366 * 864e5).toISOString().slice(0, 10);
+  const out = [];
+  let lastWeek = "";
+  for (const p of points) {
+    if (p.date >= cutoff) {
+      out.push(p);
+      continue;
+    }
+    const d = new Date(p.date);
+    const week = `${d.getUTCFullYear()}-${Math.floor((d.getTime() / 864e5 + 4) / 7)}`;
+    if (week !== lastWeek) {
+      out.push(p);
+      lastWeek = week;
     }
   }
-  if (!scheme && !points.points.length) throw new Error("Scheme not found.");
-  return { scheme, history: points.points, returns: trailingReturns(points.points), sources: ["AMFI (official NAVs)", ...points.points.length > 1 ? ["mfapi.in (AMFI history)"] : []] };
+  return out;
+}
+async function fundDetail(code) {
+  if (!/^\d{3,8}$/.test(code)) throw new Error("Invalid scheme code.");
+  const amfi = await amfiSchemes().catch(() => null);
+  let cached = historyCache.get(code);
+  if (!cached || Date.now() - cached.at > HISTORY_TTL_MS) {
+    try {
+      const { meta, points } = await mfapiScheme(code);
+      cached = { at: Date.now(), points, meta };
+      historyCache.set(code, cached);
+      if (historyCache.size > 300) historyCache.delete(historyCache.keys().next().value);
+    } catch {
+      const a = amfi?.byCode.get(code);
+      cached = { at: Date.now(), points: a ? [{ date: a.navDate, nav: a.nav }] : [], meta: null };
+    }
+  }
+  const last = cached.points[cached.points.length - 1];
+  const scheme = amfi?.byCode.get(code) ?? schemeFromMeta(code, cached.meta, last);
+  if (!scheme && !cached.points.length) throw new Error("Scheme not found.");
+  return { scheme, history: thinHistory(cached.points), returns: trailingReturns(cached.points), sources: [amfi ? "AMFI (official NAVs)" : "mfapi.in (AMFI NAV data)"] };
+}
+async function matchFund(isin, name) {
+  const id = isin.trim().toUpperCase();
+  const amfi = await amfiSchemes().catch(() => null);
+  if (amfi) return amfi.byIsin.get(id) ?? null;
+  const words = name.replace(/\(.*?\)/g, " ").replace(/[^A-Za-z0-9 ]+/g, " ").split(/\s+/).filter((w) => w.length > 1 && !/^(fund|plan|option|the|of)$/i.test(w)).slice(0, 5).join(" ");
+  if (!words) return null;
+  const res = await fetch(`${MFAPI_URL}/mf/search?q=${encodeURIComponent(words)}`, { headers: { Accept: "application/json" }, signal: AbortSignal.timeout(1e4) }).catch(() => null);
+  if (!res?.ok) return null;
+  const rows = (await res.json()).slice(0, 12);
+  const direct = /direct/i.test(name), growth = !/idcw|dividend/i.test(name);
+  rows.sort((a, b) => Number(/direct/i.test(b.schemeName) === direct) - Number(/direct/i.test(a.schemeName) === direct) || Number(!/idcw|dividend/i.test(b.schemeName) === growth) - Number(!/idcw|dividend/i.test(a.schemeName) === growth));
+  for (const r of rows.slice(0, 6)) {
+    try {
+      const { meta, points } = await mfapiScheme(String(r.schemeCode), true);
+      if (meta && (meta.isin_growth === id || meta.isin_div_reinvestment === id)) return schemeFromMeta(String(r.schemeCode), meta, points[points.length - 1]);
+    } catch {
+    }
+  }
+  return null;
 }
 function trailingReturns(points) {
   if (points.length < 2) return {};
@@ -6131,10 +6189,14 @@ apiRouter.get("/mf/scheme/:code", async (req, res) => {
   }
 });
 apiRouter.post("/mf/isin", async (req, res) => {
-  const isins = Array.isArray(req.body?.isins) ? req.body.isins.filter((i) => typeof i === "string" && /^INF[A-Z0-9]{9}$/i.test(i.trim())) : [];
-  if (!isins.length) return res.status(400).json({ error: "Send a list of mutual fund ISINs." });
+  const raw = Array.isArray(req.body?.items) ? req.body.items : [];
+  const items = raw.flatMap((i) => {
+    const o = i;
+    return typeof o?.isin === "string" && /^INF[A-Z0-9]{9}$/i.test(o.isin.trim()) ? [{ isin: o.isin.trim(), name: typeof o.name === "string" ? o.name.slice(0, 160) : "" }] : [];
+  });
+  if (!items.length) return res.status(400).json({ error: "Send mutual fund ISINs with their names." });
   try {
-    res.json({ funds: await fundsByIsin(isins) });
+    res.json({ funds: await fundsByIsin(items) });
   } catch {
     res.status(503).json({ error: "Mutual fund data is unavailable right now." });
   }

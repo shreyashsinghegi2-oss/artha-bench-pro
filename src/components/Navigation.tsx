@@ -1,5 +1,5 @@
 import React from 'react';
-import {
+import { PieChart,
   BarChart3, BookOpen, BrainCircuit, BriefcaseBusiness, Calculator,
   FlaskConical, GraduationCap, Home, Landmark, LineChart, Newspaper, Settings,
   ShieldCheck, Sparkles, WalletCards, Zap, LayoutDashboard, Coins, HeartPulse, CalendarClock,
@@ -23,6 +23,7 @@ const OVERVIEW_ITEMS: NavigationItem[] = [
 ];
 
 const PLAN_ITEMS: NavigationItem[] = [
+  { id: 'portfolio', label: 'Portfolio', icon: PieChart },
   { id: 'money-planner', label: 'Planner', icon: Coins },
   { id: 'financial-health', label: 'Health score', icon: HeartPulse },
 ];

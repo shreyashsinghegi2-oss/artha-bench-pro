@@ -5,7 +5,8 @@
  * Results are cached in memory; AMFI updates NAVs once a day in the evening.
  */
 
-export type AssetClass = 'Equity' | 'Debt' | 'Hybrid' | 'Gold & commodities' | 'Other';
+import { assetClassFor, type FundAssetClass as AssetClass } from '../src/data/fundClass';
+export { assetClassFor };
 export interface AmfiScheme {
   code: string; name: string; house: string; category: string; assetClass: AssetClass;
   isinGrowth: string | null; isinReinvest: string | null; nav: number; navDate: string;
@@ -16,15 +17,6 @@ const AMFI_URLS = [process.env.AMFI_NAV_URL, 'https://www.amfiindia.com/spages/N
 const MFAPI_URL = (process.env.MFAPI_BASE_URL || 'https://api.mfapi.in').replace(/\/$/, '');
 const AMFI_TTL_MS = 6 * 60 * 60 * 1000;
 const HISTORY_TTL_MS = 3 * 60 * 60 * 1000;
-
-export function assetClassFor(category: string, name = ''): AssetClass {
-  const c = `${category} ${name}`.toLowerCase();
-  if (/gold|silver|commodit/.test(c)) return 'Gold & commodities';
-  if (/hybrid|balanced|asset allocation|arbitrage|equity savings|multi asset/.test(c)) return 'Hybrid';
-  if (/equity|elss|index|etf|large cap|mid cap|small cap|flexi|multi cap|focused|value|contra|dividend yield|sectoral|thematic|nifty|sensex/.test(c)) return 'Equity';
-  if (/debt|liquid|overnight|money market|gilt|bond|duration|credit risk|banking and psu|floater|income|fixed maturity|fmp/.test(c)) return 'Debt';
-  return 'Other';
-}
 
 /** "24-Sep-2025" or "24-09-2025" → "2025-09-24". */
 export function isoDate(d: string): string {
@@ -118,36 +110,90 @@ export async function searchFunds(query: string, limit = 20) {
   }
 }
 
-export async function fundsByIsin(isins: string[]) {
-  const { byIsin } = await amfiSchemes();
+export async function fundsByIsin(items: Array<{ isin: string; name?: string }>) {
   const out: Record<string, AmfiScheme | null> = {};
-  for (const i of isins.slice(0, 200)) out[i] = byIsin.get(i.trim().toUpperCase()) ?? null;
+  const list = items.slice(0, 60);
+  // A few at a time, so a large statement does not flood the data source.
+  for (let i = 0; i < list.length; i += 6) {
+    const batch = list.slice(i, i + 6);
+    const found = await Promise.all(batch.map((it) => matchFund(it.isin, it.name ?? '').catch(() => null)));
+    batch.forEach((it, j) => { out[it.isin.toUpperCase()] = found[j]; });
+  }
   return out;
 }
 
-const historyCache = new Map<string, { at: number; points: NavPoint[] }>();
+const historyCache = new Map<string, { at: number; points: NavPoint[]; meta: MfapiMeta | null }>();
+interface MfapiMeta { fund_house?: string; scheme_type?: string; scheme_category?: string; scheme_code?: number | string; scheme_name?: string; isin_growth?: string | null; isin_div_reinvestment?: string | null }
 
-/** NAV history (oldest first), from mfapi.in; falls back to AMFI's latest NAV only. */
+function schemeFromMeta(code: string, meta: MfapiMeta | null, last?: NavPoint): AmfiScheme | null {
+  if (!meta?.scheme_name) return null;
+  const category = (meta.scheme_category || '').replace(/^.*?Scheme\s*-\s*/i, (m) => m).trim();
+  return { code, name: meta.scheme_name, house: meta.fund_house || '', category, assetClass: assetClassFor(category, meta.scheme_name), isinGrowth: meta.isin_growth || null, isinReinvest: meta.isin_div_reinvestment || null, nav: last?.nav ?? 0, navDate: last?.date ?? '' };
+}
+
+async function mfapiScheme(code: string, latestOnly = false) {
+  const res = await fetch(`${MFAPI_URL}/mf/${code}${latestOnly ? '/latest' : ''}`, { headers: { Accept: 'application/json' }, signal: AbortSignal.timeout(10_000) });
+  if (!res.ok) throw new Error(`mfapi HTTP ${res.status}`);
+  const body = await res.json() as { meta?: MfapiMeta; data?: Array<{ date: string; nav: string }> };
+  const points = (body.data ?? []).map((d) => ({ date: isoDate(d.date), nav: Number(d.nav) })).filter((p) => Number.isFinite(p.nav) && p.nav > 0).reverse();
+  return { meta: body.meta ?? null, points };
+}
+
+/** Daily points for the last year, weekly before that: small enough for a phone, exact for returns. */
+export function thinHistory(points: NavPoint[]): NavPoint[] {
+  if (points.length < 400) return points;
+  const cutoff = new Date(new Date(points[points.length - 1].date).getTime() - 366 * 86_400_000).toISOString().slice(0, 10);
+  const out: NavPoint[] = [];
+  let lastWeek = '';
+  for (const p of points) {
+    if (p.date >= cutoff) { out.push(p); continue; }
+    const d = new Date(p.date); const week = `${d.getUTCFullYear()}-${Math.floor((d.getTime() / 86_400_000 + 4) / 7)}`;
+    if (week !== lastWeek) { out.push(p); lastWeek = week; }
+  }
+  return out;
+}
+
+/** Scheme details, NAV history (oldest first) and trailing returns. */
 export async function fundDetail(code: string) {
   if (!/^\d{3,8}$/.test(code)) throw new Error('Invalid scheme code.');
-  const { byCode } = await amfiSchemes().catch(() => ({ byCode: new Map<string, AmfiScheme>() }));
-  const scheme = byCode.get(code) ?? null;
-  let points = historyCache.get(code);
-  if (!points || Date.now() - points.at > HISTORY_TTL_MS) {
+  const amfi = await amfiSchemes().catch(() => null);
+  let cached = historyCache.get(code);
+  if (!cached || Date.now() - cached.at > HISTORY_TTL_MS) {
     try {
-      const res = await fetch(`${MFAPI_URL}/mf/${code}`, { headers: { Accept: 'application/json' }, signal: AbortSignal.timeout(10_000) });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const body = await res.json() as { data?: Array<{ date: string; nav: string }> };
-      const pts = (body.data ?? []).map((d) => ({ date: isoDate(d.date), nav: Number(d.nav) })).filter((p) => Number.isFinite(p.nav) && p.nav > 0).reverse();
-      points = { at: Date.now(), points: pts };
-      historyCache.set(code, points);
+      const { meta, points } = await mfapiScheme(code);
+      cached = { at: Date.now(), points, meta };
+      historyCache.set(code, cached);
       if (historyCache.size > 300) historyCache.delete(historyCache.keys().next().value as string);
     } catch {
-      points = { at: Date.now(), points: scheme ? [{ date: scheme.navDate, nav: scheme.nav }] : [] };
+      const a = amfi?.byCode.get(code);
+      cached = { at: Date.now(), points: a ? [{ date: a.navDate, nav: a.nav }] : [], meta: null };
     }
   }
-  if (!scheme && !points.points.length) throw new Error('Scheme not found.');
-  return { scheme, history: points.points, returns: trailingReturns(points.points), sources: ['AMFI (official NAVs)', ...(points.points.length > 1 ? ['mfapi.in (AMFI history)'] : [])] };
+  const last = cached.points[cached.points.length - 1];
+  const scheme = amfi?.byCode.get(code) ?? schemeFromMeta(code, cached.meta, last);
+  if (!scheme && !cached.points.length) throw new Error('Scheme not found.');
+  return { scheme, history: thinHistory(cached.points), returns: trailingReturns(cached.points), sources: [amfi ? 'AMFI (official NAVs)' : 'mfapi.in (AMFI NAV data)'] };
+}
+
+/** Find the scheme for an ISIN: AMFI's file when reachable, else search mfapi by name and confirm the ISIN. */
+export async function matchFund(isin: string, name: string): Promise<AmfiScheme | null> {
+  const id = isin.trim().toUpperCase();
+  const amfi = await amfiSchemes().catch(() => null);
+  if (amfi) return amfi.byIsin.get(id) ?? null;
+  const words = name.replace(/\(.*?\)/g, ' ').replace(/[^A-Za-z0-9 ]+/g, ' ').split(/\s+/).filter((w) => w.length > 1 && !/^(fund|plan|option|the|of)$/i.test(w)).slice(0, 5).join(' ');
+  if (!words) return null;
+  const res = await fetch(`${MFAPI_URL}/mf/search?q=${encodeURIComponent(words)}`, { headers: { Accept: 'application/json' }, signal: AbortSignal.timeout(10_000) }).catch(() => null);
+  if (!res?.ok) return null;
+  const rows = (await res.json() as Array<{ schemeCode: number | string; schemeName: string }>).slice(0, 12);
+  const direct = /direct/i.test(name), growth = !/idcw|dividend/i.test(name);
+  rows.sort((a, b) => Number(/direct/i.test(b.schemeName) === direct) - Number(/direct/i.test(a.schemeName) === direct) || Number(!/idcw|dividend/i.test(b.schemeName) === growth) - Number(!/idcw|dividend/i.test(a.schemeName) === growth));
+  for (const r of rows.slice(0, 6)) {
+    try {
+      const { meta, points } = await mfapiScheme(String(r.schemeCode), true);
+      if (meta && (meta.isin_growth === id || meta.isin_div_reinvestment === id)) return schemeFromMeta(String(r.schemeCode), meta, points[points.length - 1]);
+    } catch { /* try the next candidate */ }
+  }
+  return null;
 }
 
 /** Point-to-point returns: absolute for up to 1 year, compounded yearly (CAGR) beyond. */

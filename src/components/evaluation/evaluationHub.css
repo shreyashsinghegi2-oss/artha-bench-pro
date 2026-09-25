@@ -3,7 +3,7 @@
 .eh .good{--t:#059669}.eh .bad{--t:#dc2626}.eh .warn{--t:#d97706}.eh .info{--t:#2563eb}
 .eh-tools{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
 .eh-tools button{display:flex;align-items:center;gap:9px;padding:10px 11px;border-radius:14px;border:1px solid var(--border-subtle);background:var(--bg-surface);color:var(--text-primary);text-align:left;cursor:pointer;transition:border-color .15s,background .15s,transform .15s}
-.eh-tools button:hover{transform:translateY(-1px);border-color:#7c3aed}
+.eh-tools button:hover{}
 .eh-tools button.on{border-color:#7c3aed;background:color-mix(in srgb,#7c3aed 8%,var(--bg-surface));box-shadow:0 10px 24px -18px #7c3aed}
 .eh-ico{display:grid;place-items:center;flex:none;width:30px;height:30px;border-radius:9px;background:color-mix(in srgb,#7c3aed 12%,transparent);color:#7c3aed}
 .eh-tools b{display:block;font-size:12.5px}.eh-tools small{display:block;font-size:10.5px;color:var(--text-secondary);line-height:1.3}

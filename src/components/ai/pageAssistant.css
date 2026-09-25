@@ -9,7 +9,7 @@
 .pa-q p span{font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#0f9d8a}
 .pa-opts{display:flex;flex-wrap:wrap;gap:6px}
 .pa-opts button,.pa-starters button{border:1px solid var(--border-subtle);border-radius:12px;padding:8px 12px;background:var(--bg-surface);color:inherit;font:600 13px/1.3 inherit;text-align:left;cursor:pointer}
-.pa-opts button:hover,.pa-starters button:hover{border-color:#0f9d8a;color:#0f9d8a}
+.pa-opts button:hover,.pa-starters button:hover{color:#0f9d8a}
 .pa-skip{justify-self:start;display:inline-flex;align-items:center;gap:4px;border:0;background:none;color:var(--text-secondary);font:600 12px inherit;cursor:pointer}
 .pa-answers{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:6px}
 .pa-answers li{display:flex;gap:6px;align-items:baseline;padding:4px 10px;border-radius:999px;background:color-mix(in srgb,#0f9d8a 10%,var(--bg-surface));font-size:12px}

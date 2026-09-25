@@ -1,7 +1,7 @@
 /**
  * One shared picture of the user's money, built from every feature (setup, income, expenses, EMIs,
  * portfolio, planners), so any AI assistant can answer with the user's own numbers. It is attached
- * to AI requests only when the user switches "Use my data" on; the default is off.
+ * to AI requests while "Use my data" is on (the default) so every assistant answers for this person; one tap turns it off.
  */
 import { loadMoneyProfile } from './moneyProfile';
 import { buildCompleteDashboard } from './completeDashboard';
@@ -12,7 +12,7 @@ import { loadPortfolio, summarise } from './portfolio';
 
 const KEY = 'arthamind-use-my-data-v1';
 export const USE_MY_DATA_EVENT = 'arthamind:use-my-data';
-export function useMyDataEnabled(): boolean { try { return localStorage.getItem(KEY) === 'on'; } catch { return false; } }
+export function useMyDataEnabled(): boolean { try { return localStorage.getItem(KEY) !== 'off'; } catch { return false; } }
 export function setUseMyData(on: boolean) { try { localStorage.setItem(KEY, on ? 'on' : 'off'); } catch { /* ignore */ } window.dispatchEvent(new CustomEvent(USE_MY_DATA_EVENT, { detail: on })); }
 
 const inr = (v: number) => `₹${Math.round(v).toLocaleString('en-IN')}`;

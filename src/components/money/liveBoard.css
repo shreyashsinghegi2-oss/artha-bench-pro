@@ -5,7 +5,7 @@
 .lv-head button{margin-left:auto;border:1px solid var(--border-subtle);border-radius:10px;padding:6px 8px;background:var(--bg-surface);color:var(--text-secondary);cursor:pointer}
 .lv-tiles{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
 .lv-tile{display:grid;gap:3px;justify-items:start;padding:12px;border:1px solid var(--border-subtle);border-radius:16px;background:var(--bg-surface);color:inherit;font:inherit;text-align:left;cursor:pointer;transition:border-color .15s,transform .15s}
-.lv-tile:hover{border-color:#0f9d8a;transform:translateY(-1px)}
+.lv-tile:hover{}
 .lv-tile span{font-size:11.5px;font-weight:700;color:var(--text-secondary)}
 .lv-tile b{font-size:17px;font-variant-numeric:tabular-nums;min-height:22px}
 .lv-tile em{display:inline-flex;align-items:center;gap:2px;font-style:normal;font-size:12px;font-weight:700;color:var(--text-secondary)}
@@ -24,7 +24,7 @@
 .lv-search input{flex:1;min-width:0;height:38px;padding:0 12px;border:0;background:none;color:inherit;font:13.5px inherit;outline:none}
 .lv-hits{list-style:none;margin:0;padding:0;display:grid;gap:3px}
 .lv-hits button{width:100%;padding:7px 10px;border:1px solid var(--border-subtle);border-radius:10px;background:var(--bg-surface);color:inherit;font:600 12.5px/1.35 inherit;text-align:left;cursor:pointer}
-.lv-hits button:hover{border-color:#0f9d8a}
+.lv-hits button:hover{}
 .lv-fund{display:grid;gap:6px}
 .lv-fund-row{display:flex;align-items:flex-end;justify-content:space-between;gap:10px}
 .lv-fund-row small{display:block;font-size:11.5px;color:var(--text-secondary)}

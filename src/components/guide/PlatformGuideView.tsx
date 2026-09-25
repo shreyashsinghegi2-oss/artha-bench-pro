@@ -33,10 +33,10 @@ const SECTIONS: Array<{ title: string; icon: React.ComponentType<{ size?: number
 ];
 
 const AI_TIPS: Array<{ icon: React.ComponentType<{ size?: number }>; title: string; text: string }> = [
-  { icon: Bot, title: 'Ask AI on every page', text: 'The green "Ask AI" button reads the page you are on. Drag it anywhere below the header.' },
+  { icon: Bot, title: 'Ask ArthaMind AI on every page', text: 'The "Ask ArthaMind AI" button opens the expert for the page you are on (for example ArthaMind EMI Manager Intelligence) and reads the page. Drag it anywhere below the header.' },
   { icon: Mic, title: 'Speak and listen', text: 'Tap the mic to ask by voice; press Listen under any answer and choose the language and speed.' },
-  { icon: UserRoundCheck, title: 'Use my data', text: 'Switch it on next to "Web search" and every assistant uses your saved income, spending, loans and portfolio.' },
-  { icon: Sparkles, title: 'Live facts', text: 'Web search (Auto) fetches current prices, rates, fees and news, and shows the sources with dates.' },
+  { icon: UserRoundCheck, title: 'Use my data', text: 'On by default: every assistant combines your saved income, spending, loans and portfolio with live data. Switch it off next to "Web search" at any time.' },
+  { icon: Sparkles, title: 'Live facts', text: 'Web search (Auto) fetches current Google results and live prices, newest first, and shows each source with its date.' },
   { icon: ShieldCheck, title: 'Your data stays yours', text: 'Profile and portfolio stay on your device unless you save them; we never ask for PINs or OTPs.' },
 ];
 

@@ -20,7 +20,7 @@
 .rb-conf-bars i{width:12px;height:5px;border-radius:2px;background:#e2e8f0}
 .rb-conf-bars i.on{background:#1f8f4e}
 .rb-close{border:1px solid #e2e8f0;border-radius:9px;padding:5px 10px;background:#fff;font:inherit;font-size:12px;font-weight:700;color:#334155;cursor:pointer}
-.rb-close:hover{border-color:#1f8f4e;color:#1f8f4e}
+.rb-close:hover{color:#1f8f4e}
 
 .rb-tags{display:flex;flex-wrap:wrap;gap:6px;margin:14px 0 2px}
 .rb-entity{display:inline-flex;align-items:center;gap:6px;padding:4px 10px 4px 4px;border:1px solid #e2e8f0;border-radius:999px;font-size:12px;font-weight:700;color:#0f172a;background:#f8fafc}

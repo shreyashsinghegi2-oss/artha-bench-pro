@@ -114,7 +114,7 @@ export const EvaluationLabView: React.FC = () => {
                 <h3 className="text-xs font-black text-ink">Upload text for reliability evaluation</h3>
                 <p className="mt-1 text-[10px] leading-5 text-secondary">Supported: .txt, .md, .csv, .json · maximum 128 KB. The extracted text is shown below before you evaluate it.</p>
               </div>
-              <button type="button" onClick={() => uploadRef.current?.click()} className="inline-flex items-center gap-2 rounded-xl border border-line-strong bg-surface px-4 py-2.5 text-xs font-black text-ink transition hover:border-interactive/40 hover:bg-subtle"><FileUp className="h-4 w-4 text-interactive" /> Choose file</button>
+              <button type="button" onClick={() => uploadRef.current?.click()} className="inline-flex items-center gap-2 rounded-xl border border-line-strong bg-surface px-4 py-2.5 text-xs font-black text-ink transition hover:bg-subtle"><FileUp className="h-4 w-4 text-interactive" /> Choose file</button>
               <input ref={uploadRef} type="file" className="hidden" accept=".txt,.md,.csv,.json,text/plain,text/markdown,text/csv,application/json" onChange={(event) => void handleUpload(event)} />
             </div>
             {uploadName && <div className="mt-3 rounded-xl border border-success-fill/25 bg-success-soft px-3 py-2 text-[10px] font-bold text-success">Loaded: {uploadName}</div>}
@@ -137,7 +137,7 @@ export const EvaluationLabView: React.FC = () => {
 };
 
 const ModeButton: React.FC<{ active: boolean; onClick: () => void; icon: React.ReactNode; title: string; description: string }> = ({ active, onClick, icon, title, description }) => (
-  <button type="button" role="tab" aria-selected={active} onClick={onClick} className={`rounded-xl border px-3 py-3 text-left transition ${active ? 'border-interactive/35 bg-interactive-soft' : 'border-transparent hover:border-line hover:bg-subtle'}`}>
+  <button type="button" role="tab" aria-selected={active} onClick={onClick} className={`rounded-xl border px-3 py-3 text-left transition ${active ? 'border-interactive/35 bg-interactive-soft' : 'border-transparent hover:bg-subtle'}`}>
     <span className={`flex items-center gap-2 text-xs font-black ${active ? 'text-interactive' : 'text-ink'}`}>{icon}{title}</span>
     <span className="mt-1 block text-[9px] leading-4 text-secondary">{description}</span>
   </button>

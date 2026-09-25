@@ -9,7 +9,7 @@ import { freeMarketRouter } from './server/freeMarketRoutes';
 import { aiRouter } from './server/aiRoutes';
 import { handleNvidiaTutor } from './server/nvidiaService';
 import { handleNewsImage } from './server/newsImageProxy';
-import { groundingMiddleware, stripUserProfile, liveSourceStatus } from './server/liveGrounding';
+import { groundingMiddleware, stripUserProfile, liveSourceStatus, webSearch } from './server/liveGrounding';
 
 dotenv.config();
 /** Assistant endpoints that answer with live market data, news and web search. */
@@ -24,7 +24,7 @@ async function startServer() {
   app.get('/api/news/image', handleNewsImage);
   app.use('/api', stripUserProfile);
   app.use('/api', (req, res, next) => (GROUNDED_AI_PATHS.has(req.path) ? groundingMiddleware(req, res, next) : next()));
-  app.get('/api/ai/live-sources', (_req, res) => { res.json(liveSourceStatus()); });
+  app.get('/api/ai/live-sources', (_req, res) => { res.json(liveSourceStatus()); }); app.get('/api/ai/web-search', async (req, res) => { const q = String(req.query.q ?? '').slice(0, 200).trim(); if (!q) return res.status(400).json({ error: 'Add ?q=your question' }); try { res.json({ query: q, retrievedAt: new Date().toISOString(), ...(await webSearch(q)) }); } catch { res.status(502).json({ error: 'Web search is unavailable right now.' }); } });
   app.post('/api/nvidia-tutor', handleNvidiaTutor);
   app.use('/api', aiRouter);
   app.use('/api', apiRouter);

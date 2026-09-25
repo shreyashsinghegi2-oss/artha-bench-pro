@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { AssistantLogo } from '../ai/AssistantLogo';
 import { Brain, Sparkles } from 'lucide-react';
 import type { StructuredFinancialAnswer } from '../../types';
 import { StructuredFinancialAnswerView } from '../ai/StructuredFinancialAnswer';
@@ -102,7 +103,7 @@ export const PlanAI: React.FC<{ title: string; summary: string; questions: strin
     finally { setBusy(false); }
   };
   return <article className="pk-card info pk-ai">
-    <header><h3><Brain size={16}/> AI review of this plan</h3><span className="pk-status info"><Sparkles size={11}/> Live data</span><small>The AI reads every number here plus current rates, fees and news.</small></header>
+    <header><h3><AssistantLogo size={20}/> ArthaMind Planner Intelligence</h3><span className="pk-status info"><Sparkles size={11}/> Live data</span><small>The AI reads every number here plus current rates, fees and news.</small></header>
     <div className="pk-ai-quick">{questions.map((x, i) => <button key={x} type="button" className={i === 0 ? 'primary' : ''} disabled={busy} onClick={() => void ask(x)}>{x}</button>)}</div>
     <form className="pk-ai-form" onSubmit={(e) => { e.preventDefault(); void ask(q); }}><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Ask anything about this plan…" aria-label="Ask about this plan"/><button type="submit" disabled={busy || !q.trim()}>Ask</button></form>
     <ThinkingSteps active={busy}/>

@@ -1,4 +1,5 @@
 import { MicButton } from '../ai/MicButton';
+import { AssistantLogo } from '../ai/AssistantLogo';
 import { ThinkingSteps } from '../ai/ThinkingSteps';
 import React, { useEffect, useMemo, useState } from 'react';
 import { WebSearchToggle } from '../ai/WebSearchToggle';
@@ -457,9 +458,7 @@ export const CompanyIntelligencePanel: React.FC<CompanyIntelligencePanelProps> =
       <section className="bg-surface border border-line rounded-2xl p-4 sm:p-6 shadow-sm">
         <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4 mb-5">
           <div className="flex items-start gap-3">
-            <div className="p-2.5 rounded-xl bg-interactive-soft border border-interactive text-interactive">
-              <Bot className="w-5 h-5" />
-            </div>
+            <AssistantLogo size={40}/>
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="text-base font-bold text-ink">ArthaBench Company AI Assistant</h3>
@@ -545,7 +544,7 @@ export const CompanyIntelligencePanel: React.FC<CompanyIntelligencePanelProps> =
                   key={question}
                   onClick={() => submitAssistantQuestion(question)}
                   disabled={assistantLoading}
-                  className="w-full text-left p-3 rounded-xl bg-surface border border-line hover:border-interactive hover:bg-interactive-soft text-[10px] text-secondary leading-relaxed transition-all disabled:opacity-50"
+                  className="w-full text-left p-3 rounded-xl bg-surface border border-line hover:bg-interactive-soft text-[10px] text-secondary leading-relaxed transition-all disabled:opacity-50"
                 >
                   {question}
                 </button>

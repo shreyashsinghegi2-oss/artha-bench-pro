@@ -136,7 +136,7 @@ export const ComparisonView: React.FC = () => {
           <button type="button" onClick={() => void runComparison()} disabled={loading || generating || !question.trim() || !modelAText.trim() || !modelBText.trim()} className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-brand px-5 py-3 text-sm font-black text-brand-foreground transition hover:bg-brand-hover hover:text-white disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 focus:ring-offset-canvas">
             {loading ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Scale className="h-4 w-4" />}{loading ? 'Scoring both responses…' : 'Run systematic comparison'}
           </button>
-          <button type="button" onClick={() => void generateDualModelResponses()} disabled={loading || generating || !question.trim()} className="inline-flex items-center justify-center gap-2 rounded-xl border border-line-strong bg-canvas px-5 py-3 text-xs font-black text-ink transition hover:border-interactive/40 hover:bg-subtle disabled:opacity-50">
+          <button type="button" onClick={() => void generateDualModelResponses()} disabled={loading || generating || !question.trim()} className="inline-flex items-center justify-center gap-2 rounded-xl border border-line-strong bg-canvas px-5 py-3 text-xs font-black text-ink transition hover:bg-subtle disabled:opacity-50">
             {generating ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4 text-interactive" />}{generating ? 'Generating pair…' : 'Generate dual-model responses'}
           </button>
         </div>
@@ -151,10 +151,10 @@ export const ComparisonView: React.FC = () => {
 };
 
 const ResponseEditor: React.FC<{ label: string; value: string; onChange: (value: string) => void; onUpload: () => void }> = ({ label, value, onChange, onUpload }) => (
-  <div className="space-y-3 rounded-2xl border border-line bg-canvas p-5 transition hover:border-interactive/30">
+  <div className="space-y-3 rounded-2xl border border-line bg-canvas p-5 transition">
     <div className="flex items-center justify-between gap-3 border-b border-line pb-3">
       <span className="text-xs font-black uppercase tracking-wide text-interactive">{label}</span>
-      <button type="button" onClick={onUpload} className="inline-flex items-center gap-1.5 rounded-lg border border-line bg-surface px-2.5 py-1.5 text-[10px] font-bold text-secondary transition hover:border-interactive/40 hover:text-ink"><FileUp className="h-3.5 w-3.5" /> Upload text</button>
+      <button type="button" onClick={onUpload} className="inline-flex items-center gap-1.5 rounded-lg border border-line bg-surface px-2.5 py-1.5 text-[10px] font-bold text-secondary transition hover:text-ink"><FileUp className="h-3.5 w-3.5" /> Upload text</button>
     </div>
     <textarea value={value} onChange={(event) => onChange(event.target.value.slice(0, 12000))} rows={9} maxLength={12000} className="w-full resize-y bg-transparent text-xs leading-6 text-ink outline-none" placeholder={`${label} content to evaluate...`} aria-label={`${label} content`} />
     <div className="text-right text-[9px] font-mono text-secondary">{value.length.toLocaleString()} / 12,000</div>

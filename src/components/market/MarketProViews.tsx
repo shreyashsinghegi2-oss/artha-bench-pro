@@ -9,7 +9,7 @@ import{MarketPerformanceChart}from'../dashboard/DashboardCharts';
 import{MarketAssetIdentity,MARKET_MARK_DISCLOSURE}from'./MarketAssetIdentity';
 import{ArthaMindMarketExplainer,MarketDataBadge,MarketPageHeader,MarketSourcePanel}from'./MarketProShell';
 
-const button='rounded-xl border border-line bg-canvas px-3 py-2 text-xs font-bold text-ink transition hover:border-interactive/35 disabled:cursor-not-allowed disabled:opacity-40';
+const button='rounded-xl border border-line bg-canvas px-3 py-2 text-xs font-bold text-ink transition disabled:cursor-not-allowed disabled:opacity-40';
 const input='w-full rounded-xl border border-line-strong bg-canvas px-3 py-2.5 text-xs text-ink outline-none focus:border-interactive focus:ring-2 focus:ring-interactive/15';
 const formatNumber=(value:number,currency:string)=>{try{return new Intl.NumberFormat(currency==='INR'?'en-IN':'en-US',{style:'currency',currency,maximumFractionDigits:currency==='JPY'?3:2}).format(value);}catch{return `${currency} ${value.toFixed(4)}`;}};
 const moveClass=(value:number|null|undefined)=>value==null?'text-secondary':value>=0?'text-success':'text-danger';

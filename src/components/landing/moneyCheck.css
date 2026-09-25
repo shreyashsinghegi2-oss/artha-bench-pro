@@ -56,15 +56,9 @@
 @media (max-width:960px){.mc-grid{grid-template-columns:1fr}.mc-form{position:static}}
 @media (max-width:480px){.mc-fields{grid-template-columns:1fr}.mc-tiles{grid-template-columns:1fr}.mc-score{grid-template-columns:1fr;justify-items:start}}
 
-/* ---- Colour meaning in the money report: green healthy / progress, red problem, amber watch, blue information ---- */
-.mc-tile.pos,.mc-actions li.pos{--t:#059669}.mc-tile.neg,.mc-actions li.neg{--t:#dc2626}.mc-tile.warn,.mc-actions li.warn{--t:#d97706}.mc-tile.info,.mc-actions li.info{--t:#2563eb}
-.mc-tile{position:relative;overflow:hidden}
-.mc-tile[class*=" "]::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--t,transparent)}
-.mc-tile.pos,.mc-tile.neg,.mc-tile.warn,.mc-tile.info{border-color:color-mix(in srgb,var(--t) 28%,#e5e5e5)!important;background:linear-gradient(160deg,color-mix(in srgb,var(--t) 8%,var(--bg-surface,#fff)),var(--bg-surface,#fff) 65%)!important}
+/* ---- Money report: cards keep their original black-and-white look; only the numbers carry colour
+   (green healthy / progress, red problem, amber watch, blue information). ---- */
 .mc-tile.pos>b{color:#047857!important}.mc-tile.neg>b{color:#b91c1c!important}.mc-tile.warn>b{color:#b45309!important}.mc-tile.info>b{color:#1d4ed8!important}
-.mc-tile.pos small,.mc-tile.neg small,.mc-tile.warn small,.mc-tile.info small{color:var(--t)}
 .mc-score.pos{--sc:#10b981}.mc-score.warn{--sc:#f59e0b}.mc-score.neg{--sc:#ef4444}
 .mc-score .mc-ring{background:radial-gradient(closest-side,#0a0a0a 78%,transparent 79%),conic-gradient(var(--sc,#fff) var(--deg),#333 0)}
 .mc-score.pos>div>b{color:#34d399}.mc-score.warn>div>b{color:#fbbf24}.mc-score.neg>div>b{color:#f87171}
-.mc-actions li[class]::before{background:var(--t)!important}
-.mc-actions li[class]{padding:8px 10px;border-radius:12px;border-left:3px solid var(--t);background:color-mix(in srgb,var(--t) 6%,transparent)}

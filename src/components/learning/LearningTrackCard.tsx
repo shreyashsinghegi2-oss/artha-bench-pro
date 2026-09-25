@@ -45,11 +45,11 @@ export const LearningTrackCard: React.FC<LearningTrackCardProps> = ({
   return (
     <div
       onClick={() => onSelectTrack(track.id)}
-      className="bg-surface border border-line hover:border-line-strong/80 rounded-2xl p-5 cursor-pointer transition-all hover:scale-[1.01] hover:shadow-sm flex flex-col justify-between group"
+      className="bg-surface border border-line rounded-2xl p-5 cursor-pointer transition-all flex flex-col justify-between group"
     >
       <div>
         <div className="flex items-center justify-between gap-3 mb-3">
-          <div className="w-10 h-10 rounded-xl bg-hover border border-line-strong/80 flex items-center justify-center text-success group-hover:bg-success-soft/60 group-hover:border-success-fill/60 transition-colors">
+          <div className="w-10 h-10 rounded-xl bg-hover border border-line-strong/80 flex items-center justify-center text-success group-hover:bg-success-soft/60 group- transition-colors">
             <Icon className="w-5 h-5" />
           </div>
           <span className="text-[10px] font-semibold px-2.5 py-1 rounded-full bg-hover text-secondary border border-line-strong">
@@ -82,7 +82,7 @@ export const LearningTrackCard: React.FC<LearningTrackCardProps> = ({
           />
         </div>
 
-        <div className="mt-4 flex items-center justify-between text-xs font-semibold text-success group-hover:translate-x-0.5 transition-transform">
+        <div className="mt-4 flex items-center justify-between text-xs font-semibold text-success group- transition-transform">
           <span>{progressPercent === 100 ? 'Completed' : 'Explore Curriculum'}</span>
           <ChevronRight className="w-4 h-4" />
         </div>

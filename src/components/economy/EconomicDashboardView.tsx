@@ -407,7 +407,7 @@ export const EconomicDashboardView: React.FC = () => {
               className={`text-left rounded-2xl p-5 border transition-all min-h-40 ${
                 active
                   ? 'bg-interactive-soft border-interactive/40 shadow-sm'
-                  : 'bg-surface border-line hover:border-interactive/35'
+                  : 'bg-surface border-line'
               }`}
             >
               <div className="flex items-center justify-between gap-2">

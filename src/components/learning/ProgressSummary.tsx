@@ -15,7 +15,7 @@ export const ProgressSummary: React.FC<ProgressSummaryProps> = ({ progress, tota
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
       {/* Card 1: Course Progress */}
-      <div className="bg-surface border border-line hover:border-interactive/40 rounded-2xl p-5 flex flex-col justify-between space-y-3 shadow-sm transition-all">
+      <div className="bg-surface border border-line rounded-2xl p-5 flex flex-col justify-between space-y-3 shadow-sm transition-all">
         <div className="flex items-center justify-between">
           <span className="text-[10px] font-bold text-secondary uppercase tracking-wider">
             Progress
@@ -40,7 +40,7 @@ export const ProgressSummary: React.FC<ProgressSummaryProps> = ({ progress, tota
       </div>
 
       {/* Card 2: Learning Streak */}
-      <div className="bg-surface border border-line hover:border-warning-fill/40 rounded-2xl p-5 flex flex-col justify-between space-y-3 shadow-sm transition-all">
+      <div className="bg-surface border border-line rounded-2xl p-5 flex flex-col justify-between space-y-3 shadow-sm transition-all">
         <div className="flex items-center justify-between">
           <span className="text-[10px] font-bold text-secondary uppercase tracking-wider">
             Learning Streak
@@ -57,7 +57,7 @@ export const ProgressSummary: React.FC<ProgressSummaryProps> = ({ progress, tota
       </div>
 
       {/* Card 3: Bookmarks */}
-      <div className="bg-surface border border-line hover:border-success-fill/40 rounded-2xl p-5 flex flex-col justify-between space-y-3 shadow-sm transition-all">
+      <div className="bg-surface border border-line rounded-2xl p-5 flex flex-col justify-between space-y-3 shadow-sm transition-all">
         <div className="flex items-center justify-between">
           <span className="text-[10px] font-bold text-secondary uppercase tracking-wider">
             Bookmarks
@@ -76,7 +76,7 @@ export const ProgressSummary: React.FC<ProgressSummaryProps> = ({ progress, tota
       </div>
 
       {/* Card 4: Study Notes */}
-      <div className="bg-surface border border-line hover:border-interactive/40 rounded-2xl p-5 flex flex-col justify-between space-y-3 shadow-sm transition-all">
+      <div className="bg-surface border border-line rounded-2xl p-5 flex flex-col justify-between space-y-3 shadow-sm transition-all">
         <div className="flex items-center justify-between">
           <span className="text-[10px] font-bold text-secondary uppercase tracking-wider">
             Study Notes

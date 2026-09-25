@@ -32,4 +32,4 @@
 .app-shell main .bg-surface{background-color:color-mix(in srgb,var(--bg-surface) 92%,transparent);backdrop-filter:saturate(1.2)}
 @media (prefers-reduced-motion:reduce){.sr{opacity:1;transform:none;transition:none}}
 .app-shell main [class*="rounded-3xl"][class*="border"]{border-top-color:color-mix(in srgb,var(--tone-edge,#0f9d8a) 55%,transparent)}
-.app-shell main [class*="rounded-3xl"][class*="border"]:hover{border-color:color-mix(in srgb,var(--tone-edge,#0f9d8a) 40%,transparent)}
+.app-shell main [class*="rounded-3xl"][class*="border"]:hover{}

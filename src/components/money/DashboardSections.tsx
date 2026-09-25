@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { AssistantLogo } from '../ai/AssistantLogo';
 import { ArrowRight, Bot, Brain, GraduationCap, History, PieChart, ReceiptText, Sparkles, UserRound } from 'lucide-react';
 import type { AppNavigationDestination } from '../../navigationTypes';
 import type { StructuredFinancialAnswer } from '../../types';
@@ -176,7 +177,7 @@ export const DashboardAI: React.FC<{ summary: string }> = ({ summary }) => {
     finally { setBusy(false); }
   };
   return <article className="wd-card wd-ai info" id="dash-ai">
-    <header><h2><Brain size={16}/> AI analysis of your complete dashboard</h2><span className="wd-status info"><Sparkles size={11}/> Live data</span><small className="wd-sub">The AI reads every figure on this page plus live markets and news, then ranks what matters most for you.</small></header>
+    <header><h2><AssistantLogo size={22}/> ArthaMind CFO Intelligence · analysis of your complete dashboard</h2><span className="wd-status info"><Sparkles size={11}/> Live data</span><small className="wd-sub">The AI reads every figure on this page plus live markets and news, then ranks what matters most for you.</small></header>
     <div className="wd-ai-quick">{QUICK.map((q, i) => <button key={q} type="button" className={i === 0 ? 'primary' : ''} onClick={() => void ask(q)} disabled={busy}>{q}</button>)}</div>
     <ThinkingSteps active={busy}/>
     {error && <p className="wd-note neg">{error}</p>}

@@ -14,12 +14,14 @@ export type AppNavigationDestination = NavigationDestination
   | 'markets-learn'
   | 'go-pro'
   | 'my-dashboard'
-  | 'money-planner';
+  | 'money-planner'
+  | 'portfolio';
 
 export const FINANCE_DESTINATIONS: readonly AppNavigationDestination[] = [
   'my-dashboard',
   'overview',
   'money-planner',
+  'portfolio',
   'financial-health',
   'income',
   'expenses',

@@ -136,12 +136,23 @@ export function scanStatementCsv(csv: string): ScanResult {
 }
 
 /** Extracts text from a text-based PDF using pdf.js, loaded on demand. */
-export async function pdfToText(file: File): Promise<string> {
+/** Thrown when a PDF needs a password (or the one given is wrong). */
+export class PdfPasswordError extends Error {
+  constructor(public readonly wrong: boolean) { super(wrong ? 'That password did not open the file.' : 'This PDF is password-protected.'); this.name = 'PdfPasswordError'; }
+}
+
+export async function pdfToText(file: File, options: { password?: string; maxPages?: number } = {}): Promise<string> {
   const pdfjs = await import('pdfjs-dist');
   pdfjs.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/build/pdf.worker.min.mjs', import.meta.url).toString();
-  const doc = await pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise;
+  let doc;
+  try {
+    doc = await pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()), password: options.password }).promise;
+  } catch (error) {
+    if (error && typeof error === 'object' && (error as { name?: string }).name === 'PasswordException') throw new PdfPasswordError(Boolean(options.password));
+    throw error;
+  }
   const pages: string[] = [];
-  for (let p = 1; p <= Math.min(doc.numPages, 20); p += 1) {
+  for (let p = 1; p <= Math.min(doc.numPages, options.maxPages ?? 20); p += 1) {
     const page = await doc.getPage(p);
     const content = await page.getTextContent();
     // Rebuild lines from text items using their vertical position.

@@ -1,5 +1,5 @@
 import React, { MouseEvent, useEffect, useRef, useState } from 'react';
-import { CalendarClock, ChevronLeft, ChevronRight, Coins, FileBarChart2, Gauge, HeartPulse, Landmark, LayoutDashboard, ReceiptText, Sparkles, WalletCards, Waves } from 'lucide-react';
+import { PieChart, CalendarClock, ChevronLeft, ChevronRight, Coins, FileBarChart2, Gauge, HeartPulse, Landmark, LayoutDashboard, ReceiptText, Sparkles, WalletCards, Waves } from 'lucide-react';
 import { pathForDestination } from '../../appRoutes';
 import { AppNavigationDestination } from '../../navigationTypes';
 
@@ -9,7 +9,8 @@ type Props = { currentDestination: AppNavigationDestination; onNavigate: (destin
 const tabs: Array<{ id: AppNavigationDestination; label: string; description: string; icon: React.ComponentType<{ className?: string }>; group?: string; }> = [
   { id: 'my-dashboard', label: 'Dashboard', description: 'Everything at a glance: net worth, investments, savings, tax, loans, health and goals.', icon: LayoutDashboard, group: 'Overview' },
   { id: 'overview', label: 'Home & report', description: 'Your money report, plan and AI CFO in one place.', icon: Gauge },
-  { id: 'money-planner', label: 'Planner', description: 'Have a lump sum? See where each rupee should go, step by step.', icon: Coins, group: 'Plan' },
+  { id: 'portfolio', label: 'Portfolio', description: 'Net worth, mutual funds, stocks and loans in one place. Import your CAS statement.', icon: PieChart, group: 'Plan' },
+  { id: 'money-planner', label: 'Planner', description: 'Have a lump sum? See where each rupee should go, step by step.', icon: Coins },
   { id: 'financial-health', label: 'Health score', description: 'Explainable financial health indicators from your recorded data.', icon: HeartPulse },
   { id: 'income', label: 'Income & tax', description: 'Income sources, recurring amounts and tax context.', icon: WalletCards, group: 'Track' },
   { id: 'expenses', label: 'Expenses', description: 'Spending by category and transaction.', icon: ReceiptText },

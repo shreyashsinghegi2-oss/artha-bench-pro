@@ -1153,7 +1153,7 @@ var INDIA_MARKET_UNIVERSE = [
   c("hcl-tech", "HCL Technologies Limited", "HCL Technologies", "HCLTECH.NS", "Information Technology", "IT Services", "https://www.hcltech.com"),
   c("wipro", "Wipro Limited", "Wipro", "WIPRO.NS", "Information Technology", "IT Services", "https://www.wipro.com"),
   c("tech-mahindra", "Tech Mahindra Limited", "Tech Mahindra", "TECHM.NS", "Information Technology", "IT Services", "https://www.techmahindra.com"),
-  c("ltimindtree", "LTIMindtree Limited", "LTIMindtree", "LTIM.NS", "Information Technology", "IT Services", "https://www.ltimindtree.com"),
+  c("ltimindtree", "LTM Limited (formerly LTIMindtree)", "LTM (LTIMindtree)", "LTM.NS", "Information Technology", "IT Services", "https://www.ltimindtree.com"),
   c("persistent", "Persistent Systems Limited", "Persistent Systems", "PERSISTENT.NS", "Information Technology", "Software & IT Services", "https://www.persistent.com"),
   c("mphasis", "Mphasis Limited", "Mphasis", "MPHASIS.NS", "Information Technology", "IT Services", "https://www.mphasis.com"),
   c("coforge", "Coforge Limited", "Coforge", "COFORGE.NS", "Information Technology", "IT Services", "https://www.coforge.com"),
@@ -1179,7 +1179,8 @@ var INDIA_MARKET_UNIVERSE = [
   c("titan", "Titan Company Limited", "Titan Company", "TITAN.NS", "FMCG & Consumer", "Consumer Durables & Jewellery", "https://www.titancompany.in"),
   c("maruti", "Maruti Suzuki India Limited", "Maruti Suzuki", "MARUTI.NS", "Automobile", "Passenger Vehicles", "https://www.marutisuzuki.com"),
   c("mahindra", "Mahindra & Mahindra Limited", "Mahindra & Mahindra", "M&M.NS", "Automobile", "Automobiles & Farm Equipment", "https://www.mahindra.com"),
-  c("tata-motors", "Tata Motors Limited", "Tata Motors", "TATAMOTORS.NS", "Automobile", "Automobiles", "https://www.tatamotors.com"),
+  c("tata-motors-pv", "Tata Motors Passenger Vehicles Limited", "Tata Motors PV", "TMPV.NS", "Automobile", "Automobiles", "https://www.tatamotors.com"),
+  c("tata-motors", "Tata Motors Limited (commercial vehicles)", "Tata Motors CV", "TMCV.NS", "Automobile", "Automobiles", "https://www.tatamotors.com"),
   c("bajaj-auto", "Bajaj Auto Limited", "Bajaj Auto", "BAJAJ-AUTO.NS", "Automobile", "Two-Wheelers & Three-Wheelers", "https://www.bajajauto.com"),
   c("eicher", "Eicher Motors Limited", "Eicher Motors", "EICHERMOT.NS", "Automobile", "Automobiles", "https://www.eichermotors.com"),
   c("hero", "Hero MotoCorp Limited", "Hero MotoCorp", "HEROMOTOCO.NS", "Automobile", "Two-Wheelers", "https://www.heromotocorp.com"),
@@ -1542,7 +1543,7 @@ function isYahooFinanceProvider(provider) {
 }
 function safeYahooSymbol(symbol) {
   const normalized = symbol.trim().toUpperCase();
-  if (!/^[A-Z0-9^][A-Z0-9.^=_-]{0,39}$/.test(normalized)) {
+  if (!/^[A-Z0-9^][A-Z0-9.^=_&-]{0,39}$/.test(normalized)) {
     throw new Error("Invalid Yahoo Finance symbol.");
   }
   return normalized;
@@ -2114,10 +2115,25 @@ async function fetchNewsData(query, category, region, page, endpointUrl = getCon
   const normalizedRegion = region.trim().toLowerCase();
   if (normalizedRegion === "india" || normalizedRegion === "in") url.searchParams.set("country", "in");
   if (normalizedRegion === "us" || normalizedRegion === "usa") url.searchParams.set("country", "us");
-  const response = await fetch(url, {
+  let response = await fetch(url, {
     headers: { Accept: "application/json", "User-Agent": "ArthaBench-Pro/2.0" },
     signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS)
   });
+  if (response.status === 422) {
+    const reason = await response.text().catch(() => "");
+    console.warn(`${providerName} 422: ${reason.replace(/apikey=[^&\s"]+/gi, "apikey=[redacted]").slice(0, 300)}`);
+    const basic = new URL(url.origin + url.pathname);
+    basic.searchParams.set("apikey", apiKey);
+    basic.searchParams.set("language", "en");
+    const shortQuery = (query.trim() || categoryQuery(category) || "business finance markets").replace(/[()]/g, " ").split(/\s+OR\s+|\s+/).filter(Boolean).slice(0, 4).join(" OR ");
+    if (shortQuery) basic.searchParams.set("q", shortQuery.slice(0, 100));
+    const country = url.searchParams.get("country");
+    if (country) basic.searchParams.set("country", country);
+    response = await fetch(basic, {
+      headers: { Accept: "application/json", "User-Agent": "ArthaBench-Pro/2.0" },
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS)
+    });
+  }
   if (!response.ok) {
     if (response.status === 401 || response.status === 403) {
       return { items: [], status: "invalid_credentials", providerName, message: `${providerName} rejected the API key (HTTP ${response.status}).` };
@@ -4925,6 +4941,12 @@ async function handleNewsImage(req, res) {
     res.setHeader("Content-Length", buffer.length.toString());
     return res.status(200).send(buffer);
   } catch (error) {
+    const timedOut = error instanceof Error && (error.name === "TimeoutError" || error.name === "AbortError");
+    res.setHeader("Cache-Control", "public, s-maxage=600");
+    if (timedOut) {
+      console.warn("News image proxy: publisher timed out");
+      return res.status(504).json({ error: "Publisher image timed out." });
+    }
     console.error("News image proxy failed:", error);
     return res.status(502).json({ error: "Unable to resolve publisher image." });
   }
@@ -5929,8 +5951,172 @@ async function getTerminalSnapshot() {
   return snapshotInflight;
 }
 
+// server/mutualFundService.ts
+var AMFI_URL = process.env.AMFI_NAV_URL || "https://www.amfiindia.com/spages/NAVAll.txt";
+var MFAPI_URL = (process.env.MFAPI_BASE_URL || "https://api.mfapi.in").replace(/\/$/, "");
+var AMFI_TTL_MS = 6 * 60 * 60 * 1e3;
+var HISTORY_TTL_MS = 3 * 60 * 60 * 1e3;
+function assetClassFor(category, name = "") {
+  const c2 = `${category} ${name}`.toLowerCase();
+  if (/gold|silver|commodit/.test(c2)) return "Gold & commodities";
+  if (/hybrid|balanced|asset allocation|arbitrage|equity savings|multi asset/.test(c2)) return "Hybrid";
+  if (/equity|elss|index|etf|large cap|mid cap|small cap|flexi|multi cap|focused|value|contra|dividend yield|sectoral|thematic|nifty|sensex/.test(c2)) return "Equity";
+  if (/debt|liquid|overnight|money market|gilt|bond|duration|credit risk|banking and psu|floater|income|fixed maturity|fmp/.test(c2)) return "Debt";
+  return "Other";
+}
+function isoDate(d) {
+  const m = d.trim().match(/^(\d{1,2})-([A-Za-z]{3}|\d{2})-(\d{4})$/);
+  if (!m) return d.trim();
+  const months = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+  const mm = /\d/.test(m[2]) ? m[2] : String(months.indexOf(m[2].toLowerCase()) + 1).padStart(2, "0");
+  return `${m[3]}-${mm}-${m[1].padStart(2, "0")}`;
+}
+function parseAmfiNav(text) {
+  const out = [];
+  let category = "", house = "";
+  for (const raw of text.split(/\r?\n/)) {
+    const line = raw.trim();
+    if (!line || line.startsWith("Scheme Code;")) continue;
+    const parts = line.split(";");
+    if (parts.length >= 6 && /^\d+$/.test(parts[0])) {
+      const nav = Number(parts[4]);
+      if (!Number.isFinite(nav) || nav <= 0) continue;
+      const isin = (s) => /^INF[A-Z0-9]{9}$/.test(s.trim()) ? s.trim() : null;
+      out.push({ code: parts[0], isinGrowth: isin(parts[1]), isinReinvest: isin(parts[2]), name: parts[3].trim(), nav, navDate: isoDate(parts[5]), category, house, assetClass: assetClassFor(category, parts[3]) });
+    } else if (/schemes?\s*\(/i.test(line)) {
+      category = line.replace(/^.*?\((.*)\)\s*$/, "$1").trim() || line;
+    } else if (parts.length === 1) {
+      house = line;
+    }
+  }
+  return out;
+}
+var amfiCache = null;
+var amfiLoading = null;
+async function amfiSchemes() {
+  if (amfiCache && Date.now() - amfiCache.at < AMFI_TTL_MS) return amfiCache;
+  if (amfiLoading) return amfiLoading;
+  amfiLoading = (async () => {
+    try {
+      const res = await fetch(AMFI_URL, { headers: { "User-Agent": "ArthaMind/1.0" }, signal: AbortSignal.timeout(15e3) });
+      if (!res.ok) throw new Error(`AMFI NAV file request failed with HTTP ${res.status}.`);
+      const list = parseAmfiNav(await res.text());
+      if (list.length < 1e3) throw new Error("AMFI NAV file looked incomplete.");
+      const byCode = new Map(list.map((s) => [s.code, s]));
+      const byIsin = /* @__PURE__ */ new Map();
+      for (const s of list) {
+        if (s.isinGrowth) byIsin.set(s.isinGrowth, s);
+        if (s.isinReinvest) byIsin.set(s.isinReinvest, s);
+      }
+      amfiCache = { at: Date.now(), list, byCode, byIsin };
+      return amfiCache;
+    } catch (error) {
+      if (amfiCache) return amfiCache;
+      throw error;
+    } finally {
+      amfiLoading = null;
+    }
+  })();
+  return amfiLoading;
+}
+var normal = (s) => s.toLowerCase().replace(/[^a-z0-9 ]+/g, " ").replace(/\s+/g, " ").trim();
+function searchSchemes(list, query, limit = 20) {
+  const words = normal(query).split(" ").filter((w) => w.length >= 2);
+  if (!words.length) return [];
+  const hits = list.filter((s) => {
+    const n = normal(`${s.name} ${s.house}`);
+    return words.every((w) => n.includes(w));
+  });
+  const rank = (s) => (/direct/i.test(s.name) ? 0 : 2) + (/growth/i.test(s.name) ? 0 : 1);
+  return hits.sort((a, b) => rank(a) - rank(b) || a.name.length - b.name.length).slice(0, limit);
+}
+async function searchFunds(query, limit = 20) {
+  const q = query.trim().slice(0, 80);
+  if (q.length < 2) return { results: [], source: "AMFI" };
+  const { list } = await amfiSchemes();
+  return { results: searchSchemes(list, q, limit), source: "AMFI daily NAV file" };
+}
+async function fundsByIsin(isins) {
+  const { byIsin } = await amfiSchemes();
+  const out = {};
+  for (const i of isins.slice(0, 200)) out[i] = byIsin.get(i.trim().toUpperCase()) ?? null;
+  return out;
+}
+var historyCache = /* @__PURE__ */ new Map();
+async function fundDetail(code) {
+  if (!/^\d{3,8}$/.test(code)) throw new Error("Invalid scheme code.");
+  const { byCode } = await amfiSchemes().catch(() => ({ byCode: /* @__PURE__ */ new Map() }));
+  const scheme = byCode.get(code) ?? null;
+  let points = historyCache.get(code);
+  if (!points || Date.now() - points.at > HISTORY_TTL_MS) {
+    try {
+      const res = await fetch(`${MFAPI_URL}/mf/${code}`, { headers: { Accept: "application/json" }, signal: AbortSignal.timeout(1e4) });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const body = await res.json();
+      const pts = (body.data ?? []).map((d) => ({ date: isoDate(d.date), nav: Number(d.nav) })).filter((p) => Number.isFinite(p.nav) && p.nav > 0).reverse();
+      points = { at: Date.now(), points: pts };
+      historyCache.set(code, points);
+      if (historyCache.size > 300) historyCache.delete(historyCache.keys().next().value);
+    } catch {
+      points = { at: Date.now(), points: scheme ? [{ date: scheme.navDate, nav: scheme.nav }] : [] };
+    }
+  }
+  if (!scheme && !points.points.length) throw new Error("Scheme not found.");
+  return { scheme, history: points.points, returns: trailingReturns(points.points), sources: ["AMFI (official NAVs)", ...points.points.length > 1 ? ["mfapi.in (AMFI history)"] : []] };
+}
+function trailingReturns(points) {
+  if (points.length < 2) return {};
+  const last = points[points.length - 1];
+  const at = (days) => {
+    const target = new Date(new Date(last.date).getTime() - days * 864e5).toISOString().slice(0, 10);
+    let found;
+    for (const p of points) {
+      if (p.date <= target) found = p;
+      else break;
+    }
+    return found;
+  };
+  const out = {};
+  for (const [label, days] of [["1M", 30], ["6M", 182], ["1Y", 365], ["3Y", 1095], ["5Y", 1826]]) {
+    const p = at(days);
+    if (!p) continue;
+    const years = days / 365;
+    out[label] = years <= 1 ? last.nav / p.nav - 1 : (last.nav / p.nav) ** (1 / years) - 1;
+  }
+  return out;
+}
+
 // server/routes.ts
 var apiRouter = Router();
+apiRouter.get("/mf/search", async (req, res) => {
+  try {
+    const q = String(req.query.q ?? "").slice(0, 80);
+    const { results, source } = await searchFunds(q, Math.min(30, Number(req.query.limit) || 20));
+    res.setHeader("Cache-Control", "public, s-maxage=1800, stale-while-revalidate=21600");
+    res.json({ results, source });
+  } catch (error) {
+    res.status(503).json({ error: "Mutual fund data is unavailable right now. Please try again shortly.", detail: error instanceof Error ? error.message : void 0 });
+  }
+});
+apiRouter.get("/mf/scheme/:code", async (req, res) => {
+  try {
+    const detail = await fundDetail(String(req.params.code));
+    res.setHeader("Cache-Control", "public, s-maxage=1800, stale-while-revalidate=21600");
+    res.json(detail);
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : "Unavailable";
+    res.status(/invalid|not found/i.test(msg) ? 404 : 503).json({ error: msg });
+  }
+});
+apiRouter.post("/mf/isin", async (req, res) => {
+  const isins = Array.isArray(req.body?.isins) ? req.body.isins.filter((i) => typeof i === "string" && /^INF[A-Z0-9]{9}$/i.test(i.trim())) : [];
+  if (!isins.length) return res.status(400).json({ error: "Send a list of mutual fund ISINs." });
+  try {
+    res.json({ funds: await fundsByIsin(isins) });
+  } catch {
+    res.status(503).json({ error: "Mutual fund data is unavailable right now." });
+  }
+});
 var rateLimitMap = /* @__PURE__ */ new Map();
 var RATE_LIMIT_WINDOW_MS = 60 * 1e3;
 var MAX_REQUESTS_PER_WINDOW = 120;
@@ -6024,7 +6210,7 @@ var scenarioAssistantSchema = z8.object({
   question: z8.string().min(3).max(1200),
   profile: z8.enum(["US", "India", "Global"]).default("US"),
   currency: z8.enum(["USD", "INR", "EUR", "GBP"]).default("USD"),
-  companySymbol: z8.string().trim().max(20).regex(/^[A-Za-z0-9][A-Za-z0-9.:_-]*$/).optional().or(z8.literal("")),
+  companySymbol: z8.string().trim().max(20).regex(/^[A-Za-z0-9][A-Za-z0-9.:_&-]*$/).optional().or(z8.literal("")),
   useExternalContext: z8.boolean().default(true),
   inputs: z8.record(z8.string(), z8.union([z8.number().finite(), z8.string().max(120), z8.boolean()]))
 });
@@ -6038,7 +6224,7 @@ var dashboardAssistantSchema = z8.object({
   ).max(10).optional(),
   snapshot: z8.object({
     capturedAt: z8.string().max(64),
-    selectedSymbol: z8.string().min(1).max(20).regex(/^[A-Za-z0-9][A-Za-z0-9.:_-]*$/),
+    selectedSymbol: z8.string().min(1).max(20).regex(/^[A-Za-z0-9][A-Za-z0-9.:_&-]*$/),
     selectedRange: z8.enum(["1d", "1w", "1m", "3m", "6m", "1y"]),
     selectedCountry: z8.enum(["us", "india"]),
     quotes: z8.array(
@@ -6840,7 +7026,7 @@ apiRouter.get("/markets/history", async (req, res, next) => {
 apiRouter.get("/company/intelligence", async (req, res, next) => {
   try {
     const parsed = z8.object({
-      symbol: z8.string().min(1).max(20).regex(/^[A-Za-z0-9][A-Za-z0-9.:_-]*$/)
+      symbol: z8.string().min(1).max(20).regex(/^[A-Za-z0-9][A-Za-z0-9.:_&-]*$/)
     }).safeParse(req.query);
     if (!parsed.success) {
       return res.status(400).json({ error: "A valid company stock symbol is required." });
@@ -6858,7 +7044,7 @@ apiRouter.get("/company/intelligence", async (req, res, next) => {
 apiRouter.post("/company/assistant", async (req, res, next) => {
   try {
     const parsed = z8.object({
-      symbol: z8.string().min(1).max(20).regex(/^[A-Za-z0-9][A-Za-z0-9.:_-]*$/),
+      symbol: z8.string().min(1).max(20).regex(/^[A-Za-z0-9][A-Za-z0-9.:_&-]*$/),
       question: z8.string().min(3).max(1200),
       history: z8.array(
         z8.object({

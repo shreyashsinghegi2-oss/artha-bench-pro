@@ -14,6 +14,17 @@ type SearchItem = {
 };
 
 const SEARCH_ITEMS: SearchItem[] = [
+  { title: 'Forex Intelligence', description: 'Pro: USD/INR, EUR/INR, GBP/INR and major pairs with charts and context.', destination: 'forex-markets', keywords: ['forex', 'fx', '4x', 'currency', 'usd inr', 'dollar', 'rupee', 'euro', 'pound', 'exchange rate', 'pro'] },
+  { title: 'Intraday Market Lab', description: 'Pro: intraday charts, moves and learning simulations (education only).', destination: 'intraday-markets', keywords: ['intraday', 'day trading', 'intra day', 'minute chart', 'scalping', 'pro'] },
+  { title: 'India Market Explorer', description: 'Pro: NIFTY 50 companies with logos, sectors and delayed quotes.', destination: 'india-markets', keywords: ['india', 'nse', 'bse', 'nifty', 'sensex', 'indian stocks', 'reliance', 'tcs', 'hdfc', 'infosys', 'icici', 'pro'] },
+  { title: 'US Market Explorer', description: 'Pro: Apple, Microsoft, NVIDIA and major US stocks and ETFs.', destination: 'us-markets', keywords: ['us', 'usa', 'nasdaq', 'nyse', 's&p 500', 'apple', 'microsoft', 'nvidia', 'spy', 'qqq', 'us stocks', 'pro'] },
+  { title: 'Market Watchlist', description: 'Pro: track the stocks and assets you follow.', destination: 'market-watchlist', keywords: ['watchlist', 'watch list', 'track', 'favourites', 'pro'] },
+  { title: 'Market Alerts', description: 'Pro: price and move alerts for your instruments.', destination: 'market-alerts', keywords: ['alerts', 'price alert', 'notify', 'notification', 'pro'] },
+  { title: 'Markets Learning Lab', description: 'Pro: learn market concepts with simulations.', destination: 'markets-learn', keywords: ['markets learning', 'learn trading', 'simulation', 'paper trading', 'pro'] },
+  { title: 'Research Dashboard', description: 'Market, reliability and intelligence command centre.', destination: 'dashboard', keywords: ['research', 'command centre', 'market overview', 'india ticker'] },
+  { title: 'Financial Health Score', description: 'Explainable health score from your recorded data.', destination: 'financial-health', keywords: ['health', 'health score', 'financial health', 'score'] },
+  { title: 'Ripple Twin', description: 'See one financial change ripple across your plan.', destination: 'financial-twin', keywords: ['ripple', 'twin', 'what if', 'simulation'] },
+  { title: 'ArthaMind Pro plans', description: 'Compare Pro features and plans.', destination: 'go-pro', keywords: ['pro', 'premium', 'upgrade', 'plans', 'subscription'] },
   { title: 'Overview', description: 'Market, reliability and intelligence command centre.', destination: 'overview', keywords: ['dashboard', 'home', 'intelligence', 'finance overview'] },
   { title: 'Income', description: 'Private income sources, tax context and recurring income workspace.', destination: 'income', keywords: ['salary', 'earnings', 'personal finance', 'income sources'] },
   { title: 'Expenses', description: 'Private spending, categories, transactions and grounded insights.', destination: 'expenses', keywords: ['spending', 'transactions', 'personal finance', 'expense tracking'] },

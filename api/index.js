@@ -3534,10 +3534,18 @@ function rankPassages(query, docs, k = 4) {
 
 // server/liveGrounding.ts
 var store = new AsyncLocalStorage();
+function stripUserProfile(req, _res, next) {
+  const body = req.body;
+  if (body && typeof body === "object" && typeof body.userProfile === "string") {
+    req.arthaUserProfile = body.userProfile.replace(/[<>]/g, "").slice(0, 2400);
+    delete body.userProfile;
+  }
+  next();
+}
 function groundingMiddleware(req, _res, next) {
   const raw = String(req.header("x-artha-web-search") ?? (req.body && typeof req.body === "object" ? req.body.webSearch : "") ?? "auto").toLowerCase();
   const mode = raw === "on" || raw === "true" ? "on" : raw === "off" || raw === "false" ? "off" : "auto";
-  store.run({ mode, sources: [], used: false }, next);
+  store.run({ mode, sources: [], used: false, userProfile: req.arthaUserProfile }, next);
 }
 var currentWebSearchMode = () => store.getStore()?.mode ?? "auto";
 var currentGroundingSources = () => store.getStore()?.sources ?? [];
@@ -3761,12 +3769,16 @@ ${lines.join("\n")}` : "";
 var NUMBER_STYLE = "NUMBER STYLE: write every rupee amount in full with Indian digit grouping (\u20B912,00,000; \u20B91,20,200; \u20B95,000). Never abbreviate amounts as k, K, L, lakh, Cr, crore, M or bn.";
 async function groundSystemPrompt(systemPrompt2, userPrompt) {
   const state = store.getStore();
+  const profile = state?.userProfile ? `
+
+THE USER'S OWN DATA (shared by the user from their saved records; treat as facts about this person, use it to personalise every recommendation, and name the figures you rely on):
+${state.userProfile}` : "";
   const styled = `${systemPrompt2}
 
 ${IDENTITY_BLOCK}
 ${SCOPE_BLOCK}
 
-${NUMBER_STYLE}`;
+${NUMBER_STYLE}${profile}`;
   if (!state) return styled;
   const mode = state.mode;
   try {
@@ -8565,6 +8577,7 @@ var GROUNDED_AI_PATHS = /* @__PURE__ */ new Set(["/ai/chat", "/ai/tutor", "/tuto
 app.disable("x-powered-by");
 app.use(express.json({ limit: "2mb" }));
 app.get("/api/news/image", handleNewsImage);
+app.use("/api", stripUserProfile);
 app.use("/api", (req, res, next) => GROUNDED_AI_PATHS.has(req.path) ? groundingMiddleware(req, res, next) : next());
 app.get("/api/ai/live-sources", (_req, res) => {
   res.json(liveSourceStatus());

@@ -1,6 +1,6 @@
 /* Scroll-pinned phone showcase in the ArthaMind palette: ink, brand green, with a colour per app screen. */
 .ps-section{position:relative;background:#fff;color:#0a0a0a;border-block:1px solid #ececec}
-.ps-section.is-pinned{height:380vh}
+.ps-section.is-pinned{height:190vh}
 .ps-section.is-pinned .ps-sticky{position:sticky;top:0;height:100vh;display:flex;align-items:center;overflow:hidden}
 .ps-section:not(.is-pinned) .ps-sticky{padding:72px 0}
 .ps-grid{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:64px;align-items:center;width:100%}

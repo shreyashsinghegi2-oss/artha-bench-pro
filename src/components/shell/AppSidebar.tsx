@@ -16,6 +16,7 @@ export const NAV_GROUPS: Group[] = [
   { title: 'Home', items: [
     { id: 'my-dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'overview', label: 'Money report', icon: Gauge },
+    { id: 'platform-guide', label: 'How to use', icon: BookOpen },
   ] },
   { title: 'Money', items: [
     { id: 'portfolio', label: 'Portfolio & net worth', icon: PieChart },

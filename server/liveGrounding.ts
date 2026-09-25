@@ -25,15 +25,28 @@ import { rankPassages } from '../src/services/knowledgeLibrary';
 
 export type WebSearchMode = 'auto' | 'on' | 'off';
 export interface GroundingSource { name: string; dataDate: string; freshness: string; url?: string; kind: 'market' | 'news' | 'web' | 'page' | 'fund' }
-interface GroundingState { mode: WebSearchMode; sources: GroundingSource[]; used: boolean }
+interface GroundingState { mode: WebSearchMode; sources: GroundingSource[]; used: boolean; userProfile?: string }
 
 const store = new AsyncLocalStorage<GroundingState>();
 
 /** Express middleware: reads the chat's web-search setting and opens a grounding scope for the request. */
+/**
+ * Lifts the user's shared data summary ("Use my data" on) off every API request body, so strict
+ * request schemas never see an unknown field; the grounding scope picks it up for AI answers.
+ */
+export function stripUserProfile(req: Request, _res: Response, next: NextFunction) {
+  const body = req.body as Record<string, unknown> | undefined;
+  if (body && typeof body === 'object' && typeof body.userProfile === 'string') {
+    (req as Request & { arthaUserProfile?: string }).arthaUserProfile = body.userProfile.replace(/[<>]/g, '').slice(0, 2400);
+    delete body.userProfile;
+  }
+  next();
+}
+
 export function groundingMiddleware(req: Request, _res: Response, next: NextFunction) {
   const raw = String(req.header('x-artha-web-search') ?? (req.body && typeof req.body === 'object' ? (req.body as Record<string, unknown>).webSearch : '') ?? 'auto').toLowerCase();
   const mode: WebSearchMode = raw === 'on' || raw === 'true' ? 'on' : raw === 'off' || raw === 'false' ? 'off' : 'auto';
-  store.run({ mode, sources: [], used: false }, next);
+  store.run({ mode, sources: [], used: false, userProfile: (req as Request & { arthaUserProfile?: string }).arthaUserProfile }, next);
 }
 
 /** Web-search setting for the current request ('auto' outside a grounding scope). */
@@ -306,7 +319,8 @@ export const NUMBER_STYLE = 'NUMBER STYLE: write every rupee amount in full with
 
 export async function groundSystemPrompt(systemPrompt: string, userPrompt: string): Promise<string> {
   const state = store.getStore();
-  const styled = `${systemPrompt}\n\n${IDENTITY_BLOCK}\n${SCOPE_BLOCK}\n\n${NUMBER_STYLE}`;
+  const profile = state?.userProfile ? `\n\nTHE USER'S OWN DATA (shared by the user from their saved records; treat as facts about this person, use it to personalise every recommendation, and name the figures you rely on):\n${state.userProfile}` : '';
+  const styled = `${systemPrompt}\n\n${IDENTITY_BLOCK}\n${SCOPE_BLOCK}\n\n${NUMBER_STYLE}${profile}`;
   if (!state) return styled;
   const mode = state.mode;
   try {

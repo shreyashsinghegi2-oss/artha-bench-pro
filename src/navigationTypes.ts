@@ -16,6 +16,7 @@ export type AppNavigationDestination = NavigationDestination
   | 'my-dashboard'
   | 'money-planner'
   | 'retirement-planner'
+  | 'platform-guide'
   | 'education-planner'
   | 'job-switch-planner'
   | 'portfolio';

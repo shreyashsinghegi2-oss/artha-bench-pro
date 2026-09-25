@@ -4,14 +4,14 @@ import { lastSevenDays, loadTutorProgress, recordLesson, streak, TUTOR_PROGRESS_
 import './tutorDashboard.css';
 
 type Icon = React.ComponentType<{ size?: number }>;
-const TRACKS: Array<{ id: string; title: string; color: string; icon: Icon; lessons: string[] }> = [
-  { id: 'basics', title: 'Money basics', color: '#059669', icon: Wallet, lessons: ['The 50/30/20 budget', 'Building an emergency fund', 'Needs vs wants', 'Inflation and why it matters', 'The power of compounding'] },
-  { id: 'saving', title: 'Saving & banking', color: '#2563eb', icon: PiggyBank, lessons: ['Savings account vs FD vs RD', 'PPF, EPF and NPS explained', 'Sukanya Samriddhi Yojana', 'UPI safety and common frauds'] },
-  { id: 'funds', title: 'Investing & mutual funds', color: '#7c3aed', icon: Target, lessons: ['What a mutual fund is', 'SIP vs lump sum', 'Index funds', 'Direct vs regular plans', 'XIRR and CAGR', 'Asset allocation by age'] },
-  { id: 'stocks', title: 'Stock market', color: '#d97706', icon: LineChart, lessons: ['How the stock market works', 'Reading a candlestick chart', 'P/E, EPS and ROE', 'Dividends, bonus and splits', 'Risk and diversification'] },
-  { id: 'tax', title: 'Tax in India', color: '#0891b2', icon: Receipt, lessons: ['Old vs new tax regime', 'Section 80C and 80D', 'Capital gains tax', 'Filing your ITR step by step'] },
-  { id: 'loans', title: 'Loans & credit', color: '#dc2626', icon: Landmark, lessons: ['How an EMI is calculated', 'Your credit score (CIBIL)', 'Home-loan prepayment vs investing', 'Credit-card traps to avoid'] },
-  { id: 'protect', title: 'Insurance & retirement', color: '#4f46e5', icon: ShieldCheck, lessons: ['Term life insurance', 'Health insurance and top-ups', 'Your retirement freedom number', 'SWP and annuities'] },
+const TRACKS: Array<{ id: string; level: 'Beginner' | 'Intermediate' | 'Advanced'; outcome: string; title: string; color: string; icon: Icon; lessons: string[] }> = [
+  { id: 'basics', level: 'Beginner', outcome: 'Build a budget that works, keep a safety net and understand how inflation and compounding move your money.', title: 'Money basics', color: '#059669', icon: Wallet, lessons: ['The 50/30/20 budget', 'Building an emergency fund', 'Needs vs wants', 'Inflation and why it matters', 'The power of compounding'] },
+  { id: 'saving', level: 'Beginner', outcome: 'Choose between savings accounts, FDs, RDs and small-savings schemes, and stay safe from UPI frauds.', title: 'Saving & banking', color: '#2563eb', icon: PiggyBank, lessons: ['Savings account vs FD vs RD', 'PPF, EPF and NPS explained', 'Sukanya Samriddhi Yojana', 'UPI safety and common frauds'] },
+  { id: 'funds', level: 'Intermediate', outcome: 'Pick mutual funds with confidence: SIPs, index funds, direct plans, XIRR and a mix that fits your age.', title: 'Investing & mutual funds', color: '#7c3aed', icon: Target, lessons: ['What a mutual fund is', 'SIP vs lump sum', 'Index funds', 'Direct vs regular plans', 'XIRR and CAGR', 'Asset allocation by age'] },
+  { id: 'stocks', level: 'Intermediate', outcome: 'Read charts and ratios, understand dividends and splits, and manage the risk of owning shares.', title: 'Stock market', color: '#d97706', icon: LineChart, lessons: ['How the stock market works', 'Reading a candlestick chart', 'P/E, EPS and ROE', 'Dividends, bonus and splits', 'Risk and diversification'] },
+  { id: 'tax', level: 'Intermediate', outcome: 'Choose the right regime, use deductions, understand capital gains and file your ITR yourself.', title: 'Tax in India', color: '#0891b2', icon: Receipt, lessons: ['Old vs new tax regime', 'Section 80C and 80D', 'Capital gains tax', 'Filing your ITR step by step'] },
+  { id: 'loans', level: 'Beginner', outcome: 'Understand how EMIs work, protect your credit score and decide between prepaying and investing.', title: 'Loans & credit', color: '#dc2626', icon: Landmark, lessons: ['How an EMI is calculated', 'Your credit score (CIBIL)', 'Home-loan prepayment vs investing', 'Credit-card traps to avoid'] },
+  { id: 'protect', level: 'Advanced', outcome: 'Get the right life and health cover and plan a retirement income that lasts.', title: 'Insurance & retirement', color: '#4f46e5', icon: ShieldCheck, lessons: ['Term life insurance', 'Health insurance and top-ups', 'Your retirement freedom number', 'SWP and annuities'] },
 ];
 const TOTAL_LESSONS = TRACKS.reduce((n, t) => n + t.lessons.length, 0);
 
@@ -69,6 +69,15 @@ export const TutorDashboard: React.FC<{ onAsk: (prompt: string) => void }> = ({ 
         <div className="td-tracks" role="tablist">{TRACKS.map((t) => { const Icon = t.icon; const done = t.lessons.filter((_, i) => p.lessons.includes(`${t.id}:${i}`)).length; return <button key={t.id} type="button" role="tab" aria-selected={t.id === openTrack} className={`td-track ${t.id === openTrack ? 'on' : ''}`} style={{ '--c': t.color } as React.CSSProperties} onClick={() => setOpenTrack(t.id)}>
           <span className="td-track-ico"><Icon size={15}/></span><span><b>{t.title}</b><small>{done}/{t.lessons.length} lessons</small></span><i className="td-ring" style={{ '--p': done / t.lessons.length } as React.CSSProperties}/>
         </button>; })}</div>
+        {(() => { const done = track.lessons.filter((_, i) => p.lessons.includes(`${track.id}:${i}`)).length; const next = track.lessons.findIndex((_, i) => !p.lessons.includes(`${track.id}:${i}`)); return <div className="td-course" style={{ '--c': track.color } as React.CSSProperties}>
+          <div className="td-course-top"><b>{track.title}</b><span className={`td-level ${track.level.toLowerCase()}`}>{track.level}</span><span className="td-meta">{track.lessons.length} lessons · about {track.lessons.length * 12} min · final quiz</span></div>
+          <p>{track.outcome}</p>
+          <i className="td-bar"><span style={{ width: `${(done / track.lessons.length) * 100}%`, background: track.color }}/></i>
+          <div className="td-course-actions">
+            {next >= 0 ? <button type="button" className="primary" onClick={() => teach(track, track.lessons[next], next)}>{done ? 'Continue' : 'Start course'}: {track.lessons[next]}</button> : <span className="td-done">Course complete ✓</span>}
+            <button type="button" onClick={() => onAsk(`Give me a 10-question final quiz for the course "${track.title}" covering: ${track.lessons.join(', ')}. Mix multiple-choice and calculation questions with Indian rupee examples. Show the answers with short explanations at the end.`)}>Take the final quiz</button>
+          </div>
+        </div>; })()}
         <ol className="td-lessons" style={{ '--c': track.color } as React.CSSProperties} key={track.id}>{track.lessons.map((l, i) => { const done = p.lessons.includes(`${track.id}:${i}`); return <li key={l} style={{ '--i': i } as React.CSSProperties}>
           <button type="button" onClick={() => teach(track, l, i)} className={done ? 'done' : ''}><span className="td-num">{done ? <CheckCircle2 size={14}/> : i + 1}</span><span>{l}</span><em>{done ? 'Review' : 'Start'}</em></button>
         </li>; })}</ol>

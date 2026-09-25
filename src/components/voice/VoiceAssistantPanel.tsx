@@ -3,14 +3,13 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useDraggable } from '../../hooks/useDraggable';
 import { Download, Loader2, Mic, RotateCcw, Send, Square, Volume2, X } from 'lucide-react';
 import { askAiCfo, type CfoTurn } from '../../services/cfoApi';
-import { canListen, canSpeak, cloudSpeech, downloadBlob, listenOnce, pickVoice, playBlob, speak, stopAudio, stopSpeaking, VOICE_LANGUAGES, voicesReady, type VoiceLanguage } from '../../services/voice';
+import { SPEEDS, setVoiceSpeed, voiceSpeed, canListen, canSpeak, cloudSpeech, downloadBlob, listenOnce, pickVoice, playBlob, speak, stopAudio, stopSpeaking, VOICE_LANGUAGES, voicesReady, type VoiceLanguage } from '../../services/voice';
 
 type Phase = 'idle' | 'listening' | 'thinking' | 'speaking';
 interface Turn { q: string; a: string; offline: boolean }
 
 const SAMPLES = ['How much emergency fund do I need?', 'Should I repay my loan first or start a SIP?', 'Explain mutual funds in simple words', 'Is crypto safe for me?'];
 const LANG_KEY = 'arthamind-voice-language';
-const RATE_KEY = 'arthamind-voice-rate';
 
 /** What the voice reads: the short answer plus up to three actions. */
 function spokenAnswer(reply: Awaited<ReturnType<typeof askAiCfo>>): string {
@@ -24,7 +23,7 @@ export default function VoiceAssistantPanel({ initialLanguage, onClose }: { init
   const [lang, setLang] = useState<VoiceLanguage>(() => {
     try { const saved = window.localStorage.getItem(LANG_KEY); return VOICE_LANGUAGES.find((l) => l.code === saved) ?? initialLanguage; } catch { return initialLanguage; }
   });
-  const [rate, setRate] = useState<number>(() => { try { return Number(window.localStorage.getItem(RATE_KEY)) || 0.95; } catch { return 0.95; } });
+  const [rate, setRate] = useState<number>(() => voiceSpeed());
   const [phase, setPhase] = useState<Phase>('idle');
   const [heard, setHeard] = useState('');
   const [draft, setDraft] = useState('');
@@ -38,7 +37,7 @@ export default function VoiceAssistantPanel({ initialLanguage, onClose }: { init
   const listenOk = canListen(), speakOk = canSpeak();
 
   useEffect(() => { try { window.localStorage.setItem(LANG_KEY, lang.code); } catch { /* private mode */ } }, [lang]);
-  useEffect(() => { try { window.localStorage.setItem(RATE_KEY, String(rate)); } catch { /* private mode */ } }, [rate]);
+  useEffect(() => { setVoiceSpeed(rate); }, [rate]);
   useEffect(() => {
     let live = true;
     void voicesReady().then((all) => { if (!live) return; setVoice(pickVoice(all, lang.code)); setEnglishVoice(pickVoice(all, 'en-IN')); setVoicesChecked(true); });
@@ -67,7 +66,7 @@ export default function VoiceAssistantPanel({ initialLanguage, onClose }: { init
     setPhase('speaking'); setVoiceNote('');
     try {
       const blob = await audioFor(text, offline);
-      await new Promise<void>((resolve) => { stopPlayback.current = playBlob(blob, resolve); });
+      await new Promise<void>((resolve) => { stopPlayback.current = playBlob(blob, resolve, rate); });
     } catch {
       // Server voice unavailable: use a device voice if one exists for this language.
       const v = offline && lang.name !== 'English' ? englishVoice : voice;
@@ -160,7 +159,7 @@ export default function VoiceAssistantPanel({ initialLanguage, onClose }: { init
     </form>
 
     <div className="va-foot">
-      <label>Speed <select value={rate} onChange={(e) => setRate(Number(e.target.value))}><option value={0.8}>Slow</option><option value={0.95}>Normal</option><option value={1.15}>Fast</option></select></label>
+      <label>Speed <select value={rate} onChange={(e) => setRate(Number(e.target.value))}>{SPEEDS.map(([v, l]) => <option key={v} value={v}>{l} ({v}×)</option>)}</select></label>
       {last && <button type="button" onClick={() => { stopAll(); setTurns([]); }}><RotateCcw size={13}/> New conversation</button>}
     </div>
     {voiceNote && <p className="va-note">{voiceNote}</p>}

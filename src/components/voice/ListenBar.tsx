@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Download, Languages, Loader2, Square, Volume2 } from 'lucide-react';
-import { cloudSpeech, downloadBlob, playBlob, stopAudio, translateFor, VOICE_LANGUAGES, voiceLanguageFor } from '../../services/voice';
+import { SPEEDS, setVoiceSpeed, voiceSpeed, cloudSpeech, downloadBlob, playBlob, stopAudio, translateFor, VOICE_LANGUAGES, voiceLanguageFor } from '../../services/voice';
 import { currentPageLanguage } from '../LanguageSelector';
 import './listenBar.css';
 
@@ -17,6 +17,7 @@ function initialCode(): string {
 export const ListenBar: React.FC<{ text: string; compact?: boolean }> = ({ text, compact }) => {
   const [code, setCode] = useState(initialCode);
   const [phase, setPhase] = useState<'idle' | 'working' | 'playing'>('idle');
+  const [speed, setSpeed] = useState(voiceSpeed);
   const [error, setError] = useState('');
   const [translated, setTranslated] = useState<{ code: string; text: string } | null>(null);
   const [showText, setShowText] = useState(false);
@@ -49,7 +50,7 @@ export const ListenBar: React.FC<{ text: string; compact?: boolean }> = ({ text,
     try {
       const blob = await audioFor(code);
       setPhase('playing');
-      stopRef.current = playBlob(blob, () => setPhase('idle'));
+      stopRef.current = playBlob(blob, () => setPhase('idle'), speed);
     } catch (e) { setError(e instanceof Error ? e.message : 'Voice is unavailable right now.'); setPhase('idle'); }
   };
   const download = async () => {
@@ -72,6 +73,9 @@ export const ListenBar: React.FC<{ text: string; compact?: boolean }> = ({ text,
       </button>
       <select className="notranslate" value={code} onChange={(e) => { stopAudio(); setPhase('idle'); setShowText(false); setCode(e.target.value); }} aria-label="Language to listen in">
         {VOICE_LANGUAGES.map((l) => <option key={l.code} value={l.code}>{l.native}</option>)}
+      </select>
+      <select className="lb-speed" value={speed} onChange={(e) => { const v = Number(e.target.value); setSpeed(v); setVoiceSpeed(v); }} aria-label="Listening speed" title="Listening speed">
+        {SPEEDS.map(([v, l]) => <option key={v} value={v}>{v}× {l}</option>)}
       </select>
       {code !== 'en-IN' && <button type="button" className="lb-link" onClick={() => void toggleText()}><Languages size={13}/> {showText ? 'Hide' : 'Read'} in {lang.name}</button>}
       <button type="button" className="lb-link" onClick={() => void download()}><Download size={13}/> Voice note</button>

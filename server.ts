@@ -9,7 +9,7 @@ import { freeMarketRouter } from './server/freeMarketRoutes';
 import { aiRouter } from './server/aiRoutes';
 import { handleNvidiaTutor } from './server/nvidiaService';
 import { handleNewsImage } from './server/newsImageProxy';
-import { groundingMiddleware, liveSourceStatus } from './server/liveGrounding';
+import { groundingMiddleware, stripUserProfile, liveSourceStatus } from './server/liveGrounding';
 
 dotenv.config();
 /** Assistant endpoints that answer with live market data, news and web search. */
@@ -22,6 +22,7 @@ async function startServer() {
   app.disable('x-powered-by');
   app.use(express.json({ limit: '2mb' }));
   app.get('/api/news/image', handleNewsImage);
+  app.use('/api', stripUserProfile);
   app.use('/api', (req, res, next) => (GROUNDED_AI_PATHS.has(req.path) ? groundingMiddleware(req, res, next) : next()));
   app.get('/api/ai/live-sources', (_req, res) => { res.json(liveSourceStatus()); });
   app.post('/api/nvidia-tutor', handleNvidiaTutor);

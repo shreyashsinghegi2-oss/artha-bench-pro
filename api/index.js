@@ -6166,8 +6166,185 @@ function trailingReturns(points) {
   return out;
 }
 
+// server/voiceService.ts
+var VOICE_LANGS = {
+  en: { name: "English", tts: "en", cloud: "en-IN" },
+  hi: { name: "Hindi", tts: "hi", cloud: "hi-IN" },
+  bn: { name: "Bengali", tts: "bn", cloud: "bn-IN" },
+  mr: { name: "Marathi", tts: "mr", cloud: "mr-IN" },
+  te: { name: "Telugu", tts: "te", cloud: "te-IN" },
+  ta: { name: "Tamil", tts: "ta", cloud: "ta-IN" },
+  gu: { name: "Gujarati", tts: "gu", cloud: "gu-IN" },
+  ur: { name: "Urdu", tts: "ur", cloud: "ur-IN" },
+  kn: { name: "Kannada", tts: "kn", cloud: "kn-IN" },
+  ml: { name: "Malayalam", tts: "ml", cloud: "ml-IN" },
+  pa: { name: "Punjabi", tts: "pa", cloud: "pa-IN" },
+  or: { name: "Odia", tts: "or", cloud: "or-IN" },
+  as: { name: "Assamese", tts: "as", cloud: "as-IN" }
+};
+var MAX_TEXT = 3e3;
+function ttsChunks(text, max = 180) {
+  const clean2 = text.replace(/[*_#`>|[\]]/g, " ").replace(/\s+/g, " ").trim().slice(0, MAX_TEXT);
+  const out = [];
+  for (const sentence of clean2.split(/(?<=[.!?।॥؟])\s+/)) {
+    let rest = sentence.trim();
+    while (rest.length > max) {
+      const cut = Math.max(rest.lastIndexOf(",", max), rest.lastIndexOf(" ", max));
+      const at = cut > 30 ? cut + 1 : max;
+      out.push(rest.slice(0, at).trim());
+      rest = rest.slice(at).trim();
+    }
+    if (rest) out.push(rest);
+  }
+  return out;
+}
+async function cloudTts(chunk, languageCode, rate) {
+  const key = process.env.GOOGLE_TTS_API_KEY.trim();
+  const res = await fetch(`https://texttospeech.googleapis.com/v1/text:synthesize?key=${encodeURIComponent(key)}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    signal: AbortSignal.timeout(15e3),
+    body: JSON.stringify({ input: { text: chunk }, voice: { languageCode }, audioConfig: { audioEncoding: "MP3", speakingRate: rate } })
+  });
+  if (!res.ok) throw new Error(`Cloud TTS HTTP ${res.status}`);
+  const body = await res.json();
+  if (!body.audioContent) throw new Error("Cloud TTS returned no audio");
+  return Buffer.from(body.audioContent, "base64");
+}
+async function publicTts(chunk, tl, rate) {
+  const url = new URL("https://translate.google.com/translate_tts");
+  url.searchParams.set("ie", "UTF-8");
+  url.searchParams.set("client", "tw-ob");
+  url.searchParams.set("tl", tl);
+  url.searchParams.set("q", chunk);
+  url.searchParams.set("ttsspeed", rate < 0.9 ? "0.24" : "1");
+  const res = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36", Referer: "https://translate.google.com/" }, signal: AbortSignal.timeout(12e3) });
+  if (!res.ok) throw new Error(`Speech service HTTP ${res.status}`);
+  const type = res.headers.get("content-type") || "";
+  if (!type.includes("audio")) throw new Error("Speech service did not return audio");
+  return Buffer.from(await res.arrayBuffer());
+}
+async function synthesize(text, lang, rate = 1) {
+  const l = VOICE_LANGS[lang];
+  if (!l) throw new Error("Unsupported language.");
+  const chunks = ttsChunks(text);
+  if (!chunks.length) throw new Error("Nothing to read.");
+  const useCloud = Boolean(process.env.GOOGLE_TTS_API_KEY?.trim());
+  const parts = [];
+  for (const c2 of chunks) parts.push(useCloud ? await cloudTts(c2, l.cloud, rate) : await publicTts(c2, l.tts, rate));
+  return { audio: Buffer.concat(parts), provider: useCloud ? "Google Cloud Text-to-Speech" : "Google Translate speech" };
+}
+async function publicTranslate(text, tl) {
+  const pieces = [];
+  for (const para of text.split(/\n{1,}/).filter((p) => p.trim())) {
+    const url = new URL("https://translate.googleapis.com/translate_a/single");
+    url.searchParams.set("client", "gtx");
+    url.searchParams.set("sl", "auto");
+    url.searchParams.set("tl", tl);
+    url.searchParams.set("dt", "t");
+    url.searchParams.set("q", para.slice(0, 1800));
+    const res = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0" }, signal: AbortSignal.timeout(12e3) });
+    if (!res.ok) throw new Error(`Translation HTTP ${res.status}`);
+    const body = await res.json();
+    const segs = Array.isArray(body[0]) ? body[0].map((s) => String(s[0] ?? "")).join("") : "";
+    if (!segs) throw new Error("Translation returned nothing");
+    pieces.push(segs);
+  }
+  return pieces.join("\n");
+}
+async function translateText(text, lang) {
+  const l = VOICE_LANGS[lang];
+  if (!l) throw new Error("Unsupported language.");
+  const src = text.trim().slice(0, MAX_TEXT);
+  if (lang === "en" && /^[\x00-\x7F₹\s]*$/.test(src)) return { text: src, provider: "none" };
+  if (process.env.GROQ_API_KEY?.trim()) {
+    try {
+      const out = await callGroqChat(
+        `You translate personal-finance answers for Indian families. Translate the user's text into simple, everyday ${l.name}${lang === "en" ? "" : ` in its own script`}, the way a patient family elder would say it aloud. Keep every number and amount exactly, in digits with Indian grouping (\u20B912,00,000). Keep names of funds, companies and schemes as they are. Output only the translation, no notes.`,
+        src
+      );
+      if (out && out.trim().length > 5 && !/unavailable|fallback/i.test(out.slice(0, 80))) return { text: out.trim(), provider: "AI translation" };
+    } catch {
+    }
+  }
+  return { text: await publicTranslate(src, l.tts), provider: "Google Translate" };
+}
+
+// server/rateLimiter.ts
+var store2 = /* @__PURE__ */ new Map();
+var cleanupTimer = setInterval(() => {
+  const now = Date.now();
+  for (const [key, record] of store2.entries()) {
+    if (now > record.resetTime) {
+      store2.delete(key);
+    }
+  }
+}, 5 * 60 * 1e3);
+cleanupTimer.unref?.();
+function createRateLimiter(options) {
+  const { windowMs, max, message = "Too many requests from this IP, please try again later." } = options;
+  return (req, res, next) => {
+    const ip = req.headers["x-forwarded-for"]?.split(",")[0]?.trim() || req.socket.remoteAddress || "127.0.0.1";
+    const now = Date.now();
+    const key = `${windowMs}:${max}:${ip}`;
+    let record = store2.get(key);
+    if (!record || now > record.resetTime) {
+      record = { count: 0, resetTime: now + windowMs };
+      store2.set(key, record);
+    }
+    record.count++;
+    res.setHeader("X-RateLimit-Limit", max.toString());
+    res.setHeader("X-RateLimit-Remaining", Math.max(0, max - record.count).toString());
+    res.setHeader("X-RateLimit-Reset", Math.ceil(record.resetTime / 1e3).toString());
+    if (record.count > max) {
+      return res.status(429).json({
+        error: message,
+        reqId: req.reqId || `req-${Date.now()}`
+      });
+    }
+    next();
+  };
+}
+
 // server/routes.ts
+var voiceLimiter = createRateLimiter({ windowMs: 6e4, max: 30, message: "Too many voice requests. Please wait a minute." });
 var apiRouter = Router();
+var voiceBody = (req) => {
+  const text = typeof req.body?.text === "string" ? req.body.text.trim().slice(0, 3e3) : "";
+  const lang = typeof req.body?.lang === "string" ? req.body.lang.trim().toLowerCase() : "";
+  return { text, lang, ok: Boolean(text) && lang in VOICE_LANGS };
+};
+apiRouter.post("/voice/translate", voiceLimiter, async (req, res) => {
+  const { text, lang, ok } = voiceBody(req);
+  if (!ok) return res.status(400).json({ error: "Send text and a supported language code." });
+  try {
+    res.json(await translateText(text, lang));
+  } catch {
+    res.status(503).json({ error: "Translation is unavailable right now. Please try again." });
+  }
+});
+async function sendSpeech(res, text, lang, rateRaw) {
+  if (!text || !(lang in VOICE_LANGS)) return res.status(400).json({ error: "Send text and a supported language code." });
+  const rate = Math.min(1.3, Math.max(0.7, Number(rateRaw) || 1));
+  try {
+    const { audio, provider } = await synthesize(text, lang, rate);
+    res.setHeader("Content-Type", "audio/mpeg");
+    res.setHeader("Content-Length", String(audio.length));
+    res.setHeader("X-Voice-Provider", provider);
+    res.setHeader("Cache-Control", "private, max-age=3600");
+    return res.send(audio);
+  } catch (error) {
+    console.warn("TTS failed:", error instanceof Error ? error.message : error);
+    return res.status(503).json({ error: "Voice is unavailable right now. Please try again." });
+  }
+}
+apiRouter.post("/voice/tts", voiceLimiter, (req, res) => {
+  const { text, lang } = voiceBody(req);
+  void sendSpeech(res, text, lang, req.body?.rate);
+});
+apiRouter.get("/voice/tts", voiceLimiter, (req, res) => {
+  void sendSpeech(res, String(req.query.text ?? "").trim().slice(0, 600), String(req.query.lang ?? "").toLowerCase(), req.query.rate);
+});
 apiRouter.get("/mf/search", async (req, res) => {
   try {
     const q = String(req.query.q ?? "").slice(0, 80);
@@ -7557,42 +7734,6 @@ function applyOfflineDetail(answer, prompt, liveText) {
   answer.directAnswer = snap ? `The AI models are unavailable right now, so here is plain arithmetic on the numbers you gave. ${snap.lines[snap.lines.length > 2 ? 2 : 0]}` : "The AI models are unavailable right now, so here is what the live sources show for your question. Nothing below has been interpreted by AI.";
   answer.steps = snap ? steps : [...steps, ...answer.steps].slice(0, 5);
   if (snap?.takeaways.length) answer.keyTakeaways = snap.takeaways;
-}
-
-// server/rateLimiter.ts
-var store2 = /* @__PURE__ */ new Map();
-var cleanupTimer = setInterval(() => {
-  const now = Date.now();
-  for (const [key, record] of store2.entries()) {
-    if (now > record.resetTime) {
-      store2.delete(key);
-    }
-  }
-}, 5 * 60 * 1e3);
-cleanupTimer.unref?.();
-function createRateLimiter(options) {
-  const { windowMs, max, message = "Too many requests from this IP, please try again later." } = options;
-  return (req, res, next) => {
-    const ip = req.headers["x-forwarded-for"]?.split(",")[0]?.trim() || req.socket.remoteAddress || "127.0.0.1";
-    const now = Date.now();
-    const key = `${windowMs}:${max}:${ip}`;
-    let record = store2.get(key);
-    if (!record || now > record.resetTime) {
-      record = { count: 0, resetTime: now + windowMs };
-      store2.set(key, record);
-    }
-    record.count++;
-    res.setHeader("X-RateLimit-Limit", max.toString());
-    res.setHeader("X-RateLimit-Remaining", Math.max(0, max - record.count).toString());
-    res.setHeader("X-RateLimit-Reset", Math.ceil(record.resetTime / 1e3).toString());
-    if (record.count > max) {
-      return res.status(429).json({
-        error: message,
-        reqId: req.reqId || `req-${Date.now()}`
-      });
-    }
-    next();
-  };
 }
 
 // server/financialCalculations.ts

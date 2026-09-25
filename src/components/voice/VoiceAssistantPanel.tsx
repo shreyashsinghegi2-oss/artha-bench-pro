@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Loader2, Mic, RotateCcw, Send, Square, Volume2, X } from 'lucide-react';
+import { Download, Loader2, Mic, RotateCcw, Send, Square, Volume2, X } from 'lucide-react';
 import { askAiCfo, type CfoTurn } from '../../services/cfoApi';
-import { canListen, canSpeak, listenOnce, pickVoice, speak, stopSpeaking, VOICE_LANGUAGES, voicesReady, type VoiceLanguage } from '../../services/voice';
+import { canListen, canSpeak, cloudSpeech, downloadBlob, listenOnce, pickVoice, playBlob, speak, stopAudio, stopSpeaking, VOICE_LANGUAGES, voicesReady, type VoiceLanguage } from '../../services/voice';
 
 type Phase = 'idle' | 'listening' | 'thinking' | 'speaking';
 interface Turn { q: string; a: string; offline: boolean }
@@ -42,17 +42,43 @@ export default function VoiceAssistantPanel({ initialLanguage, onClose }: { init
     void voicesReady().then((all) => { if (!live) return; setVoice(pickVoice(all, lang.code)); setEnglishVoice(pickVoice(all, 'en-IN')); setVoicesChecked(true); });
     return () => { live = false; };
   }, [lang]);
-  useEffect(() => () => { stopListening.current(); stopSpeaking(); }, []);
+  useEffect(() => () => { stopListening.current(); stopPlayback.current(); stopAudio(); }, []);
   useEffect(() => { logRef.current?.scrollTo({ top: logRef.current.scrollHeight, behavior: 'smooth' }); }, [turns, phase]);
 
+  const audioCache = useRef(new Map<string, Blob>());
+  const stopPlayback = useRef<() => void>(() => undefined);
+  const [voiceNote, setVoiceNote] = useState('');
+
+  /** Speech for a turn: server audio in the chosen language (works on every device), else the device voice. */
+  const audioFor = useCallback(async (text: string, offline: boolean) => {
+    const code = offline ? 'en-IN' : lang.code; // an offline answer is in English
+    const key = `${code}|${text}`;
+    const hit = audioCache.current.get(key);
+    if (hit) return hit;
+    const blob = await cloudSpeech(text, code, rate);
+    audioCache.current.set(key, blob);
+    return blob;
+  }, [lang.code, rate]);
+
   const say = useCallback(async (text: string, offline: boolean) => {
-    // An offline answer is in English: read it with an English voice, never with a voice for another script.
-    const v = offline && lang.name !== 'English' ? englishVoice : voice;
-    if (!speakOk || !v || !text) { setPhase('idle'); return; }
-    setPhase('speaking');
-    await speak(text, v, rate);
+    if (!text) { setPhase('idle'); return; }
+    setPhase('speaking'); setVoiceNote('');
+    try {
+      const blob = await audioFor(text, offline);
+      await new Promise<void>((resolve) => { stopPlayback.current = playBlob(blob, resolve); });
+    } catch {
+      // Server voice unavailable: use a device voice if one exists for this language.
+      const v = offline && lang.name !== 'English' ? englishVoice : voice;
+      if (speakOk && v) await speak(text, v, rate);
+      else setVoiceNote(`Voice could not be played right now. The answer is shown as text.`);
+    }
     setPhase((p) => (p === 'speaking' ? 'idle' : p));
-  }, [englishVoice, lang.name, rate, speakOk, voice]);
+  }, [audioFor, englishVoice, lang.name, rate, speakOk, voice]);
+
+  const saveNote = async (text: string, offline: boolean) => {
+    try { downloadBlob(await audioFor(text, offline), `ArthaMind-voice-${offline ? 'English' : lang.name}.mp3`); }
+    catch { setVoiceNote('The voice note could not be prepared right now.'); }
+  };
 
   const ask = useCallback(async (question: string) => {
     const q = question.trim();
@@ -79,7 +105,7 @@ export default function VoiceAssistantPanel({ initialLanguage, onClose }: { init
       .catch((e: Error) => { setPhase('idle'); setError(e.message); });
   };
 
-  const stopAll = () => { stopListening.current(); stopSpeaking(); setPhase('idle'); };
+  const stopAll = () => { stopListening.current(); stopPlayback.current(); stopAudio(); stopSpeaking(); setPhase('idle'); };
   const last = turns[turns.length - 1];
   const status = phase === 'listening' ? 'Listening… speak now' : phase === 'thinking' ? 'Thinking…' : phase === 'speaking' ? 'Speaking…' : listenOk ? 'Tap the mic and ask your question' : 'Type your question below';
 
@@ -104,7 +130,8 @@ export default function VoiceAssistantPanel({ initialLanguage, onClose }: { init
           <p>{t.a}</p>
           <footer>
             {t.offline && <span className="va-tag">AI offline · basic answer in English</span>}
-            {speakOk && <button type="button" onClick={() => void say(t.a, t.offline)} disabled={phase !== 'idle'}><Volume2 size={14}/> Listen again</button>}
+            <button type="button" onClick={() => void say(t.a, t.offline)} disabled={phase !== 'idle'}><Volume2 size={14}/> Listen again</button>
+            <button type="button" onClick={() => void saveNote(t.a, t.offline)}><Download size={14}/> Voice note</button>
           </footer>
         </div>
       </div>)}
@@ -133,8 +160,7 @@ export default function VoiceAssistantPanel({ initialLanguage, onClose }: { init
       <label>Speed <select value={rate} onChange={(e) => setRate(Number(e.target.value))}><option value={0.8}>Slow</option><option value={0.95}>Normal</option><option value={1.15}>Fast</option></select></label>
       {last && <button type="button" onClick={() => { stopAll(); setTurns([]); }}><RotateCcw size={13}/> New conversation</button>}
     </div>
-    {voicesChecked && speakOk && !voice && <p className="va-note">This device has no {lang.name} voice installed, so answers are shown as text. You can add one in your phone or computer’s text-to-speech settings.</p>}
-    {!speakOk && <p className="va-note">This browser cannot read answers aloud; answers are shown as text.</p>}
+    {voiceNote && <p className="va-note">{voiceNote}</p>}
     {!listenOk && <p className="va-note">Voice input works in Chrome or Edge. In this browser, please type your question.</p>}
     <p className="va-fine">Education only, not investment advice. Speech is turned into text by your browser’s speech service; ArthaMind does not record your voice.</p>
   </div>;

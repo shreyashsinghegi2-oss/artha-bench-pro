@@ -13,6 +13,8 @@ import {
 } from './aiResponseStandard';
 import { generateVerificationCode } from './financeEngine';
 import { computeFullReliabilityEvaluation, FullReliabilityEvaluation } from './scoringEngine';
+import { withDateContext } from './dateContext';
+import { currentGroundingSources, extractQuestion, groundSystemPrompt } from './liveGrounding';
 
 export interface GroqModelsConfig {
   tutorModel: string;
@@ -216,13 +218,13 @@ function generateFallbackChatResponse(userPrompt: string): string {
       `- **Quick Ratio (Acid-Test):** $\\frac{\\text{Cash + Marketable Securities + Receivables}}{\\text{Current Liabilities}}$. Excludes inventory because inventory cannot always be liquidated immediately without price haircuts.`;
   }
 
-  return `### Financial Learning Explanation\n\n` +
-    `Regarding your inquiry ("*${userPrompt.trim()}*"):\n\n` +
-    `**Key Concept Breakdown:**\n` +
-    `1. **Core Principle:** Sound financial analysis relies on objective mathematical frameworks, liquidity evaluation, and risk-adjusted return calculations.\n` +
-    `2. **Analytical Steps:** Always establish baseline numbers, account for compounding frequency, and adjust for inflation and tax liabilities.\n` +
-    `3. **Risk & Limitations:** Models assume static inputs. Real-world market execution involves variance, interest rate fluctuations, and unexpected liquidity demands.\n\n` +
-    `*Educational Disclaimer: ArthaBench provides non-advisory educational frameworks only.*`;
+  return `### Here is how to think about it\n\n` +
+    `The live AI adviser is not connected right now, so this is a general framework rather than a tailored answer to "*${userPrompt.trim()}*".\n\n` +
+    `1. **Start with your numbers:** note your monthly take-home, fixed costs, EMIs and savings, since every money decision depends on them.\n` +
+    `2. **Check the basics first:** keep EMIs under about 40% of take-home, aim to save 20% or more, and hold 6 months of expenses as an emergency fund.\n` +
+    `3. **Compare options on the same terms:** use after-tax, inflation-adjusted figures over the same time period.\n` +
+    `4. **Name the risks:** income loss, rate changes and market swings can change the answer, so plan for them.\n\n` +
+    `Please try again in a moment for a full answer. *For education only; not personalised investment advice.*`;
 }
 
 function buildGroqMessages(
@@ -231,7 +233,7 @@ function buildGroqMessages(
   history?: Array<{ role: string; content: string }>,
 ) {
   const messages: Array<{ role: string; content: string }> = [
-    { role: 'system', content: systemPrompt },
+    { role: 'system', content: withDateContext(systemPrompt) },
   ];
 
   if (Array.isArray(history)) {
@@ -268,7 +270,8 @@ export async function callGroqChat(
   const allowedModels = new Set(Object.values(models));
   const selectedModel = modelName && allowedModels.has(modelName) ? modelName : models.tutorModel;
 
-  const messages = buildGroqMessages(systemPrompt, userPrompt, history);
+  const grounded = await groundSystemPrompt(systemPrompt, extractQuestion(userPrompt));
+  const messages = buildGroqMessages(grounded, userPrompt, history);
 
   const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
@@ -329,8 +332,9 @@ export async function callGroqStructuredFinancialAnswer(
       : models.tutorModel;
   const strictSchemaSupported =
     selectedModel === 'openai/gpt-oss-120b' || selectedModel === 'openai/gpt-oss-20b';
+  const groundedSystem = await groundSystemPrompt(systemPrompt, extractQuestion(options.fallbackQuestion || userPrompt));
   const messages = buildGroqMessages(
-    `${systemPrompt}\n\nReturn one valid JSON object only. It must match the supplied Artha financial-answer schema exactly.`,
+    `${groundedSystem}\n\nReturn one valid JSON object only. It must match the supplied Artha financial-answer schema exactly.`,
     userPrompt,
     options.history,
   );
@@ -372,7 +376,7 @@ export async function callGroqStructuredFinancialAnswer(
 
     if (response.status === 400 && strictSchemaSupported) {
       const compatibilityMessages = buildGroqMessages(
-        `${systemPrompt}\n\nReturn one valid JSON object only with exactly this contract: ${JSON.stringify(STRUCTURED_FINANCIAL_ANSWER_JSON_SCHEMA)}`,
+        `${groundedSystem}\n\nReturn one valid JSON object only with exactly this contract: ${JSON.stringify(STRUCTURED_FINANCIAL_ANSWER_JSON_SCHEMA)}`,
         userPrompt,
         options.history,
       );
@@ -416,7 +420,16 @@ export async function callGroqStructuredFinancialAnswer(
     return createFallbackStructuredFinancialAnswer(fallbackQuestion, content);
   }
 
-  return sanitizeStructuredFinancialAnswer(parsed.data);
+  return withGroundingSources(sanitizeStructuredFinancialAnswer(parsed.data));
+}
+
+/** Adds the live sources gathered for this request to a structured answer (deduplicated by name). */
+function withGroundingSources(answer: StructuredFinancialAnswer): StructuredFinancialAnswer {
+  const live = currentGroundingSources();
+  if (!live.length) return answer;
+  const seen = new Set(answer.sources.map((s) => s.name));
+  const extra = live.filter((s) => !seen.has(s.name)).map(({ name, dataDate, freshness }) => ({ name, dataDate, freshness }));
+  return { ...answer, sources: [...answer.sources, ...extra].slice(0, 12) };
 }
 
 /**

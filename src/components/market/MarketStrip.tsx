@@ -1,4 +1,5 @@
 import React from 'react';
+import { CompanyLogo } from './CompanyLogo';
 import { NormalizedMarketQuote } from '../../types';
 
 export interface MarketStripInstrument {
@@ -91,7 +92,7 @@ export const MarketStrip: React.FC<MarketStripProps> = ({
               <article key={instrument.symbol} className="min-h-28 px-4 py-3.5">
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <p className="text-xs font-semibold text-ink">{instrument.label}</p>
+                    <p className="flex items-center gap-1.5 text-xs font-semibold text-ink"><CompanyLogo symbol={instrument.label} size={18} className="rounded-md border border-line" />{instrument.label}</p>
                     <p className="mt-0.5 text-[10px] text-secondary">{instrument.symbol}</p>
                   </div>
                   <span className={`inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[9px] font-bold ${stateStyles[feedState]}`}>

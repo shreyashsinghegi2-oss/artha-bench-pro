@@ -82,7 +82,7 @@ export function isYahooFinanceProvider(provider: string) {
 
 function safeYahooSymbol(symbol: string) {
   const normalized = symbol.trim().toUpperCase();
-  if (!/^[A-Z0-9^][A-Z0-9.^=_-]{0,39}$/.test(normalized)) {
+  if (!/^[A-Z0-9^][A-Z0-9.^=_&-]{0,39}$/.test(normalized)) {
     throw new Error('Invalid Yahoo Finance symbol.');
   }
   return normalized;
@@ -327,50 +327,61 @@ function historyConfiguration(range: string) {
   return configurations[range] || configurations['1m'];
 }
 
+export interface YahooChartSeries {
+  points: MarketHistoryPoint[];
+  /** Minutes the exchange feed is delayed by, when Yahoo reports it. */
+  delayMinutes: number | null;
+  providerTimestamp: string | null;
+}
+
+/** Fetches OHLCV points for an explicit Yahoo range/interval pair (e.g. "5d"/"15m"). */
+export async function fetchYahooFinanceChart(symbol: string, range: string, interval: string): Promise<YahooChartSeries> {
+  const normalizedSymbol = normalizeYahooFinanceSymbol(symbol);
+  const url = buildChartUrl(normalizedSymbol.providerSymbol, range, interval);
+  const response = await fetch(url, {
+    headers: { Accept: 'application/json' },
+    signal: AbortSignal.timeout(8_000),
+  });
+  if (!response.ok) throw new Error(`Yahoo Finance chart request failed with HTTP ${response.status}.`);
+
+  const rawData: unknown = await response.json().catch(() => null);
+  const parsed = yahooChartResponseSchema.safeParse(rawData);
+  const result = parsed.success ? parsed.data.chart.result?.[0] : null;
+  const series = result?.indicators.quote[0];
+  if (!result || !series) throw new Error('Yahoo Finance returned no chart series.');
+
+  const points = result.timestamp.flatMap((timestamp, index): MarketHistoryPoint[] => {
+    const close = valueAt(series.close, index);
+    if (close === null) return [];
+    const open = valueAt(series.open, index);
+    const high = valueAt(series.high, index);
+    const low = valueAt(series.low, index);
+    const volume = valueAt(series.volume, index);
+    return [{
+      date: new Date(timestamp * 1000).toISOString(),
+      price: close,
+      ...(open === null ? {} : { open }),
+      ...(high === null ? {} : { high }),
+      ...(low === null ? {} : { low }),
+      close,
+      ...(volume === null ? {} : { volume }),
+    }];
+  });
+  const marketTime = toFiniteNumber(result.meta.regularMarketTime);
+  return {
+    points,
+    delayMinutes: toFiniteNumber(result.meta.exchangeDataDelayedBy),
+    providerTimestamp: marketTime === null ? null : new Date(marketTime * 1000).toISOString(),
+  };
+}
+
 export async function fetchYahooFinanceHistory(
   symbol: string,
   range = '1m',
 ): Promise<MarketHistoryPoint[]> {
-  const normalizedSymbol = normalizeYahooFinanceSymbol(symbol);
-
   try {
     const configuration = historyConfiguration(range);
-    const url = buildChartUrl(
-      normalizedSymbol.providerSymbol,
-      configuration.range,
-      configuration.interval,
-    );
-    const response = await fetch(url, {
-      headers: { Accept: 'application/json' },
-      signal: AbortSignal.timeout(8_000),
-    });
-    if (!response.ok) return [];
-
-    const rawData: unknown = await response.json().catch(() => null);
-    const parsed = yahooChartResponseSchema.safeParse(rawData);
-    const result = parsed.success ? parsed.data.chart.result?.[0] : null;
-    const series = result?.indicators.quote[0];
-    if (!result || !series) return [];
-
-    const points = result.timestamp.flatMap((timestamp, index): MarketHistoryPoint[] => {
-      const close = valueAt(series.close, index);
-      if (close === null) return [];
-      const open = valueAt(series.open, index);
-      const high = valueAt(series.high, index);
-      const low = valueAt(series.low, index);
-      const volume = valueAt(series.volume, index);
-      return [{
-        date: new Date(timestamp * 1000).toISOString(),
-        price: close,
-        ...(open === null ? {} : { open }),
-        ...(high === null ? {} : { high }),
-        ...(low === null ? {} : { low }),
-        close,
-        ...(volume === null ? {} : { volume }),
-      }];
-    });
-
-    return points;
+    return (await fetchYahooFinanceChart(symbol, configuration.range, configuration.interval)).points;
   } catch {
     return [];
   }

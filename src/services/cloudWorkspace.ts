@@ -20,7 +20,7 @@ export const CLOUD_SYNC_KEYS = [
   'arthabench_finance_assistant_history_v1',
   'arthabench_ai_context_usage_v1',
   'arthabench_feedback_v1',
-  'artha-bench-theme',
+  'artha-bench-theme-v2',
   'arthabench_ai_context_v1',
   'arthabench_notifications_v1',
   'arthabench_dashboard_preferences_v1',
@@ -28,7 +28,7 @@ export const CLOUD_SYNC_KEYS = [
 
 const LEGACY_GUEST_BACKUP_KEY = 'arthabench_guest_workspace_backup_v1';
 const ACTIVE_USER_KEY = 'arthabench_active_cloud_user_v1';
-const DEVICE_UI_KEYS = new Set<string>(['artha-bench-theme']);
+const DEVICE_UI_KEYS = new Set<string>(['artha-bench-theme-v2']);
 
 function browserReady() {
   return typeof window !== 'undefined' && Boolean(window.localStorage);

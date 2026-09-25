@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
 import { ExternalLink, Sparkles, Clock, Newspaper } from 'lucide-react';
-import { NewsExplanationResponse, NormalizedNewsItem } from '../../types';
-import { explainNewsArticleAI } from '../../services/learningApi';
-import { StructuredFinancialAnswerView } from '../ai/StructuredFinancialAnswer';
+import { NormalizedNewsItem } from '../../types';
+import { ResearchBriefLoading, ResearchBriefPanel, useNewsBrief } from './ResearchBrief';
 
 interface NewsCardProps { article: NormalizedNewsItem; }
 
 export const NewsCard: React.FC<NewsCardProps> = ({ article }) => {
-  const [isExplaining, setIsExplaining] = useState(false);
   const [imageFailed, setImageFailed] = useState(false);
-  const [explanation, setExplanation] = useState<NewsExplanationResponse | null>(null);
+  const [open, setOpen] = useState(false);
+  const input = React.useMemo(() => ({ title: article.title, summary: article.summary, sourceName: article.sourceName, sourceUrl: article.sourceUrl, publishedAt: article.publishedAt }), [article]);
+  const { brief, loading, load } = useNewsBrief(input);
 
   const getCategorySurface = () => {
     const cat = (article.category || '').toLowerCase();
@@ -19,20 +19,14 @@ export const NewsCard: React.FC<NewsCardProps> = ({ article }) => {
     return 'bg-subtle text-interactive';
   };
 
-  const handleExplain = async () => {
-    if (explanation) { setExplanation(null); return; }
-    setIsExplaining(true);
-    try { setExplanation(await explainNewsArticleAI(article)); }
-    catch (err) { console.error('Failed to explain news:', err); }
-    finally { setIsExplaining(false); }
-  };
+  const handleExplain = () => { setOpen((v) => !v); void load(); };
 
   return (
-    <div className="bg-surface border border-line hover:border-interactive/40 rounded-3xl p-5 shadow-sm space-y-4 flex flex-col justify-between overflow-hidden transition-all">
+    <div className="bg-surface border border-line rounded-3xl p-5 shadow-sm space-y-4 flex flex-col justify-between overflow-hidden transition-all">
       <div>
         <div className="relative w-full h-40 rounded-2xl overflow-hidden mb-3 bg-canvas">
           {article.imageUrl && !imageFailed ? (
-            <img src={article.imageUrl} alt={article.title} referrerPolicy="no-referrer" onError={() => setImageFailed(true)} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+            <img src={article.imageUrl} alt={article.title} referrerPolicy="no-referrer" onError={() => setImageFailed(true)} className="w-full h-full object-cover group- transition-transform duration-500" />
           ) : (
             <div className={`w-full h-full ${getCategorySurface()} flex items-center justify-center`}><Newspaper className="w-12 h-12 opacity-55" aria-hidden="true" /></div>
           )}
@@ -46,10 +40,10 @@ export const NewsCard: React.FC<NewsCardProps> = ({ article }) => {
         <p className="text-xs text-secondary mt-2 line-clamp-3 leading-relaxed">{article.summary}</p>
       </div>
       <div className="pt-3 border-t border-line flex items-center justify-between gap-2">
-        <button onClick={handleExplain} disabled={isExplaining} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-interactive/20 hover:bg-interactive/30 text-interactive border border-interactive/40 transition-all"><Sparkles className="w-3.5 h-3.5 text-interactive" /><span>{explanation ? 'Hide Explanation' : isExplaining ? 'Analyzing...' : 'AI Business Analysis'}</span></button>
+        <button onClick={handleExplain} aria-expanded={open} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-interactive/20 hover:bg-interactive/30 text-interactive border border-interactive/40 transition-all"><Sparkles className="w-3.5 h-3.5 text-interactive" /><span>{open ? 'Hide research brief' : loading ? 'Analysing…' : 'Research brief'}</span></button>
         <a href={article.sourceUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-secondary hover:text-ink transition-colors"><span>Source</span><ExternalLink className="w-3.5 h-3.5" /></a>
       </div>
-      {explanation && <div className="mt-3"><StructuredFinancialAnswerView answer={explanation.structuredAnswer} disclaimer={explanation.disclaimer} compact /></div>}
+      {open && (brief ? <ResearchBriefPanel brief={brief} onClose={() => setOpen(false)} /> : <ResearchBriefLoading />)}
     </div>
   );
 };

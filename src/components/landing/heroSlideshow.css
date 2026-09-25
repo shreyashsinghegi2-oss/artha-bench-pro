@@ -1,0 +1,36 @@
+.hs{position:absolute;inset:0;z-index:0;overflow:hidden;background:#0b1422}
+.hs-slide{position:absolute;inset:0;opacity:0;transition:opacity 1.8s ease-in-out}
+.hs-slide.on{opacity:1}
+.hs-slide img{width:100%;height:100%;object-fit:cover;transform:scale(1.02);will-change:transform}
+.hs-slide.on img,.hs-slide.out img{animation:var(--hs-move) 10s linear forwards}
+.hs-m1{--hs-move:hs-m1}.hs-m2{--hs-move:hs-m2}.hs-m3{--hs-move:hs-m3}.hs-m4{--hs-move:hs-m4}
+.hs-slide.out{z-index:0}.hs-slide.on{z-index:1}
+.hs-paused .hs-slide img{animation-play-state:paused}
+/* Readable text on any photo: darker on the text side, a soft vignette, and a fade into the page below. */
+.hs-shade{position:absolute;inset:0;background:
+  linear-gradient(90deg,rgba(4,10,20,.78) 0%,rgba(4,10,20,.55) 38%,rgba(4,10,20,.18) 70%,rgba(4,10,20,.1) 100%),
+  linear-gradient(180deg,rgba(4,10,20,.35) 0%,rgba(4,10,20,0) 22%,rgba(4,10,20,0) 72%,rgba(4,10,20,.55) 100%)}
+@keyframes hs-zoom{from{transform:scale(1.02)}to{transform:scale(1.1)}}
+/* A slow drift for each photo: zoom in or out while panning a little, like a moving camera. */
+@keyframes hs-m1{from{transform:scale(1.04) translate3d(-1.2%,.6%,0)}to{transform:scale(1.14) translate3d(1.2%,-.6%,0)}}
+@keyframes hs-m2{from{transform:scale(1.14) translate3d(1%,0,0)}to{transform:scale(1.04) translate3d(-1%,.4%,0)}}
+@keyframes hs-m3{from{transform:scale(1.05) translate3d(0,1%,0)}to{transform:scale(1.13) translate3d(-.8%,-1%,0)}}
+@keyframes hs-m4{from{transform:scale(1.12) translate3d(-.8%,-.6%,0)}to{transform:scale(1.03) translate3d(.8%,.6%,0)}}
+@media (max-width:900px){.hs-shade{background:linear-gradient(180deg,rgba(4,10,20,.55) 0%,rgba(4,10,20,.38) 45%,rgba(4,10,20,.12) 72%,rgba(4,10,20,.5) 100%)}.hx-photo .hx-copy h1{text-shadow:0 2px 18px rgba(0,0,0,.45)}}
+@media (prefers-reduced-motion:reduce){.hs-slide{transition:none}.hs-slide.on img{animation:none}}
+/* Hero scene on the photos */
+.hx.hx-photo{background:#fff}
+.hx-scene{position:relative;margin-top:-64px;padding:96px 0 72px;min-height:min(92vh,900px);display:flex;align-items:center;isolation:isolate}
+.hx-scene .hx-wrap{position:relative;z-index:1;width:min(1200px,calc(100% - 56px))}
+.hx-photo .hx-copy h1.hx-one{color:#fff;text-shadow:0 2px 18px rgba(0,0,0,.35)}
+.hx-photo .hx-copy h1.hx-one span{color:#86efac;text-shadow:0 2px 18px rgba(0,0,0,.35)}
+.hx-photo .hx-btn-primary{background:#10b981!important;border-color:#10b981!important;color:#04130d!important}
+.hx-photo .hx-btn-secondary{background:rgba(255,255,255,.12)!important;border-color:rgba(255,255,255,.55)!important;color:#fff!important;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+@media (max-width:980px){.hx-scene{margin-top:-44px;padding:72px 0 48px;min-height:0}}
+/* Two-line headline: a clean white lead-in, then the promise in a mint-to-gold gradient
+   (growth and wealth) that stays readable on every photo. */
+.hx-photo .hx-copy h1.hx-one.hx-short{font-size:clamp(30px,3.7vw,54px);line-height:1.04;letter-spacing:-.025em;font-weight:800;max-width:none;color:#f8fafc;text-shadow:0 3px 24px rgba(0,0,0,.45)}
+.hx-photo .hx-copy h1.hx-one.hx-short span{background:linear-gradient(92deg,#6ee7b7 0%,#a7f3d0 45%,#fde68a 100%);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none;filter:drop-shadow(0 3px 14px rgba(0,0,0,.45));display:block;margin-top:10px;font-size:.52em;line-height:1.25;letter-spacing:-.01em;font-weight:700;max-width:24ch;text-wrap:balance}
+@media (max-width:980px){.hx-photo .hx-copy h1.hx-one.hx-short{font-size:clamp(32px,9.4vw,52px)}.hx-photo .hx-copy h1.hx-one.hx-short span{font-size:.56em}.hx-photo .hx-copy{min-width:0}}
+.hx-why{display:inline-flex;align-items:center;gap:6px;margin-top:18px;color:#d1fae5;font-size:14.5px;font-weight:700;text-decoration:none;border-bottom:1px solid rgba(209,250,229,.45);padding-bottom:2px;text-shadow:0 1px 10px rgba(0,0,0,.5)}
+.hx-why:hover{color:#fff;border-color:#fff}

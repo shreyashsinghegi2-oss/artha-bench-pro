@@ -174,8 +174,8 @@ export const FinancialResearchWorkspace: React.FC<Props> = ({ onEnter }) => {
                   const height = Math.max(5, Math.abs(candle.close - candle.open));
                   return (
                     <g key={candle.x} className={`artha-candle candle-${index + 1}`} style={{ animationDelay: `${0.82 + index * 0.075}s` }}>
-                      <line x1={candle.x} x2={candle.x} y1={candle.high} y2={candle.low} stroke={up ? '#0F766E' : '#B4535A'} strokeWidth="1.6" />
-                      <rect x={candle.x - 4.5} y={top} width="9" height={height} rx="1.5" fill={up ? '#2A9D8F' : '#C96A70'} />
+                      <line x1={candle.x} x2={candle.x} y1={candle.high} y2={candle.low} stroke={up ? '#059669' : '#DC2626'} strokeWidth="1.6" />
+                      <rect x={candle.x - 4.5} y={top} width="9" height={height} rx="1.5" fill={up ? '#10B981' : '#EF4444'} />
                     </g>
                   );
                 })}

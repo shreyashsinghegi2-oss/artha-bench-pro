@@ -92,6 +92,10 @@ export async function handleNewsImage(req: Request, res: Response) {
     res.setHeader('Content-Length', buffer.length.toString());
     return res.status(200).send(buffer);
   } catch (error) {
+    // Slow publisher sites time out often; that is expected, so cache the miss briefly and let the page use its fallback image.
+    const timedOut = error instanceof Error && (error.name === 'TimeoutError' || error.name === 'AbortError');
+    res.setHeader('Cache-Control', 'public, s-maxage=600');
+    if (timedOut) { console.warn('News image proxy: publisher timed out'); return res.status(504).json({ error: 'Publisher image timed out.' }); }
     console.error('News image proxy failed:', error);
     return res.status(502).json({ error: 'Unable to resolve publisher image.' });
   }

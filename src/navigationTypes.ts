@@ -12,10 +12,23 @@ export type AppNavigationDestination = NavigationDestination
   | 'market-watchlist'
   | 'market-alerts'
   | 'markets-learn'
-  | 'go-pro';
+  | 'go-pro'
+  | 'my-dashboard'
+  | 'money-planner'
+  | 'retirement-planner'
+  | 'platform-guide'
+  | 'education-planner'
+  | 'job-switch-planner'
+  | 'portfolio';
 
 export const FINANCE_DESTINATIONS: readonly AppNavigationDestination[] = [
+  'my-dashboard',
   'overview',
+  'money-planner',
+  'retirement-planner',
+  'education-planner',
+  'job-switch-planner',
+  'portfolio',
   'financial-health',
   'income',
   'expenses',

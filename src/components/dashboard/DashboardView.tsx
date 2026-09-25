@@ -252,7 +252,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
               <FlaskConical className="h-4 w-4" /> Open Workspace
             </button>
             <button type="button" onClick={() => onNavigate('reports')}
-              className="inline-flex items-center gap-2 rounded-xl border border-interactive/20 bg-interactive-soft px-4 py-2.5 text-xs font-bold text-interactive transition hover:border-interactive/40">
+              className="inline-flex items-center gap-2 rounded-xl border border-interactive/20 bg-interactive-soft px-4 py-2.5 text-xs font-bold text-interactive transition">
               <FileCheck2 className="h-4 w-4" /> Inspect Evidence
             </button>
           </div>
@@ -304,7 +304,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
             <div><p className="text-[10px] font-bold uppercase tracking-[0.14em] text-secondary">Provider health</p><p className="mt-2 text-2xl font-black text-ink">{diagnostics.length ? `${connectedDiagnostics.length}/${diagnostics.length}` : '—'}</p><p className="mt-1 text-[10px] text-secondary">{diagnostics.length ? (unavailableDiagnostics.length ? `${unavailableDiagnostics.length} need attention` : 'all reported checks connected') : 'Diagnostics unavailable'}</p></div>
             <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-line bg-subtle" style={{ color: unavailableDiagnostics.length ? 'var(--warning)' : 'var(--success)' }}><ServerCog className="h-4 w-4" /></div>
           </div>
-          <button type="button" onClick={() => onNavigate('connections')} className="mt-3 w-full rounded-lg border border-line bg-canvas px-2.5 py-2 text-left text-[8px] font-semibold leading-4 text-secondary hover:border-interactive/30 hover:text-ink">
+          <button type="button" onClick={() => onNavigate('connections')} className="mt-3 w-full rounded-lg border border-line bg-canvas px-2.5 py-2 text-left text-[8px] font-semibold leading-4 text-secondary hover:text-ink">
             View source status, timestamps and provider diagnostics →
           </button>
         </div>
@@ -397,7 +397,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
             {economicChartData.length > 0 ? <Suspense fallback={<div className="flex h-full items-center justify-center text-xs text-secondary">Preparing comparison chart…</div>}><EconomicPulseChart data={economicChartData} country={selectedCountry} /></Suspense> : <div className="flex h-full items-center justify-center text-xs text-secondary">Economic comparison data is unavailable.</div>}
           </div>
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
-            {selectedEconomicIndicators.slice(0, 5).map((item) => <button key={item.id} type="button" onClick={() => onNavigate('economy')} className="rounded-xl border border-line bg-surface p-3 text-left transition hover:border-interactive/30"><div className="flex items-start justify-between gap-2"><span className="text-[10px] text-secondary">{item.label}</span><ArrowRight className="h-3 w-3 text-secondary" /></div><p className="mt-1 text-sm font-black text-ink">{item.value == null ? '—' : item.value.toLocaleString()} <span className="text-[9px] font-medium text-secondary">{item.unit}</span></p><p className="mt-1 text-[9px] text-secondary">{formatDate(item.date)} · {item.sourceName}</p></button>)}
+            {selectedEconomicIndicators.slice(0, 5).map((item) => <button key={item.id} type="button" onClick={() => onNavigate('economy')} className="rounded-xl border border-line bg-surface p-3 text-left transition"><div className="flex items-start justify-between gap-2"><span className="text-[10px] text-secondary">{item.label}</span><ArrowRight className="h-3 w-3 text-secondary" /></div><p className="mt-1 text-sm font-black text-ink">{item.value == null ? '—' : item.value.toLocaleString()} <span className="text-[9px] font-medium text-secondary">{item.unit}</span></p><p className="mt-1 text-[9px] text-secondary">{formatDate(item.date)} · {item.sourceName}</p></button>)}
           </div>
         </div>
 
@@ -427,7 +427,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
 
         <div className="rounded-3xl border border-line bg-surface p-5 shadow-sm sm:p-6">
           <div className="flex items-center justify-between"><div><div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.16em] text-secondary"><Newspaper className="h-3.5 w-3.5" /> Business brief</div><h2 className="mt-2 text-lg font-black text-ink">Latest headlines</h2></div><button type="button" onClick={() => onNavigate('news')} className="text-[10px] font-bold text-interactive hover:text-interactive/80">View feed</button></div>
-          <div className="mt-5 space-y-2.5">{news.length > 0 ? news.map((item) => <button key={item.id} type="button" onClick={() => onNavigate('news')} className="w-full rounded-xl border border-line bg-surface p-3 text-left transition hover:border-interactive/25"><div className="flex items-center justify-between gap-3 text-[9px]"><span className="font-bold text-interactive">{item.sourceName}</span><span className="text-secondary">{formatDate(item.publishedAt)}</span></div><p className="mt-2 line-clamp-2 text-[11px] font-semibold leading-5 text-ink">{item.title}</p></button>) : <div className="rounded-xl border border-line bg-surface p-5 text-center text-xs text-secondary">Current business news is unavailable.</div>}</div>
+          <div className="mt-5 space-y-2.5">{news.length > 0 ? news.map((item) => <button key={item.id} type="button" onClick={() => onNavigate('news')} className="w-full rounded-xl border border-line bg-surface p-3 text-left transition"><div className="flex items-center justify-between gap-3 text-[9px]"><span className="font-bold text-interactive">{item.sourceName}</span><span className="text-secondary">{formatDate(item.publishedAt)}</span></div><p className="mt-2 line-clamp-2 text-[11px] font-semibold leading-5 text-ink">{item.title}</p></button>) : <div className="rounded-xl border border-line bg-surface p-5 text-center text-xs text-secondary">Current business news is unavailable.</div>}</div>
         </div>
       </section>
 
@@ -437,7 +437,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
           { title: 'Evaluation laboratory', text: 'Run the seven-dimension dual-model benchmark.', icon: FlaskConical, destination: 'evaluation-lab' as const, accent: 'var(--interactive)' },
           { title: 'Structured learning', text: 'Continue finance lessons and knowledge checks.', icon: BookOpen, destination: 'learning' as const, accent: 'var(--interactive)' },
           { title: 'Verified reports', text: 'Review evidence, scores, risk flags, and exports.', icon: FileCheck2, destination: 'reports' as const, accent: 'var(--success)' },
-        ].map((action) => <button key={action.title} type="button" onClick={() => onNavigate(action.destination)} className="group rounded-2xl border border-line bg-surface p-4 text-left transition hover:-translate-y-0.5 hover:border-interactive/25"><div className="flex items-start justify-between gap-3"><div className="flex h-9 w-9 items-center justify-center rounded-xl border border-line bg-subtle" style={{ color: action.accent }}><action.icon className="h-4 w-4" /></div><ArrowRight className="h-4 w-4 text-secondary transition group-hover:translate-x-1 group-hover:text-interactive" /></div><h3 className="mt-4 text-sm font-black text-ink">{action.title}</h3><p className="mt-1 text-[10px] leading-5 text-secondary">{action.text}</p></button>)}
+        ].map((action) => <button key={action.title} type="button" onClick={() => onNavigate(action.destination)} className="group rounded-2xl border border-line bg-surface p-4 text-left transition"><div className="flex items-start justify-between gap-3"><div className="flex h-9 w-9 items-center justify-center rounded-xl border border-line bg-subtle" style={{ color: action.accent }}><action.icon className="h-4 w-4" /></div><ArrowRight className="h-4 w-4 text-secondary transition group- group-hover:text-interactive" /></div><h3 className="mt-4 text-sm font-black text-ink">{action.title}</h3><p className="mt-1 text-[10px] leading-5 text-secondary">{action.text}</p></button>)}
       </section>
 
       <SafetyBanner />

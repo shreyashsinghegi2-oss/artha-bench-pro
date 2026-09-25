@@ -1,0 +1,10 @@
+.gd-sec{margin:0 0 20px}
+.gd-sec h2{display:flex;align-items:center;gap:9px;margin:0 0 10px;font-size:17px}
+.gd-sec h2 span{display:grid;place-items:center;width:32px;height:32px;border-radius:10px;background:color-mix(in srgb,var(--c) 14%,transparent);color:var(--c)}
+.gd-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px}
+.gd-card{position:relative;display:flex;flex-direction:column;gap:6px;padding:14px 14px 14px 18px;border-radius:14px;border:1px solid color-mix(in srgb,var(--c) 22%,var(--border-subtle));background:linear-gradient(160deg,color-mix(in srgb,var(--c) 6%,var(--bg-surface)),var(--bg-surface) 70%);overflow:hidden}
+.gd-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--c)}
+.gd-card b{display:flex;align-items:center;gap:6px;font-size:14px;color:var(--text-primary)}
+.gd-card p{margin:0;font-size:13px;line-height:1.5;color:var(--text-primary)}
+.gd-card small{font-size:12px;line-height:1.5;color:var(--text-secondary)}
+.gd-card button{margin-top:auto;align-self:flex-start;display:inline-flex;align-items:center;gap:5px;height:32px;padding:0 12px;border-radius:9px;border:0;background:var(--c);color:#fff;font-size:12.5px;font-weight:800;cursor:pointer}

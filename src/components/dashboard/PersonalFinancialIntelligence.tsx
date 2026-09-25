@@ -60,13 +60,13 @@ export const PersonalFinancialIntelligence: React.FC<Props> = ({ onNavigate }) =
           <p className="mt-1 text-[11px] text-secondary">Private account snapshot · {snapshot.month} · only recorded data is shown.</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <button type="button" onClick={() => onNavigate('financial-health')} className="inline-flex items-center gap-2 rounded-xl border border-line bg-canvas px-3 py-2 text-xs font-black text-ink hover:border-interactive/40">
+          <button type="button" onClick={() => onNavigate('financial-health')} className="inline-flex items-center gap-2 rounded-xl border border-line bg-canvas px-3 py-2 text-xs font-black text-ink">
             <HeartPulse className="h-3.5 w-3.5" /> Financial Health
           </button>
-          <button type="button" onClick={() => onNavigate('decision-replay')} className="inline-flex items-center gap-2 rounded-xl border border-interactive/30 bg-interactive-soft px-3 py-2 text-xs font-black text-interactive hover:border-interactive/50">
+          <button type="button" onClick={() => onNavigate('decision-replay')} className="inline-flex items-center gap-2 rounded-xl border border-interactive/30 bg-interactive-soft px-3 py-2 text-xs font-black text-interactive">
             <Sparkles className="h-3.5 w-3.5" /> Decision Replay
           </button>
-          <button type="button" onClick={() => onNavigate('account')} className="inline-flex items-center gap-2 rounded-xl border border-line bg-canvas px-3 py-2 text-xs font-bold text-ink hover:border-interactive/40">
+          <button type="button" onClick={() => onNavigate('account')} className="inline-flex items-center gap-2 rounded-xl border border-line bg-canvas px-3 py-2 text-xs font-bold text-ink">
             Data & privacy <ArrowRight className="h-3.5 w-3.5" />
           </button>
         </div>
@@ -82,10 +82,10 @@ export const PersonalFinancialIntelligence: React.FC<Props> = ({ onNavigate }) =
       </div>
 
       <div className="mt-4 grid gap-3 md:grid-cols-2">
-        <button type="button" onClick={() => onNavigate('financial-health')} className="rounded-2xl border border-line bg-canvas p-4 text-left transition hover:border-interactive/35 hover:bg-subtle">
+        <button type="button" onClick={() => onNavigate('financial-health')} className="rounded-2xl border border-line bg-canvas p-4 text-left transition hover:bg-subtle">
           <div className="flex items-start justify-between gap-3"><div><div className="flex items-center gap-2 text-[9px] font-black uppercase tracking-wider text-secondary"><HeartPulse className="h-4 w-4 text-interactive" /> Financial Health Profile</div><div className="mt-2 text-base font-black text-ink">{snapshot.health.composite == null ? 'Data needed' : `${snapshot.health.composite}/100 · ${snapshot.health.compositeStatus}`}</div><div className="mt-1 text-[9px] leading-4 text-secondary">Explainable personal financial health indicator from recorded workspace data · not a credit score.</div></div><ArrowRight className="h-4 w-4 text-interactive" /></div>
         </button>
-        <button type="button" onClick={() => onNavigate('emi-manager')} className="rounded-2xl border border-line bg-canvas p-4 text-left transition hover:border-interactive/35 hover:bg-subtle">
+        <button type="button" onClick={() => onNavigate('emi-manager')} className="rounded-2xl border border-line bg-canvas p-4 text-left transition hover:bg-subtle">
           <div className="flex items-start justify-between gap-3"><div><div className="flex items-center gap-2 text-[9px] font-black uppercase tracking-wider text-secondary"><CalendarClock className="h-4 w-4 text-interactive" /> Commitment Intelligence</div><div className="mt-2 text-base font-black text-ink">{snapshot.emi.activeCount ? `${formatINR(snapshot.emi.activeMonthlyCommitment)} / month` : 'No active EMI recorded'}</div><div className="mt-1 text-[9px] leading-4 text-secondary">{snapshot.emi.commitmentToIncomePercent == null ? 'Add recorded income for commitment-to-income context.' : `${snapshot.emi.commitmentToIncomePercent}% of recorded monthly income · internal descriptive ratio only.`}</div></div><ArrowRight className="h-4 w-4 text-interactive" /></div>
         </button>
       </div>
@@ -99,7 +99,7 @@ export const PersonalFinancialIntelligence: React.FC<Props> = ({ onNavigate }) =
 };
 
 const Summary: React.FC<{ icon: React.ComponentType<{ className?: string }>; label: string; value: string; note: string; onClick: () => void }> = ({ icon: Icon, label, value, note, onClick }) => (
-  <button type="button" onClick={onClick} className="min-h-32 rounded-2xl border border-line bg-canvas p-4 text-left transition hover:border-interactive/35 hover:bg-subtle">
+  <button type="button" onClick={onClick} className="min-h-32 rounded-2xl border border-line bg-canvas p-4 text-left transition hover:bg-subtle">
     <Icon className="h-4 w-4 text-interactive" />
     <div className="mt-3 text-[9px] font-bold uppercase tracking-wider text-secondary">{label}</div>
     <div className="mt-1 text-sm font-black text-ink">{value}</div>

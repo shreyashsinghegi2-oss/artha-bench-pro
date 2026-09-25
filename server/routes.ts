@@ -30,7 +30,7 @@ import {
   generateVerificationCode,
 } from './financeEngine';
 import { generateLessonContent, reviewQuizAnswer } from './learningService';
-import { getBusinessNews, explainNewsArticle } from './businessNewsService';
+import { getBusinessNews, explainNewsArticle, buildNewsResearchBrief } from './businessNewsService';
 import { handleNewsImage } from './newsImageProxy';
 import { getMarketQuote, searchMarketQuotes, getMarketHistory } from './marketDataService';
 import { getIndiaMarketTicker } from './indiaMarketTickerService';
@@ -52,13 +52,95 @@ import {
 } from './providers/finnhubProvider';
 import { answerCryptoQuestion, getCryptoKlines, getCryptoMarkets } from './cryptoService';
 import { CRYPTO_INTERVALS, CRYPTO_SYMBOLS } from '../src/components/crypto/cryptoTypes';
+import { candleTtlMs, findInstrument, getTerminalCandles, getTerminalSnapshot, TERMINAL_INTERVALS } from './marketTerminal';
+
+import { fundDetail, fundsByIsin, searchFunds } from './mutualFundService';
+import { synthesize, translateText, VOICE_LANGS } from './voiceService';
+import { readWebPage } from './webReader';
+import { createRateLimiter } from './rateLimiter';
+
+const voiceLimiter = createRateLimiter({ windowMs: 60_000, max: 30, message: 'Too many voice requests. Please wait a minute.' });
 
 export const apiRouter = Router();
+
+// ---------------- Voice: translation and speech audio in Indian languages ----------------
+const voiceBody = (req: Request) => {
+  const text = typeof req.body?.text === 'string' ? req.body.text.trim().slice(0, 3000) : '';
+  const lang = typeof req.body?.lang === 'string' ? req.body.lang.trim().toLowerCase() : '';
+  return { text, lang, ok: Boolean(text) && lang in VOICE_LANGS };
+};
+apiRouter.post('/voice/translate', voiceLimiter, async (req: Request, res: Response) => {
+  const { text, lang, ok } = voiceBody(req);
+  if (!ok) return res.status(400).json({ error: 'Send text and a supported language code.' });
+  try { res.json(await translateText(text, lang)); }
+  catch { res.status(503).json({ error: 'Translation is unavailable right now. Please try again.' }); }
+});
+async function sendSpeech(res: Response, text: string, lang: string, rateRaw: unknown) {
+  if (!text || !(lang in VOICE_LANGS)) return res.status(400).json({ error: 'Send text and a supported language code.' });
+  const rate = Math.min(1.3, Math.max(0.7, Number(rateRaw) || 1));
+  try {
+    const { audio, provider } = await synthesize(text, lang, rate);
+    res.setHeader('Content-Type', 'audio/mpeg');
+    res.setHeader('Content-Length', String(audio.length));
+    res.setHeader('X-Voice-Provider', provider);
+    res.setHeader('Cache-Control', 'private, max-age=3600');
+    return res.send(audio);
+  } catch (error) {
+    console.warn('TTS failed:', error instanceof Error ? error.message : error);
+    return res.status(503).json({ error: 'Voice is unavailable right now. Please try again.' });
+  }
+}
+apiRouter.post('/voice/tts', voiceLimiter, (req: Request, res: Response) => { const { text, lang } = voiceBody(req); void sendSpeech(res, text, lang, req.body?.rate); });
+// For <audio src> and quick checks: /api/voice/tts?lang=hi&text=...
+apiRouter.get('/voice/tts', voiceLimiter, (req: Request, res: Response) => { void sendSpeech(res, String(req.query.text ?? '').trim().slice(0, 600), String(req.query.lang ?? '').toLowerCase(), req.query.rate); });
+
+// ---------------- Web page reader (public pages only) ----------------
+const readerLimiter = createRateLimiter({ windowMs: 60_000, max: 12, message: 'Too many links at once. Please wait a minute.' });
+apiRouter.get('/web/read', readerLimiter, async (req: Request, res: Response) => {
+  const url = String(req.query.url ?? '').slice(0, 2000);
+  if (!url) return res.status(400).json({ error: 'Send a link to read.' });
+  try { res.json(await readWebPage(url)); }
+  catch (e) { res.status(422).json({ error: e instanceof Error ? e.message : 'This page could not be read.' }); }
+});
+
+// ---------------- Mutual funds (official AMFI NAVs) ----------------
+apiRouter.get('/mf/search', async (req: Request, res: Response) => {
+  try {
+    const q = String(req.query.q ?? '').slice(0, 80);
+    const { results, source } = await searchFunds(q, Math.min(30, Number(req.query.limit) || 20));
+    res.setHeader('Cache-Control', 'public, s-maxage=1800, stale-while-revalidate=21600');
+    res.json({ results, source });
+  } catch (error) {
+    res.status(503).json({ error: 'Mutual fund data is unavailable right now. Please try again shortly.', detail: error instanceof Error ? error.message : undefined });
+  }
+});
+apiRouter.get('/mf/scheme/:code', async (req: Request, res: Response) => {
+  try {
+    const detail = await fundDetail(String(req.params.code));
+    res.setHeader('Cache-Control', 'public, s-maxage=1800, stale-while-revalidate=21600');
+    res.json(detail);
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : 'Unavailable';
+    res.status(/invalid|not found/i.test(msg) ? 404 : 503).json({ error: msg });
+  }
+});
+apiRouter.post('/mf/isin', async (req: Request, res: Response) => {
+  const raw = Array.isArray(req.body?.items) ? req.body.items as unknown[] : [];
+  const items = raw.flatMap((i) => {
+    const o = i as { isin?: unknown; name?: unknown };
+    return typeof o?.isin === 'string' && /^INF[A-Z0-9]{9}$/i.test(o.isin.trim()) ? [{ isin: o.isin.trim(), name: typeof o.name === 'string' ? o.name.slice(0, 160) : '' }] : [];
+  });
+  if (!items.length) return res.status(400).json({ error: 'Send mutual fund ISINs with their names.' });
+  try { res.json({ funds: await fundsByIsin(items) }); }
+  catch { res.status(503).json({ error: 'Mutual fund data is unavailable right now.' }); }
+});
 
 // Simple in-memory rate limiter
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
 const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
-const MAX_REQUESTS_PER_WINDOW = 60;
+// Applies to write/compute requests only; cached GET data reads are not counted so page loads and
+// market polling never lock a user (or everyone behind a shared mobile-carrier IP) out of the assistants.
+const MAX_REQUESTS_PER_WINDOW = 120;
 const DIAGNOSTIC_CACHE_MS = 60 * 1000;
 let diagnosticCache:
   | {
@@ -75,7 +157,8 @@ apiRouter.use((req: Request, res: Response, next: NextFunction) => {
   res.setHeader('X-Frame-Options', 'SAMEORIGIN');
   res.setHeader('X-XSS-Protection', '1; mode=block');
 
-  const clientIp = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || '127.0.0.1';
+  if (req.method === 'GET' || req.method === 'HEAD' || req.method === 'OPTIONS') return next();
+  const clientIp = (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.socket.remoteAddress || '127.0.0.1';
   const now = Date.now();
   const limitInfo = rateLimitMap.get(clientIp) || { count: 0, resetTime: now + RATE_LIMIT_WINDOW_MS };
 
@@ -176,7 +259,7 @@ const scenarioAssistantSchema = z.object({
   question: z.string().min(3).max(1200),
   profile: z.enum(['US', 'India', 'Global']).default('US'),
   currency: z.enum(['USD', 'INR', 'EUR', 'GBP']).default('USD'),
-  companySymbol: z.string().trim().max(20).regex(/^[A-Za-z0-9][A-Za-z0-9.:_-]*$/).optional().or(z.literal('')),
+  companySymbol: z.string().trim().max(20).regex(/^[A-Za-z0-9][A-Za-z0-9.:_&-]*$/).optional().or(z.literal('')),
   useExternalContext: z.boolean().default(true),
   inputs: z.record(z.string(), z.union([z.number().finite(), z.string().max(120), z.boolean()])),
 });
@@ -194,7 +277,7 @@ const dashboardAssistantSchema = z.object({
     .optional(),
   snapshot: z.object({
     capturedAt: z.string().max(64),
-    selectedSymbol: z.string().min(1).max(20).regex(/^[A-Za-z0-9][A-Za-z0-9.:_-]*$/),
+    selectedSymbol: z.string().min(1).max(20).regex(/^[A-Za-z0-9][A-Za-z0-9.:_&-]*$/),
     selectedRange: z.enum(['1d', '1w', '1m', '3m', '6m', '1y']),
     selectedCountry: z.enum(['us', 'india']),
     quotes: z
@@ -1033,6 +1116,25 @@ apiRouter.post('/news/explain', async (req: Request, res: Response, next: NextFu
   }
 });
 
+apiRouter.post('/news/brief', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const body = (req.body?.article || req.body || {}) as Record<string, unknown>;
+    const text = (v: unknown, max: number) => (typeof v === 'string' ? v.slice(0, max) : '');
+    const title = text(body.title, 400).trim();
+    if (!title) return res.status(400).json({ error: 'A headline is required.' });
+    const brief = await buildNewsResearchBrief({
+      title,
+      summary: text(body.summary, 2000),
+      sourceName: text(body.sourceName, 120) || 'Unknown source',
+      sourceUrl: text(body.sourceUrl, 600) || undefined,
+      publishedAt: text(body.publishedAt, 60) || null,
+    });
+    res.json({ brief });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // 8. Markets Routes
 const handleMarketQuote = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -1067,6 +1169,34 @@ apiRouter.get('/markets/search', async (req: Request, res: Response, next: NextF
   }
 });
 
+// Market terminal: provider-agnostic snapshot + candles for the landing dashboard and chart.
+apiRouter.get('/markets/terminal/snapshot', async (_req: Request, res: Response) => {
+  try {
+    const snapshot = await getTerminalSnapshot();
+    res.setHeader('Cache-Control', 'public, s-maxage=30, stale-while-revalidate=60');
+    res.json(snapshot);
+  } catch {
+    res.status(503).json({ error: 'Market snapshot is temporarily unavailable.' });
+  }
+});
+
+const terminalCandleQuerySchema = z.object({
+  instrument: z.enum(['nifty50', 'sensex', 'usdinr', 'gold', 'btcusdt']),
+  interval: z.enum(TERMINAL_INTERVALS),
+});
+apiRouter.get('/markets/terminal/candles', async (req: Request, res: Response) => {
+  const parsed = terminalCandleQuerySchema.safeParse(req.query);
+  if (!parsed.success) return res.status(400).json({ error: 'A supported instrument and interval are required.' });
+  try {
+    const data = await getTerminalCandles(parsed.data.instrument, parsed.data.interval);
+    const ttl = Math.round(candleTtlMs(findInstrument(data.instrument)!, data.interval) / 1000);
+    res.setHeader('Cache-Control', `public, s-maxage=${ttl}, stale-while-revalidate=${ttl * 2}`);
+    res.json(data);
+  } catch (error) {
+    res.status(503).json({ error: 'Candles for this instrument and interval are temporarily unavailable.', detail: error instanceof Error ? error.message.slice(0, 160) : undefined });
+  }
+});
+
 apiRouter.get('/markets/history', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const symbol = (req.query.symbol as string) || 'AAPL';
@@ -1082,7 +1212,7 @@ apiRouter.get('/company/intelligence', async (req: Request, res: Response, next:
   try {
     const parsed = z
       .object({
-        symbol: z.string().min(1).max(20).regex(/^[A-Za-z0-9][A-Za-z0-9.:_-]*$/),
+        symbol: z.string().min(1).max(20).regex(/^[A-Za-z0-9][A-Za-z0-9.:_&-]*$/),
       })
       .safeParse(req.query);
 
@@ -1107,7 +1237,7 @@ apiRouter.post('/company/assistant', async (req: Request, res: Response, next: N
   try {
     const parsed = z
       .object({
-        symbol: z.string().min(1).max(20).regex(/^[A-Za-z0-9][A-Za-z0-9.:_-]*$/),
+        symbol: z.string().min(1).max(20).regex(/^[A-Za-z0-9][A-Za-z0-9.:_&-]*$/),
         question: z.string().min(3).max(1200),
         history: z
           .array(
@@ -1142,7 +1272,8 @@ apiRouter.post('/company/assistant', async (req: Request, res: Response, next: N
     const symbol = parsed.data.symbol.toUpperCase();
     const [company, quoteResult] = await Promise.all([
       fetchFinnhubCompanyIntelligence(symbol),
-      getMarketQuote(symbol),
+      // A missing quote must not stop the company explanation: the profile and metrics still answer most questions.
+      getMarketQuote(symbol).catch(() => null),
     ]);
 
     if (company.status !== 'connected') {
@@ -1156,9 +1287,9 @@ apiRouter.post('/company/assistant', async (req: Request, res: Response, next: N
       fundamentalMetrics: company.metrics,
       recentEarnings: company.earnings,
       analystRecommendationCounts: company.recommendations,
-      marketQuote: quoteResult.quote,
+      marketQuote: quoteResult?.quote ?? 'Quote unavailable right now; do not state a current price.',
       dataRetrievedAt: company.retrievedAt,
-      dataProviders: ['Finnhub', quoteResult.quote.providerName],
+      dataProviders: quoteResult ? ['Finnhub', quoteResult.quote.providerName] : ['Finnhub'],
     };
 
     const systemPrompt = `You are the ArthaBench Company AI Assistant, a careful financial educator and evidence-grounded company-analysis explainer.

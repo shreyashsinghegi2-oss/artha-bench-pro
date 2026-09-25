@@ -1,3 +1,4 @@
+import { IdleWarning, LogoutNotice, rememberLogoutReason, type LogoutReason } from './SessionNotices';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import {
   AuthSession,
@@ -12,6 +13,8 @@ import {
   sendPasswordReset,
   signInWithPassword,
   signOutRemote,
+  signOutOtherSessions,
+  checkSession,
   signUpWithPassword,
   SocialAuthProvider,
   startSocialOAuth,
@@ -125,6 +128,7 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
           };
           window.history.replaceState({}, document.title, window.location.pathname);
           if (!cancelled) {
+            if (!isResetFlow) void signOutOtherSessions(nextSession.access_token);
             await establishSession(nextSession, true, isResetFlow);
             if (isResetFlow) { setAuthScreen('reset'); setAuthOpen(true); }
           }
@@ -184,6 +188,8 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
     const normalizedEmail = email.trim();
     try {
       const next = await signInWithPassword(normalizedEmail, password);
+      // One device per account: signing in here ends the account's sessions on other devices.
+      void signOutOtherSessions(next.access_token);
       const nextProfile = await establishSession(next, remember);
       if (nextProfile.onboarding_completed) setAuthOpen(false);
     } catch (error) {
@@ -206,7 +212,7 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
   const signUp = async (input: { fullName: string; email: string; password: string; country: string; financialDataConsent: boolean }) => {
     if (!configured) throw new Error('Account sign-up is not configured on this deployment yet.');
     const result = await signUpWithPassword({ email: input.email.trim(), password: input.password, fullName: input.fullName, country: input.country, financialDataConsent: input.financialDataConsent });
-    if (result.session) { await establishSession(result.session, true); return; }
+    if (result.session) { void signOutOtherSessions(result.session.access_token); await establishSession(result.session, true); return; }
     setAuthMessage('Account created. Check your email and verify it once, then return here to sign in.');
     setAuthScreen('verify');
     setAuthOpen(true);
@@ -231,11 +237,12 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
     setAuthScreen('login');
   };
 
-  const signOut = async () => {
-    if (session) {
+  const endSession = async (reason?: LogoutReason) => {
+    if (session && reason !== 'other-device') {
       await syncNow().catch(() => undefined);
       await signOutRemote(session.access_token).catch(() => undefined);
     }
+    if (reason) rememberLogoutReason(reason);
     persistSession(null);
     restoreGuestWorkspace();
     setSession(null);
@@ -243,6 +250,51 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
     setAuthOpen(false);
     window.location.reload();
   };
+  const signOut = () => endSession();
+
+  // Keep this device's session honest: refresh it before expiry and sign out here if the account
+  // signed in on another device (the server ended this session).
+  useEffect(() => {
+    if (!session) return;
+    let stopped = false;
+    const check = async () => {
+      if (document.visibilityState !== 'visible') return;
+      const result = await checkSession(session);
+      if (stopped) return;
+      if (result.state === 'revoked') { void endSession('other-device'); return; }
+      if (result.state === 'valid' && result.session.access_token !== session.access_token) {
+        persistSession(result.session, loadStoredSession().remember);
+        setSession(result.session);
+      }
+    };
+    const id = window.setInterval(() => void check(), 60_000);
+    const onVisible = () => { if (document.visibilityState === 'visible') void check(); };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => { stopped = true; window.clearInterval(id); document.removeEventListener('visibilitychange', onVisible); };
+  }, [session]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Auto sign-out after 30 minutes without activity in any tab, with a one-minute warning.
+  const [idleDeadline, setIdleDeadline] = useState<number | null>(null);
+  useEffect(() => {
+    if (!session) { setIdleDeadline(null); return; }
+    const IDLE = 30 * 60_000, WARN = 60_000, KEY = 'arthamind-last-activity';
+    let lastWrite = 0;
+    const bump = () => { const now = Date.now(); if (now - lastWrite > 5000) { lastWrite = now; try { localStorage.setItem(KEY, String(now)); } catch { /* ignore */ } } };
+    bump();
+    const events = ['pointerdown', 'keydown', 'scroll', 'touchstart', 'mousemove'] as const;
+    events.forEach((e) => window.addEventListener(e, bump, { passive: true }));
+    const id = window.setInterval(() => {
+      let last = Date.now();
+      try { last = Number(localStorage.getItem(KEY)) || last; } catch { /* ignore */ }
+      const idle = Date.now() - last;
+      if (idle >= IDLE) { window.clearInterval(id); void endSession('idle'); }
+      else if (idle >= IDLE - WARN) setIdleDeadline((d) => d ?? last + IDLE);
+      else setIdleDeadline(null);
+    }, 2000);
+    return () => { window.clearInterval(id); events.forEach((e) => window.removeEventListener(e, bump)); };
+  }, [session]); // eslint-disable-line react-hooks/exhaustive-deps
+  const stayActive = () => { try { localStorage.setItem('arthamind-last-activity', String(Date.now())); } catch { /* ignore */ } setIdleDeadline(null); };
+
 
   const refreshProfile = async () => { if (session) setProfile(await getProfile(session.access_token)); };
   const saveProfile = async (changes: Partial<UserProfile>) => {
@@ -259,7 +311,7 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
     forgotPassword, resetPassword, signOut, saveProfile, syncNow, refreshProfile,
   }), [configured, loading, syncing, session, profile, authOpen, authScreen, authMessage, syncNow]);
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={value}>{children}<LogoutNotice/>{idleDeadline && <IdleWarning deadline={idleDeadline} onStay={stayActive} onSignOut={() => void endSession()}/>}</AuthContext.Provider>;
 };
 
 export function useAuth(): AuthContextValue {

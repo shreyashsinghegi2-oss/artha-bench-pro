@@ -67,19 +67,30 @@ export function isSupabaseConfigured(): boolean {
 
 function authHeaders(token?: string): HeadersInit {
   const { anonKey } = config();
-  return {
-    apikey: anonKey,
-    Authorization: `Bearer ${token || anonKey}`,
-    'Content-Type': 'application/json',
-  };
+  // Publishable keys (sb_publishable_…) are not JWTs: they go in the apikey header only. The
+  // Authorization header carries a user's access token, or the legacy JWT anon key.
+  const headers: Record<string, string> = { apikey: anonKey, 'Content-Type': 'application/json' };
+  if (token) headers.Authorization = `Bearer ${token}`;
+  else if (!anonKey.startsWith('sb_')) headers.Authorization = `Bearer ${anonKey}`;
+  return headers;
+}
+
+/** Supabase error text rewritten so people know what to do next. */
+function friendlyAuthError(raw: string): string {
+  if (/invalid login credentials/i.test(raw)) return 'That email and password do not match an account. Check the password, use "Forgot password?" to reset it, or create a free account if you have not signed up yet. If you first signed up with Google, use the Google button.';
+  if (/user already registered/i.test(raw)) return 'An account with this email already exists. Sign in instead, or reset your password.';
+  if (/password should be at least/i.test(raw)) return 'Please choose a password of at least 8 characters.';
+  if (/rate limit|too many requests/i.test(raw)) return 'Too many attempts. Please wait a minute and try again.';
+  if (/invalid api key|no api key/i.test(raw)) return 'Sign-in is temporarily unavailable (service key problem). Please try again shortly.';
+  return raw;
 }
 
 async function requestJSON<T>(url: string, init?: RequestInit): Promise<T> {
   const response = await fetch(url, init);
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) {
-    const message = payload?.msg || payload?.message || payload?.error_description || payload?.error || `Request failed (${response.status})`;
-    throw new Error(message);
+    const raw = String(payload?.msg || payload?.message || payload?.error_description || payload?.error || `Request failed (${response.status})`);
+    throw new Error(friendlyAuthError(raw));
   }
   return payload as T;
 }
@@ -371,4 +382,35 @@ export async function requestAccountDeletion(token: string): Promise<void> {
   const response = await fetch('/api/account/delete', { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(payload?.error || 'Account deletion failed.');
+}
+
+/** Signs out every other device of this account, so only the current device stays signed in. */
+export async function signOutOtherSessions(token: string): Promise<void> {
+  const { url } = config();
+  await fetch(`${url}/auth/v1/logout?scope=others`, { method: 'POST', headers: authHeaders(token) }).catch(() => undefined);
+}
+
+/**
+ * Checks this device's session with the auth server. 'revoked' means the session was ended
+ * elsewhere (for example a sign-in on another device); 'unknown' means the check could not run.
+ * An access token near expiry is refreshed first, and the new session is returned.
+ */
+export async function checkSession(session: AuthSession): Promise<{ state: 'valid'; session: AuthSession } | { state: 'revoked' | 'unknown' }> {
+  const { url } = config();
+  let current = session;
+  try {
+    if (current.expires_at <= Math.floor(Date.now() / 1000) + 120) {
+      const r = await fetch(`${url}/auth/v1/token?grant_type=refresh_token`, { method: 'POST', headers: authHeaders(), body: JSON.stringify({ refresh_token: current.refresh_token }) });
+      if (r.status === 400 || r.status === 401 || r.status === 403) return { state: 'revoked' };
+      if (!r.ok) return { state: 'unknown' };
+      const next = normalizeSession(await r.json());
+      if (!next) return { state: 'unknown' };
+      current = next;
+    }
+    const u = await fetch(`${url}/auth/v1/user`, { headers: authHeaders(current.access_token) });
+    if (u.status === 401 || u.status === 403) return { state: 'revoked' };
+    return u.ok ? { state: 'valid', session: current } : { state: 'unknown' };
+  } catch {
+    return { state: 'unknown' };
+  }
 }

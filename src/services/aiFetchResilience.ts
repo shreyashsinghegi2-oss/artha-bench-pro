@@ -1,4 +1,7 @@
+import { buildUserContext, useMyDataEnabled } from './userContext';
+import { logFromRequestBody } from './questionLog';
 import { buildFallbackStructuredAnswer, buildGroundedFallbackAnswer } from './reliableTutor';
+import { getWebSearchMode } from '../components/ai/WebSearchToggle';
 
 const FALLBACK_PATHS = new Set([
   '/api/dashboard/assistant',
@@ -8,6 +11,8 @@ const FALLBACK_PATHS = new Set([
   '/api/finance/scenario-assistant',
   '/api/news/explain',
 ]);
+
+const AI_PATHS = new Set([...FALLBACK_PATHS, '/api/ai/chat', '/api/ai/tutor', '/api/tutor', '/api/nvidia-tutor', '/api/news/brief']);
 
 const DISCLAIMER = 'Educational analysis only — not personalised investment, trading, tax, legal, lending, credit, or financial advice.';
 
@@ -164,8 +169,20 @@ export function installAiFetchResilience() {
   state[marker] = true;
 
   const nativeFetch = window.fetch.bind(window);
-  window.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
+  window.fetch = (async (input: RequestInfo | URL, originalInit?: RequestInit) => {
     const path = requestPath(input);
+    // Every AI request carries the chat's web-search setting (Auto / On / Off).
+    let init = originalInit;
+    if (AI_PATHS.has(path)) {
+      const headers = new Headers(originalInit?.headers ?? (input instanceof Request ? input.headers : undefined));
+      headers.set('x-artha-web-search', getWebSearchMode());
+      init = { ...originalInit, headers };
+      logFromRequestBody(originalInit?.body, path);
+      // With the user's consent, attach one summary of their data from every feature.
+      if (useMyDataEnabled() && typeof originalInit?.body === 'string') {
+        try { const body = JSON.parse(originalInit.body); const ctx = buildUserContext(); if (ctx && body && typeof body === 'object') init = { ...init, body: JSON.stringify({ ...body, userProfile: ctx }) }; } catch { /* not JSON */ }
+      }
+    }
     const isFallbackPath = FALLBACK_PATHS.has(path);
     try {
       const response = await nativeFetch(input, init);

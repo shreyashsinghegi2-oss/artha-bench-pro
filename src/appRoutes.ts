@@ -9,6 +9,13 @@ export type AppLocation =
 
 const financePaths: Partial<Record<AppNavigationDestination, string>> = {
   overview: '/finance/overview',
+  'my-dashboard': '/finance/dashboard',
+  'money-planner': '/finance/planner',
+  'retirement-planner': '/finance/retirement',
+  'platform-guide': '/finance/guide',
+  'education-planner': '/finance/education',
+  'job-switch-planner': '/finance/job-switch',
+  portfolio: '/finance/portfolio',
   'financial-health': '/finance/health',
   income: '/finance/income',
   expenses: '/finance/expenses',

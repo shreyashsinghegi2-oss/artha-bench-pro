@@ -73,7 +73,7 @@ export const PublicFinanceOverview: React.FC<Props> = ({ onSignIn, onNavigate })
             <button
               type="button"
               onClick={() => onNavigate('markets')}
-              className="inline-flex items-center justify-center gap-2 rounded-xl border border-line-strong bg-canvas px-5 py-3 text-sm font-bold text-ink transition hover:border-interactive/40 hover:bg-subtle"
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-line-strong bg-canvas px-5 py-3 text-sm font-bold text-ink transition hover:bg-subtle"
             >
               <LineChart className="h-4 w-4 text-interactive" /> Explore market intelligence
             </button>

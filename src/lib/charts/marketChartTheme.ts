@@ -13,6 +13,8 @@ export function marketMovementColor(rangeReturn: number | null | undefined): str
 export function formatMarketAxis(value: number, currency: string): string {
   const sign = currency.toUpperCase() === 'INR' ? '₹' : currency.toUpperCase() === 'USD' ? '$' : `${currency.toUpperCase()} `;
   const abs = Math.abs(value);
+  // Rupee amounts are shown in full with Indian grouping (₹24,500), never as K or M.
+  if (currency.toUpperCase() === 'INR') return `${value < 0 ? '−' : ''}₹${Math.abs(value).toLocaleString('en-IN', { maximumFractionDigits: abs >= 100 ? 0 : 2 })}`;
   if (abs >= 1_000_000) return `${sign}${(value / 1_000_000).toFixed(1)}M`;
   if (abs >= 1_000) return `${sign}${(value / 1_000).toFixed(1)}K`;
   return `${sign}${value.toFixed(abs >= 100 ? 0 : 2)}`;

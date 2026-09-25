@@ -5952,7 +5952,7 @@ async function getTerminalSnapshot() {
 }
 
 // server/mutualFundService.ts
-var AMFI_URL = process.env.AMFI_NAV_URL || "https://www.amfiindia.com/spages/NAVAll.txt";
+var AMFI_URLS = [process.env.AMFI_NAV_URL, "https://www.amfiindia.com/spages/NAVAll.txt", "https://portal.amfiindia.com/spages/NAVAll.txt"].filter(Boolean);
 var MFAPI_URL = (process.env.MFAPI_BASE_URL || "https://api.mfapi.in").replace(/\/$/, "");
 var AMFI_TTL_MS = 6 * 60 * 60 * 1e3;
 var HISTORY_TTL_MS = 3 * 60 * 60 * 1e3;
@@ -5998,10 +5998,24 @@ async function amfiSchemes() {
   if (amfiLoading) return amfiLoading;
   amfiLoading = (async () => {
     try {
-      const res = await fetch(AMFI_URL, { headers: { "User-Agent": "ArthaMind/1.0" }, signal: AbortSignal.timeout(15e3) });
-      if (!res.ok) throw new Error(`AMFI NAV file request failed with HTTP ${res.status}.`);
-      const list = parseAmfiNav(await res.text());
-      if (list.length < 1e3) throw new Error("AMFI NAV file looked incomplete.");
+      const problems = [];
+      let list = [];
+      for (const url of AMFI_URLS) {
+        try {
+          const res = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0 (compatible; ArthaMind/1.0)", Accept: "text/plain,*/*" }, redirect: "follow", signal: AbortSignal.timeout(15e3) });
+          const text = await res.text();
+          if (!res.ok) {
+            problems.push(`${new URL(url).host}: HTTP ${res.status}`);
+            continue;
+          }
+          list = parseAmfiNav(text);
+          if (list.length >= 1e3) break;
+          problems.push(`${new URL(url).host}: ${list.length} rows from ${text.length} bytes, starts "${text.slice(0, 80).replace(/\s+/g, " ")}"`);
+        } catch (e) {
+          problems.push(`${new URL(url).host}: ${e instanceof Error ? e.message : "failed"}`);
+        }
+      }
+      if (list.length < 1e3) throw new Error(`AMFI NAV file unavailable (${problems.join("; ")}).`);
       const byCode = new Map(list.map((s) => [s.code, s]));
       const byIsin = /* @__PURE__ */ new Map();
       for (const s of list) {
@@ -6033,8 +6047,16 @@ function searchSchemes(list, query, limit = 20) {
 async function searchFunds(query, limit = 20) {
   const q = query.trim().slice(0, 80);
   if (q.length < 2) return { results: [], source: "AMFI" };
-  const { list } = await amfiSchemes();
-  return { results: searchSchemes(list, q, limit), source: "AMFI daily NAV file" };
+  try {
+    const { list } = await amfiSchemes();
+    return { results: searchSchemes(list, q, limit), source: "AMFI daily NAV file" };
+  } catch (amfiError) {
+    const res = await fetch(`${MFAPI_URL}/mf/search?q=${encodeURIComponent(q)}`, { headers: { Accept: "application/json" }, signal: AbortSignal.timeout(1e4) }).catch(() => null);
+    if (!res?.ok) throw amfiError;
+    const rows = await res.json();
+    const results = rows.slice(0, 200).map((r) => ({ code: String(r.schemeCode), name: r.schemeName, house: "", category: "", assetClass: assetClassFor("", r.schemeName), isinGrowth: null, isinReinvest: null, nav: 0, navDate: "" }));
+    return { results: searchSchemes(results, q, limit), source: "mfapi.in (AMFI data)" };
+  }
 }
 async function fundsByIsin(isins) {
   const { byIsin } = await amfiSchemes();

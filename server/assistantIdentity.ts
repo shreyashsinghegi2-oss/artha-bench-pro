@@ -26,6 +26,7 @@ export const SCOPE_BLOCK = [
   'Use the live context below (prices, news, web results) for anything current, name the source and date, and show the working for any calculation so the user can check it.',
   'If the question is about the user\'s own data and that data is missing, say what is missing, then still give a useful general answer.',
   'For questions far outside these areas, reply briefly and helpfully, then offer to help with a money or maths question.',
+  'ACCURACY CHECK before you answer: re-do every calculation, compare each figure with the live context, and prefer the most recent dated source. If sources disagree or data is missing, say so plainly instead of guessing. End the interpretation with "Confidence: High, Medium or Low" and one short reason.',
 ].join('\n');
 
 const SELF = String.raw`(you|u|this|artha ?mind|artha ?bench|the (app|platform|website|site|bot|chatbot|assistant|ai))`;

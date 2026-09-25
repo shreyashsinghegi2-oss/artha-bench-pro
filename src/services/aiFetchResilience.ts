@@ -1,3 +1,4 @@
+import { logFromRequestBody } from './questionLog';
 import { buildFallbackStructuredAnswer, buildGroundedFallbackAnswer } from './reliableTutor';
 import { getWebSearchMode } from '../components/ai/WebSearchToggle';
 
@@ -175,6 +176,7 @@ export function installAiFetchResilience() {
       const headers = new Headers(originalInit?.headers ?? (input instanceof Request ? input.headers : undefined));
       headers.set('x-artha-web-search', getWebSearchMode());
       init = { ...originalInit, headers };
+      logFromRequestBody(originalInit?.body, path);
     }
     const isFallbackPath = FALLBACK_PATHS.has(path);
     try {

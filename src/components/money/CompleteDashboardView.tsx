@@ -9,6 +9,7 @@ import { loadExpenses } from '../../services/personalFinanceStorage';
 import type { AppNavigationDestination } from '../../navigationTypes';
 import './workspaceDash.css';
 import { LiveBoard } from './LiveBoard';
+import { ActivityCard, dashboardSummary, DashboardAI, InvestmentsCard, ProfileCard, SectionNav, SpendingCard } from './DashboardSections';
 
 /** ₹ with Indian grouping (12,00,000). Amounts are always shown in full, never as k, L or Cr. */
 export const inr = (v: number) => `${v < 0 ? '−' : ''}₹${Math.abs(Math.round(v)).toLocaleString('en-IN')}`;
@@ -57,11 +58,11 @@ export const CompleteDashboardView: React.FC<{ onNavigate: (d: AppNavigationDest
   if (!profile || !d) {
     return <div className="wd">
       <header className="wd-head"><div><small className="wd-kicker">Dashboard</small><h1>Everything about your money, on one page.</h1><p>Net worth, investments, savings, tax, loans and EMIs, health score, goals and insurance, together. Set up once and it fills in.</p></div></header>
-      <LiveBoard onNavigate={onNavigate}/>
       <section className="wd-empty">
         <button type="button" className="wd-empty-card primary" onClick={() => onNavigate('overview')}><Sparkles size={20}/><b>Set up in about two minutes</b><span>A few simple questions, or scan a payslip.</span><em>Start <ArrowRight size={14}/></em></button>
         <button type="button" className="wd-empty-card" onClick={() => saveMoneyProfile({ ...SAMPLE_MONEY_CHECK, source: 'sample', updatedAt: new Date().toISOString() })}><Gauge size={20}/><b>See it with a sample profile</b><span>Explore the full dashboard, then replace it with your numbers.</span><em>Show sample <ArrowRight size={14}/></em></button>
       </section>
+      <section className="wd-markets"><header className="wd-markets-head"><h2>Markets & news</h2><small>Live quotes, fund check and business headlines</small></header><LiveBoard onNavigate={onNavigate}/></section>
     </div>;
   }
 
@@ -88,8 +89,9 @@ export const CompleteDashboardView: React.FC<{ onNavigate: (d: AppNavigationDest
         <button type="button" className="wd-btn primary" onClick={() => onNavigate('money-planner')}><Coins size={15}/> Plan a lump sum</button>
       </div>
     </header>
-    <LiveBoard onNavigate={onNavigate}/>
+    <SectionNav/>
 
+    <div id="dash-overview" className="wd-anchor"/>
     <section className="wd-tiles" aria-label="Key figures">
       <Tile icon={<TrendingUp size={15}/>} label="Net worth" fig={d.netWorth} sub="Cash + investments − loans" tone={d.netWorth.value >= 0 ? 'good' : 'bad'}/>
       <Tile icon={<PiggyBank size={15}/>} label="Total investments" fig={d.totalInvestments} tone="good"/>
@@ -109,7 +111,18 @@ export const CompleteDashboardView: React.FC<{ onNavigate: (d: AppNavigationDest
       <span className="good">Green · growth, healthy</span><span className="bad">Red · loss, debt, risk</span><span className="warn">Amber · needs attention</span><span className="info">Blue · information</span>
     </section>
 
-    <section className="wd-grid three">
+    <DashboardAI summary={dashboardSummary(profile, d)}/>
+
+    <section className="wd-grid two" id="dash-profile">
+      <ProfileCard profile={profile} d={d} onNavigate={onNavigate}/>
+      <article className={`wd-card ${actions.length ? 'warn' : 'good'}`}>
+        <header><h2>Next best steps</h2><Status tone={actions.length ? 'warn' : 'good'} label={actions.length ? `${actions.length} to do` : 'All clear'}/><small className="wd-sub">In priority order</small></header>
+        <ol className="wd-actions">{actions.map((a) => <li key={a.title} className={a.priority <= 2 ? 'bad' : a.priority <= 4 ? 'warn' : 'info'}><b>{a.title}</b><span>{a.detail}</span></li>)}</ol>
+        {!actions.length && <p className="wd-note">Nothing urgent. Keep your SIPs going and review once a quarter.</p>}
+      </article>
+    </section>
+
+    <section className="wd-grid three" id="dash-cash">
       <article className={`wd-card ${flowTone}`}>
         <header><h2>Monthly cash flow</h2><Status tone={flowTone}/><small className="wd-sub">Take-home {inr(d.monthlyTakeHome.value)}</small></header>
         <Bar parts={[{ label: 'Living expenses', value: d.monthlyExpenses.value, cls: 'c-ink' }, { label: 'EMIs', value: d.monthlyEmi.value, cls: 'c-amber' }, { label: 'Left to save', value: Math.max(0, d.monthlySurplus.value), cls: 'c-green' }]}/>
@@ -131,7 +144,12 @@ export const CompleteDashboardView: React.FC<{ onNavigate: (d: AppNavigationDest
       </article>
     </section>
 
-    <section className="wd-grid three">
+    <section className="wd-grid two" id="dash-invest">
+      <InvestmentsCard profile={profile} d={d} onNavigate={onNavigate}/>
+      <SpendingCard d={d} onNavigate={onNavigate}/>
+    </section>
+
+    <section className="wd-grid three" id="dash-loans">
       <article className={`wd-card ${emiTone}`}>
         <header><h2>Loans & EMIs</h2><Status tone={emiTone}/><small className="wd-sub">{d.loans.length ? `${d.loans.length} active` : 'From your setup'}</small></header>
         {d.loans.length
@@ -165,18 +183,10 @@ export const CompleteDashboardView: React.FC<{ onNavigate: (d: AppNavigationDest
       </article>
     </section>
 
-    <section className="wd-grid two">
-      <article className={`wd-card ${actions.length ? 'warn' : 'good'}`}>
-        <header><h2>Next best steps</h2><Status tone={actions.length ? 'warn' : 'good'} label={actions.length ? `${actions.length} to do` : 'All clear'}/><small className="wd-sub">In priority order</small></header>
-        <ol className="wd-actions">{actions.map((a) => <li key={a.title} className={a.priority <= 2 ? 'bad' : a.priority <= 4 ? 'warn' : 'info'}><b>{a.title}</b><span>{a.detail}</span></li>)}</ol>
-        {!actions.length && <p className="wd-note">Nothing urgent. Keep your SIPs going and review once a quarter.</p>}
-      </article>
-      <article className={`wd-card ${monthTone}`}>
-        <header><h2>This month</h2><Status tone={monthTone} label={d.spendThisMonth == null ? 'No data' : undefined}/><small className="wd-sub">{d.spendThisMonth != null ? 'From your recorded expenses' : 'No expenses recorded yet'}</small></header>
-        {d.spendThisMonth != null
-          ? <><p className="wd-big">{inr(d.spendThisMonth)}</p><p className="wd-note">spent so far{d.topCategory ? <> · most on <b>{d.topCategory.name}</b> ({inr(d.topCategory.amount)})</> : null}</p>
-              <Meter value={d.monthlyExpenses.value ? d.spendThisMonth / d.monthlyExpenses.value : 0} label={`${pct(d.monthlyExpenses.value ? d.spendThisMonth / d.monthlyExpenses.value : 0)} of your usual ${inr(d.monthlyExpenses.value)}`} tone={d.spendThisMonth > d.monthlyExpenses.value ? 'bad' : 'good'}/></>
-          : <p className="wd-note">Record spending to see this month against your usual {inr(d.monthlyExpenses.value)}.</p>}
+    <section className="wd-grid two" id="dash-activity">
+      <ActivityCard onNavigate={onNavigate}/>
+      <article className="wd-card info">
+        <header><h2>Go to a feature</h2><Status tone="info" label="Shortcuts"/><small className="wd-sub">Every part of your money, one tap away</small></header>
         <div className="wd-quick">
           <button type="button" onClick={() => onNavigate('expenses')}><ReceiptText size={14}/> Expenses</button>
           <button type="button" onClick={() => onNavigate('budgeting')}><Target size={14}/> Budget</button>
@@ -185,6 +195,11 @@ export const CompleteDashboardView: React.FC<{ onNavigate: (d: AppNavigationDest
           <button type="button" onClick={() => onNavigate('financial-health')}><ShieldCheck size={14}/> Health</button>
         </div>
       </article>
+    </section>
+
+    <section id="dash-markets" className="wd-markets">
+      <header className="wd-markets-head"><h2>Markets & news</h2><small>Live quotes, fund check and business headlines</small></header>
+      <LiveBoard onNavigate={onNavigate}/>
     </section>
 
     <p className="wd-foot">Figures are calculated from what you entered and recorded; tax uses FY 2025-26 rules. Educational estimates, not investment or tax advice.</p>

@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { ArrowDownRight, ArrowRight, ArrowUpRight, Loader2, Newspaper, PieChart, RefreshCw, Search } from 'lucide-react';
 import type { AppNavigationDestination } from '../../navigationTypes';
-import { loadPortfolio, PORTFOLIO_EVENT, summarise } from '../../services/portfolio';
+import { loadPortfolio, PORTFOLIO_EVENT, sipBacktest, summarise } from '../../services/portfolio';
+import { parseMoney } from './MoneyReport';
 import './liveBoard.css';
 
 const TILES = [
@@ -104,6 +105,8 @@ const FundCheck: React.FC = () => {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [picked, setPicked] = useState('');
+  const [sipAmt, setSipAmt] = useState('5,000');
+  const [sipYears, setSipYears] = useState(5);
   useEffect(() => {
     if (q.trim().length < 3 || q === picked) { setHits([]); return; }
     const t = window.setTimeout(() => {
@@ -128,7 +131,17 @@ const FundCheck: React.FC = () => {
       <p className="lv-sub">{detail.scheme?.category || 'Mutual fund'}{detail.scheme?.house ? ` · ${detail.scheme.house}` : ''}</p>
       <div className="lv-fund-row"><div><b className="lv-big">₹{last.nav.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</b><small>NAV on {last.date}</small></div><Sparkline points={spark}/></div>
       <div className="lv-mini">{(['1Y', '3Y', '5Y'] as const).map((k) => detail.returns[k] !== undefined && <span key={k} className={detail.returns[k] >= 0 ? 'up' : 'down'}>{k}{k !== '1Y' ? ' a year' : ''} <b>{pct(detail.returns[k])}</b></span>)}</div>
-      <p className="lv-fine">Past returns do not guarantee future returns. Source: AMFI NAVs.</p>
+      {(() => {
+        const amt = parseMoney(sipAmt);
+        const bt = Number.isFinite(amt) && amt > 0 ? sipBacktest(detail.history, amt, sipYears) : null;
+        return <div className="lv-sip">
+          <div className="lv-sip-row"><span>SIP check: ₹</span><input value={sipAmt} onChange={(e) => setSipAmt(e.target.value)} inputMode="decimal" aria-label="Monthly SIP amount"/><span>a month for</span>
+            {[1, 3, 5].map((y) => <button key={y} type="button" className={sipYears === y ? 'on' : ''} onClick={() => setSipYears(y)}>{y}Y</button>)}</div>
+          {bt ? <p>Invested <b>{inr(bt.invested)}</b> over {bt.months} months → worth <b>{inr(bt.value)}</b> today{bt.xirr !== null ? <> (XIRR <b className={bt.xirr >= 0 ? 'up' : 'down'}>{pct(bt.xirr)}</b>)</> : null}.</p>
+            : <p className="lv-sub">{Number.isFinite(amt) && amt > 0 ? 'Not enough NAV history for this period.' : 'Enter a monthly amount, e.g. 5,000.'}</p>}
+        </div>;
+      })()}
+      <p className="lv-fine">Uses actual past NAVs; past returns do not guarantee future returns. Source: AMFI NAVs.</p>
     </div>}
     {!detail && !hits.length && !error && <p className="lv-sub">Official NAVs and 1, 3 and 5-year returns for any scheme.</p>}
   </article>;

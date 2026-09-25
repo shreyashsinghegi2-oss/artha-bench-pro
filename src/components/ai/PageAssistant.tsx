@@ -92,7 +92,7 @@ export const PageAssistant: React.FC<{ destination: AppNavigationDestination; sn
     {error && <p className="pa-error" role="alert">{error}</p>}
 
     {(doneAsking || turns.length > 0) && <form className="pa-form" onSubmit={(e) => { e.preventDefault(); void send(draft); }}>
-      <input value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Ask about this page…" aria-label="Ask the assistant" maxLength={600} disabled={busy}/>
+      <input value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Ask about this page, or paste any link to analyse…" aria-label="Ask the assistant" maxLength={600} disabled={busy}/>
       <button type="submit" disabled={!draft.trim() || busy}>Ask</button>
     </form>}
     <div className="pa-foot"><WebSearchToggle compact/><small>Education only, not investment advice.</small></div>

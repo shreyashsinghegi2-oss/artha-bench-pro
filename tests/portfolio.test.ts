@@ -82,3 +82,19 @@ describe('portfolio summary', () => {
     expect(snap).not.toMatch(/\d\s?(k|L|Cr|lakh)\b/);
   });
 });
+
+import { sipBacktest } from '../src/services/portfolio';
+describe('SIP check', () => {
+  it('buys monthly at actual NAVs and values at the latest NAV', () => {
+    // NAV 100 flat for 2 years, then 110 on the last day → every unit gains 10%.
+    const hist: Array<{ date: string; nav: number }> = [];
+    for (let d = new Date('2024-01-01'); d <= new Date('2026-01-01'); d.setUTCDate(d.getUTCDate() + 7)) hist.push({ date: d.toISOString().slice(0, 10), nav: 100 });
+    hist.push({ date: '2026-01-02', nav: 110 });
+    const r = sipBacktest(hist, 5000, 1)!;
+    expect(r.months).toBe(12);
+    expect(r.invested).toBe(60000);
+    expect(r.value).toBeCloseTo(66000, 6);
+    expect(r.xirr!).toBeGreaterThan(0.1);
+    expect(sipBacktest(hist, 5000, 5)).toBeNull(); // not enough history
+  });
+});

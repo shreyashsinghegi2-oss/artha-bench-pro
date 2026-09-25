@@ -14,6 +14,8 @@
  * without changing its signature. Every lookup has a short timeout and failures never block an answer.
  */
 import { AsyncLocalStorage } from 'node:async_hooks';
+import { linksIn, readWebPage } from './webReader';
+import { fundDetail, searchFunds } from './mutualFundService';
 import type { NextFunction, Request, Response } from 'express';
 import { INDIA_MARKET_UNIVERSE } from '../src/data/indiaMarketUniverse';
 import { getMarketQuote } from './marketDataService';
@@ -21,7 +23,7 @@ import { getBusinessNews } from './businessNewsService';
 import { rankPassages } from '../src/services/knowledgeLibrary';
 
 export type WebSearchMode = 'auto' | 'on' | 'off';
-export interface GroundingSource { name: string; dataDate: string; freshness: string; url?: string; kind: 'market' | 'news' | 'web' }
+export interface GroundingSource { name: string; dataDate: string; freshness: string; url?: string; kind: 'market' | 'news' | 'web' | 'page' | 'fund' }
 interface GroundingState { mode: WebSearchMode; sources: GroundingSource[]; used: boolean }
 
 const store = new AsyncLocalStorage<GroundingState>();
@@ -164,6 +166,53 @@ const istNow = () => new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkat
 const fmt = (v: number) => v.toLocaleString('en-IN', { maximumFractionDigits: v < 10 ? 4 : 2 });
 
 /** Build the LIVE CONTEXT block for a question. Returns empty text when nothing relevant was found. */
+
+const FUND_HOUSES = /\b(hdfc|sbi|icici(?: prudential)?|axis|parag parikh|ppfas|nippon(?: india)?|kotak|mirae(?: asset)?|uti|quant|dsp|tata|aditya birla(?: sun life)?|motilal oswal|franklin(?: india| templeton)?|canara robeco|bandhan|edelweiss|invesco(?: india)?|hsbc|pgim(?: india)?|sundaram|mahindra manulife|navi|zerodha|groww|whiteoak|360 one|bajaj finserv|jm financial|lic|baroda bnp paribas|union|samco|old bridge|helios|quantum)\b/i;
+const FUND_WORD = /\b(fund|mutual funds?|nav|sip|scheme|elss|index fund|etf)\b/i;
+const FUND_STOP = new Set('what is the of should i invest in for a an my how are was were today now current latest nav returns return sip mutual fund funds scheme good bad better best me tell about to and or vs with price value performance'.split(' '));
+
+/** A fund named in the question → search words from the fund house onward, e.g. "hdfc flexi cap". */
+export function fundQueryFrom(q: string): string | null {
+  if (!FUND_WORD.test(q)) return null;
+  const m = q.match(FUND_HOUSES);
+  if (!m || m.index === undefined) return null;
+  const words = q.slice(m.index).toLowerCase().replace(/[^a-z0-9& ]+/g, ' ').split(/\s+/).filter((w) => w && !FUND_STOP.has(w));
+  const out = words.slice(0, 5).join(' ');
+  return out.split(' ').length >= 2 ? out : null;
+}
+
+async function fundContext(q: string): Promise<{ lines: string[]; sources: GroundingSource[] }> {
+  const query = fundQueryFrom(q);
+  if (!query) return { lines: [], sources: [] };
+  const { results } = await searchFunds(query, 3);
+  const pick = results[0];
+  if (!pick) return { lines: [`Mutual fund data: no scheme matched "${query}"; ask the user for the exact fund name.`], sources: [] };
+  const d = await fundDetail(pick.code);
+  const last = d.history[d.history.length - 1];
+  const r = d.returns as Record<string, number>;
+  const pc = (k: string, label: string) => (r[k] !== undefined ? `${label} ${(r[k] * 100).toFixed(1)}%` : '');
+  const name = d.scheme?.name ?? pick.name;
+  const line = `- ${name}${d.scheme?.category ? ` [${d.scheme.category}]` : ''}: NAV ₹${last?.nav} on ${last?.date}; returns ${[pc('1Y', '1 year'), pc('3Y', '3 years (a year)'), pc('5Y', '5 years (a year)')].filter(Boolean).join(', ')}. Source: ${d.sources.join(', ')}. Past returns do not guarantee future returns.`;
+  return { lines: ['Mutual fund data (official NAVs):', line], sources: [{ name: `AMFI NAV: ${name.slice(0, 80)}`, dataDate: last?.date ?? '', freshness: 'end of day', kind: 'fund' }] };
+}
+
+async function pageContext(q: string): Promise<{ lines: string[]; sources: GroundingSource[] }> {
+  const links = linksIn(q);
+  if (!links.length) return { lines: [], sources: [] };
+  const lines: string[] = [];
+  const sources: GroundingSource[] = [];
+  for (const link of links) {
+    try {
+      const p = await readWebPage(link);
+      lines.push(`Web page the user shared — "${p.title}" (${p.url}), read ${p.retrievedAt}:`, p.text.slice(0, 2600));
+      sources.push({ name: `Page: ${p.title.slice(0, 90)}`, dataDate: p.retrievedAt, freshness: 'read now', url: p.url, kind: 'page' });
+    } catch (e) {
+      lines.push(`Web page ${link} could not be read (${e instanceof Error ? e.message : 'error'}); tell the user and do not guess its contents.`);
+    }
+  }
+  return { lines, sources };
+}
+
 export async function gatherLiveContext(query: string, mode: WebSearchMode = 'auto'): Promise<{ text: string; sources: GroundingSource[] }> {
   const q = query.replace(/\s+/g, ' ').trim().slice(0, 600);
   if (!q) return { text: '', sources: [] };
@@ -175,10 +224,12 @@ export async function gatherLiveContext(query: string, mode: WebSearchMode = 'au
   const wantNews = NEWSY.test(q) || (instruments.length > 0 && /\bwhy|move|fell|rose|up|down\b/i.test(q));
   const wantWeb = shouldSearchWeb(q, mode);
 
-  const [quotes, news, web] = await Promise.all([
+  const [quotes, news, web, page, fund] = await Promise.all([
     Promise.all(instruments.map((i) => withTimeout(getMarketQuote(i.symbol).then((r) => ({ i, quote: r.quote })), 3500))),
     wantNews ? withTimeout(getBusinessNews(instruments[0]?.label ?? q.split(' ').slice(0, 6).join(' '), 'business', 'india'), 4000) : Promise.resolve(null),
     wantWeb ? withTimeout(webSearch(q), 7000) : Promise.resolve(null),
+    withTimeout(pageContext(query.slice(0, 2000)), 11000),
+    withTimeout(fundContext(q), 8000),
   ]);
 
   const lines: string[] = [];
@@ -212,6 +263,9 @@ export async function gatherLiveContext(query: string, mode: WebSearchMode = 'au
   } else if (wantWeb) {
     lines.push('Web search: no results could be retrieved; do not state current figures you cannot verify.');
   }
+
+  if (page?.lines.length) { lines.push(...page.lines); sources.push(...page.sources); }
+  if (fund?.lines.length) { lines.push(...fund.lines); sources.push(...fund.sources); }
 
   // Verified formulas from the ArthaMind formula book, so calculations use the exact, tested form.
   const formulas = rankPassages(q, [], 2).flatMap((h) => (h.kind === 'formula' && h.score > 2.5 && h.entry.formula ? [h.entry] : []));

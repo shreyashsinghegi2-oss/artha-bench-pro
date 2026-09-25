@@ -152,3 +152,33 @@ export function portfolioSnapshot(data: PortfolioData, s: PortfolioSummary): str
   ];
   return lines.filter(Boolean).join('\n');
 }
+
+// ---------------- SIP check on real NAV history ----------------
+
+export interface SipBacktest { months: number; invested: number; value: number; units: number; xirr: number | null; start: string; end: string }
+
+/**
+ * What a monthly SIP would be worth today, from actual NAVs: buys on the first available NAV on or
+ * after the same day each month, values the units at the latest NAV. Returns null if history is short.
+ */
+export function sipBacktest(history: Array<{ date: string; nav: number }>, monthly: number, years: number): SipBacktest | null {
+  if (history.length < 2 || !(monthly > 0) || !(years > 0)) return null;
+  const last = history[history.length - 1];
+  const end = new Date(`${last.date}T00:00:00Z`);
+  const start = new Date(end); start.setUTCMonth(start.getUTCMonth() - years * 12);
+  if (history[0].date > start.toISOString().slice(0, 10)) return null;
+  let units = 0, invested = 0, i = 0;
+  const flows: Array<{ date: string; amount: number }> = [];
+  for (let m = 0; m < years * 12; m++) {
+    const d = new Date(start); d.setUTCMonth(start.getUTCMonth() + m);
+    const want = d.toISOString().slice(0, 10);
+    while (i < history.length && history[i].date < want) i++;
+    if (i >= history.length) break;
+    const p = history[i];
+    units += monthly / p.nav; invested += monthly;
+    flows.push({ date: p.date, amount: -monthly });
+  }
+  const value = units * last.nav;
+  flows.push({ date: last.date, amount: value });
+  return { months: flows.length - 1, invested, value, units, xirr: xirr(flows), start: flows[0]?.date ?? '', end: last.date };
+}

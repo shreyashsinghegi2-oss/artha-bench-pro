@@ -166,3 +166,47 @@
 .wd-actions li::before{background:color-mix(in srgb,var(--tone,var(--g)) 14%,transparent)!important;color:var(--tone,var(--g))!important}
 .wd-actions li{padding:8px 10px 8px 44px;border-radius:12px;border-left:3px solid var(--tone,var(--bd));background:color-mix(in srgb,var(--tone,transparent) 5%,transparent)}
 .wd-actions li::before{left:10px;top:8px}
+
+/* ---- Unified dashboard: section menu and the new sections ---- */
+.wd-nav{position:sticky;top:78px;z-index:20;display:flex;gap:4px;margin:0 -4px 16px;padding:6px;border:1px solid var(--bd);border-radius:14px;background:color-mix(in srgb,var(--sf) 92%,transparent);backdrop-filter:blur(8px);overflow-x:auto;scrollbar-width:none;box-shadow:0 10px 24px -20px rgba(15,23,42,.4)}
+.wd-nav::-webkit-scrollbar{display:none}
+.wd-nav a{flex:none;padding:7px 12px;border-radius:10px;font-size:12.5px;font-weight:700;color:var(--mut);text-decoration:none;white-space:nowrap;transition:background .15s,color .15s}
+.wd-nav a:hover{background:var(--bg-subtle);color:var(--ink)}
+.wd-nav a.on{background:#059669;color:#fff}
+.wd-anchor,#dash-ai,#dash-profile,#dash-cash,#dash-invest,#dash-loans,#dash-activity,#dash-markets{scroll-margin-top:130px}
+.wd-card h2{display:flex;align-items:center;gap:7px}
+.wd-card h2 svg{color:var(--tone,var(--g))}
+.wd-profile li b{font-weight:700}
+.wd-chip{padding:2px 9px;border-radius:999px;color:var(--tone);background:color-mix(in srgb,var(--tone) 12%,transparent)}
+.wd-invest{display:flex;align-items:center;gap:18px}
+.wd-invest .wd-legend{flex:1;min-width:0}
+.wd-legend li i{border-radius:3px}
+.wd-donut{flex:none;width:112px;height:112px;border-radius:50%;display:grid;place-items:center;animation:wd-spin-in .7s cubic-bezier(.2,.7,.2,1)}
+.wd-donut span{width:66px;height:66px;border-radius:50%;background:var(--sf)}
+@keyframes wd-spin-in{from{transform:rotate(-90deg) scale(.85);opacity:0}}
+.wd-cats{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.wd-cats li{display:grid;grid-template-columns:120px 1fr auto;align-items:center;gap:10px;font-size:12.5px}
+.wd-cats li span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink);font-weight:600}
+.wd-cats i{height:9px;border-radius:99px;background:var(--bg-subtle);overflow:hidden}
+.wd-cats b{display:block;height:100%;border-radius:inherit}
+.wd-cats em{font-style:normal;font-weight:700;font-variant-numeric:tabular-nums}
+.wd-activity-kpis{display:flex;flex-wrap:wrap;gap:8px}
+.wd-activity-kpis span{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:10px;font-size:12px;font-weight:700;color:var(--tone);background:color-mix(in srgb,var(--tone) 10%,transparent)}
+.wd-questions{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.wd-questions li{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;background:var(--bg-canvas);font-size:12.5px}
+.wd-questions em{font-style:normal;font-size:10.5px;font-weight:800;color:#2563eb;background:#dbeafe;padding:2px 8px;border-radius:999px}
+.wd-questions span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wd-questions small{color:var(--mut);font-size:11px}
+.wd-ai{margin-bottom:14px;background:linear-gradient(135deg,color-mix(in srgb,#2563eb 6%,var(--sf)),var(--sf) 55%)}
+.wd-ai-quick{display:flex;flex-wrap:wrap;gap:8px}
+.wd-ai-quick button{padding:8px 13px;border-radius:999px;border:1px solid var(--bd);background:var(--sf);color:var(--ink);font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;transition:border-color .15s,background .15s}
+.wd-ai-quick button:hover:not(:disabled){border-color:#2563eb;background:#eff6ff}
+.wd-ai-quick button.primary{background:#2563eb;border-color:#2563eb;color:#fff}
+.wd-ai-quick button:disabled{opacity:.5;cursor:default}
+.wd-markets{margin-top:6px;padding-top:18px;border-top:1px dashed var(--bd)}
+.wd-markets-head{display:flex;align-items:baseline;gap:10px;margin-bottom:10px}
+.wd-markets-head h2{margin:0;font-size:17px}
+.wd-markets-head small{color:var(--mut);font-size:12.5px}
+.wd-note.neg{color:#dc2626}
+@media (max-width:760px){.wd-nav{top:56px}.wd-invest{flex-direction:column;align-items:flex-start}.wd-cats li{grid-template-columns:90px 1fr auto}}
+@media (prefers-reduced-motion:reduce){.wd-donut{animation:none}}

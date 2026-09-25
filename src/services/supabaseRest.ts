@@ -372,3 +372,34 @@ export async function requestAccountDeletion(token: string): Promise<void> {
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(payload?.error || 'Account deletion failed.');
 }
+
+/** Signs out every other device of this account, so only the current device stays signed in. */
+export async function signOutOtherSessions(token: string): Promise<void> {
+  const { url } = config();
+  await fetch(`${url}/auth/v1/logout?scope=others`, { method: 'POST', headers: authHeaders(token) }).catch(() => undefined);
+}
+
+/**
+ * Checks this device's session with the auth server. 'revoked' means the session was ended
+ * elsewhere (for example a sign-in on another device); 'unknown' means the check could not run.
+ * An access token near expiry is refreshed first, and the new session is returned.
+ */
+export async function checkSession(session: AuthSession): Promise<{ state: 'valid'; session: AuthSession } | { state: 'revoked' | 'unknown' }> {
+  const { url } = config();
+  let current = session;
+  try {
+    if (current.expires_at <= Math.floor(Date.now() / 1000) + 120) {
+      const r = await fetch(`${url}/auth/v1/token?grant_type=refresh_token`, { method: 'POST', headers: authHeaders(), body: JSON.stringify({ refresh_token: current.refresh_token }) });
+      if (r.status === 400 || r.status === 401 || r.status === 403) return { state: 'revoked' };
+      if (!r.ok) return { state: 'unknown' };
+      const next = normalizeSession(await r.json());
+      if (!next) return { state: 'unknown' };
+      current = next;
+    }
+    const u = await fetch(`${url}/auth/v1/user`, { headers: authHeaders(current.access_token) });
+    if (u.status === 401 || u.status === 403) return { state: 'revoked' };
+    return u.ok ? { state: 'valid', session: current } : { state: 'unknown' };
+  } catch {
+    return { state: 'unknown' };
+  }
+}

@@ -26,7 +26,7 @@ export const AuthGateView: React.FC<Props> = ({ returnTo, onCancel, onEmail }) =
     <div className="am-card am-gate-card">
       <aside className="am-brand">
         <div className="am-glow" aria-hidden="true"/>
-        <div className="am-brand-top"><ArthaBenchLogo compact onDark /><span className="am-pill"><ShieldCheck size={13}/> Private workspace</span></div>
+        <div className="am-brand-top"><ArthaBenchLogo compact /><span className="am-pill"><ShieldCheck size={13}/> Private workspace</span></div>
         <div className="am-brand-mid">
           <h2>Your records stay private.<br/><em>Everything else stays open.</em></h2>
           <ul className="am-points">

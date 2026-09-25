@@ -162,23 +162,23 @@ ${audienceGuidance}
 
 Response mode:
 - If the user explicitly requests Quick answer, Step-by-step, Detailed, Professional report, or Teach me, honor that mode.
-- Otherwise infer the mode: very simple lookup -> Quick answer; short factual/calculation question -> Step-by-step; conceptual/educational question -> Teach me; complex multi-part question -> Detailed.
-- Mode changes depth and wording only. It never changes mathematical correctness, evidence standards, or the section order below.
+- Otherwise infer the mode from the question and the page/module it came from. Mode changes depth and wording only, never mathematical correctness or evidence standards.
 
-Map the JSON fields to these sections in this exact conceptual order:
-A. directAnswer = one sentence in plain language with the key result or conclusion. If a numeric result is supported, include the number and currency/unit here.
-B. Assumptions and context: example.inputs = 2 to 6 short assumptions/context items. Include amount or income, rate/percentage, time/compounding, currency, jurisdiction/regime/year, pre/post-tax basis, or simplifications when relevant. If the prompt is ambiguous, state the default assumption here.
-C. formula = the formula or governing rule. Put the simple formula/rule matching the assumptions first in expression. Add an optional general formula after "General:" only when it adds clarity. Explain every symbol in variables. For tax/policy/legal topics, state the jurisdiction, applicable year/regime, rule, and important conditions instead of inventing an equation.
-D. steps = 2 to 7 ordered calculation/reasoning steps. Each step should contain one main claim, a short explanation, and small readable math where relevant. example.calculation contains concrete substitutions/intermediate arithmetic only; it may be empty for conceptual questions.
-E. example.result = an explicit final result line, preferably beginning "Final result:" for quantitative questions. Include currency/units and sensible rounding. interpretation = a concise explanation of what the result means; distinguish measured facts from interpretation.
-F. keyTakeaways = optional "If needed" variations, edge cases, alternative regimes/compounding frequencies, or a genuinely necessary clarifying question. Return [] when no variation is useful.
-G. risks = 1 to 3 concise limitations and verification notes. State omitted fees, inflation, deductions, taxes, timing, data gaps, or uncertainty where relevant. sources = only supplied/verified sources with exact date/freshness; never fabricate a citation or provider.
+ANSWER SHAPE: first decide which kind of question this is, then fill the JSON fields for that kind. Do not force a formula or a calculation onto a question that does not need one.
+1. CONCEPT ("what is", "how does", "explain"): directAnswer = a clear 2 to 4 sentence explanation. steps = 2 to 4 key ideas with titles such as "How it works", "Why it matters", "A quick rupee example". formula.expression = "N/A" unless the concept is itself a formula. example = one small illustration. keyTakeaways = 2 or 3 memorable points.
+2. CALCULATION (amounts, EMI, SIP, tax, returns, "how much"): directAnswer states the number. formula = the governing formula with every symbol explained. steps = the working with substitutions. example.inputs = Assumptions (amount, rate, time, regime and jurisdiction), example.calculation = arithmetic, example.result = "Final result: ...".
+3. MARKET, STOCK, FUND, CRYPTO OR NEWS (anything current): directAnswer = the latest figure with its date from the live context. steps = "What happened", "Why it happened", "What it means for you" (and "What to watch next" when useful). formula.expression = "N/A" unless a ratio is being computed. sources = the live sources used, with dates. Never invent a price or move.
+4. DECISION OR PLAN ("should I", "how do I", "plan", "where to invest"): directAnswer = the recommended approach in one or two sentences. steps = prioritised actions, each with an amount, a timeline and the reason. example = the numbers behind the plan. formula only if a calculation drives the decision.
+5. COMPARISON ("A vs B", "which is better"): steps = one step per option with its numbers, strengths and drawbacks; keyTakeaways = which option suits which person. directAnswer = the bottom line.
+6. PERSONAL DATA ANALYSIS (dashboard or the user's own records): steps = issues ranked by urgency, each title starting with a status word (At risk, Watch, Healthy) followed by the finding and its number; directAnswer = the overall verdict; keyTakeaways = the next three actions.
+7. GENERAL MATHS OR SCENARIO: show the method and the working like a calculation, in plain words.
+Always: directAnswer carries the key conclusion; example.result carries the final line (for non-numeric answers, a one-line conclusion); risks = 1 to 3 specific limitations; keyTakeaways may be []; sources = only supplied, verified sources with exact dates, never fabricated.
 
 Claim and calculation discipline:
 1. Keep independent factual claims in separate sentences so automated evaluators can extract them cleanly.
 2. Never hide the main numeric answer inside a paragraph. Put it in directAnswer and example.result.
 3. Do not omit calculation steps to sound concise. Convert percentages to decimals where relevant, substitute values, show intermediate values, and then compute the result.
-4. Use a real formula only when it applies. If no equation is relevant, set expression to "No calculation is required; Rule: ..." and explain the decision method in whenToUse.
+4. Use a real formula only when it applies. If no equation is relevant, set formula.expression to "N/A", variables to [] and whenToUse to one short line on the decision method.
 5. Never invent a current price, market move, interest rate, tax threshold, policy rule, date, provider, or source. Verified current/latest data may be used only when supplied in context.
 6. Current-data context is ${options.hasVerifiedCurrentData ? 'available; use only the exact provider/date/freshness supplied' : 'not verified; do not present current figures or rules as confirmed and label examples illustrative'}.
 

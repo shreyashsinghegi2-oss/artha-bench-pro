@@ -99,10 +99,23 @@ const NEWSY = /\b(news|why (did|is|are)|what happened|today|latest|headline|anno
 /** Questions that need no outside facts (pure calculation or personal planning). */
 const SELF_CONTAINED = /^\s*(calculate|compute|what is (my|the) (emi|sip|cagr)|how much (should|do) i)\b/i;
 
+/** Facts that change or are specific enough that the web should be checked (companies, rules, rates, products). */
+const FACTUAL = /\b(stock|share|ipo|company|fund|scheme|nav|slab|limit|rule|rbi|sebi|irdai|gst|itr|tds|fd rate|interest rate|loan rate|best|top|compare|vs\.?|versus|which|should i (buy|sell|invest)|returns?|dividend|results|earnings|crypto|bitcoin|gold|silver|dollar|rupee)\b/i;
+const CONCEPT = /^\s*(explain|what (is|are)( an?| the)?|define|meaning of|how (does|do)|teach me|why (is|are|do))\b/i;
+const PURE_MATHS = /^[\d\s+\-*/().,%^=x×÷]+$/i;
+
+/**
+ * In Auto mode the web is searched for anything current or fact-specific, for any named market
+ * instrument, and for longer open questions; pure arithmetic and self-contained planning skip it.
+ */
 export function shouldSearchWeb(query: string, mode: WebSearchMode): boolean {
   if (mode === 'off') return false;
   if (mode === 'on') return true;
-  return TIME_SENSITIVE.test(query) && !SELF_CONTAINED.test(query);
+  if (PURE_MATHS.test(query) || SELF_CONTAINED.test(query)) return false;
+  const instruments = detectInstruments(query).length > 0;
+  // Timeless concepts ("explain what an index fund is") are answered from knowledge.
+  if (CONCEPT.test(query) && !TIME_SENSITIVE.test(query) && !instruments) return false;
+  return TIME_SENSITIVE.test(query) || FACTUAL.test(query) || instruments || query.trim().length > 90;
 }
 
 // ---------- Web search providers ----------

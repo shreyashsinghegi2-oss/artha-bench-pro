@@ -167,3 +167,14 @@
 @media (max-width:760px){.mh-snapshot{grid-template-columns:1fr 1fr}.ch-grid{grid-template-columns:1fr 1fr}.ch-panel-grid{grid-template-columns:1fr}.mh-link-grid{grid-template-columns:1fr}}
 @media (max-width:420px){.ch-fields{grid-template-columns:1fr}.mh-stat b{font-size:19px}}
 .ch-field small{font-size:11px;color:var(--mut)}
+/* Home: the name bar and section tabs stay fixed under the app header while the page scrolls. */
+.mh-sticky{position:sticky;top:72px;z-index:25;margin:0 -12px 22px;padding:12px 12px 8px;background:color-mix(in srgb,var(--cv) 94%,transparent);backdrop-filter:blur(10px);border-radius:0 0 18px 18px;transition:box-shadow .2s,padding .2s}
+.mh-sticky .mh-head{margin-bottom:14px}
+.mh-sticky .mh-secnav{position:static;margin:0}
+.mh-sticky.is-stuck{padding-top:8px;box-shadow:0 14px 30px -24px rgba(15,23,42,.45)}
+.mh-sticky.is-stuck .mh-head{margin-bottom:8px;align-items:center}
+.mh-sticky.is-stuck .mh-head p,.mh-sticky.is-stuck .mh-kicker{display:none}
+.mh-sticky.is-stuck .mh-head h1{font-size:18px;margin:0}
+.mh-sticky.is-stuck .mh-head-actions .mh-btn{height:34px;padding:0 10px;font-size:12px}
+.mh-anchor{scroll-margin-top:210px}
+@media (max-width:760px){.mh-sticky{top:60px}.mh-sticky.is-stuck .mh-head-actions{display:none}}

@@ -1133,6 +1133,49 @@ ${systemPrompt2}`;
 // server/liveGrounding.ts
 import { AsyncLocalStorage } from "node:async_hooks";
 
+// server/assistantIdentity.ts
+var FOUNDER = {
+  name: "Shreyash Singh",
+  title: "Founder, Lead Architect and Creator of ArthaMind AI (Artha Bench Pro)",
+  built: [
+    "the core scoring engine and the deterministic Decimal.js maths core behind every calculation",
+    "the dual-model AI consensus architecture and live-data grounding (market prices, mutual fund NAVs, news and web search)",
+    "system security, privacy controls and rate limiting"
+  ],
+  mission: "to give every Indian household the financial intelligence a CFO gives a company, so people can grow their money and secure their future, in their own language",
+  team: "developed with the ArthaBench Research Team (financial reliability, datasets, regulatory evidence checks and localisation)"
+};
+var IDENTITY_BLOCK = [
+  "IDENTITY: You are ArthaMind AI, the AI money manager inside ArthaMind AI (Artha Bench Pro).",
+  `If anyone asks who created, built, founded or owns you or this platform, answer warmly and clearly: you were created by ${FOUNDER.name}, ${FOUNDER.title}. He designed and built ${FOUNDER.built.join("; ")}. His mission is ${FOUNDER.mission}. The platform was ${FOUNDER.team}. Do not add personal details about him beyond these facts.`,
+  "Never claim to be ChatGPT, Gemini, Llama or any other product; you may say ArthaMind uses leading AI models behind the scenes."
+].join("\n");
+var SCOPE_BLOCK = [
+  "SCOPE: Answer every question about money, personal finance, investing, markets, companies, crypto, economics, tax, loans, insurance, business, mathematics, statistics or any real-life scenario that involves numbers or decisions, even when it goes beyond the page or data you were given.",
+  "Use the live context below (prices, news, web results) for anything current, name the source and date, and show the working for any calculation so the user can check it.",
+  "If the question is about the user's own data and that data is missing, say what is missing, then still give a useful general answer.",
+  "For questions far outside these areas, reply briefly and helpfully, then offer to help with a money or maths question."
+].join("\n");
+var SELF = String.raw`(you|u|this|artha ?mind|artha ?bench|the (app|platform|website|site|bot|chatbot|assistant|ai))`;
+var CREATOR_Q = new RegExp([
+  String.raw`\b(who|whom)\b.{0,30}\b(created|made|built|developed|founded|owns?|designed|is behind|started)\b.{0,25}\b${SELF}\b`,
+  String.raw`\b(your|this (app|platform|website|site|assistant)'?s?)\s+(creator|founder|developer|maker|owner|ceo)\b`,
+  String.raw`\b(creator|founder|developer|maker|owner|ceo) of ${SELF}\b`,
+  String.raw`\bshreyash\b`,
+  String.raw`kisne banaya|kisne bana(ya|i)|किसने बनाया|कोणी बनवल`
+].join("|"), "i");
+function founderAnswer(question) {
+  if (!CREATOR_Q.test(question)) return null;
+  return `I'm ArthaMind AI. I was created by ${FOUNDER.name}, ${FOUNDER.title}.
+
+He designed and built:
+${FOUNDER.built.map((b) => `\u2022 ${b[0].toUpperCase()}${b.slice(1)}`).join("\n")}
+
+His mission: ${FOUNDER.mission}.
+
+The platform was ${FOUNDER.team}.`;
+}
+
 // server/webReader.ts
 import { lookup } from "node:dns/promises";
 import { isIP } from "node:net";
@@ -3711,11 +3754,14 @@ ${lines.join("\n")}` : "";
 var NUMBER_STYLE = "NUMBER STYLE: write every rupee amount in full with Indian digit grouping (\u20B912,00,000; \u20B91,20,200; \u20B95,000). Never abbreviate amounts as k, K, L, lakh, Cr, crore, M or bn.";
 async function groundSystemPrompt(systemPrompt2, userPrompt) {
   const state = store.getStore();
-  if (!state) return systemPrompt2;
-  const mode = state.mode;
   const styled = `${systemPrompt2}
 
+${IDENTITY_BLOCK}
+${SCOPE_BLOCK}
+
 ${NUMBER_STYLE}`;
+  if (!state) return styled;
+  const mode = state.mode;
   try {
     const { text, sources } = await gatherLiveContext(userPrompt, mode);
     if (!state.used) {
@@ -7825,6 +7871,13 @@ function presentationFromText(text, task) {
   return { title: task === "cfo" ? "CFO brief" : task === "calculation" ? "Verified financial calculation" : task === "quiz" ? "Financial learning check" : "ArthaBench financial explanation", directAnswer: sanitizeText(text), steps: [], formula: { expression: "Shown when relevant.", variables: [], whenToUse: "Use a formula when the question requires a calculation." }, example: { title: "Context applied", dataStatus: "not_applicable", dataAsOf: (/* @__PURE__ */ new Date()).toISOString(), inputs: [], calculation: [], result: sanitizeText(text) }, interpretation: [], risks: ["AI-generated explanations should be verified for consequential decisions."], keyTakeaways: [], sources: currentGroundingSources().map(({ name, dataDate, freshness }) => ({ name, dataDate, freshness })) };
 }
 async function runAiGateway(request) {
+  const creator = founderAnswer(extractQuestion(request.prompt));
+  if (creator) {
+    const answer = presentationFromText(creator, "general");
+    answer.title = "About ArthaMind AI";
+    answer.risks = [];
+    return { ok: true, requestId: requestId(), answer: creator, structuredAnswer: answer, provider: "ArthaMind", model: "identity", fallbackUsed: false, latencyMs: 0 };
+  }
   const id = requestId(), started = Date.now(), context2 = request.context || {}, task = request.task || inferTask(request.prompt, context2), preferred = request.requestedModel || "artha";
   const candidates = preferred === "nemotron" ? ["nemotron", "artha"] : ["artha", "nemotron"];
   let lastError = "No configured AI provider responded.";

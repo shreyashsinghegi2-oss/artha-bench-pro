@@ -45,3 +45,11 @@
 .lv-sip-row button.on{background:#0b0f14;border-color:#0b0f14;color:#fff}
 .lv-sip p{margin:0;font-size:13px;line-height:1.5}
 .lv-sip b.up{color:#059669}.lv-sip b.down{color:#dc2626}
+/* Market tiles: coloured edge and tint by direction (green up, red down, grey unavailable). */
+.lv-tile{position:relative;overflow:hidden}
+.lv-tile::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--border-subtle)}
+.lv-tile:has(em.up){border-color:#a7f3d0;background:linear-gradient(180deg,#ecfdf5,var(--bg-surface) 70%)}
+.lv-tile:has(em.up)::before{background:#059669}
+.lv-tile:has(em.down){border-color:#fecaca;background:linear-gradient(180deg,#fef2f2,var(--bg-surface) 70%)}
+.lv-tile:has(em.down)::before{background:#dc2626}
+html.dark .lv-tile:has(em.up),html.dark .lv-tile:has(em.down){background:var(--bg-surface)}

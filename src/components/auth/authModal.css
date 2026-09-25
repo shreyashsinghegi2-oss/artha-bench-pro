@@ -62,3 +62,16 @@ select.am-input{appearance:auto}
 .am-note{margin:12px 0 0;padding:10px 12px;border-radius:12px;background:#fffbeb;color:#92400e;font-size:12.5px}
 @media (max-width:900px){.am-gate-card{min-height:0}.am-gate-body{padding-top:18px}}
 .am-input.pl-10{padding-left:42px}.am-input.pr-11{padding-right:46px}
+/* Light theme: the sign-in / sign-up window is always light, with a soft mint brand panel. */
+.am-overlay{background:rgba(241,245,249,.78)}
+.am-card{background:#fff;box-shadow:0 40px 100px -30px rgba(15,23,42,.35);border:1px solid #e2e8f0;color-scheme:light;--bg-surface:#fff;--bg-canvas:#f8fafc;--bg-subtle:#f1f5f9;--text-primary:#0f172a;--text-secondary:#64748b;--border-subtle:#e2e8f0}
+.am-brand{color:#0f172a;background:radial-gradient(120% 90% at 0% 0%,#d1fae5 0%,#ecfdf5 45%,#ffffff 100%);border-right:1px solid #e2e8f0}
+.am-glow{background:radial-gradient(circle,rgba(16,185,129,.18),transparent 65%)}
+.am-pill{border-color:#a7f3d0;background:#fff;color:#047857}
+.am-brand h2{color:#0f172a}
+.am-brand h2 em{background:linear-gradient(90deg,#047857,#10b981 55%,#ca8a04);-webkit-background-clip:text;background-clip:text;color:transparent}
+.am-points li>span{background:#fff;color:#047857;border-color:#a7f3d0}
+.am-points b{color:#0f172a}
+.am-points small{color:#475569}
+.am-brand-foot{color:#64748b}
+.am-form,.am-form-top{background:#fff;color:#0f172a}

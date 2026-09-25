@@ -8,6 +8,7 @@ import { loadIncomeSources } from '../../services/incomeStorage';
 import { loadExpenses } from '../../services/personalFinanceStorage';
 import type { AppNavigationDestination } from '../../navigationTypes';
 import './workspaceDash.css';
+import { LiveBoard } from './LiveBoard';
 
 /** ₹ with Indian grouping (12,00,000). Amounts are always shown in full, never as k, L or Cr. */
 export const inr = (v: number) => `${v < 0 ? '−' : ''}₹${Math.abs(Math.round(v)).toLocaleString('en-IN')}`;
@@ -51,6 +52,7 @@ export const CompleteDashboardView: React.FC<{ onNavigate: (d: AppNavigationDest
   if (!profile || !d) {
     return <div className="wd">
       <header className="wd-head"><div><small className="wd-kicker">Dashboard</small><h1>Everything about your money, on one page.</h1><p>Net worth, investments, savings, tax, loans and EMIs, health score, goals and insurance, together. Set up once and it fills in.</p></div></header>
+      <LiveBoard onNavigate={onNavigate}/>
       <section className="wd-empty">
         <button type="button" className="wd-empty-card primary" onClick={() => onNavigate('overview')}><Sparkles size={20}/><b>Set up in about two minutes</b><span>A few simple questions, or scan a payslip.</span><em>Start <ArrowRight size={14}/></em></button>
         <button type="button" className="wd-empty-card" onClick={() => saveMoneyProfile({ ...SAMPLE_MONEY_CHECK, source: 'sample', updatedAt: new Date().toISOString() })}><Gauge size={20}/><b>See it with a sample profile</b><span>Explore the full dashboard, then replace it with your numbers.</span><em>Show sample <ArrowRight size={14}/></em></button>
@@ -76,6 +78,7 @@ export const CompleteDashboardView: React.FC<{ onNavigate: (d: AppNavigationDest
         <button type="button" className="wd-btn primary" onClick={() => onNavigate('money-planner')}><Coins size={15}/> Plan a lump sum</button>
       </div>
     </header>
+    <LiveBoard onNavigate={onNavigate}/>
 
     <section className="wd-tiles" aria-label="Key figures">
       <Tile icon={<TrendingUp size={15}/>} label="Net worth" fig={d.netWorth} sub="Cash + investments − loans" tone={d.netWorth.value >= 0 ? 'good' : 'bad'}/>

@@ -182,7 +182,7 @@ export const AuthModal: React.FC = () => {
         <aside className="am-brand">
           <div className="am-glow" aria-hidden="true"/>
           <div className="am-brand-top">
-            <ArthaBenchLogo compact onDark />
+            <ArthaBenchLogo compact />
             <span className="am-pill"><ShieldCheck size={13}/> Private by design</span>
           </div>
           <div className="am-brand-mid">

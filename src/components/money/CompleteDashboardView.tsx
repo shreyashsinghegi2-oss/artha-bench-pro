@@ -16,7 +16,12 @@ export const shortInr = inr;
 const pct = (v: number) => `${Math.round(v * 100)}%`;
 const SOURCE: Record<FigureSource, string> = { profile: 'From your setup', loans: 'From your EMI records', income: 'From your income records', expenses: 'From your expenses', calculated: 'Calculated' };
 
-const Tile: React.FC<{ icon: React.ReactNode; label: string; fig: Figure; sub?: string; tone?: 'good' | 'warn' | 'bad' }> = ({ icon, label, fig, sub, tone }) =>
+type Tone = 'good' | 'warn' | 'bad' | 'info';
+const STATUS: Record<Tone, string> = { good: 'Healthy', warn: 'Watch', bad: 'At risk', info: 'Info' };
+/** Status pill in a card header; the card's top edge takes the same colour. */
+const Status: React.FC<{ tone: Tone; label?: string }> = ({ tone, label }) => <span className={`wd-status ${tone}`}>{label ?? STATUS[tone]}</span>;
+
+const Tile: React.FC<{ icon: React.ReactNode; label: string; fig: Figure; sub?: string; tone?: Tone }> = ({ icon, label, fig, sub, tone }) =>
   <article className={`wd-tile ${tone ?? ''}`}>
     <header><span className="wd-tile-ico">{icon}</span><small>{label}</small></header>
     <b>{shortInr(fig.value)}</b>
@@ -65,6 +70,11 @@ export const CompleteDashboardView: React.FC<{ onNavigate: (d: AppNavigationDest
   const healthTone = r.health.score >= 70 ? 'good' : r.health.score >= 45 ? 'warn' : 'bad';
   const emergencyRatio = r.emergency.target > 0 ? Math.min(1, profile.liquidSavings / r.emergency.target) : 1;
   const actions = r.actions.slice(0, 4);
+  const flowTone: Tone = r.cashflow.savingsRate >= 0.2 ? 'good' : r.cashflow.savingsRate >= 0.1 ? 'warn' : 'bad';
+  const emiTone: Tone = emiLoad > 0.4 ? 'bad' : emiLoad > 0.3 ? 'warn' : 'good';
+  const goalTone: Tone = d.freedomProgress >= 0.8 ? 'good' : d.freedomProgress >= 0.4 ? 'warn' : 'bad';
+  const safetyTone: Tone = emergencyRatio >= 1 && r.protection.termGap <= 0 && r.protection.healthGap <= 0 ? 'good' : emergencyRatio < 0.5 ? 'bad' : 'warn';
+  const monthTone: Tone = d.spendThisMonth == null ? 'info' : d.spendThisMonth > d.monthlyExpenses.value ? 'bad' : 'good';
 
   return <div className="wd">
     <header className="wd-head">
@@ -82,12 +92,12 @@ export const CompleteDashboardView: React.FC<{ onNavigate: (d: AppNavigationDest
 
     <section className="wd-tiles" aria-label="Key figures">
       <Tile icon={<TrendingUp size={15}/>} label="Net worth" fig={d.netWorth} sub="Cash + investments − loans" tone={d.netWorth.value >= 0 ? 'good' : 'bad'}/>
-      <Tile icon={<PiggyBank size={15}/>} label="Total investments" fig={d.totalInvestments}/>
-      <Tile icon={<Wallet size={15}/>} label="Cash & savings" fig={d.totalSavings} sub={`${r.emergency.months === Infinity ? '—' : r.emergency.months.toFixed(1)} months of expenses`}/>
-      <Tile icon={<Landmark size={15}/>} label="Loans outstanding" fig={d.totalDebt} tone={d.totalDebt.value > 0 ? 'warn' : 'good'}/>
-      <Tile icon={<BadgeIndianRupee size={15}/>} label="Annual income" fig={d.annualIncome}/>
-      <Tile icon={<ReceiptText size={15}/>} label="Tax this year" fig={d.taxThisYear} sub={`${r.tax.better === 'same' ? 'Either regime' : `${r.tax.better === 'new' ? 'New' : 'Old'} regime`} · ${(d.effectiveTaxRate * 100).toFixed(1)}% effective`}/>
-      <Tile icon={<CalendarClock size={15}/>} label="Monthly EMI" fig={d.monthlyEmi} sub={`${pct(emiLoad)} of take-home`} tone={emiLoad > 0.4 ? 'bad' : emiLoad > 0.3 ? 'warn' : undefined}/>
+      <Tile icon={<PiggyBank size={15}/>} label="Total investments" fig={d.totalInvestments} tone="good"/>
+      <Tile icon={<Wallet size={15}/>} label="Cash & savings" fig={d.totalSavings} sub={`${r.emergency.months === Infinity ? '—' : r.emergency.months.toFixed(1)} months of expenses`} tone={r.emergency.months < 3 ? 'warn' : 'info'}/>
+      <Tile icon={<Landmark size={15}/>} label="Loans outstanding" fig={d.totalDebt} sub={d.totalDebt.value > 0 ? 'Debt: money you owe' : 'Debt-free'} tone={d.totalDebt.value > 0 ? 'bad' : 'good'}/>
+      <Tile icon={<BadgeIndianRupee size={15}/>} label="Annual income" fig={d.annualIncome} tone="info"/>
+      <Tile icon={<ReceiptText size={15}/>} label="Tax this year" fig={d.taxThisYear} sub={`${r.tax.better === 'same' ? 'Either regime' : `${r.tax.better === 'new' ? 'New' : 'Old'} regime`} · ${(d.effectiveTaxRate * 100).toFixed(1)}% effective`} tone="warn"/>
+      <Tile icon={<CalendarClock size={15}/>} label="Monthly EMI" fig={d.monthlyEmi} sub={`${pct(emiLoad)} of take-home`} tone={emiLoad > 0.4 ? 'bad' : emiLoad > 0.3 ? 'warn' : 'good'}/>
       <article className={`wd-tile wd-health ${healthTone}`}>
         <header><span className="wd-tile-ico"><Gauge size={15}/></span><small>Health score</small></header>
         <div className="wd-ring" style={{ '--p': r.health.score / 100 } as React.CSSProperties}><b>{r.health.score}</b></div>
@@ -95,19 +105,23 @@ export const CompleteDashboardView: React.FC<{ onNavigate: (d: AppNavigationDest
       </article>
     </section>
 
+    <section className="wd-signals" aria-label="Colour guide">
+      <span className="good">Green · growth, healthy</span><span className="bad">Red · loss, debt, risk</span><span className="warn">Amber · needs attention</span><span className="info">Blue · information</span>
+    </section>
+
     <section className="wd-grid three">
-      <article className="wd-card">
-        <header><h2>Monthly cash flow</h2><small>Take-home {inr(d.monthlyTakeHome.value)}</small></header>
+      <article className={`wd-card ${flowTone}`}>
+        <header><h2>Monthly cash flow</h2><Status tone={flowTone}/><small className="wd-sub">Take-home {inr(d.monthlyTakeHome.value)}</small></header>
         <Bar parts={[{ label: 'Living expenses', value: d.monthlyExpenses.value, cls: 'c-ink' }, { label: 'EMIs', value: d.monthlyEmi.value, cls: 'c-amber' }, { label: 'Left to save', value: Math.max(0, d.monthlySurplus.value), cls: 'c-green' }]}/>
         <p className="wd-note">Savings rate <b>{pct(Math.max(0, r.cashflow.savingsRate))}</b>{d.monthlySurplus.value < 0 ? ' · spending more than take-home' : ''}</p>
       </article>
-      <article className="wd-card">
-        <header><h2>Balance sheet</h2><small>Net worth {shortInr(d.netWorth.value)}</small></header>
+      <article className={`wd-card ${d.netWorth.value >= 0 ? 'good' : 'bad'}`}>
+        <header><h2>Balance sheet</h2><Status tone={d.netWorth.value >= 0 ? 'good' : 'bad'} label={d.netWorth.value >= 0 ? 'Positive' : 'In debt'}/><small className="wd-sub">Net worth {shortInr(d.netWorth.value)}</small></header>
         <Bar parts={[{ label: 'Cash & savings', value: d.totalSavings.value, cls: 'c-teal' }, { label: 'Investments', value: d.totalInvestments.value, cls: 'c-green' }, { label: 'Loans', value: d.totalDebt.value, cls: 'c-red' }]}/>
         <p className="wd-note">Runway <b>{Number.isFinite(r.runwayMonths) ? `${r.runwayMonths.toFixed(1)} months` : '—'}</b> if income stopped today</p>
       </article>
-      <article className="wd-card">
-        <header><h2>Tax · FY 2025-26</h2><small>Estimated from salary and deductions</small></header>
+      <article className="wd-card info">
+        <header><h2>Tax · FY 2025-26</h2><Status tone="info" label={r.tax.better === 'same' ? 'Either regime' : `${r.tax.better === 'new' ? 'New' : 'Old'} regime wins`}/><small className="wd-sub">Estimated from salary and deductions</small></header>
         <div className="wd-tax">
           {([['Old regime', r.tax.oldRegimeTax, r.tax.better === 'old'], ['New regime', r.tax.newRegimeTax, r.tax.better === 'new']] as const).map(([label, v, win]) =>
             <div key={label} className={win ? 'win' : ''}><span>{label}</span><i><b style={{ width: `${(v / Math.max(r.tax.oldRegimeTax, r.tax.newRegimeTax, 1)) * 100}%` }}/></i><em>{inr(v)}</em></div>)}
@@ -118,8 +132,8 @@ export const CompleteDashboardView: React.FC<{ onNavigate: (d: AppNavigationDest
     </section>
 
     <section className="wd-grid three">
-      <article className="wd-card">
-        <header><h2>Loans & EMIs</h2><small>{d.loans.length ? `${d.loans.length} active` : 'From your setup'}</small></header>
+      <article className={`wd-card ${emiTone}`}>
+        <header><h2>Loans & EMIs</h2><Status tone={emiTone}/><small className="wd-sub">{d.loans.length ? `${d.loans.length} active` : 'From your setup'}</small></header>
         {d.loans.length
           ? <table className="wd-table"><thead><tr><th>Loan</th><th>EMI</th><th>Left</th><th>Rate</th></tr></thead><tbody>
               {d.loans.slice(0, 5).map((l) => <tr key={l.name + l.nextDue}><td>{l.name}<small>{l.nextDue ? `Next ${new Date(l.nextDue).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}` : l.type}</small></td><td>{inr(l.emi)}</td><td>{shortInr(l.outstanding)}</td><td>{l.rate != null ? `${l.rate}%` : '—'}</td></tr>)}
@@ -128,8 +142,8 @@ export const CompleteDashboardView: React.FC<{ onNavigate: (d: AppNavigationDest
         <Meter value={emiLoad / 0.5} label={`EMI load ${pct(emiLoad)} of take-home (keep under 30–40%)`} tone={emiLoad > 0.4 ? 'bad' : emiLoad > 0.3 ? 'warn' : 'good'}/>
         <button type="button" className="wd-link" onClick={() => onNavigate('emi-manager')}>Manage EMIs <ArrowRight size={13}/></button>
       </article>
-      <article className="wd-card">
-        <header><h2>Goals & retirement</h2><small>Freedom number</small></header>
+      <article className={`wd-card ${goalTone}`}>
+        <header><h2>Goals & retirement</h2><Status tone={goalTone} label={goalTone === 'good' ? 'On track' : goalTone === 'warn' ? 'Behind' : 'Far behind'}/><small className="wd-sub">Freedom number</small></header>
         <p className="wd-big">{shortInr(r.freedom.corpusNeeded)}</p>
         <Meter value={d.freedomProgress} label={`Current investments reach ${pct(d.freedomProgress)} of it by ${profile.retireAge ?? 60}`} tone={d.freedomProgress >= 0.8 ? 'good' : 'warn'}/>
         <ul className="wd-kv">
@@ -139,8 +153,8 @@ export const CompleteDashboardView: React.FC<{ onNavigate: (d: AppNavigationDest
         </ul>
         <button type="button" className="wd-link" onClick={() => onNavigate('overview')}>See the full plan <ArrowRight size={13}/></button>
       </article>
-      <article className="wd-card">
-        <header><h2>Safety & protection</h2><small>Emergency fund and insurance</small></header>
+      <article className={`wd-card ${safetyTone}`}>
+        <header><h2>Safety & protection</h2><Status tone={safetyTone}/><small className="wd-sub">Emergency fund and insurance</small></header>
         <Meter value={emergencyRatio} label={`Emergency fund ${pct(emergencyRatio)} of ${shortInr(r.emergency.target)} (6 months)`} tone={emergencyRatio >= 1 ? 'good' : emergencyRatio >= 0.5 ? 'warn' : 'bad'}/>
         <ul className="wd-kv">
           <li><span>Term cover needed</span><b>{shortInr(r.protection.termCoverNeeded)}</b></li>
@@ -152,13 +166,13 @@ export const CompleteDashboardView: React.FC<{ onNavigate: (d: AppNavigationDest
     </section>
 
     <section className="wd-grid two">
-      <article className="wd-card">
-        <header><h2>Next best steps</h2><small>In priority order</small></header>
-        <ol className="wd-actions">{actions.map((a) => <li key={a.title}><b>{a.title}</b><span>{a.detail}</span></li>)}</ol>
+      <article className={`wd-card ${actions.length ? 'warn' : 'good'}`}>
+        <header><h2>Next best steps</h2><Status tone={actions.length ? 'warn' : 'good'} label={actions.length ? `${actions.length} to do` : 'All clear'}/><small className="wd-sub">In priority order</small></header>
+        <ol className="wd-actions">{actions.map((a) => <li key={a.title} className={a.priority <= 2 ? 'bad' : a.priority <= 4 ? 'warn' : 'info'}><b>{a.title}</b><span>{a.detail}</span></li>)}</ol>
         {!actions.length && <p className="wd-note">Nothing urgent. Keep your SIPs going and review once a quarter.</p>}
       </article>
-      <article className="wd-card">
-        <header><h2>This month</h2><small>{d.spendThisMonth != null ? 'From your recorded expenses' : 'No expenses recorded yet'}</small></header>
+      <article className={`wd-card ${monthTone}`}>
+        <header><h2>This month</h2><Status tone={monthTone} label={d.spendThisMonth == null ? 'No data' : undefined}/><small className="wd-sub">{d.spendThisMonth != null ? 'From your recorded expenses' : 'No expenses recorded yet'}</small></header>
         {d.spendThisMonth != null
           ? <><p className="wd-big">{inr(d.spendThisMonth)}</p><p className="wd-note">spent so far{d.topCategory ? <> · most on <b>{d.topCategory.name}</b> ({inr(d.topCategory.amount)})</> : null}</p>
               <Meter value={d.monthlyExpenses.value ? d.spendThisMonth / d.monthlyExpenses.value : 0} label={`${pct(d.monthlyExpenses.value ? d.spendThisMonth / d.monthlyExpenses.value : 0)} of your usual ${inr(d.monthlyExpenses.value)}`} tone={d.spendThisMonth > d.monthlyExpenses.value ? 'bad' : 'good'}/></>

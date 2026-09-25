@@ -14,6 +14,7 @@
  * without changing its signature. Every lookup has a short timeout and failures never block an answer.
  */
 import { AsyncLocalStorage } from 'node:async_hooks';
+import { IDENTITY_BLOCK, SCOPE_BLOCK } from './assistantIdentity';
 import { linksIn, readWebPage } from './webReader';
 import { fundDetail, searchFunds } from './mutualFundService';
 import type { NextFunction, Request, Response } from 'express';
@@ -292,9 +293,9 @@ export const NUMBER_STYLE = 'NUMBER STYLE: write every rupee amount in full with
 
 export async function groundSystemPrompt(systemPrompt: string, userPrompt: string): Promise<string> {
   const state = store.getStore();
-  if (!state) return systemPrompt;
+  const styled = `${systemPrompt}\n\n${IDENTITY_BLOCK}\n${SCOPE_BLOCK}\n\n${NUMBER_STYLE}`;
+  if (!state) return styled;
   const mode = state.mode;
-  const styled = `${systemPrompt}\n\n${NUMBER_STYLE}`;
   try {
     const { text, sources } = await gatherLiveContext(userPrompt, mode);
     if (!state.used) { state.sources.push(...sources); state.used = true; }

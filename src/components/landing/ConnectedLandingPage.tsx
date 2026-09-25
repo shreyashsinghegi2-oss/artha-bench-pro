@@ -1,7 +1,8 @@
 import React,{useEffect,useRef,useState}from'react';
 import { installTilt } from '../../lib/tilt3d';
-import { LandingModulePipeline } from './LandingModulePipeline';
-import { LandingReliabilityLab } from './LandingReliabilityLab';
+import { lazyOnView } from './lazyOnView';
+const LandingModulePipeline=lazyOnView(()=>import('./LandingModulePipeline').then(m=>({default:m.LandingModulePipeline})),{minHeight:700});
+const LandingReliabilityLab=lazyOnView(()=>import('./LandingReliabilityLab').then(m=>({default:m.LandingReliabilityLab})),{minHeight:600});
 import { PhoneShowcase } from './PhoneShowcase';
 import { MoneyCheck } from './MoneyCheck';
 import{ArrowDown,ArrowRight,ArrowUp,CheckCircle2,Menu,Sparkles,X}from'lucide-react';
@@ -10,7 +11,8 @@ import type{NormalizedMarketQuote}from'../../types';
 import{fetchBusinessNews}from'../../services/learningApi';
 import { ArthaMindMark } from './ArthaMindMark';
 import { LandingHero } from './LandingHero';
-import{LiveMarketTicker}from'./LiveMarketTicker';
+const LandingSecurity=lazyOnView(()=>import('./LandingSecurity').then(m=>({default:m.LandingSecurity})),{minHeight:1100,anchorId:'security'});
+const LiveMarketTicker=lazyOnView(()=>import('./LiveMarketTicker').then(m=>({default:m.LiveMarketTicker})),{minHeight:120});
 import{LazyCryptoMarketPreview as CryptoMarketPreview}from'./LazyCryptoMarketPreview';
 import{BusinessBrief,normalizeBusinessNews}from'./BusinessBrief';
 import{LanguageSelector}from'../LanguageSelector';
@@ -18,13 +20,13 @@ import'./connectedLanding.css';
 import'./landingMotion.css';
 import{useLandingMotion}from'./useLandingMotion';
 import{LandingAiCfo}from'./LandingAiCfo';
-import{LandingReviews}from'./LandingReviews';
-import{LandingIntelligenceSection}from'./LandingIntelligenceSection';
-import{LandingMarketDashboard}from'./LandingMarketDashboard';
+const LandingReviews=lazyOnView(()=>import('./LandingReviews').then(m=>({default:m.LandingReviews})),{minHeight:700});
+const LandingIntelligenceSection=lazyOnView(()=>import('./LandingIntelligenceSection').then(m=>({default:m.LandingIntelligenceSection})),{minHeight:900});
+const LandingMarketDashboard=lazyOnView(()=>import('./LandingMarketDashboard').then(m=>({default:m.LandingMarketDashboard})),{minHeight:900,anchorId:'market-data'});
 
 type Props={signedIn:boolean;onEnter:(destination?:AppNavigationDestination)=>void;onSignIn:()=>void};
 type MacroCard={label:string;value:string;delta:string;direction:'up'|'down'|'flat'|'none'};
-const NAV_LINKS=[['money-check','Money check'],['modules','Modules'],['market-data','Market data'],['how','How it works'],['lab','Reliability Lab'],['trust','Trust & privacy']] as const;
+const NAV_LINKS=[['money-check','Money check'],['modules','Modules'],['market-data','Market data'],['how','How it works'],['lab','Reliability Lab'],['security','Data security']] as const;
 const CAPABILITIES=['Old vs new tax regime','80C · 80D · NPS room','EMI prepayment vs invest','6-month emergency runway','SIP for every goal','Retirement corpus','Term & health cover gap','Home-loan affordability','Business cash flow','Credit-card debt payoff','Hindi & Hinglish answers','Verified ₹ calculations'];
 /** Cycles hero phrases with a slide-up transition; shows the first phrase only for reduced motion. */
 /** Formats a provider quote for a macro card. A missing or non-finite change is shown as unavailable, never as +0.00%. */
@@ -86,6 +88,7 @@ export const ConnectedLandingPage:React.FC<Props>=({signedIn,onEnter,onSignIn})=
  <section id="lab" className="cl-section cl-soft cl-reveal-section tone-violet"><div className="cl-wrap"><div className="cl-eyebrow">AI Reliability Lab</div><h2>Answer. Evaluate. Evidence. Reliability.</h2><p className="cl-sub">Financial AI should be checked, not just believed. The workspace makes visible checks part of the answer.</p><LandingReliabilityLab/></div></section>
  <LandingMarketDashboard/>
  <LandingReviews/>
+ <LandingSecurity/>
  <section id="trust" className="cl-section cl-trust cl-reveal-section tone-forest"><div className="cl-wrap"><div className="cl-eyebrow">Trust & privacy</div><h2>Independent by design.</h2><p className="cl-sub">ArthaMind AI is not a brokerage and does not execute trades. It exists to help you understand, inspect and decide.</p><div className="cl-trust-grid" data-stagger>{[['01','Public tools first','Explore markets, learning and the Reliability Lab before you sign in.'],['02','Personal context is opt-in','Your personal data is off by default and only used when you turn it on.'],['03','Evidence, not opinion','Every answer shows what supports it, so you can verify it yourself.'],['04','Educational scope','Built for education and research. It is not investment advice.']].map(x=><div className="cl-card" key={x[0]}><span className="cl-module-icon">{x[0]}</span><h4>{x[1]}</h4><p>{x[2]}</p></div>)}</div><div className="cl-final"><h2>Your AI CFO is ready.</h2><p>Run a free health check, ask about taxes, EMIs or goals, then take the plan into your private workspace.</p><div className="cl-actions"><button className="cl-primary cl-glow" onClick={scrollToCfo}><Sparkles size={16}/>Ask your AI CFO</button><button className="cl-secondary" onClick={()=>open('overview')}>Open Artha Bench Pro <ArrowRight size={16}/></button><button className="cl-secondary" onClick={()=>open('evaluation-lab')}>Test an AI answer</button></div></div></div></section>
  </main><button type="button" className={'cl-top '+(showTop?'show':'')} aria-label="Back to top" onClick={()=>window.scrollTo({top:0,behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'})}><ArrowUp size={17}/></button><footer className="cl-footer"><div className="cl-wrap"><b>ArthaMind AI × Artha Bench Pro</b><span>India-focused financial intelligence, education and AI reliability. Educational/research use only—not investment, tax, legal or lending advice.</span></div></footer>
  </div>

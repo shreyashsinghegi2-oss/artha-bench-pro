@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion, useInView, useMotionValue, useReducedMotion, useSpring, useTransform } from 'motion/react';
 import { CompanyLogo, companyLogoSrc, hasMarketMark } from '../market/CompanyLogo';
-import { BarChart3, Bell, BookOpen, Bot, Check, Home, LayoutGrid, Newspaper, ReceiptText, ShieldCheck, Sparkles, Star, Target, Wallet } from 'lucide-react';
+import { BarChart3, Bell, BookOpen, Bot, Calculator, Check, EyeOff, Home, KeyRound, LayoutGrid, LockKeyhole, Newspaper, ReceiptText, ShieldCheck, Sparkles, Star, Target, Wallet } from 'lucide-react';
 import { SUPPORTED_LANGUAGES } from '../LanguageSelector';
 import { LANDING_REVIEWS } from '../../data/landingReviews';
 import { buildMoneyCheck, type MoneyCheckInputs } from '../../services/moneyCheck';
@@ -124,11 +124,11 @@ const Price: React.FC<{ row: Row; run: boolean }> = ({ row, run }) => {
 
 // The tour walks through the app the way a user would: home, markets, a stock, the AI CFO and tutor,
 // news, tax, language and what people say.
-const SCREENS = ['splash', 'home', 'markets', 'stock', 'cfo', 'tutor', 'news', 'tax', 'language', 'people'] as const;
+const SCREENS = ['splash', 'home', 'markets', 'stock', 'cfo', 'tutor', 'news', 'tax', 'language', 'security', 'people'] as const;
 type Screen = typeof SCREENS[number];
-const DURATION: Record<Screen, number> = { splash: 5400, home: 4600, markets: 5200, stock: 4800, cfo: 3800, tutor: 5000, news: 4800, tax: 3400, language: 4200, people: 3400 };
+const DURATION: Record<Screen, number> = { splash: 5400, home: 4600, markets: 5200, stock: 4800, cfo: 3800, tutor: 5000, news: 4800, tax: 3400, language: 4200, security: 4600, people: 3400 };
 type TabId = 'home' | 'markets' | 'ai' | 'news' | 'more';
-const TAB_OF: Record<Screen, TabId> = { splash: 'home', home: 'home', markets: 'markets', stock: 'markets', cfo: 'ai', tutor: 'ai', news: 'news', tax: 'more', language: 'more', people: 'more' };
+const TAB_OF: Record<Screen, TabId> = { splash: 'home', home: 'home', markets: 'markets', stock: 'markets', cfo: 'ai', tutor: 'ai', news: 'news', tax: 'more', language: 'more', security: 'more', people: 'more' };
 const TABS: Array<{ id: TabId; label: string; icon: React.ComponentType<{ size?: number }> }> = [
   { id: 'home', label: 'Home', icon: Home }, { id: 'markets', label: 'Markets', icon: BarChart3 }, { id: 'ai', label: 'AI', icon: Bot },
   { id: 'news', label: 'News', icon: Newspaper }, { id: 'more', label: 'More', icon: LayoutGrid },
@@ -459,6 +459,24 @@ export const HeroPhone: React.FC<{ photoSrc?: string }> = ({ photoSrc }) => {
                 </div>
                 <div className="hp-lang-grid" aria-hidden="true">{SUPPORTED_LANGUAGES.slice(0, 12).map(([code, name], i) => <span key={code} className={i === lang.index ? 'on' : i < lang.index ? 'done' : ''}>{name}</span>)}</div>
                 <p className="hp-note">AI CFO replies in English, हिन्दी and Hinglish.</p>
+              </>}
+
+              {screen === 'security' && <>
+                <div className="hp-head"><b>Your data, protected</b><small>How ArthaMind keeps it private</small></div>
+                <div className="hp-shield" aria-hidden="true">
+                  <motion.span className="hp-shield-ring" initial={animate ? { scale: 0.6, opacity: 0 } : false} animate={{ scale: [0.6, 1.08, 1], opacity: 1 }} transition={{ duration: 0.8 }}/>
+                  <motion.span className="hp-shield-core" initial={animate ? { rotateY: 90 } : false} animate={{ rotateY: 0 }} transition={{ duration: 0.6, delay: 0.2 }}><ShieldCheck size={30}/></motion.span>
+                  <motion.span className="hp-shield-lock" initial={animate ? { y: -10, opacity: 0 } : false} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.7 }}><LockKeyhole size={12}/></motion.span>
+                </div>
+                <ul className="hp-secure">{([
+                  [Calculator, 'Your numbers are calculated with plain maths on your phone'],
+                  [LockKeyhole, 'Everything sent is encrypted (HTTPS)'],
+                  [KeyRound, 'Saved records open only for your account'],
+                  [EyeOff, 'AI sees only the question you ask'],
+                ] as Array<[React.ComponentType<{ size?: number }>, string]>).map(([Icon, text], i) => <motion.li key={text} initial={animate ? { opacity: 0, x: 14 } : false} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.9 + i * 0.45 }}>
+                  <span><Icon size={12}/></span>{text}<Check size={11} className="hp-secure-ok"/>
+                </motion.li>)}</ul>
+                <motion.p className="hp-secure-note" initial={animate ? { opacity: 0 } : false} animate={{ opacity: 1 }} transition={{ delay: 2.9 }}>We never ask for bank passwords, PINs or OTPs.</motion.p>
               </>}
 
               {screen === 'people' && <>

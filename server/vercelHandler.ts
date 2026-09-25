@@ -18,6 +18,18 @@ app.use(express.json({ limit: '2mb' }));
 app.get('/api/news/image', handleNewsImage);
 app.use('/api', (req, res, next) => (GROUNDED_AI_PATHS.has(req.path) ? groundingMiddleware(req, res, next) : next()));
 app.get('/api/ai/live-sources', (_req, res) => { res.json(liveSourceStatus()); });
+// Health of the sign-in service (no secrets): is the Supabase project reachable, and does it accept email sign-up?
+app.get('/api/auth/status', async (_req, res) => {
+  const url = (process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || 'https://agjbvoosukxfvrritgto.supabase.co').replace(/\/$/, '');
+  const key = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || 'sb_publishable_KOdXB7LW5Ho5hDjsi3GMiw_xdogy5oR';
+  try {
+    const r = await fetch(`${url}/auth/v1/settings`, { headers: { apikey: key }, signal: AbortSignal.timeout(8000) });
+    const body = await r.json().catch(() => ({})) as Record<string, any>;
+    res.json({ reachable: true, status: r.status, project: new URL(url).hostname.split('.')[0], keyType: key.startsWith('sb_') ? 'publishable' : 'jwt', emailEnabled: body?.external?.email ?? null, signupDisabled: body?.disable_signup ?? null, autoConfirm: body?.mailer_autoconfirm ?? null, error: r.ok ? null : (body?.message || body?.msg || body?.error || null) });
+  } catch (e) {
+    res.json({ reachable: false, error: e instanceof Error ? e.message : 'unreachable' });
+  }
+});
 app.post('/api/nvidia-tutor', handleNvidiaTutor);
 app.use('/api', aiRouter);
 app.use('/api', apiRouter);

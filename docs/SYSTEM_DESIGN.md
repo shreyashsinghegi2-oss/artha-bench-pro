@@ -207,3 +207,30 @@ Gaps, stated plainly:
 | CI | `.github/workflows/ci.yml` | GitHub Actions | yes |
 
 Environment variables: `RAG_SIDECAR_URL`, `RAG_ADMIN_TOKEN`, `RAG_EMBEDDER` (`hashing` | `sentence-transformers`), `RAG_RERANKER`, `DATABASE_URL` (sidecar → pgvector), `WS_ROLE`, `REDIS_URL`, `WS_ALLOWED_ORIGINS`, `WS_REQUIRE_AUTH`, `WS_POLL_MS`, `FINNHUB_API_KEY`.
+
+---
+
+## 8. Precision engine (certified calculations)
+
+`precision-engine/` is a FastAPI service that returns EMI, SIP, CAGR, XIRR, bond yield and income tax with a certificate.
+The certificate gives a value, an interval proven to contain the true value of the stated formula, and an error bound.
+If it cannot prove at most 1×10⁻⁸ relative error, it answers 422 with no number.
+
+**Method**
+- Inputs are decimal strings converted to exact rationals.
+- EMI, SIP and tax are computed exactly.
+- CAGR, XIRR and bond yield use outward-rounded interval arithmetic (mpmath `iv`) for existence, and Descartes' rule of signs or interval branch-and-bound for uniqueness.
+- The proof is detailed in `precision-engine/README.md`.
+
+**Evidence and speed**
+- CI runs 10,000 Hypothesis cases per closed-form calculator and per tax regime, and 5,000 per root-finder, against oracles in a different library (Python `decimal` at 80 digits, `fractions`).
+- Typical latency is 1–2 ms (EMI, SIP, CAGR, tax) to 7–100 ms (XIRR, depending on cash-flow count).
+
+**Integration**
+- Express proxies `/api/precision/*` when `PRECISION_ENGINE_URL` is set; `src/lib/precision-client.ts` is the browser client.
+- The in-browser TypeScript calculators remain the default and are not yet switched over in the UI.
+- `tests/integration/precisionParity.integration.test.ts` shows they match the certified values to the paisa (EMI, tax below the surcharge threshold), 1e-12 relative (CAGR) and 1e-7 (XIRR).
+
+**Known differences from the TS tax engine**
+- The precision engine rounds total income to ₹10 (s.288A).
+- It applies surcharge marginal relief, which the TS engine only flags as a warning.

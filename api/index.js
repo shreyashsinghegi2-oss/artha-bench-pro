@@ -2,7 +2,7 @@
 import express from "express";
 
 // server/routes.ts
-import { Router } from "express";
+import { Router as Router2 } from "express";
 import { z as z8 } from "zod";
 
 // server/aiResponseStandard.ts
@@ -6581,9 +6581,48 @@ function createRateLimiter(options) {
   };
 }
 
+// server/precisionRoutes.ts
+import { Router } from "express";
+var PRECISION_KINDS = ["emi", "sip", "cagr", "xirr", "bond", "tax", "verify"];
+var precisionRouter = Router();
+var limiter = createRateLimiter({ windowMs: 6e4, max: 60, message: "Too many calculations. Please wait a minute." });
+function precisionEngineUrl() {
+  const raw = process.env.PRECISION_ENGINE_URL?.trim();
+  return raw ? raw.replace(/\/$/, "") : null;
+}
+precisionRouter.get("/health", async (_req, res) => {
+  const base = precisionEngineUrl();
+  if (!base) return res.status(503).json({ configured: false });
+  try {
+    const upstream = await fetch(`${base}/health`, { signal: AbortSignal.timeout(3e3) });
+    return res.status(upstream.status).json({ configured: true, ...await upstream.json() });
+  } catch {
+    return res.status(502).json({ configured: true, ok: false, error: "Precision engine did not respond." });
+  }
+});
+precisionRouter.post("/:kind", limiter, async (req, res) => {
+  const kind = req.params.kind;
+  if (!PRECISION_KINDS.includes(kind)) return res.status(404).json({ error: "Unknown calculation." });
+  const base = precisionEngineUrl();
+  if (!base) return res.status(503).json({ configured: false, error: "The precision engine is not configured on this server." });
+  try {
+    const upstream = await fetch(`${base}/api/${kind}`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(req.body ?? {}),
+      signal: AbortSignal.timeout(1e4)
+    });
+    const text = await upstream.text();
+    res.status(upstream.status).type("application/json").send(text);
+  } catch {
+    res.status(502).json({ verified: false, error: "Precision engine did not respond." });
+  }
+});
+
 // server/routes.ts
 var voiceLimiter = createRateLimiter({ windowMs: 6e4, max: 30, message: "Too many voice requests. Please wait a minute." });
-var apiRouter = Router();
+var apiRouter = Router2();
+apiRouter.use("/precision", precisionRouter);
 var voiceBody = (req) => {
   const text = typeof req.body?.text === "string" ? req.body.text.trim().slice(0, 3e3) : "";
   const lang = typeof req.body?.lang === "string" ? req.body.lang.trim().toLowerCase() : "";
@@ -7795,7 +7834,7 @@ apiRouter.use((err, req, res, next) => {
 });
 
 // server/aiRoutes.ts
-import { Router as Router2 } from "express";
+import { Router as Router3 } from "express";
 import { z as z9 } from "zod";
 
 // server/nvidiaService.ts
@@ -8070,7 +8109,7 @@ function calculateSavingsTarget(targetAmount, months) {
 
 // server/aiRoutes.ts
 var aiChatLimiter = createRateLimiter({ windowMs: 6e4, max: 20, message: "You are sending questions quickly. Please wait a minute and try again." });
-var aiRouter = Router2();
+var aiRouter = Router3();
 var context = z9.object({ country: z9.enum(["India", "US", "Global"]).optional().catch(void 0), currency: z9.enum(["INR", "USD", "EUR", "GBP"]).optional().catch(void 0), language: z9.enum(["english", "hindi", "hinglish"]).optional().catch(void 0), replyLanguage: z9.string().max(40).optional().catch(void 0), voice: z9.boolean().optional().catch(void 0), level: z9.enum(["beginner", "intermediate", "advanced"]).optional().catch(void 0), mode: z9.enum(["explain", "quiz", "calc"]).optional().catch(void 0), detail: z9.enum(["short", "standard", "detailed"]).optional().catch(void 0), useOfficialSources: z9.boolean().optional().catch(void 0), highContrast: z9.boolean().optional().catch(void 0), reducedMotion: z9.boolean().optional().catch(void 0), learningGoal: z9.string().max(200).optional().catch(void 0), learningStyle: z9.enum(["visual", "practical", "reading", "socratic", "example-first", "step-by-step", "challenge-based", "deep-dive"]).optional().catch(void 0), activityType: z9.enum(["lesson", "quiz", "calculation", "scenario", "flashcards", "revision", "mock-test"]).optional().catch(void 0), quizType: z9.enum(["mcq", "mixed", "true-false", "fill-blank", "short-answer", "scenario", "calculation"]).optional().catch(void 0), quizLength: z9.union([z9.literal(5), z9.literal(10), z9.literal(20), z9.literal(50)]).optional().catch(void 0), adaptiveDifficulty: z9.boolean().optional().catch(void 0), sessionLength: z9.union([z9.literal(2), z9.literal(5), z9.literal(10), z9.literal(15), z9.literal(20), z9.literal(30), z9.literal(45), z9.literal(60)]).optional().catch(void 0), learnerProfile: z9.string().max(500).optional().catch(void 0) });
 var requestSchema = z9.object({ prompt: z9.preprocess((value) => typeof value === "string" ? value.trim().slice(0, 4e3) : value, z9.string().min(1).max(4e3)), model: z9.enum(["artha", "nemotron"]).optional(), task: z9.enum(["education", "calculation", "live_data", "quiz", "scenario", "evaluation", "report", "general", "cfo"]).optional(), history: z9.preprocess((value) => Array.isArray(value) ? value.filter((turn) => turn && (turn.role === "user" || turn.role === "assistant") && typeof turn.content === "string" && turn.content.trim()).slice(-10).map((turn) => ({ role: turn.role, content: turn.content.slice(0, 4e3) })) : void 0, z9.array(z9.object({ role: z9.enum(["user", "assistant"]), content: z9.string().min(1).max(4e3) })).max(10).optional()), context: context.optional().catch(void 0) });
 var calcSchema = z9.object({ kind: z9.enum(["emi", "emergency-fund", "budget-503020", "savings-target"]), principal: z9.coerce.number().finite().optional(), annualRatePercent: z9.coerce.number().finite().optional(), years: z9.coerce.number().finite().optional(), monthlyIncome: z9.coerce.number().finite().optional(), monthlyExpenses: z9.coerce.number().finite().optional(), targetAmount: z9.coerce.number().finite().optional(), months: z9.coerce.number().finite().optional() });
@@ -8114,10 +8153,10 @@ aiRouter.post("/ai/calculate", async (req, res) => {
 });
 
 // server/personalAccountRoutes.ts
-import { Router as Router3 } from "express";
+import { Router as Router4 } from "express";
 import Decimal3 from "decimal.js";
 import { z as z10 } from "zod";
-var personalAccountRouter = Router3();
+var personalAccountRouter = Router4();
 var DEFAULT_SUPABASE_URL = "https://agjbvoosukxfvrritgto.supabase.co";
 var DEFAULT_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_KOdXB7LW5Ho5hDjsi3GMiw_xdogy5oR";
 var contextSettingsSchema = z10.object({
@@ -8499,9 +8538,9 @@ personalAccountRouter.delete("/account/delete", async (req, res) => {
 });
 
 // server/evaluationComparisonRoutes.ts
-import { Router as Router4 } from "express";
+import { Router as Router5 } from "express";
 import { z as z11 } from "zod";
-var evaluationComparisonRouter = Router4();
+var evaluationComparisonRouter = Router5();
 var profileSchema2 = z11.enum(["India", "US", "Global"]).default("US");
 var suppliedResponseSchema = z11.object({
   query: z11.string().trim().min(3, "Financial question or evaluation instruction is required.").max(4e3),
@@ -8599,8 +8638,8 @@ evaluationComparisonRouter.post("/compare-responses", async (req, res, next) => 
 });
 
 // server/freeMarketRoutes.ts
-import { Router as Router5 } from "express";
-var freeMarketRouter = Router5();
+import { Router as Router6 } from "express";
+var freeMarketRouter = Router6();
 var MAX_SYMBOLS = 20;
 var MAX_CONCURRENCY = 4;
 function parseSymbols(value) {

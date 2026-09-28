@@ -38,12 +38,14 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      - uses: actions/setup-python@v5 # the RAG integration test spawns the Python sidecar
+      - uses: actions/setup-python@v5 # integration tests spawn the RAG sidecar and the precision engine
         with:
           python-version: '3.11'
           cache: pip
-          cache-dependency-path: rag/requirements*.txt
-      - run: pip install numpy
+          cache-dependency-path: |
+            rag/requirements*.txt
+            precision-engine/requirements*.txt
+      - run: pip install numpy -r precision-engine/requirements.txt
       - run: npm ci
       # Fails if core-logic coverage drops below the thresholds in vitest.config.ts (80% lines/functions/statements).
       - run: npm run test:coverage

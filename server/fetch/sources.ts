@@ -221,9 +221,9 @@ export function createSources(deps: SourceDeps): Source[] {
             title: `${i.label} [${q.symbol}]`,
             publisher: q.providerName,
             publishedAt: when,
-            text: `${i.label} [${q.symbol}]: ${fmtNum(q.price)} ${q.currency}${pct} · ${q.providerName}, ${q.freshness.replace('_', ' ')}, as of ${when}`,
+            text: `${i.label} [${q.symbol}]: ${fmtNum(q.price)} ${q.currency}${pct} · ${q.providerName}, ${q.freshness.replaceAll('_', ' ')}, as of ${when}`,
             fetchedAt: iso(deps),
-            freshness: q.freshness.replace('_', ' '),
+            freshness: q.freshness.replaceAll('_', ' '),
             boost: 1,
           },
         ];

@@ -3902,9 +3902,9 @@ function createSources(deps) {
             title: `${i.label} [${q.symbol}]`,
             publisher: q.providerName,
             publishedAt: when,
-            text: `${i.label} [${q.symbol}]: ${fmtNum(q.price)} ${q.currency}${pct2} \xB7 ${q.providerName}, ${q.freshness.replace("_", " ")}, as of ${when}`,
+            text: `${i.label} [${q.symbol}]: ${fmtNum(q.price)} ${q.currency}${pct2} \xB7 ${q.providerName}, ${q.freshness.replaceAll("_", " ")}, as of ${when}`,
             fetchedAt: iso(deps),
-            freshness: q.freshness.replace("_", " "),
+            freshness: q.freshness.replaceAll("_", " "),
             boost: 1
           }
         ];
@@ -4088,7 +4088,7 @@ async function firecrawlScrape(url, fetchImpl = fetch) {
 }
 
 // server/fetch/refineInput.ts
-var KIND_WEIGHT = { official: 5, market: 4, news: 2.5, web: 2, reference: 0.5 };
+var KIND_WEIGHT = { official: 4, market: 4, news: 2.5, web: 2, reference: 0.5 };
 var PER_SOURCE_CHARS = 1400;
 function cleanText(s) {
   return s.replace(/<\/?[a-zA-Z][^<>]{0,300}>/g, " ").replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, " ").replace(/<{2,}|>{2,}/g, "").replace(/[ \t]+/g, " ").replace(/\n{3,}/g, "\n\n").trim();
@@ -4115,11 +4115,23 @@ function recencyScore(publishedAt, now) {
   const days = (now - t) / 864e5;
   return days < 0 ? 0 : days <= 2 ? 1.2 : days <= 7 ? 1 : days <= 30 ? 0.5 : days <= 365 ? 0.1 : -0.3;
 }
+function phraseOverlap(question, text) {
+  const q = terms(question);
+  if (q.length < 2) return 0;
+  const t = ` ${terms(text).join(" ")} `;
+  const pairs = q.slice(1).map((w, i) => `${q[i]} ${w}`);
+  return pairs.filter((p) => t.includes(` ${p} `)).length / pairs.length;
+}
 function scoreItem(item, question, now = Date.now()) {
-  return KIND_WEIGHT[item.kind] + (item.boost ?? 0) * 2 + overlap(question, `${item.title} ${item.text}`) * 4 + recencyScore(item.publishedAt, now);
+  const hay = `${item.title} ${item.text}`;
+  return KIND_WEIGHT[item.kind] + (item.boost ?? 0) * 2 + overlap(question, hay) * 6 + phraseOverlap(question, hay) * 3 + recencyScore(item.publishedAt, now);
 }
 function rankAndDedupe(items, question, now = Date.now()) {
-  const ranked = items.map((item) => ({ item: { ...item, title: cleanText(item.title).slice(0, 200), text: cleanText(item.text) }, score: scoreItem(item, question, now) })).filter((x) => x.item.text).sort((a, b) => b.score - a.score);
+  const ranked = items.map((item) => ({
+    item: { ...item, title: cleanText(item.title).slice(0, 200), text: cleanText(item.text) },
+    score: scoreItem(item, question, now),
+    rel: overlap(question, `${item.title} ${item.text}`)
+  })).filter((x) => x.item.text && !((x.item.kind === "news" || x.item.kind === "web") && !x.item.boost && x.rel === 0)).sort((a, b) => b.score - a.score);
   const kept = [];
   for (const { item } of ranked) {
     const dup = kept.some((k) => k.url && item.url && k.url === item.url || similarity(k.text, item.text) >= 0.8);

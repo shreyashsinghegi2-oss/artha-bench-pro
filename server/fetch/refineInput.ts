@@ -20,7 +20,7 @@ export interface NumberedSource {
   sourceId: string;
 }
 
-const KIND_WEIGHT: Record<SourceKind, number> = { official: 5, market: 4, news: 2.5, web: 2, reference: 0.5 };
+const KIND_WEIGHT: Record<SourceKind, number> = { official: 4, market: 4, news: 2.5, web: 2, reference: 0.5 };
 const PER_SOURCE_CHARS = 1_400;
 
 /** Plain text with markup, control characters and block markers removed. */
@@ -61,14 +61,31 @@ function recencyScore(publishedAt: string | undefined, now: number): number {
   return days < 0 ? 0 : days <= 2 ? 1.2 : days <= 7 ? 1 : days <= 30 ? 0.5 : days <= 365 ? 0.1 : -0.3;
 }
 
+/** Share of the question's adjacent word pairs ("repo rate") that appear as phrases in the text. */
+export function phraseOverlap(question: string, text: string): number {
+  const q = terms(question);
+  if (q.length < 2) return 0;
+  const t = ` ${terms(text).join(' ')} `;
+  const pairs = q.slice(1).map((w, i) => `${q[i]} ${w}`);
+  return pairs.filter((p) => t.includes(` ${p} `)).length / pairs.length;
+}
+
 export function scoreItem(item: FetchItem, question: string, now = Date.now()): number {
-  return KIND_WEIGHT[item.kind] + (item.boost ?? 0) * 2 + overlap(question, `${item.title} ${item.text}`) * 4 + recencyScore(item.publishedAt, now);
+  // Relevance counts as much as authority, so an on-topic news report can outrank an off-topic official notice.
+  const hay = `${item.title} ${item.text}`;
+  return KIND_WEIGHT[item.kind] + (item.boost ?? 0) * 2 + overlap(question, hay) * 6 + phraseOverlap(question, hay) * 3 + recencyScore(item.publishedAt, now);
 }
 
 export function rankAndDedupe(items: FetchItem[], question: string, now = Date.now()): FetchItem[] {
   const ranked = items
-    .map((item) => ({ item: { ...item, title: cleanText(item.title).slice(0, 200), text: cleanText(item.text) }, score: scoreItem(item, question, now) }))
-    .filter((x) => x.item.text)
+    .map((item) => ({
+      item: { ...item, title: cleanText(item.title).slice(0, 200), text: cleanText(item.text) },
+      score: scoreItem(item, question, now),
+      rel: overlap(question, `${item.title} ${item.text}`),
+    }))
+    // Relevance floor: a news or web item that shares no content word with the question is noise (e.g. a generic
+    // headline feed); official documents, market quotes for named instruments and user pages are kept.
+    .filter((x) => x.item.text && !((x.item.kind === 'news' || x.item.kind === 'web') && !x.item.boost && x.rel === 0))
     .sort((a, b) => b.score - a.score);
   const kept: FetchItem[] = [];
   for (const { item } of ranked) {

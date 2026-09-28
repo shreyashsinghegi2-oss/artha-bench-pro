@@ -4008,6 +4008,7 @@ function createSources(deps) {
         title: x.title,
         url: x.url,
         publisher: isOfficialUrl(x.url) ? publisherFor(x.url) : x.source,
+        publishedAt: x.publishedAt,
         text: x.snippet,
         fetchedAt: iso(deps),
         freshness: isOfficialUrl(x.url) ? "official" : "web"
@@ -5247,7 +5248,7 @@ async function googleNews(q) {
   items.sort((a, b) => (b.date.getTime() || 0) - (a.date.getTime() || 0));
   return items.slice(0, 6).map((x) => {
     const when = Number.isFinite(x.date.getTime()) ? x.date.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Kolkata" }) : "date unknown";
-    return { title: x.title, url: x.url, snippet: `${x.title} (${x.source || "publisher"}, published ${when})`, source: `Google News \xB7 ${x.source || "publisher"}` };
+    return { title: x.title, url: x.url, snippet: `${x.title} (${x.source || "publisher"}, published ${when})`, source: `Google News \xB7 ${x.source || "publisher"}`, publishedAt: Number.isFinite(x.date.getTime()) ? x.date.toISOString() : void 0 };
   });
 }
 async function duckduckgo(q) {

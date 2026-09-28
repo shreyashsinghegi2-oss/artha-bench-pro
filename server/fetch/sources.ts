@@ -51,7 +51,7 @@ export interface SourceDeps {
     category: string,
     region: string,
   ): Promise<{ items?: Array<{ title: string; sourceName: string; sourceUrl: string; publishedAt: string | null; description?: string | null }> }>;
-  webSearch(q: string): Promise<{ provider: string; results: Array<{ title: string; url: string; snippet: string; source: string }> }>;
+  webSearch(q: string): Promise<{ provider: string; results: Array<{ title: string; url: string; snippet: string; source: string; publishedAt?: string }> }>;
   readWebPage(url: string): Promise<{ url: string; title: string; text: string; retrievedAt: string }>;
   linksIn(text: string): string[];
   fetchImpl?: typeof fetch;
@@ -331,6 +331,7 @@ export function createSources(deps: SourceDeps): Source[] {
         title: x.title,
         url: x.url,
         publisher: isOfficialUrl(x.url) ? publisherFor(x.url) : x.source,
+        publishedAt: x.publishedAt,
         text: x.snippet,
         fetchedAt: iso(deps),
         freshness: isOfficialUrl(x.url) ? 'official' : 'web',

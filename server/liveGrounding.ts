@@ -146,7 +146,7 @@ export function shouldSearchWeb(query: string, mode: WebSearchMode): boolean {
 
 // ---------- Web search providers ----------
 
-export interface WebResult { title: string; url: string; snippet: string; source: string }
+export interface WebResult { title: string; url: string; snippet: string; source: string; publishedAt?: string }
 
 const withTimeout = <T,>(p: Promise<T>, ms: number): Promise<T | null> => Promise.race([p.catch(() => null), new Promise<null>((r) => setTimeout(() => r(null), ms))]);
 const strip = (s: string) => s.replace(/<[^>]+>/g, '').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&').replace(/\s+/g, ' ').trim();
@@ -193,7 +193,7 @@ async function googleNews(q: string): Promise<WebResult[]> {
   items.sort((a, b) => (b.date.getTime() || 0) - (a.date.getTime() || 0));
   return items.slice(0, 6).map((x) => {
     const when = Number.isFinite(x.date.getTime()) ? x.date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Kolkata' }) : 'date unknown';
-    return { title: x.title, url: x.url, snippet: `${x.title} (${x.source || 'publisher'}, published ${when})`, source: `Google News · ${x.source || 'publisher'}` };
+    return { title: x.title, url: x.url, snippet: `${x.title} (${x.source || 'publisher'}, published ${when})`, source: `Google News · ${x.source || 'publisher'}`, publishedAt: Number.isFinite(x.date.getTime()) ? x.date.toISOString() : undefined };
   });
 }
 async function duckduckgo(q: string): Promise<WebResult[]> {

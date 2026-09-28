@@ -586,3 +586,41 @@ describe('relevance (production findings)', () => {
     expect(ranked[0].title).toMatch(/MPC decision/);
   });
 });
+
+describe('dated web results', () => {
+  it('web results keep their publish date, so a recent on-topic report outranks an off-topic official notice', async () => {
+    const d = deps({
+      webSearch: vi.fn(async () => ({
+        provider: 'g',
+        results: [
+          {
+            title: 'RBI MPC decision: repo rate unchanged at 5.25%',
+            url: 'https://n.example.com/a',
+            snippet: 'RBI MPC decision: repo rate unchanged at 5.25%',
+            source: 'Google News · ET',
+            publishedAt: '2026-09-27T10:00:00.000Z',
+          },
+        ],
+      })),
+    });
+    const [web] = await byId(d, 'web').fetch(ctx());
+    expect(web.publishedAt).toBe('2026-09-27T10:00:00.000Z');
+    const now = Date.parse('2026-09-28T23:00:00Z');
+    const ranked = rankAndDedupe(
+      [
+        item({
+          kind: 'official',
+          sourceId: 'official',
+          publisher: 'RBI',
+          title: 'RBI to conduct Overnight Variable Rate Reverse Repo (VRRR) auction',
+          text: 'On a review of liquidity conditions, it has been decided to conduct a Variable Rate Reverse Repo auction.',
+          publishedAt: 'Mon, 28 Sep 2026 19:05:00',
+        }),
+        web,
+      ],
+      'What is the latest RBI repo rate decision?',
+      now,
+    );
+    expect(ranked[0].title).toMatch(/MPC decision/);
+  });
+});

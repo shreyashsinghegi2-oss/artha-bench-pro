@@ -1,0 +1,8 @@
+# Core (always needed)
+numpy>=1.26
+pypdf>=4.0
+# Optional: real embedding + re-ranking models (nomic-embed-text / bge, ms-marco cross-encoder).
+# Without it the sidecar uses a deterministic hashing embedder and a lexical re-ranker.
+# sentence-transformers>=3.0
+# Optional: Supabase Postgres (pgvector) store. Without DATABASE_URL an in-memory store is used.
+# psycopg[binary]>=3.1

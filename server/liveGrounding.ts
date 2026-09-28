@@ -22,9 +22,10 @@ import { INDIA_MARKET_UNIVERSE } from '../src/data/indiaMarketUniverse';
 import { getMarketQuote } from './marketDataService';
 import { getBusinessNews } from './businessNewsService';
 import { rankPassages } from '../src/services/knowledgeLibrary';
+import { ragEngine, sourceLabel } from '../rag/rag_engine';
 
 export type WebSearchMode = 'auto' | 'on' | 'off';
-export interface GroundingSource { name: string; dataDate: string; freshness: string; url?: string; kind: 'market' | 'news' | 'web' | 'page' | 'fund' }
+export interface GroundingSource { name: string; dataDate: string; freshness: string; url?: string; kind: 'market' | 'news' | 'web' | 'page' | 'fund' | 'doc' }
 interface GroundingState { mode: WebSearchMode; sources: GroundingSource[]; used: boolean; userProfile?: string }
 
 const store = new AsyncLocalStorage<GroundingState>();
@@ -276,12 +277,15 @@ export async function gatherLiveContext(query: string, mode: WebSearchMode = 'au
   const wantNews = NEWSY.test(q) || (instruments.length > 0 && /\bwhy|move|fell|rose|up|down\b/i.test(q));
   const wantWeb = shouldSearchWeb(q, mode);
 
-  const [quotes, news, web, page, fund] = await Promise.all([
+  // Official documents (SEBI, RBI, CBDT, AMFI, NSE/BSE) from the RAG sidecar when RAG_SIDECAR_URL is set.
+  const wantDocs = ragEngine.enabled && (FACTUAL.test(q) || /\b(sebi|rbi|cbdt|amfi|nse|bse|circular|regulation|section|rule|tax|nav|expense ratio|kyc)\b/i.test(q));
+  const [quotes, news, web, page, fund, docs] = await Promise.all([
     Promise.all(instruments.map((i) => withTimeout(getMarketQuote(i.symbol).then((r) => ({ i, quote: r.quote })), 3500))),
     wantNews ? withTimeout(getBusinessNews(instruments[0]?.label ?? q.split(' ').slice(0, 6).join(' '), 'business', 'india'), 4000) : Promise.resolve(null),
     wantWeb ? withTimeout(webSearch(q), 7000) : Promise.resolve(null),
     withTimeout(pageContext(query.slice(0, 2000)), 11000),
     withTimeout(fundContext(q), 8000),
+    wantDocs ? withTimeout(ragEngine.retrieve(q, { topK: 5 }), 3000) : Promise.resolve(null),
   ]);
 
   const lines: string[] = [];
@@ -318,6 +322,10 @@ export async function gatherLiveContext(query: string, mode: WebSearchMode = 'au
 
   if (page?.lines.length) { lines.push(...page.lines); sources.push(...page.sources); }
   if (fund?.lines.length) { lines.push(...fund.lines); sources.push(...fund.sources); }
+  if (docs?.ok && docs.passages.length) {
+    lines.push(docs.context);
+    for (const p of docs.passages) sources.push({ name: `[${p.citation}] ${sourceLabel(p)}`.slice(0, 160), dataDate: p.date ?? '', freshness: 'official document', url: p.url ?? undefined, kind: 'doc' });
+  }
 
   // Verified formulas from the ArthaMind formula book, so calculations use the exact, tested form.
   const formulas = rankPassages(q, [], 2).flatMap((h) => (h.kind === 'formula' && h.score > 2.5 && h.entry.formula ? [h.entry] : []));

@@ -3532,6 +3532,64 @@ function rankPassages(query, docs, k = 4) {
   return scored.filter((h) => h.score > 1.2).sort((a, b2) => b2.score - a.score).slice(0, k);
 }
 
+// rag/rag_engine.ts
+var EMPTY = (error, latencyMs) => ({ passages: [], context: "", ok: false, error, latencyMs });
+var RagEngine = class {
+  constructor(options = {}) {
+    this.baseUrl = (options.baseUrl ?? process.env.RAG_SIDECAR_URL ?? "").replace(/\/$/, "");
+    this.timeoutMs = options.timeoutMs ?? 2500;
+    this.fetchImpl = options.fetchImpl ?? fetch;
+  }
+  get enabled() {
+    return this.baseUrl.length > 0;
+  }
+  async retrieve(query, opts = {}) {
+    const started = Date.now();
+    if (!this.enabled) return EMPTY("RAG sidecar not configured", 0);
+    const q = query.trim().slice(0, 1e3);
+    if (!q) return EMPTY("empty query", 0);
+    try {
+      const res = await this.fetchImpl(`${this.baseUrl}/query`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: q, top_k: opts.topK ?? 5, ...opts.authority ? { authority: opts.authority } : {} }),
+        signal: AbortSignal.timeout(this.timeoutMs)
+      });
+      if (!res.ok) return EMPTY(`sidecar HTTP ${res.status}`, Date.now() - started);
+      const data = await res.json();
+      const passages = Array.isArray(data.results) ? data.results : [];
+      return { passages, context: typeof data.context === "string" ? data.context : buildContext(passages), ok: true, latencyMs: Date.now() - started };
+    } catch (error) {
+      return EMPTY(error instanceof Error ? error.message : "sidecar unreachable", Date.now() - started);
+    }
+  }
+  async health() {
+    if (!this.enabled) return false;
+    try {
+      const res = await this.fetchImpl(`${this.baseUrl}/health`, { signal: AbortSignal.timeout(this.timeoutMs) });
+      return res.ok;
+    } catch {
+      return false;
+    }
+  }
+};
+function buildContext(passages, maxChars = 1800) {
+  if (!passages.length) return "";
+  const lines = ["OFFICIAL DOCUMENTS (retrieved). Cite each fact you use as [n]; if these passages do not answer the question, say so."];
+  for (const p of passages) {
+    const where = [p.authority, p.title, p.section, p.date].filter(Boolean).join(" \xB7 ");
+    const text = p.text.length <= maxChars ? p.text : `${p.text.slice(0, maxChars)} \u2026`;
+    lines.push(`[${p.citation}] ${where}
+${text}`);
+  }
+  return lines.join("\n\n");
+}
+function sourceLabel(p) {
+  const main = [p.authority, p.title ?? p.source].filter(Boolean).join(" \xB7 ");
+  return p.date ? `${main} (${p.date})` : main;
+}
+var ragEngine = new RagEngine();
+
 // server/liveGrounding.ts
 var store = new AsyncLocalStorage();
 function stripUserProfile(req, _res, next) {
@@ -3726,12 +3784,14 @@ async function gatherLiveContext(query, mode = "auto") {
   const instruments = detectInstruments(q);
   const wantNews = NEWSY.test(q) || instruments.length > 0 && /\bwhy|move|fell|rose|up|down\b/i.test(q);
   const wantWeb = shouldSearchWeb(q, mode);
-  const [quotes, news, web, page, fund] = await Promise.all([
+  const wantDocs = ragEngine.enabled && (FACTUAL.test(q) || /\b(sebi|rbi|cbdt|amfi|nse|bse|circular|regulation|section|rule|tax|nav|expense ratio|kyc)\b/i.test(q));
+  const [quotes, news, web, page, fund, docs] = await Promise.all([
     Promise.all(instruments.map((i) => withTimeout(getMarketQuote(i.symbol).then((r) => ({ i, quote: r.quote })), 3500))),
     wantNews ? withTimeout(getBusinessNews(instruments[0]?.label ?? q.split(" ").slice(0, 6).join(" "), "business", "india"), 4e3) : Promise.resolve(null),
     wantWeb ? withTimeout(webSearch(q), 7e3) : Promise.resolve(null),
     withTimeout(pageContext(query.slice(0, 2e3)), 11e3),
-    withTimeout(fundContext(q), 8e3)
+    withTimeout(fundContext(q), 8e3),
+    wantDocs ? withTimeout(ragEngine.retrieve(q, { topK: 5 }), 3e3) : Promise.resolve(null)
   ]);
   const lines = [];
   const sources = [];
@@ -3770,6 +3830,10 @@ async function gatherLiveContext(query, mode = "auto") {
   if (fund?.lines.length) {
     lines.push(...fund.lines);
     sources.push(...fund.sources);
+  }
+  if (docs?.ok && docs.passages.length) {
+    lines.push(docs.context);
+    for (const p of docs.passages) sources.push({ name: `[${p.citation}] ${sourceLabel(p)}`.slice(0, 160), dataDate: p.date ?? "", freshness: "official document", url: p.url ?? void 0, kind: "doc" });
   }
   const formulas = rankPassages(q, [], 2).flatMap((h) => h.kind === "formula" && h.score > 2.5 && h.entry.formula ? [h.entry] : []);
   if (formulas.length) {

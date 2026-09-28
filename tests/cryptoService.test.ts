@@ -116,10 +116,12 @@ describe('crypto stream validation and assistant safety', () => {
 
     const answer = buildCryptoAssistantFallback('Should I buy this?', context);
 
-    expect(answer).toContain('## Selected Data');
-    expect(answer).toContain('## Purchase Decision Framework');
-    expect(answer).toContain('## Scenario Analysis');
-    expect(answer).toContain('does not issue a buy, sell, hold');
+    expect(answer).toContain('## Direct answer');
+    expect(answer).toContain('## Formula or rule');
+    expect(answer).toContain('## Limitations and verification');
+    expect(answer).toContain('+5.00%');
+    expect(answer).toContain('not a forecast or a buy/sell/hold signal');
+    expect(answer).toContain('does not issue personalized buy, sell, hold');
     expect(answer).toContain('Binance Public Market Data');
   });
 });

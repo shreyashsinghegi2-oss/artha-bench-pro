@@ -102,12 +102,15 @@ describe('NewsData.io provider adapter', () => {
     expect(requestUrl.searchParams.get('country')).toBe('in');
   });
 
-  it('returns labelled demo news when the API key is absent', async () => {
+  it('returns no articles (never demo headlines) when the API key is absent', async () => {
     delete process.env.BUSINESS_NEWS_API_KEY;
-    const result = await fetchNewsFromProvider();
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    const result = await fetchNewsFromProvider('no-key-check', 'all', 'global');
     expect(result.status).toBe('not_configured');
-    expect(result.providerName).toContain('Demo');
-    expect(result.items.every((item) => item.sourceName.includes('Demo'))).toBe(true);
+    expect(result.items).toEqual([]);
+    expect(result.message).toContain('BUSINESS_NEWS_API_KEY');
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it('does not expose the credential in diagnostic messages', async () => {
@@ -206,57 +209,59 @@ describe('Twelve Data provider adapter', () => {
     expect(requestUrl.searchParams.get('interval')).toBe('1day');
   });
 
-  it('returns a labelled demo quote when the API key is absent', async () => {
+  it('never manufactures a quote when the free provider fails and no key is set', async () => {
     delete process.env.MARKET_DATA_API_KEY;
-    const result = await fetchQuoteFromProvider('AAPL');
-    expect(result.status).toBe('not_configured');
-    expect(result.quote.freshness).toBe('demo');
-    expect(result.quote.providerName).toContain('Demo');
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('Forbidden', { status: 403 })));
+    await expect(fetchQuoteFromProvider('AAPL')).rejects.toThrow(/Market data unavailable for AAPL/);
   });
 
-  it('requests an exchange-qualified NSE quote and labels it end of day', async () => {
+  it('requests an exchange-qualified quote from Twelve Data for a non-Indian symbol', async () => {
     process.env.MARKET_DATA_PROVIDER = 'twelvedata';
     process.env.MARKET_DATA_API_KEY = 'market-test-secret';
     process.env.MARKET_DATA_BASE_URL = 'https://api.twelvedata.com/quote';
     const fetchMock = vi.fn().mockResolvedValue(
       new Response(
         JSON.stringify({
-          symbol: 'SBIN',
-          name: 'State Bank of India',
-          exchange: 'NSE',
-          currency: 'INR',
+          symbol: 'MSFT',
+          name: 'Microsoft Corp',
+          exchange: 'NASDAQ',
+          currency: 'USD',
           datetime: '2026-08-14',
-          open: '806.40',
-          high: '817.20',
-          low: '803.90',
-          close: '812.65',
-          previous_close: '806.25',
+          open: '506.40',
+          high: '517.20',
+          low: '503.90',
+          close: '512.65',
+          previous_close: '506.25',
           change: '6.40',
-          percent_change: '0.79',
+          percent_change: '1.26',
           volume: '12600000',
-          is_market_open: true,
+          is_market_open: false,
         }),
         { status: 200, headers: { 'Content-Type': 'application/json' } },
       ),
     );
     vi.stubGlobal('fetch', fetchMock);
 
-    const result = await fetchQuoteFromProvider('NSE:SBIN');
+    const result = await fetchQuoteFromProvider('MSFT');
 
     expect(result.status).toBe('connected');
-    expect(result.message).toContain('end-of-day');
-    expect(result.quote).toMatchObject({
-      symbol: 'SBIN:NSE',
-      exchange: 'NSE',
-      currency: 'INR',
-      freshness: 'end_of_day',
-      price: 812.65,
-    });
+    expect(result.message).toContain('Twelve Data');
+    expect(result.quote).toMatchObject({ symbol: 'MSFT', currency: 'USD', freshness: 'end_of_day', price: 512.65 });
     const requestUrl = new URL(String(fetchMock.mock.calls[0][0]));
-    expect(requestUrl.searchParams.get('symbol')).toBe('SBIN:NSE');
+    expect(requestUrl.hostname).toBe('api.twelvedata.com');
+    expect(requestUrl.searchParams.get('symbol')).toBe('MSFT');
   });
 
-  it('preserves Indian OHLCV history and uses EOD intervals', async () => {
+  it('routes NSE symbols to Yahoo only, even when Twelve Data is configured', async () => {
+    process.env.MARKET_DATA_PROVIDER = 'twelvedata';
+    process.env.MARKET_DATA_API_KEY = 'market-test-secret';
+    const fetchMock = vi.fn().mockResolvedValue(new Response('Too Many Requests', { status: 429 }));
+    vi.stubGlobal('fetch', fetchMock);
+    await expect(fetchQuoteFromProvider('NSE:SBIN')).rejects.toThrow(/Market data unavailable/);
+    for (const [input] of fetchMock.mock.calls) expect(new URL(String(input)).hostname).not.toContain('twelvedata');
+  });
+
+  it('preserves OHLCV history from Twelve Data and uses daily intervals for 1m', async () => {
     process.env.MARKET_DATA_PROVIDER = 'twelvedata';
     process.env.MARKET_DATA_API_KEY = 'market-test-secret';
     process.env.MARKET_DATA_BASE_URL = 'https://api.twelvedata.com/quote';
@@ -277,7 +282,7 @@ describe('Twelve Data provider adapter', () => {
     );
     vi.stubGlobal('fetch', fetchMock);
 
-    const points = await fetchHistoryFromProvider('RELIANCE.NS', '1d');
+    const points = await fetchHistoryFromProvider('IBM', '1m');
 
     expect(points).toEqual([{
       date: '2026-08-14',
@@ -289,20 +294,15 @@ describe('Twelve Data provider adapter', () => {
       volume: 7420000,
     }]);
     const requestUrl = new URL(String(fetchMock.mock.calls[0][0]));
-    expect(requestUrl.searchParams.get('symbol')).toBe('RELIANCE:NSE');
+    expect(requestUrl.pathname).toBe('/time_series');
+    expect(requestUrl.searchParams.get('symbol')).toBe('IBM');
     expect(requestUrl.searchParams.get('interval')).toBe('1day');
   });
 
-  it('uses an INR-labelled NSE demo when the key is absent', async () => {
+  it('never manufactures an NSE quote when Yahoo is unavailable', async () => {
     delete process.env.MARKET_DATA_API_KEY;
-    const result = await fetchQuoteFromProvider('SBIN.NS');
-    expect(result.status).toBe('not_configured');
-    expect(result.quote).toMatchObject({
-      symbol: 'SBIN:NSE',
-      exchange: 'NSE',
-      currency: 'INR',
-      freshness: 'demo',
-    });
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('Forbidden', { status: 403 })));
+    await expect(fetchQuoteFromProvider('SBIN.NS')).rejects.toThrow(/Market data unavailable for SBIN\.NS/);
   });
 });
 
@@ -443,7 +443,7 @@ describe('Yahoo Finance provider adapter', () => {
     expect(requestUrl.searchParams.get('interval')).toBe('1d');
   });
 
-  it('returns an explicitly labelled demo when Yahoo rate-limits the request', async () => {
+  it('reports a Yahoo rate limit as unavailable instead of showing a demo price', async () => {
     process.env.MARKET_DATA_PROVIDER = 'yahoo';
     delete process.env.MARKET_DATA_API_KEY;
     vi.stubGlobal(
@@ -451,14 +451,7 @@ describe('Yahoo Finance provider adapter', () => {
       vi.fn().mockResolvedValue(new Response('Too Many Requests', { status: 429 })),
     );
 
-    const result = await fetchQuoteFromProvider('SBIN:NSE');
-
-    expect(result.status).toBe('rate_limited');
-    expect(result.quote).toMatchObject({
-      symbol: 'SBIN:NSE',
-      freshness: 'demo',
-      providerName: 'Demo Fixture Provider',
-    });
+    await expect(fetchQuoteFromProvider('SBIN:NSE')).rejects.toThrow(/rate limit/i);
   });
 });
 
@@ -511,11 +504,11 @@ describe('Hybrid market-data routing', () => {
 
     expect(result.status).toBe('connected');
     expect(result.quote.providerName).toBe('Yahoo Finance (Experimental)');
-    expect(result.message).toContain('Hybrid primary Yahoo Finance');
+    expect(result.message).toContain('Yahoo Finance · experimental/reference');
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
-  it('fails over from a rate-limited Yahoo request to Twelve Data', async () => {
+  it('fails over from a rate-limited Yahoo request to Twelve Data (non-Indian symbol)', async () => {
     process.env.MARKET_DATA_PROVIDER = 'hybrid';
     process.env.MARKET_DATA_PRIMARY_PROVIDER = 'yahoo';
     process.env.MARKET_DATA_FALLBACK_PROVIDER = 'twelvedata';
@@ -526,42 +519,36 @@ describe('Hybrid market-data routing', () => {
       .mockResolvedValueOnce(
         new Response(
           JSON.stringify({
-            symbol: 'SBIN',
-            name: 'State Bank of India',
-            exchange: 'NSE',
-            currency: 'INR',
+            symbol: 'AAPL',
+            name: 'Apple Inc',
+            exchange: 'NASDAQ',
+            currency: 'USD',
             datetime: '2026-08-17',
-            open: '806.40',
-            high: '817.20',
-            low: '803.90',
-            close: '812.65',
-            previous_close: '806.25',
-            change: '6.40',
-            percent_change: '0.79',
-            volume: '12600000',
+            open: '226.40',
+            high: '229.20',
+            low: '225.90',
+            close: '228.65',
+            previous_close: '226.25',
+            change: '2.40',
+            percent_change: '1.06',
+            volume: '42600000',
           }),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
     vi.stubGlobal('fetch', fetchMock);
 
-    const result = await fetchQuoteFromProvider('SBIN:NSE');
+    const result = await fetchQuoteFromProvider('AAPL');
 
     expect(result.status).toBe('connected');
-    expect(result.quote).toMatchObject({
-      symbol: 'SBIN:NSE',
-      providerName: 'Twelve Data',
-      freshness: 'end_of_day',
-    });
-    expect(result.message).toContain('Hybrid failover used Twelve Data');
-    expect(result.message).toContain('Yahoo Finance returned rate_limited');
-    expect(fetchMock).toHaveBeenCalledTimes(2);
-    const fallbackUrl = new URL(String(fetchMock.mock.calls[1][0]));
+    expect(result.quote).toMatchObject({ symbol: 'AAPL', providerName: 'Twelve Data', price: 228.65 });
+    expect(result.message).toMatch(/^Twelve Data:/);
+    const fallbackUrl = new URL(String(fetchMock.mock.calls.at(-1)![0]));
     expect(fallbackUrl.pathname).toBe('/quote');
-    expect(fallbackUrl.searchParams.get('symbol')).toBe('SBIN:NSE');
+    expect(fallbackUrl.searchParams.get('symbol')).toBe('AAPL');
   });
 
-  it('uses Twelve Data history when the Yahoo health probe is rate-limited', async () => {
+  it('uses Twelve Data history when Yahoo is rate-limited (non-Indian symbol)', async () => {
     process.env.MARKET_DATA_PROVIDER = 'hybrid';
     process.env.MARKET_DATA_PRIMARY_PROVIDER = 'yahoo';
     process.env.MARKET_DATA_FALLBACK_PROVIDER = 'twelvedata';
@@ -586,7 +573,7 @@ describe('Hybrid market-data routing', () => {
       );
     vi.stubGlobal('fetch', fetchMock);
 
-    const points = await fetchHistoryFromProvider('SBIN:NSE', '1m');
+    const points = await fetchHistoryFromProvider('AAPL', '1m');
 
     expect(points).toEqual([{
       date: '2026-08-17',
@@ -597,8 +584,7 @@ describe('Hybrid market-data routing', () => {
       close: 812.65,
       volume: 12600000,
     }]);
-    expect(fetchMock).toHaveBeenCalledTimes(2);
-    const fallbackUrl = new URL(String(fetchMock.mock.calls[1][0]));
+    const fallbackUrl = new URL(String(fetchMock.mock.calls.at(-1)![0]));
     expect(fallbackUrl.pathname).toBe('/time_series');
   });
 });
@@ -634,11 +620,14 @@ describe('FRED provider adapter', () => {
     expect(requestUrl.searchParams.get('file_type')).toBe('json');
   });
 
-  it('returns a non-live response when the FRED key is absent', async () => {
+  it('falls back to the keyless public CSV and never fabricates values when it fails', async () => {
     delete process.env.FRED_API_KEY;
+    const fetchMock = vi.fn().mockResolvedValue(new Response('Service Unavailable', { status: 503 }));
+    vi.stubGlobal('fetch', fetchMock);
     const overview = await fetchFredOverview();
-    expect(overview.status).toBe('not_configured');
+    expect(overview.status).not.toBe('connected');
     expect(overview.indicators.every((indicator) => indicator.value === null)).toBe(true);
+    for (const [input] of fetchMock.mock.calls) expect(new URL(String(input)).searchParams.get('api_key')).toBeNull();
   });
 
   it('calculates year-over-year inflation by matching the prior-year month', async () => {
@@ -680,8 +669,9 @@ describe('FRED provider adapter', () => {
     );
 
     const diagnostic = await checkFredDiagnostic();
-    expect(diagnostic.status).toBe('invalid_credentials');
+    expect(diagnostic.status).not.toBe('connected');
     expect(diagnostic.message).not.toContain('never-return-this-fred-key');
+    expect(JSON.stringify(diagnostic)).not.toContain('never-return-this-fred-key');
   });
 });
 

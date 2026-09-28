@@ -1,0 +1,6 @@
+# Prettier runs only on the files listed in the format:check script; this keeps editors from reformatting the rest.
+dist
+api
+coverage
+node_modules
+package-lock.json

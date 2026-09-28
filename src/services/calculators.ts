@@ -51,7 +51,7 @@ export const nscMaturity = (amount: number, annual: number = DEFAULT_RATES.nsc) 
 
 /** Loan EMI (reducing balance). */
 export function emi(principal: number, annual: number, months: number): number {
-  if (principal <= 0 || months <= 0) return 0;
+  if (!Number.isFinite(principal) || !Number.isFinite(annual) || !Number.isFinite(months) || principal <= 0 || months <= 0) return 0;
   const m = annual / 12;
   if (m === 0) return r2(principal / months);
   return r2(principal * m * (1 + m) ** months / ((1 + m) ** months - 1));
@@ -59,7 +59,7 @@ export function emi(principal: number, annual: number, months: number): number {
 
 /** Compound annual growth rate between two values. */
 export function cagr(start: number, end: number, years: number): number {
-  if (start <= 0 || end <= 0 || years <= 0) return Number.NaN;
+  if (!Number.isFinite(start) || !Number.isFinite(end) || !Number.isFinite(years) || start <= 0 || end <= 0 || years <= 0) return Number.NaN;
   return (end / start) ** (1 / years) - 1;
 }
 

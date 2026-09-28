@@ -14,7 +14,7 @@ import {
 import { generateVerificationCode } from './financeEngine';
 import { computeFullReliabilityEvaluation, FullReliabilityEvaluation } from './scoringEngine';
 import { withDateContext } from './dateContext';
-import { currentGroundingSources, extractQuestion, groundSystemPrompt } from './liveGrounding';
+import { currentGroundingSources, extractQuestion, finalizeGroundedAnswer, finalizeGroundedText, groundSystemPrompt } from './liveGrounding';
 
 export interface GroqModelsConfig {
   tutorModel: string;
@@ -293,10 +293,11 @@ export async function callGroqChat(
   }
 
   const data = await response.json();
-  const text = data?.choices?.[0]?.message?.content;
-  if (typeof text !== 'string' || !text.trim()) {
+  const raw = data?.choices?.[0]?.message?.content;
+  if (typeof raw !== 'string' || !raw.trim()) {
     throw new Error('Groq returned an invalid completion response.');
   }
+  const text = finalizeGroundedText(raw);
 
   return text;
 }
@@ -313,16 +314,17 @@ export async function callGroqStructuredFinancialAnswer(
     modelName?: string;
     history?: Array<{ role: string; content: string }>;
     fallbackQuestion?: string;
+    /** Throw instead of returning a generic template, so a caller with its own fallback (the AI gateway) can use it. */
+    throwOnFailure?: boolean;
   } = {},
 ): Promise<StructuredFinancialAnswer> {
   const fallbackQuestion = options.fallbackQuestion || userPrompt;
+  const fail = (reason: string, text: string = generateFallbackChatResponse(fallbackQuestion)) => {
+    if (options.throwOnFailure) throw new Error(reason);
+    return createFallbackStructuredFinancialAnswer(fallbackQuestion, text);
+  };
   const apiKey = process.env.GROQ_API_KEY?.trim() || '';
-  if (!apiKey) {
-    return createFallbackStructuredFinancialAnswer(
-      fallbackQuestion,
-      generateFallbackChatResponse(fallbackQuestion),
-    );
-  }
+  if (!apiKey) return fail('Groq is not configured.');
 
   const models = getGroqModels();
   const allowedModels = new Set(Object.values(models));
@@ -386,27 +388,14 @@ export async function callGroqStructuredFinancialAnswer(
       );
     }
   } catch {
-    return createFallbackStructuredFinancialAnswer(
-      fallbackQuestion,
-      generateFallbackChatResponse(fallbackQuestion),
-    );
+    return fail('Groq request failed.');
   }
 
-  if (!response.ok) {
-    return createFallbackStructuredFinancialAnswer(
-      fallbackQuestion,
-      generateFallbackChatResponse(fallbackQuestion),
-    );
-  }
+  if (!response.ok) return fail(`Groq answered HTTP ${response.status}.`);
 
   const data = await response.json().catch(() => null);
   const content = data?.choices?.[0]?.message?.content;
-  if (typeof content !== 'string' || !content.trim()) {
-    return createFallbackStructuredFinancialAnswer(
-      fallbackQuestion,
-      generateFallbackChatResponse(fallbackQuestion),
-    );
-  }
+  if (typeof content !== 'string' || !content.trim()) return fail('Groq returned an empty answer.');
 
   const decoded = (() => {
     try {
@@ -416,15 +405,18 @@ export async function callGroqStructuredFinancialAnswer(
     }
   })();
   const parsed = structuredFinancialAnswerSchema.safeParse(decoded);
-  if (!parsed.success) {
-    return createFallbackStructuredFinancialAnswer(fallbackQuestion, content);
-  }
+  if (!parsed.success) return fail('Groq answer failed schema validation.', content);
 
   return withGroundingSources(sanitizeStructuredFinancialAnswer(parsed.data));
 }
 
-/** Adds the live sources gathered for this request to a structured answer (deduplicated by name). */
+/**
+ * Finalises a grounded answer: removes citations that point at no source, enforces verified numbers and
+ * attaches the numbered live sources (with links). Outside a grounding scope it only merges live sources.
+ */
 function withGroundingSources(answer: StructuredFinancialAnswer): StructuredFinancialAnswer {
+  const finalized = finalizeGroundedAnswer(answer);
+  if (finalized !== answer) return finalized;
   const live = currentGroundingSources();
   if (!live.length) return answer;
   const seen = new Set(answer.sources.map((s) => s.name));

@@ -59,6 +59,7 @@ import { synthesize, translateText, VOICE_LANGS } from './voiceService';
 import { readWebPage } from './webReader';
 import { createRateLimiter } from './rateLimiter';
 import { precisionRouter } from './precisionRoutes';
+import { groundingRouter } from './groundingRoutes';
 
 const voiceLimiter = createRateLimiter({ windowMs: 60_000, max: 30, message: 'Too many voice requests. Please wait a minute.' });
 
@@ -66,6 +67,8 @@ export const apiRouter = Router();
 
 // Certified calculations from the Python precision engine (503 until PRECISION_ENGINE_URL is set).
 apiRouter.use('/precision', precisionRouter);
+// Live-data pipeline status and fetch-only preview (no model call).
+apiRouter.use('/grounding', groundingRouter);
 
 // ---------------- Voice: translation and speech audio in Indian languages ----------------
 const voiceBody = (req: Request) => {

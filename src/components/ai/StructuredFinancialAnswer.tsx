@@ -99,9 +99,20 @@ export const StructuredFinancialAnswerView: React.FC<{ answer: StructuredFinanci
         <ul>{answer.keyTakeaways.map((x, i) => <li key={i}><RichFinancialText value={clean(x)}/></li>)}</ul>
       </section>}
 
+      {(answer.verifiedNumbers?.length ?? 0) > 0 && <section className="sa-sources">
+        <div className="sa-label"><Calculator className="h-3.5 w-3.5"/>Calculated by the app, not the AI</div>
+        <div className="flex flex-wrap gap-2">{answer.verifiedNumbers!.map((v) => <span key={v.id} className="rounded-lg border border-line bg-subtle px-2 py-1 text-[10px] text-secondary" title={v.assumptions.join(' ')}><b className="text-ink">{v.display}</b> · {v.label}{v.certified && v.badge ? <> · <CheckCircle2 className="inline h-3 w-3 align-[-2px]"/> {v.badge}</> : null}</span>)}</div>
+      </section>}
+
       {answer.sources?.length > 0 && <section className="sa-sources">
         <div className="sa-label"><Database className="h-3.5 w-3.5"/>{kind === 'market' ? <><Newspaper className="h-3.5 w-3.5"/>Live sources</> : 'Sources'}</div>
-        <div className="flex flex-wrap gap-2">{answer.sources.map((s, i) => <span key={i} className="rounded-lg border border-line bg-subtle px-2 py-1 text-[10px] text-secondary"><b className="text-ink">{clean(s.name)}</b>{s.dataDate ? ` · ${s.dataDate}` : ''}{s.freshness ? ` · ${s.freshness}` : ''}</span>)}</div>
+        <div className="flex flex-wrap gap-2">{answer.sources.map((s, i) => {
+          const body = <><b className="text-ink">{clean(s.name)}</b>{s.dataDate ? ` · as of ${s.dataDate}` : ''}{s.freshness ? ` · ${s.freshness}` : ''}</>;
+          const safe = s.url && /^https?:\/\//i.test(s.url) ? s.url : undefined;
+          return safe
+            ? <a key={i} href={safe} target="_blank" rel="noopener noreferrer nofollow" className="rounded-lg border border-line bg-subtle px-2 py-1 text-[10px] text-secondary underline-offset-2 hover:underline">{body}</a>
+            : <span key={i} className="rounded-lg border border-line bg-subtle px-2 py-1 text-[10px] text-secondary">{body}</span>;
+        })}</div>
       </section>}
 
       {answer.risks?.length > 0 && <section className="sa-risks">

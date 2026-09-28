@@ -21,6 +21,7 @@ export default mergeConfig(
           'server/ws/hub.ts',
           'server/rateLimiter.ts',
           'rag/rag_engine.ts',
+          'server/fetch/*.ts',
         ],
         thresholds: { lines: 80, functions: 80, statements: 80, branches: 75 },
       },

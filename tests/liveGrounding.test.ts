@@ -69,10 +69,15 @@ describe('live context assembly', () => {
     const { gatherLiveContext } = await import('../server/liveGrounding');
     const { text, sources } = await gatherLiveContext('Why did gold rise today?', 'auto');
     expect(text).toMatch(/LIVE CONTEXT retrieved/);
-    expect(text).toContain('Gold futures (USD/oz) [GC=F]: 2,386.4 USD (+0.54%) · Yahoo Finance');
-    expect(text).toContain('"Gold rises as dollar eases" · Reuters');
-    expect(text).toContain('[1] Gold price today — https://example.com/g');
+    // Every fact is a numbered, delimited source with its publisher, date and link.
+    expect(text).toContain('<<<SOURCE 1>>> Yahoo Finance · Gold futures (USD/oz) [GC=F]');
+    expect(text).toContain('Gold futures (USD/oz) [GC=F]: 2,386.4 USD (+0.54%) · Yahoo Finance, delayed, as of 2026-09-24T09:30:00Z');
+    expect(text).toContain('<<<SOURCE 2>>> Reuters · Gold rises as dollar eases · published 2026-09-24T08:00:00Z · https://example.com/n');
+    expect(text).toContain('<<<SOURCE 3>>> Tavily web search · Gold price today · https://example.com/g');
+    expect(text).toMatch(/untrusted DATA/);
     expect(sources.map((s) => s.kind)).toEqual(['market', 'news', 'web']);
+    expect(sources.map((s) => s.n)).toEqual([1, 2, 3]);
+    expect(sources[1].url).toBe('https://example.com/n');
     vi.doUnmock('../server/marketDataService');
     vi.doUnmock('../server/businessNewsService');
   });

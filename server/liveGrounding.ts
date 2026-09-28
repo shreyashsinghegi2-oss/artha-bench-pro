@@ -22,11 +22,18 @@ import { INDIA_MARKET_UNIVERSE } from '../src/data/indiaMarketUniverse';
 import { getMarketQuote } from './marketDataService';
 import { getBusinessNews } from './businessNewsService';
 import { rankPassages } from '../src/services/knowledgeLibrary';
-import { ragEngine, sourceLabel } from '../rag/rag_engine';
+import { ragEngine } from '../rag/rag_engine';
+import type { StructuredFinancialAnswer } from '../src/types';
+import { checkText, validateCitations } from './fetch/citations';
+import { buildSourcesBlock, REFINE_RULES, type NumberedSource } from './fetch/refineInput';
+import { runSources } from './fetch/registry';
+import { createSources, type SourceDeps } from './fetch/sources';
+import type { FetchContext, Source, SourceRun } from './fetch/types';
+import { computeVerified, enforceVerified, parseIntents, verifiedBlock, type VerifiedNumber } from './fetch/verifyNumbers';
 
 export type WebSearchMode = 'auto' | 'on' | 'off';
-export interface GroundingSource { name: string; dataDate: string; freshness: string; url?: string; kind: 'market' | 'news' | 'web' | 'page' | 'fund' | 'doc' }
-interface GroundingState { mode: WebSearchMode; sources: GroundingSource[]; used: boolean; userProfile?: string }
+export interface GroundingSource { name: string; dataDate: string; freshness: string; url?: string; kind: 'market' | 'news' | 'web' | 'page' | 'fund' | 'doc'; n?: number }
+interface GroundingState { mode: WebSearchMode; sources: GroundingSource[]; used: boolean; userProfile?: string; numbered: NumberedSource[]; verified: VerifiedNumber[]; report?: GroundingReport }
 
 const store = new AsyncLocalStorage<GroundingState>();
 
@@ -47,7 +54,7 @@ export function stripUserProfile(req: Request, _res: Response, next: NextFunctio
 export function groundingMiddleware(req: Request, _res: Response, next: NextFunction) {
   const raw = String(req.header('x-artha-web-search') ?? (req.body && typeof req.body === 'object' ? (req.body as Record<string, unknown>).webSearch : '') ?? 'auto').toLowerCase();
   const mode: WebSearchMode = raw === 'on' || raw === 'true' ? 'on' : raw === 'off' || raw === 'false' ? 'off' : 'auto';
-  store.run({ mode, sources: [], used: false, userProfile: (req as Request & { arthaUserProfile?: string }).arthaUserProfile }, next);
+  store.run({ mode, sources: [], used: false, numbered: [], verified: [], userProfile: (req as Request & { arthaUserProfile?: string }).arthaUserProfile }, next);
 }
 
 /** Web-search setting for the current request ('auto' outside a grounding scope). */
@@ -109,11 +116,14 @@ export function detectInstruments(text: string): Array<{ symbol: string; label: 
 }
 
 const TIME_SENSITIVE = /\b(today|now|current(ly)?|latest|live|this (week|month|year)|recent|news|price|rate|repo|inflation|cpi|gdp|budget|policy|announced|new rule|circular|notification|deadline|due date|20(2[4-9]|3\d)|who is|what happened|why (did|is)|market)\b/i;
+/** Explicitly current information (narrower than TIME_SENSITIVE, which also matches words like "rate"). */
+const TIME_SENSITIVE_STRICT = /\b(today|now|current(ly)?|latest|live|this (week|month|year)|recent|news|announced|new rule|circular|notification)\b/i;
 const NEWSY = /\b(news|why (did|is|are)|what happened|today|latest|headline|announce|results|earnings|merger|ipo|rbi|sebi|budget|policy)\b/i;
 /** Questions that need no outside facts (pure calculation or personal planning). */
 const SELF_CONTAINED = /^\s*(calculate|compute|what is (my|the) (emi|sip|cagr)|how much (should|do) i)\b/i;
 
 /** Facts that change or are specific enough that the web should be checked (companies, rules, rates, products). */
+const OFFICIAL_TOPIC = /\b(sebi|rbi|cbdt|amfi|nse|bse|pib|irdai|pfrda|circular|regulation|notification|section|rule|tax|nav|expense ratio|kyc|repo|monetary policy|budget|mutual funds?)\b/i;
 const FACTUAL = /\b(stock|share|ipo|company|fund|scheme|nav|slab|limit|rule|rbi|sebi|irdai|gst|itr|tds|fd rate|interest rate|loan rate|best|top|compare|vs\.?|versus|which|should i (buy|sell|invest)|returns?|dividend|results|earnings|crypto|bitcoin|gold|silver|dollar|rupee)\b/i;
 const CONCEPT = /^\s*(explain|what (is|are)( an?| the)?|define|meaning of|how (does|do)|teach me|why (is|are|do))\b/i;
 const PURE_MATHS = /^[\d\s+\-*/().,%^=x×÷]+$/i;
@@ -125,7 +135,9 @@ const PURE_MATHS = /^[\d\s+\-*/().,%^=x×÷]+$/i;
 export function shouldSearchWeb(query: string, mode: WebSearchMode): boolean {
   if (mode === 'off') return false;
   if (mode === 'on') return true;
-  if (PURE_MATHS.test(query) || SELF_CONTAINED.test(query)) return false;
+  if (PURE_MATHS.test(query)) return false;
+  // A pure calculation needs no web search, unless the same question also asks for something current.
+  if (SELF_CONTAINED.test(query) && !TIME_SENSITIVE_STRICT.test(query)) return false;
   const instruments = detectInstruments(query).length > 0;
   // Timeless concepts ("explain what an index fund is") are answered from knowledge.
   if (CONCEPT.test(query) && !TIME_SENSITIVE.test(query) && !instruments) return false;
@@ -213,10 +225,9 @@ export async function webSearch(query: string): Promise<{ provider: string; resu
 
 // ---------- Context assembly ----------
 
-const cache = new Map<string, { at: number; value: { text: string; sources: GroundingSource[] } }>();
+const cache = new Map<string, { at: number; value: LiveContext }>();
 const CACHE_MS = 60_000;
 const istNow = () => new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-const fmt = (v: number) => v.toLocaleString('en-IN', { maximumFractionDigits: v < 10 ? 4 : 2 });
 
 /** Build the LIVE CONTEXT block for a question. Returns empty text when nothing relevant was found. */
 
@@ -249,121 +260,170 @@ async function fundContext(q: string): Promise<{ lines: string[]; sources: Groun
   return { lines: ['Mutual fund data (official NAVs):', line], sources: [{ name: `AMFI NAV: ${name.slice(0, 80)}`, dataDate: last?.date ?? '', freshness: 'end of day', kind: 'fund' }] };
 }
 
-async function pageContext(q: string): Promise<{ lines: string[]; sources: GroundingSource[] }> {
-  const links = linksIn(q);
-  if (!links.length) return { lines: [], sources: [] };
-  const lines: string[] = [];
-  const sources: GroundingSource[] = [];
-  for (const link of links) {
-    try {
-      const p = await readWebPage(link);
-      lines.push(`Web page the user shared — "${p.title}" (${p.url}), read ${p.retrievedAt}:`, p.text.slice(0, 2600));
-      sources.push({ name: `Page: ${p.title.slice(0, 90)}`, dataDate: p.retrievedAt, freshness: 'read now', url: p.url, kind: 'page' });
-    } catch (e) {
-      lines.push(`Web page ${link} could not be read (${e instanceof Error ? e.message : 'error'}); tell the user and do not guess its contents.`);
-    }
-  }
-  return { lines, sources };
+// ---------- Fetch → Refine → Verify ----------
+
+let registrySources: Source[] | null = null;
+/** Sources are created once per process; dependencies are the app's existing services. */
+function liveSources(): Source[] {
+  registrySources ??= createSources({
+    rag: ragEngine,
+    getMarketQuote: (symbol) => getMarketQuote(symbol) as ReturnType<SourceDeps['getMarketQuote']>,
+    fund: fundContext,
+    getBusinessNews: (q, c, r) => getBusinessNews(q, c, r) as ReturnType<SourceDeps['getBusinessNews']>,
+    webSearch,
+    readWebPage,
+    linksIn,
+  });
+  return registrySources;
 }
 
-export async function gatherLiveContext(query: string, mode: WebSearchMode = 'auto'): Promise<{ text: string; sources: GroundingSource[] }> {
+const KIND_FOR: Record<string, GroundingSource['kind']> = { rag: 'doc', official: 'doc', market: 'market', fund: 'fund', 'user-page': 'page', news: 'news', web: 'web', wikipedia: 'web' };
+
+export interface LiveContext { text: string; sources: GroundingSource[]; numbered: NumberedSource[]; runs: SourceRun[] }
+
+/** Fetch (registry) → refine input (rank, dedupe, number, wrap). Returns empty text when nothing relevant was found. */
+export async function gatherLiveContext(query: string, mode: WebSearchMode = 'auto'): Promise<LiveContext> {
   const q = query.replace(/\s+/g, ' ').trim().slice(0, 600);
-  if (!q) return { text: '', sources: [] };
+  if (!q) return { text: '', sources: [], numbered: [], runs: [] };
   const key = `${mode}|${q.toLowerCase()}`;
   const hit = cache.get(key);
   if (hit && Date.now() - hit.at < CACHE_MS) return hit.value;
 
   const instruments = detectInstruments(q);
-  const wantNews = NEWSY.test(q) || (instruments.length > 0 && /\bwhy|move|fell|rose|up|down\b/i.test(q));
-  const wantWeb = shouldSearchWeb(q, mode);
+  const ctx: FetchContext = {
+    question: q,
+    prompt: query.slice(0, 2000),
+    webMode: mode,
+    instruments,
+    wantNews: NEWSY.test(q) || (instruments.length > 0 && /\bwhy|move|fell|rose|up|down\b/i.test(q)),
+    wantWeb: shouldSearchWeb(q, mode),
+    wantOfficial: FACTUAL.test(q) || OFFICIAL_TOPIC.test(q),
+    // Background definitions only for plain concept questions (not calculations or current events).
+    isConcept: CONCEPT.test(q) && !SELF_CONTAINED.test(q) && !TIME_SENSITIVE.test(q) && !/\b(emi|sip|cagr|xirr|tax on|loan of)\b/i.test(q),
+  };
+  const runs = await runSources(liveSources(), ctx, { budgetMs: 4_000 });
+  const items = runs.flatMap((r) => r.items);
+  const built = buildSourcesBlock(items, q, { retrievedAtIst: `${istNow()} IST` });
 
-  // Official documents (SEBI, RBI, CBDT, AMFI, NSE/BSE) from the RAG sidecar when RAG_SIDECAR_URL is set.
-  const wantDocs = ragEngine.enabled && (FACTUAL.test(q) || /\b(sebi|rbi|cbdt|amfi|nse|bse|circular|regulation|section|rule|tax|nav|expense ratio|kyc)\b/i.test(q));
-  const [quotes, news, web, page, fund, docs] = await Promise.all([
-    Promise.all(instruments.map((i) => withTimeout(getMarketQuote(i.symbol).then((r) => ({ i, quote: r.quote })), 3500))),
-    wantNews ? withTimeout(getBusinessNews(instruments[0]?.label ?? q.split(' ').slice(0, 6).join(' '), 'business', 'india'), 4000) : Promise.resolve(null),
-    wantWeb ? withTimeout(webSearch(q), 7000) : Promise.resolve(null),
-    withTimeout(pageContext(query.slice(0, 2000)), 11000),
-    withTimeout(fundContext(q), 8000),
-    wantDocs ? withTimeout(ragEngine.retrieve(q, { topK: 5 }), 3000) : Promise.resolve(null),
-  ]);
-
-  const lines: string[] = [];
-  const sources: GroundingSource[] = [];
-  const quoteLines = quotes.flatMap((x) => {
-    const quote = x?.quote;
-    if (!x || !quote || quote.freshness === 'demo' || !Number.isFinite(quote.price)) return [];
-    const pct = quote.changePercent != null ? ` (${quote.changePercent >= 0 ? '+' : ''}${quote.changePercent.toFixed(2)}%)` : '';
-    const when = quote.providerTimestamp || quote.retrievedAt;
-    sources.push({ name: `${quote.providerName}: ${x.i.label}`, dataDate: when, freshness: quote.freshness, kind: 'market' });
-    return [`- ${x.i.label} [${quote.symbol}]: ${fmt(quote.price)} ${quote.currency}${pct} · ${quote.providerName}, ${quote.freshness.replace('_', ' ')}, as of ${when}`];
-  });
-  if (quoteLines.length) lines.push('Market data:', ...quoteLines);
-  if (instruments.length && !quoteLines.length) lines.push(`Market data: live quotes for ${instruments.map((i) => i.label).join(', ')} could not be retrieved right now; say so rather than guessing a price.`);
-
-  const items = (news as { items?: Array<{ title: string; sourceName: string; sourceUrl: string; publishedAt: string | null }> } | null)?.items ?? [];
-  if (items.length) {
-    lines.push('Business news:');
-    for (const n of items.slice(0, 4)) {
-      lines.push(`- "${n.title}" · ${n.sourceName}${n.publishedAt ? `, ${n.publishedAt}` : ''}`);
-      sources.push({ name: `${n.sourceName}: ${n.title.slice(0, 90)}`, dataDate: n.publishedAt ?? '', freshness: 'news', url: n.sourceUrl, kind: 'news' });
-    }
+  const notes: string[] = [];
+  if (instruments.length && !items.some((i) => i.sourceId === 'market')) {
+    notes.push(`Market data: live quotes for ${instruments.map((i) => i.label).join(', ')} could not be retrieved right now; say so rather than guessing a price.`);
   }
-
-  if (web && web.results.length) {
-    lines.push(`Web search (${web.provider}):`);
-    web.results.forEach((r, k) => {
-      lines.push(`[${k + 1}] ${r.title} — ${r.url}\n    ${r.snippet}`);
-      sources.push({ name: `${r.source}: ${r.title.slice(0, 90)}`, dataDate: istNow(), freshness: 'web', url: r.url, kind: 'web' });
-    });
-  } else if (wantWeb) {
-    lines.push('Web search: no results could be retrieved; do not state current figures you cannot verify.');
-  }
-
-  if (page?.lines.length) { lines.push(...page.lines); sources.push(...page.sources); }
-  if (fund?.lines.length) { lines.push(...fund.lines); sources.push(...fund.sources); }
-  if (docs?.ok && docs.passages.length) {
-    lines.push(docs.context);
-    for (const p of docs.passages) sources.push({ name: `[${p.citation}] ${sourceLabel(p)}`.slice(0, 160), dataDate: p.date ?? '', freshness: 'official document', url: p.url ?? undefined, kind: 'doc' });
-  }
+  if (ctx.wantWeb && !runs.find((r) => r.id === 'web')?.items.length) notes.push('Web search: no results could be retrieved; do not state current figures you cannot verify.');
+  const fundRun = runs.find((r) => r.id === 'fund');
+  if (fundRun?.ok && !fundRun.items.length && fundQueryFrom(q)) notes.push(`Mutual fund data: no scheme matched "${fundQueryFrom(q)}"; ask the user for the exact fund name.`);
 
   // Verified formulas from the ArthaMind formula book, so calculations use the exact, tested form.
   const formulas = rankPassages(q, [], 2).flatMap((h) => (h.kind === 'formula' && h.score > 2.5 && h.entry.formula ? [h.entry] : []));
   if (formulas.length) {
-    lines.push('Verified formulas (ArthaMind formula book, checked by automated tests):');
-    for (const e of formulas) lines.push(`- ${e.title}: ${e.formula}${e.example ? ` · e.g. ${e.example.inputs} → ${e.example.result}` : ''}`);
+    notes.push('Verified formulas (ArthaMind formula book, checked by automated tests):');
+    for (const e of formulas) notes.push(`- ${e.title}: ${e.formula}${e.example ? ` · e.g. ${e.example.inputs} → ${e.example.result}` : ''}`);
   }
 
-  const text = lines.length
-    ? `LIVE CONTEXT retrieved ${istNow()} IST. Treat these as the current facts for this answer. Quote figures exactly with their source and time; if the question needs something not listed here, say you could not verify it live. Web results are listed newest first with their publish dates: for "who is" / "current" / "latest" questions, answer from the most recent dated result and name it with its date; never answer current facts from memory or encyclopaedias. Search results can be wrong or dated: prefer official sources (RBI, SEBI, Income Tax Department, NSE, BSE, PIB) when they disagree.\n${lines.join('\n')}`
+  const parts = [built.text, notes.join('\n')].filter(Boolean);
+  const text = parts.length
+    ? `LIVE CONTEXT retrieved ${istNow()} IST. Treat the numbered sources as the current facts for this answer. For "who is" / "current" / "latest" questions, answer from the most recent dated source and name its date; never answer current facts from memory or encyclopaedias. Prefer official sources (RBI, SEBI, Income Tax Department, AMFI, NSE, BSE, PIB) when sources disagree.\n${parts.join('\n\n')}`
     : '';
-  const value = { text, sources };
+  const sources: GroundingSource[] = built.numbered.map((s) => ({
+    name: `[${s.n}] ${s.publisher} · ${s.title}`.slice(0, 160),
+    dataDate: (s.publishedAt || s.fetchedAt).slice(0, 80),
+    freshness: s.freshness,
+    url: s.url,
+    kind: KIND_FOR[s.sourceId] ?? 'web',
+    n: s.n,
+  }));
+  const value: LiveContext = { text, sources, numbered: built.numbered, runs };
   cache.set(key, { at: Date.now(), value });
   if (cache.size > 300) cache.delete(cache.keys().next().value as string);
   return value;
 }
 
-/**
- * Adds live context for `userPrompt` to a system prompt. Used by every model call. Only the first call
- * in a request gathers context; later calls in the same request reuse the collected sources.
- */
 /** House number style for every assistant: users of all backgrounds read full amounts more easily than shorthand. */
 export const NUMBER_STYLE = 'NUMBER STYLE: write every rupee amount in full with Indian digit grouping (₹12,00,000; ₹1,20,200; ₹5,000). Never abbreviate amounts as k, K, L, lakh, Cr, crore, M or bn.';
 
+/**
+ * Adds live context for `userPrompt` to a system prompt. Used by every model call. Only the first call
+ * in a request gathers context and computes verified numbers; later calls in the same request reuse them.
+ */
 export async function groundSystemPrompt(systemPrompt: string, userPrompt: string): Promise<string> {
   const state = store.getStore();
   const profile = state?.userProfile ? `\n\nTHE USER'S OWN DATA (shared by the user from their saved records; treat as facts about this person, use it to personalise every recommendation, and name the figures you rely on):\n${state.userProfile}` : '';
   const styled = `${systemPrompt}\n\n${IDENTITY_BLOCK}\n${SCOPE_BLOCK}\n\n${NUMBER_STYLE}${profile}`;
   if (!state) return styled;
-  const mode = state.mode;
   try {
-    const { text, sources } = await gatherLiveContext(userPrompt, mode);
-    if (!state.used) { state.sources.push(...sources); state.used = true; }
-    return text ? `${styled}\n\n${text}` : styled;
+    const [live, verified] = await Promise.all([
+      gatherLiveContext(userPrompt, state.mode),
+      state.used ? Promise.resolve(state.verified) : computeVerified(parseIntents(userPrompt)).catch(() => [] as VerifiedNumber[]),
+    ]);
+    if (!state.used) {
+      state.sources.push(...live.sources);
+      state.numbered = live.numbered;
+      state.verified = verified;
+      state.used = true;
+    }
+    const blocks = [live.text, verifiedBlock(state.verified)].filter(Boolean);
+    return blocks.length ? `${styled}\n\n${blocks.join('\n\n')}\n\n${REFINE_RULES}` : styled;
   } catch {
     return styled;
   }
 }
+
+export interface GroundingReport { sources: number; cited: number[]; invalidCitationsRemoved: number[]; uncited: boolean; verifiedNumbers: number; certifiedNumbers: number; numberCorrections: string[] }
+
+/**
+ * After generation: drop citations that point at no source, enforce verified numbers, and attach the numbered
+ * sources (with links) and verified numbers to the answer. Safe to call outside a grounding scope (no-op).
+ */
+export function finalizeGroundedAnswer(answer: StructuredFinancialAnswer): StructuredFinancialAnswer {
+  const state = store.getStore();
+  if (!state) return answer;
+  const { answer: cited, report } = validateCitations(answer, state.numbered);
+  const { answer: fixed, corrections } = enforceVerified(cited, state.verified);
+  if (corrections.length) console.info(JSON.stringify({ scope: 'artha-grounding', event: 'verified-number-corrected', corrections }));
+  const live = state.sources.map(({ name, dataDate, freshness, url }) => ({ name, dataDate, freshness, ...(url ? { url } : {}) }));
+  const seen = new Set(live.map((s) => s.name));
+  const own = fixed.sources.filter((s) => !seen.has(s.name));
+  state.report = {
+    sources: state.numbered.length,
+    cited: report.cited,
+    invalidCitationsRemoved: report.invalid,
+    uncited: report.uncited,
+    verifiedNumbers: state.verified.length,
+    certifiedNumbers: state.verified.filter((v) => v.certified).length,
+    numberCorrections: corrections,
+  };
+  return {
+    ...fixed,
+    sources: [...live, ...own].slice(0, 12),
+    ...(state.verified.length ? { verifiedNumbers: state.verified } : {}),
+  };
+}
+
+/** Plain-text answers: remove citation markers that point at no source (numbers are enforced on structured answers). */
+export function finalizeGroundedText(text: string): string {
+  const state = store.getStore();
+  if (!state || !state.used) return text;
+  return checkText(text, new Set(state.numbered.map((s) => s.n))).text;
+}
+
+/** Citation / verification summary for the current request (null outside a grounding scope or before finalising). */
+export const currentGroundingReport = (): GroundingReport | null => store.getStore()?.report ?? null;
+
+/** Readable live facts for the offline fallback (no AI): numbered sources as plain lines. */
+export function numberedFactsForFallback(ctx: LiveContext): string[] {
+  const byN = new Map(ctx.numbered.map((s) => [s.n, s]));
+  return ctx.text
+    .split('<<<SOURCE ')
+    .slice(1)
+    .map((chunk) => {
+      const n = Number(chunk.slice(0, chunk.indexOf('>>>')));
+      const body = chunk.slice(chunk.indexOf('\n') + 1, chunk.indexOf('<<<END')).trim().replace(/\s+/g, ' ').slice(0, 320);
+      const s = byN.get(n);
+      return s ? `[${n}] ${s.publisher}: ${body}` : '';
+    })
+    .filter(Boolean);
+}
+
 
 /** Which live sources are connected (no secrets), for the chat UI's source indicator. */
 export function liveSourceStatus() {

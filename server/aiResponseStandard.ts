@@ -20,6 +20,21 @@ const sourceSchema = z
     name: z.string().min(1).max(160),
     dataDate: z.string().max(80),
     freshness: z.string().min(1).max(120),
+    // Added by the grounding pipeline after generation (never requested from the model).
+    url: z.string().max(2000).optional(),
+  })
+  .strict();
+
+const verifiedNumberSchema = z
+  .object({
+    id: z.string().max(20),
+    label: z.string().max(300),
+    display: z.string().max(60),
+    value: z.string().max(80),
+    certified: z.boolean(),
+    method: z.enum(['precision-engine', 'app-calculator']),
+    badge: z.string().max(160).optional(),
+    assumptions: z.array(z.string().max(300)).max(6),
   })
   .strict();
 
@@ -55,6 +70,7 @@ export const structuredFinancialAnswerSchema = z
     risks: z.array(z.string().min(1).max(600)).max(8),
     keyTakeaways: z.array(z.string().min(1).max(500)).max(8),
     sources: z.array(sourceSchema).max(12),
+    verifiedNumbers: z.array(verifiedNumberSchema).max(6).optional(),
   })
   .strict();
 

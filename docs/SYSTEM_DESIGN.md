@@ -234,3 +234,75 @@ If it cannot prove at most 1×10⁻⁸ relative error, it answers 422 with no nu
 **Known differences from the TS tax engine**
 - The precision engine rounds total income to ₹10 (s.288A).
 - It applies surcharge marginal relief, which the TS engine only flags as a warning.
+
+---
+
+## 9. Fetch → Refine → Verify (live answers)
+
+Every assistant answer is built from data fetched at question time. The model extracts, organises and explains that data with citations. Numbers the app can compute are computed by the app, never taken from the model.
+
+```
+question
+  │
+  ├─ FETCH (server/fetch/registry.ts; parallel, 4 s total budget, per-source timeout, cache, per-host back-off)
+  │    rag        official documents in the RAG sidecar (when RAG_SIDECAR_URL is set)
+  │    official   RBI and SEBI RSS feeds, only for RBI/SEBI questions; robots.txt respected, allowlisted hosts only
+  │    market     quotes for named instruments (existing market-data service)
+  │    fund       AMFI NAVs for a named fund (existing mutual-fund service)
+  │    user-page  links in the question (safe reader; Firecrawl for JS pages only if FIRECRAWL_API_KEY is set)
+  │    news       business headlines (existing news service)
+  │    web        Google-first search (Serper → Tavily/Brave → keyless Google News); the first official result page is read
+  │    wikipedia  plain concept questions only, used last, labelled "background"
+  │
+  ├─ REFINE INPUT (server/fetch/refineInput.ts)
+  │    clean → deduplicate (text similarity ≥ 0.8 or same URL) → rank (official > market > news > web > background,
+  │    plus question overlap and recency) → cap at ~6,000 characters → number [1..n] → wrap in <<<SOURCE n>>> blocks
+  │
+  ├─ VERIFY BEFORE (server/fetch/verifyNumbers.ts)
+  │    EMI, SIP, CAGR and income-tax questions with all their inputs → computed by the precision engine
+  │    (PRECISION_ENGINE_URL) or the app's calculators → passed to the model as "VERIFIED NUMBERS, copy exactly"
+  │
+  ├─ REFINE (Groq → NVIDIA NIM → offline template), with ANSWER RULES: cite [n] for every fact, say when the
+  │    sources do not answer, never invent figures, prefer official sources, copy verified numbers exactly
+  │
+  └─ VERIFY AFTER (finalizeGroundedAnswer)
+       citations: [n] that point at no source are removed and reported
+       numbers:   a figure within 10% of a verified number but different is replaced; a missing one is stated at the top
+       badge:     only precision-engine results with verification.all_agree === true
+       sources:   numbered, with publisher, "as of" time, freshness and link, shown on the answer card
+```
+
+**Sources and their verified limits**
+
+| Source | Key needed | Limits and terms (as checked) |
+|---|---|---|
+| RBI RSS (press releases, notifications) | No | Feed URLs published on rbi.org.in/Scripts/rss.aspx. Cached 15 min; robots.txt honoured; back-off on 403/429 |
+| SEBI RSS | No | Feed URL published on sebi.gov.in/rss.html. Same rules |
+| Google News RSS | No | Existing keyless fallback |
+| Serper / Tavily / Brave | Yes | Existing, optional |
+| Firecrawl | **Yes** | Its docs show every call needs `Authorization: Bearer fc-…`; there is no keyless mode. The Free plan has 1,000 credits a month, 1 credit per page. **Off** unless `FIRECRAWL_API_KEY` is set |
+| Wikipedia REST | No | Concept questions only; labelled background |
+| NSE / BSE | — | Not scraped. Prices come from the existing market-data service; NSE/BSE pages are read only when a search result links to them, through the robots-aware fetcher |
+| data.gov.in | Yes | Not wired: it needs an API key and dataset-specific resources, with no general question-to-dataset mapping |
+
+**Failure modes**
+- A source times out or fails → it is dropped and the answer uses the rest.
+- A host throttles (403/429) → back-off from 60 s, doubling to 15 min.
+- robots.txt unreachable → that site is not read (RFC 9309).
+- All models fail → the fetched facts are shown verbatim, labelled "not interpreted by AI".
+- The precision engine is down → the app's calculator value is used, with no badge.
+
+**Security**
+- Fetched text is data: markers inside a page are neutralised so a page cannot close its own block, and the model is told to ignore instructions in sources.
+- Official fetches use an allowlist, re-checked on every redirect.
+- User links go through the private-network-blocking reader.
+- No secrets appear in `/api/grounding/status`.
+
+**Observability**
+- `GET /api/grounding/status`: per-source runs, successes, failures, timeouts, cache hits, average latency and bytes.
+- `GET /api/grounding/preview?q=`: runs the fetch and refine-input steps without calling a model (rate-limited).
+- Each chat response includes `grounding` (sources, cited numbers, removed citations, number corrections).
+
+**Evaluation**
+- `scripts/eval-grounding.ts` covers 30 questions and reports citation coverage, unsupported figures, expected facts, fetch and answer latency p50/p95, and estimated tokens.
+- Run it through the "Grounding evaluation" workflow before and after a deploy, then compare the two reports.

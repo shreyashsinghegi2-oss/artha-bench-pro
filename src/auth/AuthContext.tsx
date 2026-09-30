@@ -124,10 +124,12 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
 
   const establishSession = useCallback(async (nextSession: AuthSession, remember: boolean, suppressOnboarding = false) => {
     persistSession(nextSession, remember);
-    if (!isCloudWorkspaceActiveFor(nextSession.user.id)) {
-      await hydrateCloudWorkspace(nextSession.access_token, nextSession.user.id);
-    }
-    let nextProfile = await getProfile(nextSession.access_token);
+    // Workspace hydration and the profile lookup are independent: run them together.
+    const [, fetchedProfile] = await Promise.all([
+      isCloudWorkspaceActiveFor(nextSession.user.id) ? Promise.resolve() : hydrateCloudWorkspace(nextSession.access_token, nextSession.user.id),
+      getProfile(nextSession.access_token),
+    ]);
+    let nextProfile = fetchedProfile;
     if (!nextProfile) nextProfile = await upsertProfile(nextSession.access_token, defaultProfile(nextSession.user));
     setSession(nextSession);
     setProfile(nextProfile);
@@ -175,7 +177,20 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
         if (activeSession.expires_at <= Math.floor(Date.now() / 1000) + 60) {
           activeSession = await refreshAuthSession(activeSession.refresh_token);
         } else {
-          activeSession = { ...activeSession, user: await fetchCurrentUser(activeSession.access_token) };
+          // Validate the stored token while the workspace and profile load, instead of before them.
+          const verified = fetchCurrentUser(activeSession.access_token);
+          verified.catch(() => undefined);
+          if (emailOtpRequired() && !sessionIsEmailVerified(activeSession.access_token)) {
+            activeSession = { ...activeSession, user: await verified };
+          } else {
+            const [user] = await Promise.all([verified, establishSession(activeSession, stored.remember, isResetFlow)]);
+            if (cancelled) return;
+            setSession((current) => (current ? { ...current, user } : current));
+            persistSession({ ...activeSession, user }, stored.remember);
+            if (isResetFlow) { setAuthScreen('reset'); setAuthOpen(true); }
+            try { if (!localStorage.getItem(SIGNED_IN_AT_KEY)) markSignedIn(); } catch { /* storage blocked */ }
+            return;
+          }
         }
         if (emailOtpRequired() && !sessionIsEmailVerified(activeSession.access_token)) {
           // A password-only session from before email codes were switched on: sign in again with a code.
@@ -196,6 +211,7 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
         console.warn('Authentication bootstrap failed:', error);
         persistSession(null);
         restoreGuestWorkspace();
+        if (!cancelled) { setSession(null); setProfile(null); }
       } finally {
         if (!cancelled) setLoading(false);
       }

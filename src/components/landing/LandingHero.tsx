@@ -1,7 +1,12 @@
 import React from 'react';
-import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
+import { lazy, Suspense } from 'react';
+import { useReducedMotion } from './useReducedMotion';
+
+// The animated phone (and the animation library it uses) loads after the headline and buttons are on screen.
+const HeroPhone = lazy(() => import('./HeroPhone').then((r) => ({ default: r.HeroPhone })));
 import { ArrowRight, BadgeIndianRupee, BarChart3, Bot, Calculator, Check, GraduationCap, Languages, ShieldCheck } from 'lucide-react';
-import { HeroPhone, HERO_REPORT, useLanguageCycle } from './HeroPhone';
+import { HERO_REPORT } from './heroSample';
+import { useLanguageCycle } from './heroLanguage';
 import { ArthaMindLogoMark } from '../branding/ArthaMindBrand';
 import './landingHero.css';
 import { HeroSlideshow } from './HeroSlideshow';
@@ -43,9 +48,7 @@ const LanguageBadge: React.FC = () => {
     <span className="hx-lang-icon" aria-hidden="true"><Languages size={12}/></span>
     <span className="hx-lang-num" aria-hidden="true">{String(lang.index + 1).padStart(2, '0')}<small>/{lang.total}</small></span>
     <span className="hx-lang-name" aria-hidden="true">
-      <AnimatePresence mode="popLayout" initial={false}>
-        <motion.span key={lang.code} initial={reduced ? false : { opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={reduced ? undefined : { opacity: 0, y: -10 }} transition={{ duration: 0.22 }}>{lang.name}</motion.span>
-      </AnimatePresence>
+      <span key={lang.code} className={reduced ? undefined : 'hx-lang-swap'}>{lang.name}</span>
     </span>
   </div>;
 };
@@ -55,31 +58,33 @@ const LanguageBadge: React.FC = () => {
  */
 export const LandingHero: React.FC<{ onSample: () => void; onExplore: () => void }> = ({ onSample, onExplore }) => {
   const reduced = useReducedMotion();
-  const item = (i: number) => (reduced ? {} : { initial: { opacity: 0, y: 12 }, animate: { opacity: 1, y: 0 }, transition: { delay: 0.08 + i * 0.1, duration: 0.45, ease: [0.2, 0.7, 0.2, 1] as [number, number, number, number] } });
+  // CSS entrance (no animation library): fade up with a small stagger; skipped for reduced motion.
+  const item = (i: number) => (reduced ? {} : { className: 'hx-in', style: { animationDelay: `${0.08 + i * 0.1}s` } as React.CSSProperties });
+  const cls = (base: string, i: number) => { const it = item(i); return { className: it.className ? `${base} ${it.className}` : base, style: it.style }; };
 
   return <section className="hx hx-nature hx-photo" aria-labelledby="hx-title">
     <div className="hx-scene">
     <HeroSlideshow/>
     <div className="hx-wrap">
       <div className="hx-copy">
-        <motion.h1 id="hx-title" className="hx-one hx-short" {...item(0)}>Financial intelligence <span>that grows your money and secures your future.</span></motion.h1>
-        <motion.div className="hx-ctas" {...item(1)}>
+        <h1 id="hx-title" {...cls("hx-one hx-short", 0)}>Financial intelligence <span>that grows your money and secures your future.</span></h1>
+        <div {...cls("hx-ctas", 1)}>
           <button type="button" className="hx-btn hx-btn-primary" onClick={onSample}>Try a sample analysis <ArrowRight size={16} aria-hidden="true"/></button>
           <button type="button" className="hx-btn hx-btn-secondary" onClick={onExplore}>Explore the workspace</button>
-        </motion.div>
-        <motion.a className="hx-why" href="#purpose" {...item(1.5)}>What is ArthaMind for? See how it works <ArrowRight size={14} aria-hidden="true"/></motion.a>
+        </div>
+        <a {...cls("hx-why", 1.5)} href="#purpose">What is ArthaMind for? See how it works <ArrowRight size={14} aria-hidden="true"/></a>
       </div>
 
-      <motion.div className="hx-stage" {...item(2)}>
+      <div {...cls("hx-stage", 2)}>
         <span className="hx-glow" aria-hidden="true"/>
         <span className="hx-ring r1" aria-hidden="true"/><span className="hx-ring r2" aria-hidden="true"/>
-        <HeroPhone/>
+        <Suspense fallback={<div className="hp" aria-hidden="true"><div className="hp-device"/></div>}><HeroPhone/></Suspense>
         <div className="hx-float hx-float-a"><LanguageBadge/></div>
         <div className="hx-float hx-float-b" aria-hidden="true">
           <span className="hx-float-icon"><Check size={14}/></span>
           <span><small>Example tax saved</small><b>{inr(HERO_REPORT.tax.saving)}</b></span>
         </div>
-      </motion.div>
+      </div>
     </div>
 
     </div>
@@ -87,10 +92,10 @@ export const LandingHero: React.FC<{ onSample: () => void; onExplore: () => void
     <div className="hx-offer" aria-labelledby="hx-offer-title">
       <h2 id="hx-offer-title" className="hx-offer-title">What you get</h2>
       <div className="hx-offer-grid">
-        {OFFER.map((o, i) => <motion.article key={o.name} className="hx-offer-card" {...(reduced ? {} : { initial: { opacity: 0, y: 12 }, whileInView: { opacity: 1, y: 0 }, viewport: { once: true, amount: 0.4 }, transition: { delay: i * 0.1, duration: 0.45 } })}>
+        {OFFER.map((o, i) => <article key={o.name} {...cls('hx-offer-card', i + 3)}>
           <header><small>{o.kicker}</small><b>{o.name}</b><span>{o.line}</span></header>
           <ul>{o.items.map((it) => <li key={it}><Check size={14} aria-hidden="true"/>{it}</li>)}</ul>
-        </motion.article>)}
+        </article>)}
       </div>
     </div>
   </section>;

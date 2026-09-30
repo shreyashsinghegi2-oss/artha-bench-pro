@@ -4,7 +4,7 @@ import { CompanyLogo, companyLogoSrc, hasMarketMark } from '../market/CompanyLog
 import { BarChart3, Bell, BookOpen, Bot, Calculator, Check, EyeOff, Home, KeyRound, LayoutGrid, LockKeyhole, Newspaper, ReceiptText, ShieldCheck, Sparkles, Star, Target, Wallet } from 'lucide-react';
 import { SUPPORTED_LANGUAGES } from '../LanguageSelector';
 import { LANDING_REVIEWS } from '../../data/landingReviews';
-import { buildMoneyCheck, type MoneyCheckInputs } from '../../services/moneyCheck';
+import { HERO_REPORT, HERO_SAMPLE } from './heroSample';
 import { ArthaMindLogoMark } from '../branding/ArthaMindBrand';
 
 /**
@@ -13,26 +13,10 @@ import { ArthaMindLogoMark } from '../branding/ArthaMindBrand';
  * for a labelled sample profile; market prices are a labelled demo feed, not live data.
  */
 
-const HERO_SAMPLE: MoneyCheckInputs = { age: 28, annualSalary: 1_200_000, monthlyExpenses: 45_000, monthlyEmi: 8_000, liquidSavings: 200_000, investments: 650_000, dependants: 0, section80C: 150_000, section80D: 25_000, retireAge: 60 };
-export const HERO_REPORT = buildMoneyCheck(HERO_SAMPLE);
+export { HERO_REPORT };
 
-/** "Hello" in each supported language, keyed by the codes in SUPPORTED_LANGUAGES. */
-const GREETINGS: Record<string, string> = {
-  en: 'Hello', hi: 'नमस्ते', mr: 'नमस्कार', gu: 'નમસ્તે', bn: 'নমস্কার', ta: 'வணக்கம்', te: 'నమస్కారం', kn: 'ನಮಸ್ಕಾರ', ml: 'നമസ്കാരം', pa: 'ਸਤ ਸ੍ਰੀ ਅਕਾਲ',
-  ur: 'السلام علیکم', or: 'ନମସ୍କାର', as: 'নমস্কাৰ', es: 'Hola', fr: 'Bonjour', de: 'Hallo', ar: 'مرحبا', pt: 'Olá', it: 'Ciao', ja: 'こんにちは',
-};
-
-/** Cycles through the supported languages; shared by the phone and the hero badge. */
-export function useLanguageCycle(running: boolean, ms = 900) {
-  const [i, setI] = useState(0);
-  useEffect(() => {
-    if (!running) return;
-    const id = window.setInterval(() => setI((v) => (v + 1) % SUPPORTED_LANGUAGES.length), ms);
-    return () => window.clearInterval(id);
-  }, [running, ms]);
-  const [code, name] = SUPPORTED_LANGUAGES[i];
-  return { index: i, total: SUPPORTED_LANGUAGES.length, code, name, greeting: GREETINGS[code] ?? 'Hello' };
-}
+import { useLanguageCycle } from './heroLanguage';
+export { useLanguageCycle };
 
 const inr = (v: number) => `₹${Math.round(v).toLocaleString('en-IN')}`;
 

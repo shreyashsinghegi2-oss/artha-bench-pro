@@ -2,22 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { Globe, UserRoundCheck } from 'lucide-react';
 import { setUseMyData, USE_MY_DATA_EVENT, useMyDataEnabled } from '../../services/userContext';
 
-/**
- * Web-search setting shared by every AI chat. "Auto" searches when a question needs current facts
- * (prices, rates, news, new rules); "On" always searches; "Off" answers from the model and app data only.
- * The setting is sent with each AI request (see aiFetchResilience) and applied on the server.
- */
-export type WebSearchMode = 'auto' | 'on' | 'off';
-const KEY = 'artha.ai.webSearch';
-const EVENT = 'artha:web-search-mode';
-
-export function getWebSearchMode(): WebSearchMode {
-  try { const v = localStorage.getItem(KEY); return v === 'on' || v === 'off' ? v : 'auto'; } catch { return 'auto'; }
-}
-export function setWebSearchMode(mode: WebSearchMode) {
-  try { localStorage.setItem(KEY, mode); } catch { /* storage unavailable: keep for this page only */ }
-  window.dispatchEvent(new CustomEvent(EVENT, { detail: mode }));
-}
+import { getWebSearchMode, setWebSearchMode, WEB_SEARCH_EVENT as EVENT, type WebSearchMode } from '../../services/webSearchMode';
+export { getWebSearchMode, setWebSearchMode, type WebSearchMode };
 
 let statusPromise: Promise<{ webSearch?: { provider: string } } | null> | null = null;
 const loadStatus = () => (statusPromise ??= fetch('/api/ai/live-sources').then((r) => (r.ok ? r.json() : null)).catch(() => null));

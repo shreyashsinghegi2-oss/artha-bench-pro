@@ -1,7 +1,10 @@
-import { buildUserContext, useMyDataEnabled } from './userContext';
 import { logFromRequestBody } from './questionLog';
 import { buildFallbackStructuredAnswer, buildGroundedFallbackAnswer } from './reliableTutor';
-import { getWebSearchMode } from '../components/ai/WebSearchToggle';
+import { getWebSearchMode } from './webSearchMode';
+
+/** Mirrors useMyDataEnabled() in ./userContext (keep USE_MY_DATA_KEY in sync), read here so that module (and its finance engines) loads only when an AI request is sent. */
+const USE_MY_DATA_KEY = 'arthamind-use-my-data-v1';
+const myDataEnabled = (): boolean => { try { return localStorage.getItem(USE_MY_DATA_KEY) !== 'off'; } catch { return false; } };
 
 const FALLBACK_PATHS = new Set([
   '/api/dashboard/assistant',
@@ -179,8 +182,8 @@ export function installAiFetchResilience() {
       init = { ...originalInit, headers };
       logFromRequestBody(originalInit?.body, path);
       // With the user's consent, attach one summary of their data from every feature.
-      if (useMyDataEnabled() && typeof originalInit?.body === 'string') {
-        try { const body = JSON.parse(originalInit.body); const ctx = buildUserContext(); if (ctx && body && typeof body === 'object') init = { ...init, body: JSON.stringify({ ...body, userProfile: ctx }) }; } catch { /* not JSON */ }
+      if (myDataEnabled() && typeof originalInit?.body === 'string') {
+        try { const body = JSON.parse(originalInit.body); const { buildUserContext } = await import('./userContext'); const ctx = buildUserContext(); if (ctx && body && typeof body === 'object') init = { ...init, body: JSON.stringify({ ...body, userProfile: ctx }) }; } catch { /* not JSON */ }
       }
     }
     const isFallbackPath = FALLBACK_PATHS.has(path);

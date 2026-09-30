@@ -10,7 +10,8 @@ import { loadIncomeSources } from './incomeStorage';
 import { loadExpenses } from './personalFinanceStorage';
 import { loadPortfolio, summarise } from './portfolio';
 
-const KEY = 'arthamind-use-my-data-v1';
+export const USE_MY_DATA_KEY = 'arthamind-use-my-data-v1';
+const KEY = USE_MY_DATA_KEY;
 export const USE_MY_DATA_EVENT = 'arthamind:use-my-data';
 export function useMyDataEnabled(): boolean { try { return localStorage.getItem(KEY) !== 'off'; } catch { return false; } }
 export function setUseMyData(on: boolean) { try { localStorage.setItem(KEY, on ? 'on' : 'off'); } catch { /* ignore */ } window.dispatchEvent(new CustomEvent(USE_MY_DATA_EVENT, { detail: on })); }

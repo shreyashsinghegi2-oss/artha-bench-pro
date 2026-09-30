@@ -3,8 +3,8 @@ import { installTilt } from '../../lib/tilt3d';
 import { lazyOnView } from './lazyOnView';
 const LandingModulePipeline=lazyOnView(()=>import('./LandingModulePipeline').then(m=>({default:m.LandingModulePipeline})),{minHeight:700});
 const LandingReliabilityLab=lazyOnView(()=>import('./LandingReliabilityLab').then(m=>({default:m.LandingReliabilityLab})),{minHeight:600});
-import { PhoneShowcase } from './PhoneShowcase';
-import { MoneyCheck } from './MoneyCheck';
+const PhoneShowcase=lazyOnView(()=>import('./PhoneShowcase').then(m=>({default:m.PhoneShowcase})),{minHeight:900,anchorId:'phone-tour'});
+const MoneyCheck=lazyOnView(()=>import('./MoneyCheck').then(m=>({default:m.MoneyCheck})),{minHeight:900,anchorId:'money-check'});
 import{ArrowDown,ArrowRight,ArrowUp,CheckCircle2,Menu,Sparkles,X}from'lucide-react';
 import type{AppNavigationDestination}from'../../navigationTypes';
 import type{NormalizedMarketQuote}from'../../types';
@@ -14,13 +14,13 @@ import { LandingHero } from './LandingHero';
 const LandingSecurity=lazyOnView(()=>import('./LandingSecurity').then(m=>({default:m.LandingSecurity})),{minHeight:1100,anchorId:'security'});
 const LiveMarketTicker=lazyOnView(()=>import('./LiveMarketTicker').then(m=>({default:m.LiveMarketTicker})),{minHeight:120});
 import{LazyCryptoMarketPreview as CryptoMarketPreview}from'./LazyCryptoMarketPreview';
-import{BusinessBrief,normalizeBusinessNews}from'./BusinessBrief';
+const BusinessBrief=lazyOnView(()=>import('./BusinessBrief').then(m=>({default:m.BusinessBrief})),{minHeight:600,anchorId:'business-brief'});type LandingNews=ReturnType<typeof import('./BusinessBrief')['normalizeBusinessNews']>;
 import{LanguageSelector}from'../LanguageSelector';
 import'./connectedLanding.css';
 import'./landingMotion.css';
 import{useLandingMotion}from'./useLandingMotion';
-import{LandingAiCfo}from'./LandingAiCfo';
-import{LandingPurpose}from'./LandingPurpose';
+const LandingAiCfo=lazyOnView(()=>import('./LandingAiCfo').then(m=>({default:m.LandingAiCfo})),{minHeight:900,anchorId:'ai-cfo'});
+const LandingPurpose=lazyOnView(()=>import('./LandingPurpose').then(m=>({default:m.LandingPurpose})),{minHeight:700,anchorId:'purpose'});
 const LandingReviews=lazyOnView(()=>import('./LandingReviews').then(m=>({default:m.LandingReviews})),{minHeight:700});
 const LandingIntelligenceSection=lazyOnView(()=>import('./LandingIntelligenceSection').then(m=>({default:m.LandingIntelligenceSection})),{minHeight:900});
 
@@ -52,13 +52,13 @@ const modules=[
  ['AI','AI Financial Advisor','Ask in Hinglish or English and get numbers-backed answers.','AI','ask:'],
 ] as const;
 export const ConnectedLandingPage:React.FC<Props>=({signedIn,onEnter,onSignIn})=>{
- const[scrolled,setScrolled]=useState(false),[active,setActive]=useState('workspace'),[news,setNews]=useState<ReturnType<typeof normalizeBusinessNews>>([]);
+ const[scrolled,setScrolled]=useState(false),[active,setActive]=useState('workspace'),[news,setNews]=useState<LandingNews>([]);
  const rootRef=useRef<HTMLDivElement>(null);const[menuOpen,setMenuOpen]=useState(false);useEffect(()=>{if(!menuOpen)return;const onKey=(e:KeyboardEvent)=>{if(e.key==='Escape')setMenuOpen(false)};window.addEventListener('keydown',onKey);return()=>window.removeEventListener('keydown',onKey)},[menuOpen]);const[cfoPrompt,setCfoPrompt]=useState<{id:number;text:string}|null>(null);const[showTop,setShowTop]=useState(false);useLandingMotion(rootRef);
  useEffect(()=>{const el=rootRef.current;if(!el)return;return installTilt(el,{selector:'.cl-card, .rv-card, .mk-card',maxWidth:560,maxDeg:7});},[]);
  useEffect(()=>{const f=()=>{setScrolled(window.scrollY>8);setShowTop(window.scrollY>900)};f();addEventListener('scroll',f,{passive:true});return()=>removeEventListener('scroll',f)},[]);
  useEffect(()=>{const move=(e:MouseEvent)=>{const card=(e.target as HTMLElement)?.closest?.('.cl-card') as HTMLElement|null;if(!card)return;const r=card.getBoundingClientRect();card.style.setProperty('--mx',e.clientX-r.left+'px');card.style.setProperty('--my',e.clientY-r.top+'px')};document.addEventListener('mousemove',move);return()=>document.removeEventListener('mousemove',move)},[]);
  useEffect(()=>{const ids=['top','purpose','money-check','ai-cfo','modules','how','lab','trust'];const els=ids.map(id=>document.getElementById(id)).filter(Boolean)as HTMLElement[];if(!els.length)return;const ob=new IntersectionObserver(es=>{const v=es.filter(e=>e.isIntersecting).sort((a,b)=>b.intersectionRatio-a.intersectionRatio)[0];if(v)setActive((v.target as HTMLElement).id==='top'?'workspace':(v.target as HTMLElement).id)},{rootMargin:'-20% 0px -60% 0px',threshold:[.15,.35,.6]});els.forEach(e=>ob.observe(e));const reveal=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)(e.target as HTMLElement).classList.add('in')}),{rootMargin:'0px 0px -8% 0px',threshold:.12});document.querySelectorAll('.cl-reveal,.cl-reveal-section').forEach(e=>reveal.observe(e));return()=>{ob.disconnect();reveal.disconnect()}},[]);
- useEffect(()=>{let alive=true;const load=async()=>{try{const [business,general]=await Promise.all([fetchBusinessNews(undefined,'business'),fetchBusinessNews(undefined,'all')]);if(alive){const items=[...normalizeBusinessNews(business),...normalizeBusinessNews(general)];const seen=new Set<string>();setNews(items.filter(x=>{const k=(x.url||x.title).toLowerCase();if(seen.has(k))return false;seen.add(k);return true}).slice(0,12))}}catch{if(alive)setNews([])}};void load();const t=window.setInterval(()=>void load(),45000);return()=>{alive=false;window.clearInterval(t)}},[]);
+ useEffect(()=>{let alive=true;const load=async()=>{try{const [business,general,{normalizeBusinessNews}]=await Promise.all([fetchBusinessNews(undefined,'business'),fetchBusinessNews(undefined,'all'),import('./BusinessBrief')]);if(alive){const items=[...normalizeBusinessNews(business),...normalizeBusinessNews(general)];const seen=new Set<string>();setNews(items.filter(x=>{const k=(x.url||x.title).toLowerCase();if(seen.has(k))return false;seen.add(k);return true}).slice(0,12))}}catch{if(alive)setNews([])}};void load();const t=window.setInterval(()=>void load(),45000);return()=>{alive=false;window.clearInterval(t)}},[]);
 
  const open=(d:AppNavigationDestination)=>onEnter(d);
  const scrollToId=(id:string)=>document.getElementById(id)?.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});

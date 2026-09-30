@@ -22,6 +22,7 @@ import type { Calculation, Guardrail } from '../../advisor/math-engine';
 import type { ProfileMatch } from '../../advisor/profile-matcher';
 import type { PatternResult } from '../../advisor/pattern-matcher';
 import { loadMoneyProfile } from '../../services/moneyProfile';
+import { SimulationCard } from '../simulation/SimulationCard';
 
 /* ---------- Formatting (Indian digit grouping) ---------- */
 
@@ -246,7 +247,28 @@ function ProfileCard({ m }: { m: ProfileMatch }) {
   );
 }
 
+interface SimArgs {
+  initial: number;
+  monthly: number;
+  years: number;
+  expectedReturnPct: number;
+}
+
+/** Equity SIP or lump-sum projections also get a Monte Carlo range (Module 23). */
+function simulationFor(answer: AdvisorAnswer): SimArgs | null {
+  const c = answer.math.calculations.find((x) => (x.id === 'sip' || x.id === 'lump_sum') && x.inputs.some((i) => i.name.includes('scenarios')));
+  if (!c) return null;
+  const val = (name: string) => c.inputs.find((i) => i.name === name)?.value;
+  const years = val('Time');
+  const ret = c.inputs.find((i) => i.unit === '%')?.value;
+  if (!years || !ret) return null;
+  return c.id === 'sip'
+    ? { initial: 0, monthly: val('Monthly SIP') ?? 0, years, expectedReturnPct: ret }
+    : { initial: val('Amount invested') ?? 0, monthly: 0, years, expectedReturnPct: ret };
+}
+
 function AnswerView({ answer, showWork }: { answer: AdvisorAnswer; showWork: boolean }) {
+  const sim = simulationFor(answer);
   const ex = answer.explanation;
   const sources = answer.sources ?? [];
   const stale = sources.length
@@ -274,6 +296,7 @@ function AnswerView({ answer, showWork }: { answer: AdvisorAnswer; showWork: boo
           ))}
         </div>
       )}
+      {sim && <SimulationCard {...sim} />}
       {answer.pattern && <PatternCard p={answer.pattern} showWork={showWork} />}
       {answer.profile && <ProfileCard m={answer.profile} />}
       {answer.math.assumptions.length > 0 && <p className="text-xs text-secondary">Assumptions: {answer.math.assumptions.join('; ')}.</p>}

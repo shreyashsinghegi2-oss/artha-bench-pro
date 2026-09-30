@@ -17,6 +17,9 @@
     "scripts/create-api-key.ts",
     "src/advisor/**/*.ts",
     "server/advisor/**/*.ts",
-    "src/components/advisor/**/*.tsx"
+    "src/components/advisor/**/*.tsx",
+    "src/simulation/**/*.ts",
+    "server/simulation/**/*.ts",
+    "src/components/simulation/**/*.tsx"
   ]
 }

@@ -13799,6 +13799,50 @@ function createAdvisorRouter(deps = {}) {
 }
 var advisorRouter = createAdvisorRouter();
 
+// server/simulation/routes.ts
+import { Router as Router10 } from "express";
+
+// src/simulation/historical.ts
+function paramsFromCloses(series) {
+  const s2 = series.filter((p) => Number.isFinite(p.close) && p.close > 0);
+  if (s2.length < 250) throw new Error("need at least a year of daily closes");
+  const logs = [];
+  for (let i = 1; i < s2.length; i += 1) logs.push(Math.log((s2[i]?.close ?? 1) / (s2[i - 1]?.close ?? 1)));
+  const mean = logs.reduce((a, b) => a + b, 0) / logs.length;
+  const variance = logs.reduce((a, b) => a + (b - mean) ** 2, 0) / (logs.length - 1);
+  const volatility = Math.sqrt(variance * 252);
+  const first = s2[0];
+  const last = s2[s2.length - 1];
+  const years = (Date.parse(last.date) - Date.parse(first.date)) / (365.25 * 864e5);
+  const cagr2 = years > 0 ? (last.close / first.close) ** (1 / years) - 1 : Number.NaN;
+  return { expected_return: mean * 252 + volatility * volatility / 2, volatility, cagr: cagr2, from: first.date, to: last.date, days: s2.length };
+}
+
+// server/simulation/routes.ts
+var FALLBACK_PARAMS = { expected_return: 0.12, volatility: 0.16 };
+function createSimulationRouter(history = niftyHistory) {
+  const router = Router10();
+  router.get("/params", async (_req, res) => {
+    try {
+      const p = paramsFromCloses(await history());
+      res.setHeader("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=86400");
+      res.json({ asset: "NIFTY 50", ...p, source: `NIFTY 50 daily closes ${p.from} to ${p.to} (Yahoo Finance ^NSEI)`, is_historical: true });
+    } catch (e) {
+      res.setHeader("Cache-Control", "no-store");
+      res.json({
+        asset: "NIFTY 50",
+        ...FALLBACK_PARAMS,
+        cagr: null,
+        source: "Planning assumption (live history unavailable)",
+        is_historical: false,
+        note: e instanceof Error ? e.message.slice(0, 160) : "unavailable"
+      });
+    }
+  });
+  return router;
+}
+var simulationRouter = createSimulationRouter();
+
 // server/vercelHandler.ts
 var app = express2();
 var GROUNDED_AI_PATHS = /* @__PURE__ */ new Set(["/ai/chat", "/ai/tutor", "/tutor", "/nvidia-tutor", "/crypto/assistant", "/company/assistant", "/dashboard/assistant", "/personal/assistant", "/finance/scenario-assistant", "/news/explain", "/news/brief"]);
@@ -13807,6 +13851,7 @@ app.use(express2.json({ limit: "2mb" }));
 app.get("/api/news/image", handleNewsImage);
 app.use("/api/v1", v1Router);
 app.use("/api/advisor", advisorRouter);
+app.use("/api/simulation", simulationRouter);
 app.use("/api", stripUserProfile);
 app.use("/api", (req, res, next) => GROUNDED_AI_PATHS.has(req.path) ? groundingMiddleware(req, res, next) : next());
 app.get("/api/ai/live-sources", (_req, res) => {

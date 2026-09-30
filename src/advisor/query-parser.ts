@@ -182,8 +182,9 @@ function classifyAmount(before: string, after: string): { type: AmountType; expl
   )
     return { type: 'income', explicit: true, period: period ?? (/\b(?:ctc|package|lpa)\b/.test(near) ? 'yearly' : undefined) };
   if (/\b(?:spend(?:ing)?|expenses?|expenditure|kharch|kharcha|emi|rent)\b|खर्च|किराया/.test(lastWords)) return { type: 'expense', explicit: true, period };
+  if (/\bsips?\s*(?:of|amount|:)?\s*$/.test(b)) return { type: 'monthly', explicit: true, period: 'monthly' };
   if (/\b(?:target|goal|corpus|need|want|become|reach|accumulate|build)\b|लक्ष्य/.test(lastWords)) return { type: 'target', explicit: true, period };
-  if (/\bsips?\s*(?:of|amount|:)?\s*$/.test(b) || monthly) return { type: 'monthly', explicit: true, period: 'monthly' };
+  if (monthly) return { type: 'monthly', explicit: true, period: 'monthly' };
   if (yearly) return { type: 'yearly', explicit: true, period: 'yearly' };
   if (/\b(?:lump\s*-?\s*sum|one[- ]time|bonus)\b/.test(near)) return { type: 'lump_sum', explicit: true };
   if (/\b(?:invest|investing|put|deposit|park|have|savings|saved|corpus of|lagana|lagau|lagaun)\b|निवेश/.test(lastWords))

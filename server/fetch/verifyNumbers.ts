@@ -110,7 +110,8 @@ async function engine(kind: string, body: unknown, fetchImpl: typeof fetch): Pro
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify(body),
-      signal: AbortSignal.timeout(2_500),
+      // Default 4 s: a cold serverless start of the engine takes a few seconds; PRECISION_ENGINE_TIMEOUT_MS overrides.
+      signal: AbortSignal.timeout(Number(process.env.PRECISION_ENGINE_TIMEOUT_MS) || 4_000),
     });
     if (!res.ok) return null;
     const cert = (await res.json()) as EngineCert;

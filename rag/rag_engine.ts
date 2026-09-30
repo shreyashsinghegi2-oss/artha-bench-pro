@@ -53,7 +53,7 @@ export class RagEngine {
 
   constructor(options: RagEngineOptions = {}) {
     this.baseUrl = (options.baseUrl ?? process.env.RAG_SIDECAR_URL ?? '').replace(/\/$/, '');
-    this.timeoutMs = options.timeoutMs ?? 2500;
+    this.timeoutMs = options.timeoutMs ?? (Number(process.env.RAG_TIMEOUT_MS) || 2500);
     this.fetchImpl = options.fetchImpl ?? fetch;
   }
 

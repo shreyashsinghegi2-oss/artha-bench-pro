@@ -1,0 +1,16 @@
+{
+  "note": "Official sources indexed by the 'RAG index' GitHub workflow into rag/index/official-index.json. Add a source here and push; the workflow rebuilds the index.",
+  "sources": [
+    { "url": "https://www.incometaxindia.gov.in/documents/d/guest/income_tax_act_2025_as_amended_by_fa_act_2026-pdf", "kind": "pdf", "authority": "CBDT", "title": "Income-tax Act, 2025 (as amended by Finance Act, 2026)" },
+    { "url": "https://www.incometaxindia.gov.in/documents/d/guest/finance-act-2026-pdf-1", "kind": "pdf", "authority": "CBDT", "title": "Finance Act, 2026" },
+    { "url": "https://www.incometaxindia.gov.in/w/tax-rates%E2%80%8B", "kind": "html", "authority": "CBDT", "title": "Income Tax Department: tax rates" },
+    { "url": "https://www.incometaxindia.gov.in/w/deductions-allowable-to-tax-payer", "kind": "html", "authority": "CBDT", "title": "Income Tax Department: deductions allowable" },
+    { "url": "https://www.incometaxindia.gov.in/w/tax-on-long-term-capital-gains%E2%80%8B", "kind": "html", "authority": "CBDT", "title": "Income Tax Department: tax on long-term capital gains" },
+    { "url": "https://www.incometaxindia.gov.in/w/tax-on-short-term-capital-gains%E2%80%8B", "kind": "html", "authority": "CBDT", "title": "Income Tax Department: tax on short-term capital gains" },
+    { "url": "https://www.incometaxindia.gov.in/w/section-19-206", "kind": "html", "authority": "CBDT", "title": "Income Tax Department: section 19 (TDS)" },
+    { "url": "https://www.incometaxindia.gov.in/w/schedule_vda", "kind": "html", "authority": "CBDT", "title": "Income Tax Department: virtual digital assets" },
+    { "url": "https://www.rbi.org.in/pressreleases_rss.xml", "kind": "rss", "authority": "RBI", "title": "RBI press releases" },
+    { "url": "https://www.rbi.org.in/notifications_rss.xml", "kind": "rss", "authority": "RBI", "title": "RBI notifications" },
+    { "url": "https://www.sebi.gov.in/sebirss.xml", "kind": "rss", "authority": "SEBI", "title": "SEBI updates" }
+  ]
+}

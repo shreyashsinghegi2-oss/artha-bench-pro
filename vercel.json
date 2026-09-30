@@ -6,6 +6,14 @@
   "functions": {
     "api/index.js": {
       "maxDuration": 60
+    },
+    "api/precision_engine.py": {
+      "maxDuration": 60,
+      "includeFiles": "precision-engine/app/**"
+    },
+    "api/rag_engine.py": {
+      "maxDuration": 30,
+      "includeFiles": "{rag/*.py,rag/index/*.json}"
     }
   },
   "headers": [
@@ -20,6 +28,14 @@
     }
   ],
   "rewrites": [
+    {
+      "source": "/api/precision_engine/:path*",
+      "destination": "/api/precision_engine"
+    },
+    {
+      "source": "/api/rag_engine/:path*",
+      "destination": "/api/rag_engine"
+    },
     {
       "source": "/api/:path*",
       "destination": "/api/index"

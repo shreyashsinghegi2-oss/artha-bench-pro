@@ -3550,7 +3550,7 @@ var EMPTY = (error, latencyMs) => ({ passages: [], context: "", ok: false, error
 var RagEngine = class {
   constructor(options = {}) {
     this.baseUrl = (options.baseUrl ?? process.env.RAG_SIDECAR_URL ?? "").replace(/\/$/, "");
-    this.timeoutMs = options.timeoutMs ?? 2500;
+    this.timeoutMs = options.timeoutMs ?? (Number(process.env.RAG_TIMEOUT_MS) || 2500);
     this.fetchImpl = options.fetchImpl ?? fetch;
   }
   get enabled() {
@@ -4990,7 +4990,8 @@ async function engine(kind, body, fetchImpl) {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify(body),
-      signal: AbortSignal.timeout(2500)
+      // Default 4 s: a cold serverless start of the engine takes a few seconds; PRECISION_ENGINE_TIMEOUT_MS overrides.
+      signal: AbortSignal.timeout(Number(process.env.PRECISION_ENGINE_TIMEOUT_MS) || 4e3)
     });
     if (!res.ok) return null;
     const cert = await res.json();

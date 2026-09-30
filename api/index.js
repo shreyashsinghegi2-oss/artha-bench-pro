@@ -11384,10 +11384,8 @@ async function sourceHealth() {
   const [yahoo, binance, nse] = await Promise.all([
     probe(() => yahooQuote("^NSEI")),
     probe(() => getCryptoMarkets()),
-    probe(async () => {
-      const r = await fetch(NSE, { method: "GET", headers: { "User-Agent": BROWSER_UA }, signal: AbortSignal.timeout(5e3) });
-      if (!r.ok) throw new SourceUnavailableError(`HTTP ${r.status}`);
-    })
+    // The data call itself (cached 5 min): NSE's homepage can refuse cloud IPs while its data API still works.
+    probe(() => fiiDiiFlows())
   ]);
   const value = { yahoo, binance, nse };
   healthCache = { at: Date.now(), value };

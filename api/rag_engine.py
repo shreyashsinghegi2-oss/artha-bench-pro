@@ -29,8 +29,9 @@ _MAX_BODY = 256 * 1024
 _APP = None
 
 
-def load_bundle(path: str = _INDEX):
+def load_bundle(path: str | None = None):
     """In-memory store rebuilt from a bundle {documents, chunks}; vectors re-embedded deterministically."""
+    path = path or _INDEX
     store = InMemoryStore()
     embedder = HashingEmbedder()
     if os.path.exists(path):

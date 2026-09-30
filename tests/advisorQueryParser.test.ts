@@ -291,3 +291,10 @@ describe('POST /api/advisor/parse', () => {
     expect((await post({})).status).toBe(400);
   });
 });
+
+describe('amount classification regressions', () => {
+  it('"SIP of ₹X" is monthly even after "want"; "loan of X" is the principal', () => {
+    expect(parseDeterministic('I want to start a SIP of ₹10,000 per month').amounts[0]?.type).toBe('monthly');
+    expect(parseDeterministic('EMI on home loan of 40 lakh for 20 years').amounts[0]).toMatchObject({ value: 4_000_000, type: 'lump_sum' });
+  });
+});

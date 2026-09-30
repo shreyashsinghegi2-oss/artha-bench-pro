@@ -4,7 +4,7 @@
 
 | Feature | Behaviour | Setting |
 | --- | --- | --- |
-| Full screen | The first tap, click or key press enters full screen; if the user leaves it (Esc), the next interaction enters it again. A hint is shown while not in full screen. Installed app (Add to Home Screen) opens full screen via `public/manifest.webmanifest`. iPhone Safari does not allow web pages to go full screen, so there it only works as an installed app. | always on |
+| Full screen | Tried as soon as the page loads (browsers only allow this on managed devices); otherwise it switches silently at the first tap, click or key press, and again after Esc. No message is shown. Installed app (Add to Home Screen) opens full screen via `public/manifest.webmanifest`. iPhone Safari does not allow web pages to go full screen, so there it only works as an installed app. | always on |
 | Idle sign-out | Signs out after this many minutes without activity in any tab, with a warning first | `VITE_IDLE_LOGOUT_MINUTES` (default 15) |
 | Maximum session | Signs out this many hours after sign-in, even if active | `VITE_MAX_SESSION_HOURS` (default 12) |
 | One device | Signing in on a new device ends the other sessions | always on |

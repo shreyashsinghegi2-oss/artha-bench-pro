@@ -1,15 +1,13 @@
-import React, { useEffect, useState } from 'react';
-import { Maximize2 } from 'lucide-react';
-import './forceFullscreen.css';
+import React, { useEffect } from 'react';
 
 /**
  * Keeps ArthaMind in full screen.
  *
  * Browsers only allow full screen from a user gesture, so the page cannot switch on load by itself. Instead,
- * the first tap, click or key press anywhere enters full screen, and if the user leaves it (Esc), the next
- * interaction enters it again. A small hint is shown while the page is not in full screen. Phones that do not
- * support the Fullscreen API for pages (iPhone Safari) are left alone; the installed app opens full screen
- * through the web manifest instead.
+ * it tries at once (allowed only on some managed browsers) and otherwise enters full screen silently at the first
+ * tap, click or key press; if the user leaves it (Esc), the next interaction enters it again. No hint is shown.
+ * Phones that do not support the Fullscreen API for pages (iPhone Safari) are left alone; the installed app
+ * opens full screen through the web manifest instead.
  */
 
 type FullscreenDoc = Document & { webkitFullscreenElement?: Element | null; webkitFullscreenEnabled?: boolean };
@@ -43,36 +41,20 @@ export function requestAppFullscreen(doc: Document = document): void {
 }
 
 export const ForceFullscreen: React.FC = () => {
-  const automated = typeof navigator !== 'undefined' && navigator.webdriver;
-  const supported = typeof document !== 'undefined' && !automated && fullscreenSupported();
-  const [active, setActive] = useState(() => (supported ? isFullscreen() : true));
-
   useEffect(() => {
-    if (!supported) return;
+    const automated = typeof navigator !== 'undefined' && navigator.webdriver;
+    if (automated || !fullscreenSupported()) return;
+    // Try at once: browsers that allow automatic full screen (e.g. kiosk or managed devices) switch now; the rest
+    // refuse silently and the first gesture below does it.
+    requestAppFullscreen();
     const onGesture = (e: Event) => {
       if (e instanceof KeyboardEvent && isIgnoredKey(e)) return;
       requestAppFullscreen();
     };
-    const onChange = () => setActive(isFullscreen());
     // Capture phase so the request runs inside the same user gesture, before any handler stops it.
-    window.addEventListener('click', onGesture, true);
-    window.addEventListener('touchend', onGesture, true);
-    window.addEventListener('keydown', onGesture, true);
-    document.addEventListener('fullscreenchange', onChange);
-    document.addEventListener('webkitfullscreenchange', onChange);
-    return () => {
-      window.removeEventListener('click', onGesture, true);
-      window.removeEventListener('touchend', onGesture, true);
-      window.removeEventListener('keydown', onGesture, true);
-      document.removeEventListener('fullscreenchange', onChange);
-      document.removeEventListener('webkitfullscreenchange', onChange);
-    };
-  }, [supported]);
-
-  if (!supported || active) return null;
-  return (
-    <div className="ffs-hint" role="status">
-      <Maximize2 size={14} aria-hidden="true" /> Tap anywhere to continue in full screen
-    </div>
-  );
+    const events = ['pointerdown', 'mousedown', 'click', 'touchend', 'keydown'] as const;
+    events.forEach((name) => window.addEventListener(name, onGesture, true));
+    return () => events.forEach((name) => window.removeEventListener(name, onGesture, true));
+  }, []);
+  return null;
 };

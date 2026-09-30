@@ -15,6 +15,14 @@ import {
   signOutRemote,
   signOutOtherSessions,
   checkSession,
+  checkPassword,
+  emailOtpRequired,
+  EmailOtpType,
+  sendEmailOtp,
+  sessionIsEmailVerified,
+  signOutLocal,
+  signUpVerified,
+  verifyEmailOtp,
   signUpWithPassword,
   SocialAuthProvider,
   startSocialOAuth,
@@ -30,7 +38,24 @@ import {
   workspaceFingerprint,
 } from '../services/cloudWorkspace';
 
-export type AuthScreen = 'login' | 'signup' | 'verify' | 'forgot' | 'reset' | 'onboarding';
+export type AuthScreen = 'login' | 'signup' | 'verify' | 'otp' | 'forgot' | 'reset' | 'onboarding';
+
+/** Minutes of inactivity before automatic sign-out (VITE_IDLE_LOGOUT_MINUTES, default 15, 1–240). */
+export const IDLE_LOGOUT_MINUTES = clampEnv(import.meta.env.VITE_IDLE_LOGOUT_MINUTES, 15, 1, 240);
+/** Hours after sign-in when the session ends even if the user is active (VITE_MAX_SESSION_HOURS, default 12, 1–720). */
+export const MAX_SESSION_HOURS = clampEnv(import.meta.env.VITE_MAX_SESSION_HOURS, 12, 1, 720);
+const SIGNED_IN_AT_KEY = 'arthamind-signed-in-at';
+
+function clampEnv(raw: unknown, fallback: number, min: number, max: number): number {
+  const n = Number(raw);
+  return Number.isFinite(n) && n > 0 ? Math.min(max, Math.max(min, n)) : fallback;
+}
+
+function markSignedIn(): void {
+  try { localStorage.setItem(SIGNED_IN_AT_KEY, String(Date.now())); } catch { /* storage blocked */ }
+}
+
+interface PendingOtp { email: string; remember: boolean; type: EmailOtpType }
 
 interface AuthContextValue {
   configured: boolean;
@@ -42,6 +67,12 @@ interface AuthContextValue {
   authOpen: boolean;
   authScreen: AuthScreen;
   authMessage: string | null;
+  /** True when every sign-in and new account must confirm a 6-digit email code. */
+  emailOtp: boolean;
+  /** Email address the current code was sent to (on the 'otp' screen). */
+  otpEmail: string | null;
+  verifyOtp: (code: string) => Promise<void>;
+  resendOtp: () => Promise<void>;
   openAuth: (screen?: AuthScreen) => void;
   closeAuth: () => void;
   signIn: (email: string, password: string, remember: boolean) => Promise<void>;
@@ -88,6 +119,8 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
   const [authScreen, setAuthScreen] = useState<AuthScreen>('login');
   const [authMessage, setAuthMessage] = useState<string | null>(null);
   const fingerprintRef = useRef('');
+  const emailOtp = emailOtpRequired();
+  const [pendingOtp, setPendingOtp] = useState<PendingOtp | null>(null);
 
   const establishSession = useCallback(async (nextSession: AuthSession, remember: boolean, suppressOnboarding = false) => {
     persistSession(nextSession, remember);
@@ -128,6 +161,7 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
           };
           window.history.replaceState({}, document.title, window.location.pathname);
           if (!cancelled) {
+            markSignedIn();
             if (!isResetFlow) void signOutOtherSessions(nextSession.access_token);
             await establishSession(nextSession, true, isResetFlow);
             if (isResetFlow) { setAuthScreen('reset'); setAuthOpen(true); }
@@ -143,6 +177,19 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
         } else {
           activeSession = { ...activeSession, user: await fetchCurrentUser(activeSession.access_token) };
         }
+        if (emailOtpRequired() && !sessionIsEmailVerified(activeSession.access_token)) {
+          // A password-only session from before email codes were switched on: sign in again with a code.
+          await signOutLocal(activeSession.access_token);
+          persistSession(null);
+          restoreGuestWorkspace();
+          if (!cancelled) {
+            setAuthMessage('For your security, sign in again and confirm the code we email you.');
+            setAuthScreen('login');
+            setAuthOpen(true);
+          }
+          return;
+        }
+        try { if (!localStorage.getItem(SIGNED_IN_AT_KEY)) markSignedIn(); } catch { /* storage blocked */ }
         if (!cancelled) await establishSession(activeSession, stored.remember, isResetFlow);
         if (!cancelled && isResetFlow) { setAuthScreen('reset'); setAuthOpen(true); }
       } catch (error) {
@@ -186,8 +233,13 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
   const signIn = async (email: string, password: string, remember: boolean) => {
     if (!configured) throw new Error('Account sign-in is not configured on this deployment yet.');
     const normalizedEmail = email.trim();
+    if (emailOtp) {
+      await startCodeSignIn(normalizedEmail, password, remember);
+      return;
+    }
     try {
       const next = await signInWithPassword(normalizedEmail, password);
+      markSignedIn();
       // One device per account: signing in here ends the account's sessions on other devices.
       void signOutOtherSessions(next.access_token);
       const nextProfile = await establishSession(next, remember);
@@ -209,10 +261,63 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
     }
   };
 
+  /** Step 1 of a code sign-in: check the password, drop that password-only session, email a code. */
+  const startCodeSignIn = async (normalizedEmail: string, password: string, remember: boolean) => {
+    try {
+      const passwordSession = await checkPassword(normalizedEmail, password);
+      await signOutLocal(passwordSession.access_token);
+      await sendEmailOtp(normalizedEmail);
+      askForCode({ email: normalizedEmail, remember, type: 'email' }, `We sent a 6-digit code to ${normalizedEmail}. Enter it below to finish signing in.`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '';
+      if (!/email not confirmed/i.test(message)) throw error;
+      await resendSignupConfirmation(normalizedEmail);
+      askForCode({ email: normalizedEmail, remember, type: 'signup' }, `Your email is not verified yet. We sent a 6-digit code to ${normalizedEmail}.`);
+    }
+  };
+
+  const askForCode = (next: PendingOtp, message: string) => {
+    setPendingOtp(next);
+    setAuthMessage(message);
+    setAuthScreen('otp');
+    setAuthOpen(true);
+  };
+
+  const verifyOtp = async (code: string) => {
+    if (!pendingOtp) throw new Error('Start again: sign in with your email and password first.');
+    const next = await verifyEmailOtp(pendingOtp.email, code, pendingOtp.type);
+    setPendingOtp(null);
+    setAuthMessage(null);
+    markSignedIn();
+    void signOutOtherSessions(next.access_token);
+    const nextProfile = await establishSession(next, pendingOtp.remember);
+    if (nextProfile.onboarding_completed) setAuthOpen(false);
+  };
+
+  const resendOtp = async () => {
+    if (!pendingOtp) throw new Error('Start again: sign in with your email and password first.');
+    if (pendingOtp.type === 'signup') await resendSignupConfirmation(pendingOtp.email);
+    else await sendEmailOtp(pendingOtp.email);
+    setAuthMessage(`A new code was sent to ${pendingOtp.email}. Only the latest code works.`);
+  };
+
   const signUp = async (input: { fullName: string; email: string; password: string; country: string; financialDataConsent: boolean }) => {
     if (!configured) throw new Error('Account sign-up is not configured on this deployment yet.');
+    if (emailOtp) {
+      const normalizedEmail = input.email.trim();
+      const created = await signUpVerified({ ...input, email: normalizedEmail });
+      if (created.session) {
+        // The project auto-confirms emails, so prove ownership with a sign-in code before the account is used.
+        await signOutLocal(created.session.access_token);
+        await sendEmailOtp(normalizedEmail);
+        askForCode({ email: normalizedEmail, remember: true, type: 'email' }, `Account created. Enter the 6-digit code we sent to ${normalizedEmail} to verify your email.`);
+      } else {
+        askForCode({ email: normalizedEmail, remember: true, type: 'signup' }, `Enter the 6-digit code we sent to ${normalizedEmail} to verify your email. If this email already has an account, sign in instead.`);
+      }
+      return;
+    }
     const result = await signUpWithPassword({ email: input.email.trim(), password: input.password, fullName: input.fullName, country: input.country, financialDataConsent: input.financialDataConsent });
-    if (result.session) { void signOutOtherSessions(result.session.access_token); await establishSession(result.session, true); return; }
+    if (result.session) { markSignedIn(); void signOutOtherSessions(result.session.access_token); await establishSession(result.session, true); return; }
     setAuthMessage('Account created. Check your email and verify it once, then return here to sign in.');
     setAuthScreen('verify');
     setAuthOpen(true);
@@ -243,6 +348,7 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
       await signOutRemote(session.access_token).catch(() => undefined);
     }
     if (reason) rememberLogoutReason(reason);
+    try { localStorage.removeItem(SIGNED_IN_AT_KEY); } catch { /* storage blocked */ }
     persistSession(null);
     restoreGuestWorkspace();
     setSession(null);
@@ -273,11 +379,13 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
     return () => { stopped = true; window.clearInterval(id); document.removeEventListener('visibilitychange', onVisible); };
   }, [session]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Auto sign-out after 30 minutes without activity in any tab, with a one-minute warning.
+  // Auto sign-out after IDLE_LOGOUT_MINUTES without activity in any tab (one-minute warning first), and
+  // MAX_SESSION_HOURS after sign-in even when active.
   const [idleDeadline, setIdleDeadline] = useState<number | null>(null);
   useEffect(() => {
     if (!session) { setIdleDeadline(null); return; }
-    const IDLE = 30 * 60_000, WARN = 60_000, KEY = 'arthamind-last-activity';
+    const IDLE = IDLE_LOGOUT_MINUTES * 60_000, WARN = Math.min(60_000, IDLE / 2), KEY = 'arthamind-last-activity';
+    const MAX = MAX_SESSION_HOURS * 3_600_000;
     let lastWrite = 0;
     const bump = () => { const now = Date.now(); if (now - lastWrite > 5000) { lastWrite = now; try { localStorage.setItem(KEY, String(now)); } catch { /* ignore */ } } };
     bump();
@@ -287,6 +395,9 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
       let last = Date.now();
       try { last = Number(localStorage.getItem(KEY)) || last; } catch { /* ignore */ }
       const idle = Date.now() - last;
+      let signedInAt = 0;
+      try { signedInAt = Number(localStorage.getItem(SIGNED_IN_AT_KEY)) || 0; } catch { /* ignore */ }
+      if (signedInAt && Date.now() - signedInAt >= MAX) { window.clearInterval(id); void endSession('expired'); return; }
       if (idle >= IDLE) { window.clearInterval(id); void endSession('idle'); }
       else if (idle >= IDLE - WARN) setIdleDeadline((d) => d ?? last + IDLE);
       else setIdleDeadline(null);
@@ -305,13 +416,13 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
 
   const value = useMemo<AuthContextValue>(() => ({
     configured, loading, syncing, session, user: session?.user ?? null, profile,
-    authOpen, authScreen, authMessage, openAuth, closeAuth, signIn, signUp,
+    authOpen, authScreen, authMessage, emailOtp, otpEmail: pendingOtp?.email ?? null, verifyOtp, resendOtp, openAuth, closeAuth, signIn, signUp,
     continueWithSocial,
     continueWithGoogle: () => continueWithSocial('google'),
     forgotPassword, resetPassword, signOut, saveProfile, syncNow, refreshProfile,
-  }), [configured, loading, syncing, session, profile, authOpen, authScreen, authMessage, syncNow]);
+  }), [configured, loading, syncing, session, profile, authOpen, authScreen, authMessage, syncNow, pendingOtp]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  return <AuthContext.Provider value={value}>{children}<LogoutNotice/>{idleDeadline && <IdleWarning deadline={idleDeadline} onStay={stayActive} onSignOut={() => void endSession()}/>}</AuthContext.Provider>;
+  return <AuthContext.Provider value={value}>{children}<LogoutNotice idleMinutes={IDLE_LOGOUT_MINUTES} maxHours={MAX_SESSION_HOURS}/>{idleDeadline && <IdleWarning deadline={idleDeadline} onStay={stayActive} onSignOut={() => void endSession()}/>}</AuthContext.Provider>;
 };
 
 export function useAuth(): AuthContextValue {

@@ -80,6 +80,10 @@ function friendlyAuthError(raw: string): string {
   if (/invalid login credentials/i.test(raw)) return 'That email and password do not match an account. Check the password, use "Forgot password?" to reset it, or create a free account if you have not signed up yet. If you first signed up with Google, use the Google button.';
   if (/user already registered/i.test(raw)) return 'An account with this email already exists. Sign in instead, or reset your password.';
   if (/password should be at least/i.test(raw)) return 'Please choose a password of at least 8 characters.';
+  const wait = raw.match(/only request this after (\d+) seconds?/i);
+  if (wait) return `For security, please wait ${wait[1]} seconds before asking for another code.`;
+  if (/email rate limit/i.test(raw)) return 'Too many emails were sent in a short time. Please wait a few minutes and try again.';
+  if (/signups? not allowed for otp|user not found/i.test(raw)) return 'No account uses this email yet. Create an account first.';
   if (/rate limit|too many requests/i.test(raw)) return 'Too many attempts. Please wait a minute and try again.';
   if (/invalid api key|no api key/i.test(raw)) return 'Sign-in is temporarily unavailable (service key problem). Please try again shortly.';
   return raw;
@@ -223,6 +227,110 @@ export async function signUpWithPassword(input: {
   });
   const session = normalizeSession(payload?.session);
   return { session, user: session?.user ?? null };
+}
+
+/**
+ * Email one-time codes (OTP). When VITE_EMAIL_OTP=on, every password sign-in and every new account must also
+ * enter a 6-digit code sent to the email address. Off by default because it needs working email delivery:
+ * a custom SMTP sender in Supabase and email templates that include {{ .Token }} (see docs/EMAIL_OTP_SETUP.md).
+ */
+export function emailOtpRequired(): boolean {
+  const raw = String((import.meta.env.VITE_EMAIL_OTP as string | undefined) ?? '').trim().toLowerCase();
+  return raw === 'on' || raw === 'true' || raw === '1';
+}
+
+export type EmailOtpType = 'email' | 'signup';
+
+/** Sign-in methods recorded in the access token (the "amr" claim), e.g. ["password"] or ["otp"]. */
+export function sessionAuthMethods(accessToken: string): string[] {
+  try {
+    const part = accessToken.split('.')[1];
+    if (!part) return [];
+    const json = JSON.parse(atob(part.replace(/-/g, '+').replace(/_/g, '/').padEnd(Math.ceil(part.length / 4) * 4, '=')));
+    const amr = Array.isArray(json?.amr) ? json.amr : [];
+    return amr.map((m: unknown) => (typeof m === 'string' ? m : String((m as { method?: unknown })?.method ?? ''))).filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
+/** Methods that prove control of the email address (or an equivalent provider), unlike a password alone. */
+const VERIFIED_METHODS = new Set(['otp', 'oauth', 'magiclink', 'email/signup', 'recovery', 'invite', 'totp', 'sso/saml', 'email_change']);
+export function sessionIsEmailVerified(accessToken: string): boolean {
+  return sessionAuthMethods(accessToken).some((m) => VERIFIED_METHODS.has(m));
+}
+
+export async function sendEmailOtp(email: string): Promise<void> {
+  const { url } = config();
+  await requestJSON(`${url}/auth/v1/otp`, {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify({ email, create_user: false }),
+  });
+}
+
+export async function verifyEmailOtp(email: string, token: string, type: EmailOtpType): Promise<AuthSession> {
+  const { url } = config();
+  const code = token.replace(/\D/g, '');
+  if (code.length < 6 || code.length > 10) throw new Error('Enter the code from the email (6 digits).');
+  let payload: any;
+  try {
+    payload = await requestJSON<any>(`${url}/auth/v1/verify`, {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({ type, email, token: code }),
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : '';
+    if (/expired|invalid|otp/i.test(message)) throw new Error('That code is wrong or has expired. Check the latest email, or send a new code.');
+    throw error;
+  }
+  const session = normalizeSession(payload);
+  if (!session) throw new Error('The code was accepted but no session was returned. Please sign in again.');
+  return session;
+}
+
+/** Password sign-in without the auto-confirm recovery path (used when email codes are required). */
+export async function checkPassword(email: string, password: string): Promise<AuthSession> {
+  const { url } = config();
+  const payload = await requestJSON<any>(`${url}/auth/v1/token?grant_type=password`, {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify({ email, password }),
+  });
+  const session = normalizeSession(payload);
+  if (!session) throw new Error('Sign-in succeeded but no session was returned.');
+  return session;
+}
+
+/** Ends only this one session (not the account's other devices). */
+export async function signOutLocal(token: string): Promise<void> {
+  const { url } = config();
+  await fetch(`${url}/auth/v1/logout?scope=local`, { method: 'POST', headers: authHeaders(token) }).catch(() => undefined);
+}
+
+/**
+ * Standard Supabase sign-up. With "Confirm email" on, no session is returned and Supabase emails a code;
+ * with it off, a session is returned (the caller then still asks for an emailed code before using it).
+ */
+export async function signUpVerified(input: {
+  email: string;
+  password: string;
+  fullName: string;
+  country: string;
+  financialDataConsent: boolean;
+}): Promise<{ session: AuthSession | null }> {
+  const { url } = config();
+  const payload = await requestJSON<any>(`${url}/auth/v1/signup`, {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify({
+      email: input.email,
+      password: input.password,
+      data: { full_name: input.fullName, country: input.country, personal_data_insights_enabled: input.financialDataConsent },
+    }),
+  });
+  return { session: normalizeSession(payload) };
 }
 
 export async function resendSignupConfirmation(email: string): Promise<void> {

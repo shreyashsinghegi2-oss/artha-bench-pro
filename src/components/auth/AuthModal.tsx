@@ -53,6 +53,8 @@ export const AuthModal: React.FC = () => {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [verificationSent, setVerificationSent] = useState(false);
+  const [otpCode, setOtpCode] = useState('');
+  const [resendIn, setResendIn] = useState(0);
 
   const [goal, setGoal] = useState('all');
   const [currency, setCurrency] = useState('INR');
@@ -87,7 +89,14 @@ export const AuthModal: React.FC = () => {
 
   useEffect(() => {
     setError(null);
+    if (auth.authScreen === 'otp') { setOtpCode(''); setResendIn(60); }
   }, [auth.authScreen]);
+
+  useEffect(() => {
+    if (resendIn <= 0) return;
+    const t = window.setTimeout(() => setResendIn((n) => n - 1), 1000);
+    return () => window.clearTimeout(t);
+  }, [resendIn]);
 
   if (!auth.authOpen) return null;
 
@@ -114,6 +123,20 @@ export const AuthModal: React.FC = () => {
     if (password !== confirmPassword) return setError('Passwords do not match.');
     if (!termsConsent) return setError('Accept the Terms and Privacy Policy to create an account.');
     void run(() => auth.signUp({ fullName, email, password, country, financialDataConsent: financialConsent }));
+  };
+
+  const submitOtp = (event: FormEvent) => {
+    event.preventDefault();
+    if (otpCode.replace(/\D/g, '').length < 6) return setError('Enter the 6-digit code from the email.');
+    void run(() => auth.verifyOtp(otpCode));
+  };
+
+  const resendOtp = () => {
+    void run(async () => {
+      await auth.resendOtp();
+      setOtpCode('');
+      setResendIn(60);
+    });
   };
 
   const submitForgot = (event: FormEvent) => {
@@ -166,7 +189,8 @@ export const AuthModal: React.FC = () => {
       : auth.authScreen === 'forgot' ? 'Reset your password'
         : auth.authScreen === 'reset' ? 'Choose a new password'
           : auth.authScreen === 'onboarding' ? 'Personalize your workspace'
-            : 'Check your email';
+            : auth.authScreen === 'otp' ? 'Enter your email code'
+              : 'Check your email';
 
   const description = auth.authScreen === 'login'
     ? 'Sign in to your portfolio, money report and AI CFO.'
@@ -174,6 +198,8 @@ export const AuthModal: React.FC = () => {
       ? 'Track income, expenses, EMIs and investments, and get answers in your language.'
       : auth.authScreen === 'onboarding'
         ? 'These preferences personalize the interface. Optional values are never treated as verified financial facts.'
+        : auth.authScreen === 'otp'
+          ? 'A one-time code proves this email is yours. It expires soon and works only once.'
         : 'Authentication is handled by Supabase Auth. Artha Bench never stores your raw password.';
 
   return (
@@ -249,8 +275,9 @@ export const AuthModal: React.FC = () => {
                   <button type="button" onClick={() => auth.openAuth('forgot')} className="font-bold text-interactive hover:underline">Forgot password?</button>
                 </div>
                 <button disabled={busy || !auth.configured} className="am-cta">
-                  {busy ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />} Sign in securely
+                  {busy ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />} {auth.emailOtp ? 'Continue' : 'Sign in securely'}
                 </button>
+                {auth.emailOtp && <p className="text-center text-[11px] leading-5 text-secondary"><ShieldCheck className="mr-1 inline h-3.5 w-3.5 align-[-2px]" />Two-step sign-in: after your password we email you a 6-digit code.</p>}
                 <div className="rounded-2xl border border-line bg-canvas p-4 text-center text-xs text-secondary">
                   New to ArthaMind? <button type="button" onClick={() => auth.openAuth('signup')} className="font-black text-interactive hover:underline">Create an account</button>
                 </div>
@@ -273,6 +300,33 @@ export const AuthModal: React.FC = () => {
                 <label className="flex items-start gap-3 rounded-xl border border-line bg-canvas p-3 text-xs leading-5 text-secondary"><input className="mt-0.5" type="checkbox" checked={financialConsent} onChange={(e) => setFinancialConsent(e.target.checked)} /><span>I allow ArthaMind to use financial data categories I explicitly authorize for personalized educational analysis. I can turn this off later.</span></label>
                 <button disabled={busy || !auth.configured} className="am-cta">{busy && <LoaderCircle className="h-4 w-4 animate-spin" />} Create secure account</button>
                 <p className="text-center text-[10px] leading-5 text-secondary">Your records start empty until you add them. ArthaMind does not add sample income, expenses, balances or EMIs for your account.</p>
+              </form>
+            )}
+
+            {auth.authScreen === 'otp' && (
+              <form onSubmit={submitOtp} className="space-y-4">
+                <div>
+                  <label className={labelClass} htmlFor="otp-code">6-digit code{auth.otpEmail ? ` sent to ${auth.otpEmail}` : ''}</label>
+                  <input
+                    id="otp-code"
+                    className={`${inputClass} am-otp`}
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    pattern="[0-9]*"
+                    maxLength={10}
+                    placeholder="••••••"
+                    autoFocus
+                    required
+                    value={otpCode}
+                    onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
+                  />
+                </div>
+                <button disabled={busy} className="am-cta">{busy ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />} Verify and continue</button>
+                <div className="flex items-center justify-between gap-3 text-xs">
+                  <button type="button" onClick={() => auth.openAuth('login')} className="inline-flex items-center gap-1 font-bold text-secondary"><ArrowLeft className="h-3.5 w-3.5" /> Use a different email</button>
+                  <button type="button" disabled={busy || resendIn > 0} onClick={resendOtp} className="font-bold text-interactive hover:underline disabled:cursor-not-allowed disabled:text-secondary disabled:no-underline">{resendIn > 0 ? `Resend code in ${resendIn}s` : 'Resend code'}</button>
+                </div>
+                <p className="text-center text-[10px] leading-5 text-secondary">Check Spam or Promotions if the email is not in your inbox. Never share this code with anyone; ArthaMind will never ask for it by phone or chat.</p>
               </form>
             )}
 

@@ -10,6 +10,8 @@
     "server/v1/**/*.ts",
     "src/tax-engines/**/*.ts",
     "src/components/developers/**/*.tsx",
-    "scripts/create-api-key.ts"
+    "scripts/create-api-key.ts",
+    "src/advisor/**/*.ts",
+    "server/advisor/**/*.ts"
   ]
 }

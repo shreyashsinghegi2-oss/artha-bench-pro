@@ -24,6 +24,8 @@ export default mergeConfig(
           'server/fetch/*.ts',
           'server/v1/{envelope,params,calculators,auth,openapi,ai}.ts',
           'src/tax-engines/*.ts',
+          'src/advisor/*.ts',
+          'server/advisor/*.ts',
         ],
         thresholds: { lines: 80, functions: 80, statements: 80, branches: 75 },
       },

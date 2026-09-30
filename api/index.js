@@ -8061,11 +8061,46 @@ async function publicTts(chunk, tl, rate) {
   if (!type.includes("audio")) throw new Error("Speech service did not return audio");
   return Buffer.from(await res.arrayBuffer());
 }
+var FISH_TTS_URL = "https://api.fish.audio/v1/tts";
+function fishLanguages() {
+  const raw = process.env.FISH_AUDIO_LANGS?.trim() || "en,hi";
+  return new Set(raw.split(",").map((x) => x.trim().toLowerCase()).filter((x) => x in VOICE_LANGS));
+}
+function fishConfigured(lang) {
+  return Boolean(process.env.FISH_AUDIO_API_KEY?.trim()) && fishLanguages().has(lang);
+}
+async function fishTts(text, rate, fetchImpl = fetch) {
+  const key = process.env.FISH_AUDIO_API_KEY?.trim();
+  if (!key) throw new Error("Fish Audio is not configured");
+  const voice = process.env.FISH_AUDIO_VOICE_ID?.trim();
+  const model = process.env.FISH_AUDIO_MODEL?.trim();
+  const clean2 = ttsChunks(text, 400).join(" ");
+  if (!clean2) throw new Error("Nothing to read.");
+  const res = await fetchImpl(FISH_TTS_URL, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json", ...model ? { model } : {} },
+    signal: AbortSignal.timeout(3e4),
+    body: JSON.stringify({ text: clean2, format: "mp3", mp3_bitrate: 128, normalize: true, latency: "normal", prosody: { speed: rate }, ...voice ? { reference_id: voice } : {} })
+  });
+  if (!res.ok) throw new Error(`Fish Audio HTTP ${res.status}`);
+  const type = res.headers.get("content-type") || "";
+  if (type.includes("json") || type.includes("text/")) throw new Error("Fish Audio did not return audio");
+  const audio = Buffer.from(await res.arrayBuffer());
+  if (audio.length < 256) throw new Error("Fish Audio returned an empty clip");
+  return audio;
+}
 async function synthesize(text, lang, rate = 1) {
   const l = VOICE_LANGS[lang];
   if (!l) throw new Error("Unsupported language.");
   const chunks = ttsChunks(text);
   if (!chunks.length) throw new Error("Nothing to read.");
+  if (fishConfigured(lang)) {
+    try {
+      return { audio: await fishTts(text, rate), provider: "Fish Audio" };
+    } catch (error) {
+      console.warn("Fish Audio TTS failed, using the next provider:", error instanceof Error ? error.message : error);
+    }
+  }
   const useCloud = Boolean(process.env.GOOGLE_TTS_API_KEY?.trim());
   const parts = [];
   for (const c2 of chunks) parts.push(useCloud ? await cloudTts(c2, l.cloud, rate) : await publicTts(c2, l.tts, rate));

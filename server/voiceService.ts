@@ -3,8 +3,12 @@
  * speech audio (MP3) generated on the server, so it works even when a phone has no Hindi or
  * Marathi voice installed, and the user can download it as a voice note.
  *
- * Speech: Google Cloud Text-to-Speech when GOOGLE_TTS_API_KEY is set (official, recommended);
- * otherwise Google Translate's public speech endpoint (no key, unofficial, may be rate-limited).
+ * Speech, first provider that works:
+ *   1. Fish Audio when FISH_AUDIO_API_KEY is set, for the languages in FISH_AUDIO_LANGS (default: en, hi).
+ *      Optional FISH_AUDIO_VOICE_ID picks a voice (reference_id); optional FISH_AUDIO_MODEL sets the model header.
+ *   2. Google Cloud Text-to-Speech when GOOGLE_TTS_API_KEY is set (official).
+ *   3. Google Translate's public speech endpoint (no key, unofficial, may be rate-limited).
+ * If Fish Audio fails (key, credits, network), the answer is spoken by the next provider instead.
  * Translation: the AI model (Groq) when configured; otherwise Google Translate's public endpoint.
  */
 import { callGroqChat } from './groqService';
@@ -66,12 +70,53 @@ async function publicTts(chunk: string, tl: string, rate: number): Promise<Buffe
   return Buffer.from(await res.arrayBuffer());
 }
 
+const FISH_TTS_URL = 'https://api.fish.audio/v1/tts';
+
+/** Languages sent to Fish Audio (comma-separated codes from VOICE_LANGS). */
+export function fishLanguages(): Set<string> {
+  const raw = process.env.FISH_AUDIO_LANGS?.trim() || 'en,hi';
+  return new Set(raw.split(',').map((x) => x.trim().toLowerCase()).filter((x) => x in VOICE_LANGS));
+}
+
+export function fishConfigured(lang: string): boolean {
+  return Boolean(process.env.FISH_AUDIO_API_KEY?.trim()) && fishLanguages().has(lang);
+}
+
+/** Fish Audio TTS: one request for the whole (cleaned) text, MP3 back. */
+export async function fishTts(text: string, rate: number, fetchImpl: typeof fetch = fetch): Promise<Buffer> {
+  const key = process.env.FISH_AUDIO_API_KEY?.trim();
+  if (!key) throw new Error('Fish Audio is not configured');
+  const voice = process.env.FISH_AUDIO_VOICE_ID?.trim();
+  const model = process.env.FISH_AUDIO_MODEL?.trim();
+  const clean = ttsChunks(text, 400).join(' ');
+  if (!clean) throw new Error('Nothing to read.');
+  const res = await fetchImpl(FISH_TTS_URL, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json', ...(model ? { model } : {}) },
+    signal: AbortSignal.timeout(30_000),
+    body: JSON.stringify({ text: clean, format: 'mp3', mp3_bitrate: 128, normalize: true, latency: 'normal', prosody: { speed: rate }, ...(voice ? { reference_id: voice } : {}) }),
+  });
+  if (!res.ok) throw new Error(`Fish Audio HTTP ${res.status}`);
+  const type = res.headers.get('content-type') || '';
+  if (type.includes('json') || type.includes('text/')) throw new Error('Fish Audio did not return audio');
+  const audio = Buffer.from(await res.arrayBuffer());
+  if (audio.length < 256) throw new Error('Fish Audio returned an empty clip');
+  return audio;
+}
+
 /** MP3 audio for the text. MP3 frames can be joined, so chunks become one voice note. */
 export async function synthesize(text: string, lang: string, rate = 1): Promise<{ audio: Buffer; provider: string }> {
   const l = VOICE_LANGS[lang];
   if (!l) throw new Error('Unsupported language.');
   const chunks = ttsChunks(text);
   if (!chunks.length) throw new Error('Nothing to read.');
+  if (fishConfigured(lang)) {
+    try {
+      return { audio: await fishTts(text, rate), provider: 'Fish Audio' };
+    } catch (error) {
+      console.warn('Fish Audio TTS failed, using the next provider:', error instanceof Error ? error.message : error);
+    }
+  }
   const useCloud = Boolean(process.env.GOOGLE_TTS_API_KEY?.trim());
   const parts: Buffer[] = [];
   // Sequential, so long answers do not trip the speech service's limits.

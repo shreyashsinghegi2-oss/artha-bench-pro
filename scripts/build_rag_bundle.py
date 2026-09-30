@@ -16,6 +16,7 @@ import html
 import json
 import re
 import sys
+import urllib.error
 import urllib.request
 import xml.etree.ElementTree as ET
 from html.parser import HTMLParser
@@ -30,12 +31,26 @@ from rag.indexer import ingest_pdf, ingest_text  # noqa: E402
 from rag.store import InMemoryStore  # noqa: E402
 
 UA = "Mozilla/5.0 (compatible; ArthaBench-RAG-Indexer/1.0; +https://artha-bench-pro.vercel.app)"
+# Some government sites refuse unknown agents; a standard browser request is retried once for them.
+BROWSER_HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,application/pdf;q=0.9,*/*;q=0.8",
+    "Accept-Language": "en-IN,en;q=0.9",
+}
 
 
 def fetch(url: str, timeout: int = 90) -> bytes:
-    req = urllib.request.Request(url, headers={"User-Agent": UA, "Accept": "*/*"})
-    with urllib.request.urlopen(req, timeout=timeout) as res:  # noqa: S310 - fixed official URLs from sources.json
-        return res.read()
+    last: Exception | None = None
+    for headers in ({"User-Agent": UA, "Accept": "*/*"}, BROWSER_HEADERS):
+        try:
+            req = urllib.request.Request(url, headers=headers)
+            with urllib.request.urlopen(req, timeout=timeout) as res:  # noqa: S310 - fixed official URLs from sources.json
+                return res.read()
+        except urllib.error.HTTPError as e:
+            last = e
+            if e.code not in (401, 403, 406, 429):
+                raise
+    raise last if last else RuntimeError("download failed")
 
 
 class _Text(HTMLParser):

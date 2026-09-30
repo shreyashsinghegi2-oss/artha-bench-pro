@@ -7839,14 +7839,14 @@ var YAHOO_INTERVALS = {
 function pointsToCandles(points) {
   const seen = /* @__PURE__ */ new Set();
   return points.flatMap((point) => {
-    const time = Math.floor(Date.parse(point.date) / 1e3);
-    if (!Number.isFinite(time) || seen.has(time)) return [];
-    seen.add(time);
+    const time2 = Math.floor(Date.parse(point.date) / 1e3);
+    if (!Number.isFinite(time2) || seen.has(time2)) return [];
+    seen.add(time2);
     const close = point.close ?? point.price;
     const open = point.open ?? close;
     const high = point.high ?? Math.max(open, close);
     const low = point.low ?? Math.min(open, close);
-    return [{ time, open, high, low, close, ...point.volume ? { volume: point.volume } : {} }];
+    return [{ time: time2, open, high, low, close, ...point.volume ? { volume: point.volume } : {} }];
   }).sort((a, b) => a.time - b.time);
 }
 function aggregateCandles(candles, bucketSeconds) {
@@ -13238,13 +13238,13 @@ function matchPatterns(history, current = history.at(-1), k = DEFAULT_K) {
   if (!current) throw new Error("no market history");
   const maxH = Math.max(...HORIZONS);
   if (history.length < maxH + 250) throw new Error(`need at least ${maxH + 250} days of features, got ${history.length}`);
-  const z15 = zScorer(history);
-  const target = z15(current);
+  const z16 = zScorer(history);
+  const target = z16(current);
   const candidates = [];
   for (let i = 0; i + maxH < history.length; i += 1) {
     const row = history[i];
     if (!row || row.date >= current.date) continue;
-    const v = z15(row);
+    const v = z16(row);
     let d = 0;
     for (let j = 0; j < v.length; j += 1) d += ((v[j] ?? 0) - (target[j] ?? 0)) ** 2;
     candidates.push({ i, d: Math.sqrt(d) });
@@ -13485,14 +13485,14 @@ async function runPipeline(question, deps) {
     layers.push(e);
     deps.onLayer?.(e);
   };
-  const time = async (fn) => {
+  const time2 = async (fn) => {
     const t0 = now();
     const v = await fn();
     return [v, now() - t0];
   };
-  const [{ parsed, meta }, parseMs] = await time(() => parseQuery(question, { userId: deps.userId, ai: deps.extractor }));
+  const [{ parsed, meta }, parseMs] = await time2(() => parseQuery(question, { userId: deps.userId, ai: deps.extractor }));
   emit({ layer: "parse", status: "done", ms: parseMs, note: meta.method });
-  const [context2, dataMs] = await time(() => gatherContext({ question, parsed, profile: deps.profile ?? null, fetchers: deps.fetchers }));
+  const [context2, dataMs] = await time2(() => gatherContext({ question, parsed, profile: deps.profile ?? null, fetchers: deps.fetchers }));
   const sources = sourceSummary(context2);
   const okCount = sources.filter((s2) => s2.status === "ok").length;
   emit({ layer: "data", status: "done", ms: dataMs, note: `${okCount} of ${sources.length} sources` });
@@ -13509,16 +13509,16 @@ async function runPipeline(question, deps) {
   } else {
     emit({ layer: "pattern", status: "skipped", ms: 0, note: "not a market question" });
   }
-  const [math, mathMs] = await time(() => runMath(parsed, context2));
+  const [math, mathMs] = await time2(() => runMath(parsed, context2));
   emit({
     layer: "math",
     status: math.calculations.length ? "done" : "skipped",
     ms: mathMs,
     note: `${math.calculations.length} calculations, ${math.guardrails.length} checks`
   });
-  const [profile, profMs] = await time(() => matchProfile(parsed, context2.profile.status === "ok" ? context2.profile.data : null));
+  const [profile, profMs] = await time2(() => matchProfile(parsed, context2.profile.status === "ok" ? context2.profile.data : null));
   emit({ layer: "profile", status: profile.available ? "done" : "skipped", ms: profMs, note: profile.suitability });
-  const [explanation, explMs] = await time(() => explain({ question, parsed, context: context2, pattern, math, profile }, deps.llm));
+  const [explanation, explMs] = await time2(() => explain({ question, parsed, context: context2, pattern, math, profile }, deps.llm));
   emit({ layer: "explain", status: explanation.mode === "raw" && explanation.error ? "failed" : "done", ms: explMs, note: explanation.mode });
   return {
     question,
@@ -13843,6 +13843,148 @@ function createSimulationRouter(history = niftyHistory) {
 }
 var simulationRouter = createSimulationRouter();
 
+// server/timetable/routes.ts
+import { Router as Router11 } from "express";
+import { z as z15 } from "zod";
+var SUPABASE_URL = (process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || "https://agjbvoosukxfvrritgto.supabase.co").replace(/\/$/, "");
+var SUPABASE_KEY = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || "sb_publishable_KOdXB7LW5Ho5hDjsi3GMiw_xdogy5oR";
+var GROQ_URL3 = "https://api.groq.com/openai/v1/chat/completions";
+var DEFAULT_VISION_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct";
+var DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+var bodySchema2 = z15.object({
+  password: z15.string().min(1).max(100),
+  image: z15.string().max(19e5).regex(/^data:image\/(png|jpeg|webp);base64,/)
+});
+function allowedOrigin(origin) {
+  if (!origin) return false;
+  const extra = (process.env.TIMETABLE_ORIGINS || "").split(",").map((s2) => s2.trim()).filter(Boolean);
+  return extra.includes(origin) || /^https:\/\/term-timetable(-[a-z0-9-]+)?\.vercel\.app$/.test(origin) || /^http:\/\/localhost:\d+$/.test(origin);
+}
+var time = (v) => {
+  const m = /^(\d{1,2})[:.](\d{2})\s*(am|pm)?$/i.exec(String(v ?? "").trim());
+  if (!m) return null;
+  let h = Number(m[1]);
+  const min = Number(m[2]);
+  const ap = m[3]?.toLowerCase();
+  if (ap === "pm" && h < 12) h += 12;
+  if (ap === "am" && h === 12) h = 0;
+  return h < 24 && min < 60 ? `${String(h).padStart(2, "0")}:${String(min).padStart(2, "0")}` : null;
+};
+function cleanRows(raw) {
+  const list = Array.isArray(raw) ? raw : raw && typeof raw === "object" && Array.isArray(raw.rows) ? raw.rows : [];
+  const out = [];
+  for (const r of list.slice(0, 400)) {
+    if (!r || typeof r !== "object") continue;
+    const o = r;
+    const dayRaw = String(o.day ?? "").trim().slice(0, 3);
+    const day = DAYS.find((d) => d.toLowerCase() === dayRaw.toLowerCase());
+    const start = time(o.start);
+    const end = time(o.end);
+    const subject = String(o.subject ?? "").trim().slice(0, 80);
+    if (!day || !start || !end || !subject || end <= start) continue;
+    const row = { day, start, end, subject };
+    const teacher = String(o.teacher ?? "").trim().slice(0, 60);
+    const room = String(o.room ?? "").trim().slice(0, 40);
+    if (teacher) row.teacher = teacher;
+    if (room) row.room = room;
+    out.push(row);
+  }
+  return out.sort((a, b) => DAYS.indexOf(a.day) - DAYS.indexOf(b.day) || a.start.localeCompare(b.start));
+}
+var EXTRACT_PROMPT = [
+  "This image is a class timetable. Read it exactly; do not invent classes.",
+  'Return ONLY JSON: {"rows":[{"day":"Mon","start":"09:00","end":"09:50","subject":"Mathematics","teacher":"","room":""}]}',
+  "day is one of Mon Tue Wed Thu Fri Sat Sun. Times are 24-hour HH:MM. One row per class period per day.",
+  "Skip breaks and lunch unless they are named periods. Leave teacher and room empty if not shown."
+].join("\n");
+async function verifyPassword(password, fetchImpl) {
+  const res = await fetchImpl(`${SUPABASE_URL}/rest/v1/rpc/timetable_login`, {
+    method: "POST",
+    headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ p_password: password }),
+    signal: AbortSignal.timeout(5e3)
+  });
+  if (!res.ok) return { ok: false, error: "Could not check the password right now." };
+  return await res.json();
+}
+function createTimetableRouter(deps = {}) {
+  const router = Router11();
+  const doFetch = deps.fetchImpl ?? fetch;
+  const limiter2 = createRateLimiter({ windowMs: 10 * 6e4, max: 10, message: "Too many reads. Please wait a few minutes." });
+  const cors = (req, res, next) => {
+    const origin = req.header("origin");
+    if (allowedOrigin(origin)) {
+      res.setHeader("Access-Control-Allow-Origin", origin);
+      res.setHeader("Vary", "Origin");
+      res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+      res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+    }
+    if (req.method === "OPTIONS") {
+      res.status(204).end();
+      return;
+    }
+    next();
+  };
+  router.options("/extract", cors);
+  router.post("/extract", cors, limiter2, async (req, res) => {
+    res.setHeader("Cache-Control", "no-store");
+    const body = bodySchema2.safeParse(req.body);
+    if (!body.success) {
+      res.status(400).json({ error: "Send the admin password and a PNG, JPG or WebP image under 1.4 MB." });
+      return;
+    }
+    try {
+      const auth = await verifyPassword(body.data.password, doFetch);
+      if (!auth.ok) {
+        res.status(401).json({ error: auth.error ?? "Wrong password." });
+        return;
+      }
+      const key = process.env.GROQ_API_KEY?.trim();
+      if (!key) {
+        res.status(503).json({ error: "Automatic reading is not set up. Enter the rows by hand." });
+        return;
+      }
+      const ai = await doFetch(GROQ_URL3, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+        signal: AbortSignal.timeout(4e4),
+        body: JSON.stringify({
+          model: process.env.GROQ_VISION_MODEL?.trim() || DEFAULT_VISION_MODEL,
+          temperature: 0,
+          max_tokens: 4e3,
+          response_format: { type: "json_object" },
+          messages: [
+            {
+              role: "user",
+              content: [
+                { type: "text", text: EXTRACT_PROMPT },
+                { type: "image_url", image_url: { url: body.data.image } }
+              ]
+            }
+          ]
+        })
+      });
+      if (!ai.ok) {
+        console.warn("[timetable/extract] Groq HTTP", ai.status, (await ai.text()).slice(0, 300));
+        res.status(502).json({ error: "The timetable could not be read automatically. Enter the rows by hand." });
+        return;
+      }
+      const data = await ai.json();
+      const content = data.choices?.[0]?.message?.content;
+      const rows = cleanRows(typeof content === "string" ? JSON.parse(content) : null);
+      res.json({
+        rows,
+        note: rows.length ? "Read by AI. Check every row against the timetable before publishing." : "No classes could be read from this image. Enter the rows by hand."
+      });
+    } catch (e) {
+      console.warn("[timetable/extract] failed", e instanceof Error ? e.message : e);
+      res.status(502).json({ error: "The timetable could not be read automatically. Enter the rows by hand." });
+    }
+  });
+  return router;
+}
+var timetableRouter = createTimetableRouter();
+
 // server/vercelHandler.ts
 var app = express2();
 var GROUNDED_AI_PATHS = /* @__PURE__ */ new Set(["/ai/chat", "/ai/tutor", "/tutor", "/nvidia-tutor", "/crypto/assistant", "/company/assistant", "/dashboard/assistant", "/personal/assistant", "/finance/scenario-assistant", "/news/explain", "/news/brief"]);
@@ -13852,6 +13994,7 @@ app.get("/api/news/image", handleNewsImage);
 app.use("/api/v1", v1Router);
 app.use("/api/advisor", advisorRouter);
 app.use("/api/simulation", simulationRouter);
+app.use("/api/timetable", timetableRouter);
 app.use("/api", stripUserProfile);
 app.use("/api", (req, res, next) => GROUNDED_AI_PATHS.has(req.path) ? groundingMiddleware(req, res, next) : next());
 app.get("/api/ai/live-sources", (_req, res) => {

@@ -1,5 +1,5 @@
 // server/vercelHandler.ts
-import express from "express";
+import express2 from "express";
 
 // server/routes.ts
 import { Router as Router3 } from "express";
@@ -506,32 +506,32 @@ function calculateQuickRatio(cash, marketableSecurities, receivables, currentLia
     assessment
   };
 }
-function calculateCompoundInterest(principal, annualRatePercent, years, monthlyContribution = 0, compoundingFrequencyPerYear = 12) {
-  if (![principal, annualRatePercent, years, monthlyContribution, compoundingFrequencyPerYear].every(Number.isFinite)) {
+function calculateCompoundInterest(principal2, annualRatePercent, years, monthlyContribution = 0, compoundingFrequencyPerYear = 12) {
+  if (![principal2, annualRatePercent, years, monthlyContribution, compoundingFrequencyPerYear].every(Number.isFinite)) {
     throw new Error("Compound-interest inputs must be finite numbers.");
   }
-  if (principal < 0 || annualRatePercent < 0 || years <= 0 || monthlyContribution < 0 || compoundingFrequencyPerYear <= 0) {
+  if (principal2 < 0 || annualRatePercent < 0 || years <= 0 || monthlyContribution < 0 || compoundingFrequencyPerYear <= 0) {
     throw new Error("Invalid input parameters for compound interest calculation.");
   }
   if (!Number.isInteger(compoundingFrequencyPerYear) || compoundingFrequencyPerYear > 365) {
     throw new Error("Compounding frequency must be a whole number between 1 and 365.");
   }
-  const P = new Decimal(principal);
+  const P = new Decimal(principal2);
   const r = new Decimal(annualRatePercent).div(100);
   const t = new Decimal(years);
-  const n = new Decimal(compoundingFrequencyPerYear);
+  const n2 = new Decimal(compoundingFrequencyPerYear);
   const PMT = new Decimal(monthlyContribution);
   let finalBalanceDec;
   let totalContributionsDec = P;
   if (PMT.isZero()) {
-    const ratePerPeriod = r.div(n);
-    const totalPeriods = n.times(t);
+    const ratePerPeriod = r.div(n2);
+    const totalPeriods = n2.times(t);
     const growthFactor = new Decimal(1).plus(ratePerPeriod).pow(totalPeriods.toNumber());
     finalBalanceDec = P.times(growthFactor);
   } else {
     const totalMonths = Math.round(t.times(12).toNumber());
     let balance = P;
-    const effectiveMonthlyRate = new Decimal(1).plus(r.div(n)).pow(n.div(12)).minus(1);
+    const effectiveMonthlyRate = new Decimal(1).plus(r.div(n2)).pow(n2.div(12)).minus(1);
     const monthlyGrowth = new Decimal(1).plus(effectiveMonthlyRate);
     for (let m = 1; m <= totalMonths; m++) {
       balance = balance.plus(PMT).times(monthlyGrowth);
@@ -543,7 +543,7 @@ function calculateCompoundInterest(principal, annualRatePercent, years, monthlyC
   const totalContributions = totalContributionsDec.toDecimalPlaces(2, Decimal.ROUND_HALF_UP).toNumber();
   const totalInterestEarned = new Decimal(finalBalance).minus(totalContributions).toDecimalPlaces(2, Decimal.ROUND_HALF_UP).toNumber();
   return {
-    principal,
+    principal: principal2,
     annualRatePercent,
     years,
     compoundingFrequencyPerYear,
@@ -658,10 +658,10 @@ function evaluateGroundTruth(query, aiResponseText, scenarioContext) {
       const rMatch = query.match(/(\d+(?:\.\d+)?)\s*%/);
       const tMatch = query.match(/(\d+)\s*years/i);
       if (pMatch && rMatch && tMatch) {
-        const principal = parseFloat(pMatch[1].replace(/,/g, ""));
+        const principal2 = parseFloat(pMatch[1].replace(/,/g, ""));
         const rate = parseFloat(rMatch[1]);
         const years = parseFloat(tMatch[1]);
-        const res = calculateCompoundInterest(principal, rate, years, 0, 12);
+        const res = calculateCompoundInterest(principal2, rate, years, 0, 12);
         expectedResult = res.finalBalance;
       }
     } else if (lower.includes("quick ratio")) {
@@ -715,18 +715,18 @@ function extractNumbers(text) {
   if (!text) return [];
   const matches = text.match(/(?:[\$\₹]\s*)?(-?\d{1,3}(?:,\d{3})*(?:\.\d+)?|-?\d+(?:\.\d+)?)/g);
   if (!matches) return [];
-  return matches.map((m) => parseFloat(m.replace(/[\$\₹\s,]/g, ""))).filter((n) => !isNaN(n) && isFinite(n));
+  return matches.map((m) => parseFloat(m.replace(/[\$\₹\s,]/g, ""))).filter((n2) => !isNaN(n2) && isFinite(n2));
 }
 function findBestNumericValue(numbers, expected) {
   if (numbers.length === 0) return void 0;
   if (expected !== void 0) {
     let best = numbers[0];
     let minDiff = Math.abs(best - expected);
-    for (const num of numbers) {
-      const diff = Math.abs(num - expected);
+    for (const num2 of numbers) {
+      const diff = Math.abs(num2 - expected);
       if (diff < minDiff) {
         minDiff = diff;
-        best = num;
+        best = num2;
       }
     }
     return best;
@@ -1023,7 +1023,7 @@ function computeFullReliabilityEvaluation(query, primaryResponse, secondaryRespo
     evidenceVerification: {
       raw: evidenceRawScore,
       reason: evidenceRes.statusText,
-      evidenceStr: evidenceRes.sources.map((s) => `${s.title} (${s.statusLabel})`),
+      evidenceStr: evidenceRes.sources.map((s2) => `${s2.title} (${s2.statusLabel})`),
       pass: evidenceRes.pass,
       lim: "Static regulatory guidelines used; live search unconfigured."
     },
@@ -1095,10 +1095,10 @@ function computeFullReliabilityEvaluation(query, primaryResponse, secondaryRespo
     safetyComplianceScore: safetyRawScore,
     overallReliabilityScore: overallScore
   };
-  const evidenceSources = evidenceRes.sources.map((s) => ({
-    url: s.url || "https://arthabench.org/evidence",
-    title: s.title,
-    verified: s.verified
+  const evidenceSources = evidenceRes.sources.map((s2) => ({
+    url: s2.url || "https://arthabench.org/evidence",
+    title: s2.title,
+    verified: s2.verified
   }));
   const demoMode = !process.env.GROQ_API_KEY || process.env.GROQ_API_KEY.trim() === "";
   return {
@@ -1214,10 +1214,10 @@ async function assertPublic(url) {
   if (!addrs.length || addrs.some((a) => isPrivateAddress(a.address))) throw new Error("This address cannot be read.");
 }
 var ENTITIES = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: " ", rsquo: "\u2019", lsquo: "\u2018", rdquo: "\u201D", ldquo: "\u201C", ndash: "\u2013", mdash: "\u2014", hellip: "\u2026", rupee: "\u20B9" };
-var decode = (s) => s.replace(/&(#x?[0-9a-f]+|[a-z]+);/gi, (m, e) => {
+var decode = (s2) => s2.replace(/&(#x?[0-9a-f]+|[a-z]+);/gi, (m, e) => {
   if (e[0] === "#") {
-    const n = e[1].toLowerCase() === "x" ? parseInt(e.slice(2), 16) : parseInt(e.slice(1), 10);
-    return Number.isFinite(n) && n > 0 && n < 1114112 ? String.fromCodePoint(n) : "";
+    const n2 = e[1].toLowerCase() === "x" ? parseInt(e.slice(2), 16) : parseInt(e.slice(1), 10);
+    return Number.isFinite(n2) && n2 > 0 && n2 < 1114112 ? String.fromCodePoint(n2) : "";
   }
   return ENTITIES[e.toLowerCase()] ?? m;
 });
@@ -1300,7 +1300,7 @@ function parseAmfiNav(text) {
     if (parts.length >= 6 && /^\d+$/.test(parts[0])) {
       const nav = Number(parts[4]);
       if (!Number.isFinite(nav) || nav <= 0) continue;
-      const isin = (s) => /^INF[A-Z0-9]{9}$/.test(s.trim()) ? s.trim() : null;
+      const isin = (s2) => /^INF[A-Z0-9]{9}$/.test(s2.trim()) ? s2.trim() : null;
       out.push({ code: parts[0], isinGrowth: isin(parts[1]), isinReinvest: isin(parts[2]), name: parts[3].trim(), nav, navDate: isoDate(parts[5]), category, house, assetClass: assetClassFor(category, parts[3]) });
     } else if (/schemes?\s*\(/i.test(line)) {
       category = line.replace(/^.*?\((.*)\)\s*$/, "$1").trim() || line;
@@ -1335,11 +1335,11 @@ async function amfiSchemes() {
         }
       }
       if (list.length < 1e3) throw new Error(`AMFI NAV file unavailable (${problems.join("; ")}).`);
-      const byCode = new Map(list.map((s) => [s.code, s]));
+      const byCode = new Map(list.map((s2) => [s2.code, s2]));
       const byIsin = /* @__PURE__ */ new Map();
-      for (const s of list) {
-        if (s.isinGrowth) byIsin.set(s.isinGrowth, s);
-        if (s.isinReinvest) byIsin.set(s.isinReinvest, s);
+      for (const s2 of list) {
+        if (s2.isinGrowth) byIsin.set(s2.isinGrowth, s2);
+        if (s2.isinReinvest) byIsin.set(s2.isinReinvest, s2);
       }
       amfiCache = { at: Date.now(), list, byCode, byIsin };
       return amfiCache;
@@ -1352,15 +1352,15 @@ async function amfiSchemes() {
   })();
   return amfiLoading;
 }
-var normal = (s) => s.toLowerCase().replace(/[^a-z0-9 ]+/g, " ").replace(/\s+/g, " ").trim();
+var normal = (s2) => s2.toLowerCase().replace(/[^a-z0-9 ]+/g, " ").replace(/\s+/g, " ").trim();
 function searchSchemes(list, query, limit = 20) {
   const words = normal(query).split(" ").filter((w) => w.length >= 2);
   if (!words.length) return [];
-  const hits = list.filter((s) => {
-    const n = normal(`${s.name} ${s.house}`);
-    return words.every((w) => n.includes(w));
+  const hits = list.filter((s2) => {
+    const n2 = normal(`${s2.name} ${s2.house}`);
+    return words.every((w) => n2.includes(w));
   });
-  const rank = (s) => (/direct/i.test(s.name) ? 0 : 2) + (/growth/i.test(s.name) ? 0 : 1);
+  const rank = (s2) => (/direct/i.test(s2.name) ? 0 : 2) + (/growth/i.test(s2.name) ? 0 : 1);
   return hits.sort((a, b) => rank(a) - rank(b) || a.name.length - b.name.length).slice(0, limit);
 }
 async function searchFunds(query, limit = 20) {
@@ -2562,7 +2562,7 @@ async function checkNewsProviderDiagnostic() {
 
 // src/services/newsBrief.ts
 var clean = (v) => v.replace(/<[^>]+>/g, " ").replace(/&[a-z]+;/gi, " ").replace(/\s+/g, " ").trim();
-var sentences = (v) => clean(v).split(/(?<=[.!?])\s+(?=[A-Z0-9“"'‘])/).map((s) => s.trim()).filter((s) => s.length > 25);
+var sentences = (v) => clean(v).split(/(?<=[.!?])\s+(?=[A-Z0-9“"'‘])/).map((s2) => s2.trim()).filter((s2) => s2.length > 25);
 var uniq = (list, key = (t) => String(t)) => list.filter((t, i) => list.findIndex((o) => key(o) === key(t)) === i);
 var ENTITIES2 = [
   { re: /\bReliance\b/i, name: "Reliance Industries", type: "company", symbol: "RELIANCE" },
@@ -2731,7 +2731,7 @@ function buildRuleBasedNewsBrief(input, now = /* @__PURE__ */ new Date()) {
   const entities = uniq(ENTITIES2.filter((e) => e.re.test(text)).map(({ name, type, symbol }) => ({ name, type, symbol })), (e) => e.name).slice(0, 6);
   const figures = extractFigures(text);
   const { sentiment, strength } = scoreSentiment(text);
-  const body = sentences(summaryText).filter((s) => s.toLowerCase() !== title.toLowerCase());
+  const body = sentences(summaryText).filter((s2) => s2.toLowerCase() !== title.toLowerCase());
   const lead = entities.find((e) => e.type === "company") ?? entities[0];
   const summary = body.length ? body.slice(0, 2).join(" ") : `${input.sourceName} reports: ${title}${/[.!?]$/.test(title) ? "" : "."} Only the headline is available, so the detail behind it needs the full article.`;
   const keyPoints = uniq([
@@ -2777,7 +2777,7 @@ function buildRuleBasedNewsBrief(input, now = /* @__PURE__ */ new Date()) {
 }
 var DIRS = ["positive", "negative", "mixed", "unclear"];
 var str = (v, max = 600) => typeof v === "string" ? clean(v).slice(0, max) : "";
-var strList = (v, n) => Array.isArray(v) ? v.map((x) => str(x, 280)).filter(Boolean).slice(0, n) : [];
+var strList = (v, n2) => Array.isArray(v) ? v.map((x) => str(x, 280)).filter(Boolean).slice(0, n2) : [];
 function mergeAiNewsBrief(rules, raw) {
   if (!raw || typeof raw !== "object") return rules;
   const o = raw;
@@ -2992,10 +2992,10 @@ var inr = (v, d = 0) => `\u20B9${v.toLocaleString("en-IN", { minimumFractionDigi
 var pct = (v, d = 2) => `${(v * 100).toFixed(d)}%`;
 var FORMULAS = {
   simpleInterest: (p, r, t) => p * r * t,
-  compound: (p, r, n, t) => p * (1 + r / n) ** (n * t),
-  effectiveAnnualRate: (r, n) => (1 + r / n) ** n - 1,
+  compound: (p, r, n2, t) => p * (1 + r / n2) ** (n2 * t),
+  effectiveAnnualRate: (r, n2) => (1 + r / n2) ** n2 - 1,
   cagr: (start, end, years) => (end / start) ** (1 / years) - 1,
-  ruleOf72: (ratePct) => 72 / ratePct,
+  ruleOf72: (ratePct2) => 72 / ratePct2,
   doublingYearsExact: (r) => Math.log(2) / Math.log(1 + r),
   realReturn: (nominal, inflation) => (1 + nominal) / (1 + inflation) - 1,
   futureCost: (today, inflation, years) => today * (1 + inflation) ** years,
@@ -3013,19 +3013,19 @@ var FORMULAS = {
     const i = annual / 12;
     return p * i * (1 + i) ** months / ((1 + i) ** months - 1);
   },
-  npv: (rate, flows) => flows.reduce((s, cf, t) => s + cf / (1 + rate) ** t, 0),
+  npv: (rate, flows) => flows.reduce((s2, cf, t) => s2 + cf / (1 + rate) ** t, 0),
   /** IRR by bisection; flows[0] is the initial outflow (negative). */
   irr: (flows) => {
     let lo = -0.99, hi = 10;
     for (let k = 0; k < 200; k++) {
       const mid = (lo + hi) / 2;
-      const v = flows.reduce((s, cf, t) => s + cf / (1 + mid) ** t, 0);
+      const v = flows.reduce((s2, cf, t) => s2 + cf / (1 + mid) ** t, 0);
       if (v > 0) lo = mid;
       else hi = mid;
     }
     return (lo + hi) / 2;
   },
-  annuityPv: (pmt, r, n) => pmt * (1 - (1 + r) ** -n) / r,
+  annuityPv: (pmt, r, n2) => pmt * (1 - (1 + r) ** -n2) / r,
   gordon: (d1, r, g) => d1 / (r - g),
   bondPrice: (face, couponRate, yieldRate, years) => {
     let p = 0;
@@ -3514,7 +3514,7 @@ var KNOWLEDGE = [
 
 // src/services/knowledgeLibrary.ts
 var STOP = new Set("a an and are as at be by for from how i in is it of on or that the this to what when which why with you your my me do does can should about".split(" "));
-var tokenize = (s) => s.toLowerCase().replace(/[₹%]/g, " ").split(/[^a-z0-9/]+/).filter((t) => t.length > 1 && !STOP.has(t));
+var tokenize = (s2) => s2.toLowerCase().replace(/[₹%]/g, " ").split(/[^a-z0-9/]+/).filter((t) => t.length > 1 && !STOP.has(t));
 var entryText = (e) => [e.title, e.title, e.keywords.join(" "), e.keywords.join(" "), e.summary, e.formula ?? "", (e.notes ?? []).join(" "), e.chapter].join(" ");
 function rankPassages(query, docs, k = 4) {
   const q = tokenize(query);
@@ -3523,7 +3523,7 @@ function rankPassages(query, docs, k = 4) {
     ...KNOWLEDGE.map((entry) => ({ tokens: tokenize(entryText(entry)), hit: { kind: "formula", entry } })),
     ...docs.flatMap((d) => d.chunks.map((text) => ({ tokens: tokenize(text), hit: { kind: "doc", docName: d.name, text } })))
   ];
-  const N = items.length, avg = items.reduce((s, i) => s + i.tokens.length, 0) / Math.max(1, N);
+  const N = items.length, avg = items.reduce((s2, i) => s2 + i.tokens.length, 0) / Math.max(1, N);
   const df = /* @__PURE__ */ new Map();
   for (const it of items) for (const t of new Set(it.tokens)) df.set(t, (df.get(t) ?? 0) + 1);
   const k1 = 1.4, b = 0.75;
@@ -3606,27 +3606,27 @@ function checkText(text, valid) {
   const invalid = [];
   const out = text.replace(CITE, (_m, space, list) => {
     const nums = list.split(",").map((x) => Number(x.trim()));
-    const good = nums.filter((n) => valid.has(n));
-    for (const n of nums) (valid.has(n) ? cited : invalid).push(n);
+    const good = nums.filter((n2) => valid.has(n2));
+    for (const n2 of nums) (valid.has(n2) ? cited : invalid).push(n2);
     return good.length ? `${space}[${good.join(", ")}]` : "";
   });
   return { text: out.replace(/ +([.,;:])/g, "$1").replace(/ {2,}/g, " "), cited, invalid };
 }
 function validateCitations(answer, numbered) {
-  const valid = new Set(numbered.map((s) => s.n));
+  const valid = new Set(numbered.map((s2) => s2.n));
   const cited = /* @__PURE__ */ new Set();
   const invalid = /* @__PURE__ */ new Set();
-  const fix = (s) => {
-    const r = checkText(s, valid);
-    r.cited.forEach((n) => cited.add(n));
-    r.invalid.forEach((n) => invalid.add(n));
+  const fix = (s2) => {
+    const r = checkText(s2, valid);
+    r.cited.forEach((n2) => cited.add(n2));
+    r.invalid.forEach((n2) => invalid.add(n2));
     return r.text;
   };
   const a = {
     ...answer,
     title: fix(answer.title),
     directAnswer: fix(answer.directAnswer),
-    steps: answer.steps.map((s) => ({ ...s, explanation: fix(s.explanation) })),
+    steps: answer.steps.map((s2) => ({ ...s2, explanation: fix(s2.explanation) })),
     example: { ...answer.example, result: fix(answer.example.result), calculation: answer.example.calculation.map(fix) },
     interpretation: answer.interpretation.map(fix),
     risks: answer.risks.map(fix),
@@ -3792,7 +3792,7 @@ var OFFICIAL_FEEDS = [
   { url: "https://www.rbi.org.in/notifications_rss.xml", publisher: "RBI", label: "RBI notification" },
   { url: "https://www.sebi.gov.in/sebirss.xml", publisher: "SEBI", label: "SEBI update" }
 ];
-var decodeXml2 = (s) => s.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1").replace(/<[^>]+>/g, " ").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'").replace(/&nbsp;/g, " ").replace(/\s+/g, " ").trim();
+var decodeXml2 = (s2) => s2.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1").replace(/<[^>]+>/g, " ").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'").replace(/&nbsp;/g, " ").replace(/\s+/g, " ").trim();
 var tag = (xml, name) => xml.match(new RegExp(`<${name}[^>]*>([\\s\\S]*?)</${name}>`, "i"))?.[1] ?? "";
 function parseRss(xml) {
   return [...xml.matchAll(/<item\b[^>]*>([\s\S]*?)<\/item>/gi)].map((m) => ({
@@ -3807,9 +3807,9 @@ var STOP2 = new Set(
     " "
   )
 );
-var terms = (s) => [
+var terms = (s2) => [
   ...new Set(
-    s.toLowerCase().replace(/[^\p{L}\p{N} ]+/gu, " ").split(/\s+/).filter((w) => w.length > 2 && !STOP2.has(w))
+    s2.toLowerCase().replace(/[^\p{L}\p{N} ]+/gu, " ").split(/\s+/).filter((w) => w.length > 2 && !STOP2.has(w))
   )
 ];
 function overlap(question, text) {
@@ -3858,9 +3858,9 @@ function createSources(deps) {
       const wantSebi = SEBI_TOPIC.test(ctx.question);
       const feeds = OFFICIAL_FEEDS.filter((f) => f.publisher === "RBI" ? wantRbi : wantSebi);
       const settled = await Promise.allSettled(feeds.map(async (f) => ({ f, items: parseRss(await politeGetText(f.url, { fetchImpl })) })));
-      const throttled = settled.find((s) => s.status === "rejected" && s.reason instanceof HostThrottledError);
+      const throttled = settled.find((s2) => s2.status === "rejected" && s2.reason instanceof HostThrottledError);
       const scored = settled.flatMap(
-        (s) => s.status === "fulfilled" ? s.value.items.map((it) => ({ f: s.value.f, it, score: overlap(ctx.question, `${it.title} ${it.description}`) })) : []
+        (s2) => s2.status === "fulfilled" ? s2.value.items.map((it) => ({ f: s2.value.f, it, score: overlap(ctx.question, `${it.title} ${it.description}`) })) : []
       );
       const picked = scored.filter((x) => x.score >= 0.34).sort((a, b) => b.score - a.score).slice(0, 3);
       if (!picked.length && throttled?.status === "rejected") throw throttled.reason;
@@ -3878,7 +3878,7 @@ function createSources(deps) {
       }));
     }
   };
-  const market = {
+  const market2 = {
     id: "market",
     kind: "market",
     priority: 2,
@@ -3893,7 +3893,7 @@ function createSources(deps) {
       );
       return quotes.flatMap(({ i, q }) => {
         if (!q || q.freshness === "demo" || !Number.isFinite(q.price)) return [];
-        const pct2 = q.changePercent != null ? ` (${q.changePercent >= 0 ? "+" : ""}${q.changePercent.toFixed(2)}%)` : "";
+        const pct3 = q.changePercent != null ? ` (${q.changePercent >= 0 ? "+" : ""}${q.changePercent.toFixed(2)}%)` : "";
         const when = q.providerTimestamp || q.retrievedAt;
         return [
           {
@@ -3902,7 +3902,7 @@ function createSources(deps) {
             title: `${i.label} [${q.symbol}]`,
             publisher: q.providerName,
             publishedAt: when,
-            text: `${i.label} [${q.symbol}]: ${fmtNum(q.price)} ${q.currency}${pct2} \xB7 ${q.providerName}, ${q.freshness.replaceAll("_", " ")}, as of ${when}`,
+            text: `${i.label} [${q.symbol}]: ${fmtNum(q.price)} ${q.currency}${pct3} \xB7 ${q.providerName}, ${q.freshness.replaceAll("_", " ")}, as of ${when}`,
             fetchedAt: iso(deps),
             freshness: q.freshness.replaceAll("_", " "),
             boost: 1
@@ -3980,14 +3980,14 @@ function createSources(deps) {
     enabled: (ctx) => ctx.wantNews,
     async fetch(ctx) {
       const r = await deps.getBusinessNews(ctx.instruments[0]?.label ?? ctx.question.split(" ").slice(0, 6).join(" "), "business", "india");
-      return (r.items ?? []).slice(0, 4).map((n) => ({
+      return (r.items ?? []).slice(0, 4).map((n2) => ({
         sourceId: "news",
         kind: "news",
-        title: n.title,
-        url: n.sourceUrl,
-        publisher: n.sourceName,
-        publishedAt: n.publishedAt ?? "",
-        text: [n.title, n.description].filter(Boolean).join(". "),
+        title: n2.title,
+        url: n2.sourceUrl,
+        publisher: n2.sourceName,
+        publishedAt: n2.publishedAt ?? "",
+        text: [n2.title, n2.description].filter(Boolean).join(". "),
         fetchedAt: iso(deps),
         freshness: "news"
       }));
@@ -4038,13 +4038,13 @@ ${page.text.slice(0, 2400)}`;
       const q = terms(ctx.question).slice(0, 6).join(" ");
       if (!q) return [];
       const headers = { "User-Agent": USER_AGENT, Accept: "application/json" };
-      const s = await fetchImpl(`https://en.wikipedia.org/w/rest.php/v1/search/title?q=${encodeURIComponent(q)}&limit=1`, {
+      const s2 = await fetchImpl(`https://en.wikipedia.org/w/rest.php/v1/search/title?q=${encodeURIComponent(q)}&limit=1`, {
         headers,
         signal: AbortSignal.timeout(2e3)
       });
-      if (s.status === 429 || s.status === 403) throw new HostThrottledError("en.wikipedia.org", s.status);
-      if (!s.ok) return [];
-      const key = (await s.json()).pages?.[0]?.key;
+      if (s2.status === 429 || s2.status === 403) throw new HostThrottledError("en.wikipedia.org", s2.status);
+      if (!s2.ok) return [];
+      const key = (await s2.json()).pages?.[0]?.key;
       if (!key) return [];
       const r = await fetchImpl(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(key)}`, {
         headers,
@@ -4068,7 +4068,7 @@ ${page.text.slice(0, 2400)}`;
       ];
     }
   };
-  return [rag, official, market, fund, userPage, news, web, wikipedia];
+  return [rag, official, market2, fund, userPage, news, web, wikipedia];
 }
 var firecrawlEnabled = () => Boolean(process.env.FIRECRAWL_API_KEY?.trim());
 async function firecrawlScrape(url, fetchImpl = fetch) {
@@ -4091,8 +4091,8 @@ async function firecrawlScrape(url, fetchImpl = fetch) {
 // server/fetch/refineInput.ts
 var KIND_WEIGHT = { official: 4, market: 4, news: 2.5, web: 2, reference: 0.5 };
 var PER_SOURCE_CHARS = 1400;
-function cleanText(s) {
-  return s.replace(/<\/?[a-zA-Z][^<>]{0,300}>/g, " ").replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, " ").replace(/<{2,}|>{2,}/g, "").replace(/[ \t]+/g, " ").replace(/\n{3,}/g, "\n\n").trim();
+function cleanText(s2) {
+  return s2.replace(/<\/?[a-zA-Z][^<>]{0,300}>/g, " ").replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, " ").replace(/<{2,}|>{2,}/g, "").replace(/[ \t]+/g, " ").replace(/\n{3,}/g, "\n\n").trim();
 }
 function shingles(text) {
   const w = terms(text);
@@ -4151,16 +4151,16 @@ function buildSourcesBlock(items, question, opts = {}) {
     if (numbered.length >= 12) break;
     const room = maxChars - used;
     if (room < 200) break;
-    const n = numbered.length + 1;
+    const n2 = numbered.length + 1;
     const head = [item.publisher, item.title, item.publishedAt ? `published ${item.publishedAt}` : "", item.url ?? ""].filter(Boolean).join(" \xB7 ");
     const body = item.text.slice(0, Math.min(PER_SOURCE_CHARS, room - head.length - 40));
-    const block = `<<<SOURCE ${n}>>> ${head}
+    const block = `<<<SOURCE ${n2}>>> ${head}
 ${body}${body.length < item.text.length ? " \u2026" : ""}
-<<<END SOURCE ${n}>>>`;
+<<<END SOURCE ${n2}>>>`;
     blocks.push(block);
     used += block.length;
     numbered.push({
-      n,
+      n: n2,
       kind: item.kind,
       title: item.title,
       url: item.url,
@@ -4265,7 +4265,7 @@ async function runSources(sources, ctx, opts = {}) {
     })
   );
 }
-var bytesOf = (items) => items.reduce((n, i) => n + Buffer.byteLength(i.text, "utf8"), 0);
+var bytesOf = (items) => items.reduce((n2, i) => n2 + Buffer.byteLength(i.text, "utf8"), 0);
 function fetchMetrics() {
   return [...metrics.entries()].map(([id, m]) => ({
     id,
@@ -4790,12 +4790,22 @@ function sipFutureValue(monthly, annual, months) {
 }
 
 // src/services/calculators.ts
+var DEFAULT_RATES = { ppf: 0.071, ssy: 0.082, nsc: 0.077, fd: 0.07, equity: 0.12, annuity: 0.06 };
 var r2 = (value) => Math.round(value * 100) / 100;
-function emi(principal, annual, months) {
-  if (!Number.isFinite(principal) || !Number.isFinite(annual) || !Number.isFinite(months) || principal <= 0 || months <= 0) return 0;
+function annualDepositFutureValue(yearly, annual, years) {
+  if (years <= 0) return 0;
+  return r2(yearly * (((1 + annual) ** years - 1) / annual) * (1 + annual));
+}
+function ppfMaturity(yearly, annual = DEFAULT_RATES.ppf, years = 15) {
+  const deposit = Math.min(Math.max(0, yearly), 15e4);
+  const maturity = annualDepositFutureValue(deposit, annual, years);
+  return { maturity, invested: deposit * years, interest: r2(maturity - deposit * years) };
+}
+function emi(principal2, annual, months) {
+  if (!Number.isFinite(principal2) || !Number.isFinite(annual) || !Number.isFinite(months) || principal2 <= 0 || months <= 0) return 0;
   const m = annual / 12;
-  if (m === 0) return r2(principal / months);
-  return r2(principal * m * (1 + m) ** months / ((1 + m) ** months - 1));
+  if (m === 0) return r2(principal2 / months);
+  return r2(principal2 * m * (1 + m) ** months / ((1 + m) ** months - 1));
 }
 function cagr(start, end, years) {
   if (!Number.isFinite(start) || !Number.isFinite(end) || !Number.isFinite(years) || start <= 0 || end <= 0 || years <= 0) return Number.NaN;
@@ -4950,22 +4960,22 @@ function parseIntents(question) {
   const out = [];
   const rate = rateIn(q);
   const tenure = tenureIn(q);
-  const money2 = moneyIn(q);
-  if (/\bemi\b|\bloan\b/i.test(q) && money2[0] && rate && tenure)
-    out.push({ kind: "emi", amount: asDecimalString(money2[0].value), ratePct: rate, months: tenure.months });
-  if (/\bsip\b/i.test(q) && money2[0] && rate && tenure)
-    out.push({ kind: "sip", amount: asDecimalString(money2[0].value), ratePct: rate, months: tenure.months });
+  const money3 = moneyIn(q);
+  if (/\bemi\b|\bloan\b/i.test(q) && money3[0] && rate && tenure)
+    out.push({ kind: "emi", amount: asDecimalString(money3[0].value), ratePct: rate, months: tenure.months });
+  if (/\bsip\b/i.test(q) && money3[0] && rate && tenure)
+    out.push({ kind: "sip", amount: asDecimalString(money3[0].value), ratePct: rate, months: tenure.months });
   const cg = q.match(new RegExp(`\\bfrom\\s+${AMOUNT_RE}\\s+to\\s+${AMOUNT_RE}`, "i"));
   if (/\bcagr\b|\bgrew\b|\bgrown\b|\bgrowth rate\b/i.test(q) && cg && tenure) {
     const a = readAmount(`${cg[1]}${cg[2] ?? ""}`);
     const b = readAmount(`${cg[3]}${cg[4] ?? ""}`);
     if (a && b) out.push({ kind: "cagr", amount: asDecimalString(a), endAmount: asDecimalString(b), years: tenure.years });
   }
-  if (/\b(income )?tax\b/i.test(q) && !/\bgst\b|\btds\b|\bcapital gains?\b/i.test(q) && money2[0] && /\b(salary|income|ctc|earn|package|lpa)\b/i.test(q)) {
+  if (/\b(income )?tax\b/i.test(q) && !/\bgst\b|\btds\b|\bcapital gains?\b/i.test(q) && money3[0] && /\b(salary|income|ctc|earn|package|lpa)\b/i.test(q)) {
     const saysOld = /\bold\b/i.test(q) && /\bregime\b/i.test(q);
     const saysNew = /\bnew\b/i.test(q) && /\bregime\b/i.test(q);
     const regime = saysOld && !saysNew ? "old" : saysNew && !saysOld ? "new" : "both";
-    out.push({ kind: "tax", amount: asDecimalString(money2[0].value), regime, salaried: /\b(salary|salaried|ctc|package|lpa|job)\b/i.test(q) });
+    out.push({ kind: "tax", amount: asDecimalString(money3[0].value), regime, salaried: /\b(salary|salaried|ctc|package|lpa|job)\b/i.test(q) });
   }
   return out;
 }
@@ -5089,9 +5099,9 @@ function replaceNear(text, v) {
   if (!Number.isFinite(target) || target === 0) return { text, replaced: 0 };
   let replaced = 0;
   const re = v.id === "cagr" ? PCT : RUPEE;
-  const out = text.replace(re, (m, num) => {
-    const n = Number(num.replace(/,/g, ""));
-    const close = Math.abs(n - target) / Math.abs(target) <= 0.1;
+  const out = text.replace(re, (m, num2) => {
+    const n2 = Number(num2.replace(/,/g, ""));
+    const close = Math.abs(n2 - target) / Math.abs(target) <= 0.1;
     if (close && m.trim() !== v.display) {
       replaced++;
       return v.display;
@@ -5109,17 +5119,17 @@ function enforceVerified(answer, nums) {
       a = {
         ...a,
         directAnswer: fn(a.directAnswer),
-        steps: a.steps.map((s) => ({ ...s, explanation: fn(s.explanation) })),
+        steps: a.steps.map((s2) => ({ ...s2, explanation: fn(s2.explanation) })),
         example: { ...a.example, result: fn(a.example.result), calculation: a.example.calculation.map(fn) },
         keyTakeaways: a.keyTakeaways.map(fn),
         interpretation: a.interpretation.map(fn)
       };
     };
-    const all = () => [a.directAnswer, a.example.result, ...a.example.calculation, ...a.steps.map((s) => s.explanation), ...a.keyTakeaways].join("\n");
+    const all = () => [a.directAnswer, a.example.result, ...a.example.calculation, ...a.steps.map((s2) => s2.explanation), ...a.keyTakeaways].join("\n");
     if (all().includes(v.display)) continue;
     let count = 0;
-    fields((s) => {
-      const r = replaceNear(s, v);
+    fields((s2) => {
+      const r = replaceNear(s2, v);
       count += r.replaced;
       return r.text;
     });
@@ -5209,7 +5219,7 @@ function shouldSearchWeb(query, mode) {
   return TIME_SENSITIVE.test(query) || FACTUAL.test(query) || instruments || query.trim().length > 90;
 }
 var withTimeout = (p, ms) => Promise.race([p.catch(() => null), new Promise((r) => setTimeout(() => r(null), ms))]);
-var strip = (s) => s.replace(/<[^>]+>/g, "").replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, "&").replace(/\s+/g, " ").trim();
+var strip = (s2) => s2.replace(/<[^>]+>/g, "").replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, "&").replace(/\s+/g, " ").trim();
 async function tavily(q, key) {
   const r = await fetch("https://api.tavily.com/search", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ api_key: key, query: q, max_results: 5, search_depth: "basic" }), signal: AbortSignal.timeout(6e3) });
   if (!r.ok) throw new Error(`Tavily ${r.status}`);
@@ -5228,7 +5238,7 @@ async function serper(q, key) {
   const j = await r.json();
   return (j.organic ?? []).map((x) => ({ title: strip(x.title ?? ""), url: x.link ?? "", snippet: strip(x.snippet ?? "").slice(0, 400), source: "Google results via Serper" }));
 }
-var decode2 = (s) => strip(s.replace(/<!\[CDATA\[|\]\]>/g, ""));
+var decode2 = (s2) => strip(s2.replace(/<!\[CDATA\[|\]\]>/g, ""));
 var tag2 = (xml, name) => xml.match(new RegExp(`<${name}[^>]*>([\\s\\S]*?)</${name}>`))?.[1] ?? "";
 function googleQuery(q) {
   const cleaned = q.replace(/https?:\/\/\S+/g, " ").replace(/\b(please|kindly|can you|could you|tell me|i want to know|explain to me|hey|hi)\b/gi, " ").replace(/[^\p{L}\p{N}&%.₹$\- ]+/gu, " ").replace(/\s+/g, " ").trim();
@@ -5353,13 +5363,13 @@ async function gatherLiveContext(query, mode = "auto") {
   const parts = [built.text, notes.join("\n")].filter(Boolean);
   const text = parts.length ? `LIVE CONTEXT retrieved ${istNow()} IST. Treat the numbered sources as the current facts for this answer. For "who is" / "current" / "latest" questions, answer from the most recent dated source and name its date; never answer current facts from memory or encyclopaedias. Prefer official sources (RBI, SEBI, Income Tax Department, AMFI, NSE, BSE, PIB) when sources disagree.
 ${parts.join("\n\n")}` : "";
-  const sources = built.numbered.map((s) => ({
-    name: `[${s.n}] ${s.publisher} \xB7 ${s.title}`.slice(0, 160),
-    dataDate: (s.publishedAt || s.fetchedAt).slice(0, 80),
-    freshness: s.freshness,
-    url: s.url,
-    kind: KIND_FOR[s.sourceId] ?? "web",
-    n: s.n
+  const sources = built.numbered.map((s2) => ({
+    name: `[${s2.n}] ${s2.publisher} \xB7 ${s2.title}`.slice(0, 160),
+    dataDate: (s2.publishedAt || s2.fetchedAt).slice(0, 80),
+    freshness: s2.freshness,
+    url: s2.url,
+    kind: KIND_FOR[s2.sourceId] ?? "web",
+    n: s2.n
   }));
   const value = { text, sources, numbered: built.numbered, runs };
   cache3.set(key, { at: Date.now(), value });
@@ -5408,8 +5418,8 @@ function finalizeGroundedAnswer(answer) {
   const { answer: fixed, corrections } = enforceVerified(cited, state.verified);
   if (corrections.length) console.info(JSON.stringify({ scope: "artha-grounding", event: "verified-number-corrected", corrections }));
   const live = state.sources.map(({ name, dataDate, freshness, url }) => ({ name, dataDate, freshness, ...url ? { url } : {} }));
-  const seen = new Set(live.map((s) => s.name));
-  const own = fixed.sources.filter((s) => !seen.has(s.name));
+  const seen = new Set(live.map((s2) => s2.name));
+  const own = fixed.sources.filter((s2) => !seen.has(s2.name));
   state.report = {
     sources: state.numbered.length,
     cited: report.cited,
@@ -5428,16 +5438,16 @@ function finalizeGroundedAnswer(answer) {
 function finalizeGroundedText(text) {
   const state = store2.getStore();
   if (!state || !state.used) return text;
-  return checkText(text, new Set(state.numbered.map((s) => s.n))).text;
+  return checkText(text, new Set(state.numbered.map((s2) => s2.n))).text;
 }
 var currentGroundingReport = () => store2.getStore()?.report ?? null;
 function numberedFactsForFallback(ctx) {
-  const byN = new Map(ctx.numbered.map((s) => [s.n, s]));
+  const byN = new Map(ctx.numbered.map((s2) => [s2.n, s2]));
   return ctx.text.split("<<<SOURCE ").slice(1).map((chunk) => {
-    const n = Number(chunk.slice(0, chunk.indexOf(">>>")));
+    const n2 = Number(chunk.slice(0, chunk.indexOf(">>>")));
     const body = chunk.slice(chunk.indexOf("\n") + 1, chunk.indexOf("<<<END")).trim().replace(/\s+/g, " ").slice(0, 320);
-    const s = byN.get(n);
-    return s ? `[${n}] ${s.publisher}: ${body}` : "";
+    const s2 = byN.get(n2);
+    return s2 ? `[${n2}] ${s2.publisher}: ${body}` : "";
   }).filter(Boolean);
 }
 function liveSourceStatus() {
@@ -5775,8 +5785,8 @@ function withGroundingSources(answer) {
   if (finalized !== answer) return finalized;
   const live = currentGroundingSources();
   if (!live.length) return answer;
-  const seen = new Set(answer.sources.map((s) => s.name));
-  const extra = live.filter((s) => !seen.has(s.name)).map(({ name, dataDate, freshness }) => ({ name, dataDate, freshness }));
+  const seen = new Set(answer.sources.map((s2) => s2.name));
+  const extra = live.filter((s2) => !seen.has(s2.name)).map(({ name, dataDate, freshness }) => ({ name, dataDate, freshness }));
   return { ...answer, sources: [...answer.sources, ...extra].slice(0, 12) };
 }
 async function runMultiModelEvaluation(query, scenarioContext) {
@@ -8073,7 +8083,7 @@ async function publicTranslate(text, tl) {
     const res = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0" }, signal: AbortSignal.timeout(12e3) });
     if (!res.ok) throw new Error(`Translation HTTP ${res.status}`);
     const body = await res.json();
-    const segs = Array.isArray(body[0]) ? body[0].map((s) => String(s[0] ?? "")).join("") : "";
+    const segs = Array.isArray(body[0]) ? body[0].map((s2) => String(s2[0] ?? "")).join("") : "";
     if (!segs) throw new Error("Translation returned nothing");
     pieces.push(segs);
   }
@@ -8237,15 +8247,15 @@ apiRouter.use((req, res, next) => {
   res.setHeader("X-Frame-Options", "SAMEORIGIN");
   res.setHeader("X-XSS-Protection", "1; mode=block");
   if (req.method === "GET" || req.method === "HEAD" || req.method === "OPTIONS") return next();
-  const clientIp = req.headers["x-forwarded-for"]?.split(",")[0]?.trim() || req.socket.remoteAddress || "127.0.0.1";
+  const clientIp2 = req.headers["x-forwarded-for"]?.split(",")[0]?.trim() || req.socket.remoteAddress || "127.0.0.1";
   const now = Date.now();
-  const limitInfo = rateLimitMap.get(clientIp) || { count: 0, resetTime: now + RATE_LIMIT_WINDOW_MS };
+  const limitInfo = rateLimitMap.get(clientIp2) || { count: 0, resetTime: now + RATE_LIMIT_WINDOW_MS };
   if (now > limitInfo.resetTime) {
     limitInfo.count = 0;
     limitInfo.resetTime = now + RATE_LIMIT_WINDOW_MS;
   }
   limitInfo.count++;
-  rateLimitMap.set(clientIp, limitInfo);
+  rateLimitMap.set(clientIp2, limitInfo);
   if (limitInfo.count > MAX_REQUESTS_PER_WINDOW) {
     return res.status(429).json({
       error: "Rate limit exceeded. Please wait before retrying.",
@@ -9553,16 +9563,16 @@ function nonNegative2(value, name) {
 function rounded(value) {
   return value.toDecimalPlaces(2, Decimal4.ROUND_HALF_UP).toNumber();
 }
-function calculateEMI(principal, annualRatePercent, years) {
-  const P = positive(principal, "Loan amount");
+function calculateEMI(principal2, annualRatePercent, years) {
+  const P = positive(principal2, "Loan amount");
   const annual = nonNegative2(annualRatePercent, "Annual interest rate");
   const t = positive(years, "Loan tenure");
-  const n = Math.round(t.toNumber() * 12);
-  if (n < 1) throw new Error("Loan tenure must produce at least one monthly payment.");
+  const n2 = Math.round(t.toNumber() * 12);
+  if (n2 < 1) throw new Error("Loan tenure must produce at least one monthly payment.");
   const r = annual.div(100).div(12);
-  const emi2 = r.isZero() ? P.div(n) : P.times(r).times(new Decimal4(1).plus(r).pow(n)).div(new Decimal4(1).plus(r).pow(n).minus(1));
+  const emi2 = r.isZero() ? P.div(n2) : P.times(r).times(new Decimal4(1).plus(r).pow(n2)).div(new Decimal4(1).plus(r).pow(n2).minus(1));
   const monthly = rounded(emi2);
-  return { principal: P.toNumber(), annualRatePercent: annual.toNumber(), years: t.toNumber(), payments: n, monthlyRatePercent: rounded(r.times(100)), emi: monthly, totalPayments: rounded(new Decimal4(monthly).times(n)), totalInterest: rounded(new Decimal4(monthly).times(n).minus(P)) };
+  return { principal: P.toNumber(), annualRatePercent: annual.toNumber(), years: t.toNumber(), payments: n2, monthlyRatePercent: rounded(r.times(100)), emi: monthly, totalPayments: rounded(new Decimal4(monthly).times(n2)), totalInterest: rounded(new Decimal4(monthly).times(n2).minus(P)) };
 }
 function calculateEmergencyFund(monthlyExpenses, months) {
   const expenses = nonNegative2(monthlyExpenses, "Monthly expenses");
@@ -9820,8 +9830,8 @@ function currentBudget(workspace, month) {
   };
 }
 function activeEmis(workspace) {
-  const envelope = parsePayload(workspace, "artha_emi_records_v1");
-  const records = Array.isArray(envelope?.records) ? envelope.records.filter((item) => item?.status !== "closed") : [];
+  const envelope2 = parsePayload(workspace, "artha_emi_records_v1");
+  const records = Array.isArray(envelope2?.records) ? envelope2.records.filter((item) => item?.status !== "closed") : [];
   return {
     monthly: records.reduce((sum, item) => sum.plus(Number(item?.emiAmount || 0)), new Decimal5(0)),
     count: records.length
@@ -10163,12 +10173,1783 @@ freeMarketRouter.get("/markets/batch", async (req, res) => {
   });
 });
 
+// server/v1/router.ts
+import express, { Router as Router8 } from "express";
+import { ZodError } from "zod";
+
+// server/v1/ai.ts
+import { z as z12 } from "zod";
+
+// server/v1/envelope.ts
+function envelope(data, source, reliability, deterministic, timestamp = (/* @__PURE__ */ new Date()).toISOString()) {
+  return { data, source, timestamp, reliability_score: clampScore(reliability), is_deterministic: deterministic };
+}
+function errorBody(code, message, details) {
+  return { error: { code, message, ...details ? { details } : {} }, timestamp: (/* @__PURE__ */ new Date()).toISOString() };
+}
+var clampScore = (n2) => Math.max(0, Math.min(100, Math.round(Number.isFinite(n2) ? n2 : 0)));
+var SOURCE_CONFIDENCE = { exchange: 95, binance: 90, yahoo: 85, other: 70 };
+function freshnessPenalty(asOf, now = Date.now()) {
+  const t = asOf ? Date.parse(asOf) : Number.NaN;
+  if (!Number.isFinite(t)) return 60;
+  const age = Math.max(0, now - t);
+  if (age <= 6e4) return 0;
+  if (age <= 15 * 6e4) return 10;
+  if (age <= 864e5) return 25;
+  if (age <= 7 * 864e5) return 40;
+  return 60;
+}
+function marketReliability(kind, asOf, now = Date.now()) {
+  return clampScore(SOURCE_CONFIDENCE[kind] - freshnessPenalty(asOf, now));
+}
+var money2 = (n2) => Math.round(n2 * 100) / 100;
+var pct2 = (n2) => Math.round(n2 * 1e4) / 1e4;
+
+// server/v1/ai.ts
+var cfoBodySchema = z12.object({
+  query: z12.string().trim().min(3).max(2e3),
+  context: z12.object({
+    country: z12.enum(["India", "US", "Global"]).optional(),
+    language: z12.enum(["english", "hindi", "hinglish"]).optional(),
+    detail: z12.enum(["short", "standard", "detailed"]).optional()
+  }).optional()
+});
+function aiReliability(r) {
+  if (!r.ok) return 15;
+  const linked = r.structuredAnswer.sources.filter((s2) => Boolean(s2.url)).length;
+  const nums = r.structuredAnswer.verifiedNumbers ?? [];
+  let score = 50 + Math.min(20, linked * 5);
+  if (nums.some((x) => x.certified)) score += 15;
+  else if (nums.length) score += 10;
+  if ((r.grounding?.invalidCitationsRemoved.length ?? 0) > 0) score -= 10;
+  if (r.fallbackUsed) score -= 10;
+  return clampScore(Math.min(95, score));
+}
+async function cfoBrief(body, gateway = runAiGateway) {
+  const r = await gateway({ prompt: body.query, task: "cfo", context: { country: "India", currency: "INR", ...body.context } });
+  return envelope(
+    {
+      brief: r.answer,
+      sources: r.structuredAnswer.sources,
+      verified_numbers: r.structuredAnswer.verifiedNumbers ?? [],
+      model_used: `${r.provider}/${r.model}`,
+      fallback_used: r.fallbackUsed,
+      latency_ms: r.latencyMs,
+      structured: r.structuredAnswer
+    },
+    r.ok ? `ArthaBench AI gateway \xB7 ${r.provider}` : "ArthaBench offline fallback (no AI model answered)",
+    aiReliability(r),
+    false
+  );
+}
+var benchmarkBodySchema = z12.object({
+  model: z12.enum(["artha", "nemotron"]).default("artha"),
+  tolerance_pct: z12.number().min(0).max(20).default(1),
+  items: z12.array(z12.object({ question: z12.string().trim().min(5).max(1e3), expected: z12.number().finite() })).min(1).max(10)
+});
+function numbersIn(text) {
+  return [...text.matchAll(/-?\d{1,3}(?:,\d{2,3})+(?:\.\d+)?|-?\d+(?:\.\d+)?/g)].map((m) => Number(m[0].replace(/,/g, ""))).filter(Number.isFinite);
+}
+function scoreAnswer(answer, expected, tolerancePct) {
+  const nums = numbersIn(answer);
+  if (!nums.length) return { correct: false, closest: null, error_pct: null };
+  const closest = nums.reduce((a, b) => Math.abs(b - expected) < Math.abs(a - expected) ? b : a);
+  const errorPct = expected === 0 ? Math.abs(closest) * 100 : Math.abs(closest - expected) / Math.abs(expected) * 100;
+  return { correct: errorPct <= tolerancePct, closest, error_pct: Math.round(errorPct * 1e4) / 1e4 };
+}
+async function runBenchmark(body, gateway = runAiGateway) {
+  const results = [];
+  for (const item of body.items) {
+    const started = Date.now();
+    const r = await gateway({ prompt: item.question, requestedModel: body.model, task: "calculation" });
+    const score = r.ok ? scoreAnswer(r.answer, item.expected, body.tolerance_pct) : { correct: false, closest: null, error_pct: null };
+    results.push({
+      question: item.question,
+      expected: item.expected,
+      answer: r.answer,
+      model_used: `${r.provider}/${r.model}`,
+      answered_by_ai: r.ok,
+      latency_ms: Date.now() - started,
+      ...score
+    });
+  }
+  const correct = results.filter((x) => x.correct).length;
+  const latencies = results.map((x) => x.latency_ms).sort((a, b) => a - b);
+  return envelope(
+    {
+      model_requested: body.model,
+      tolerance_pct: body.tolerance_pct,
+      accuracy_pct: Math.round(correct / results.length * 1e4) / 100,
+      correct,
+      total: results.length,
+      latency_ms_p50: latencies[Math.floor((latencies.length - 1) / 2)] ?? 0,
+      results,
+      scoring: "An answer is correct when any number in it is within tolerance_pct of the expected value. Scoring is deterministic; the answers are not."
+    },
+    "ArthaBench benchmark runner \xB7 AI gateway",
+    results.every((x) => x.answered_by_ai) ? 90 : 50,
+    false
+  );
+}
+
+// server/v1/auth.ts
+import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
+var hashKey = (key) => createHash("sha256").update(key, "utf8").digest("hex");
+function configuredHashes() {
+  return (process.env.API_V1_KEY_HASHES ?? "").split(",").map((h) => h.trim().toLowerCase()).filter((h) => /^[0-9a-f]{64}$/.test(h)).map((h) => Buffer.from(h, "hex"));
+}
+function verifyApiKey(key) {
+  if (!key || key.length > 200) return null;
+  const digest = Buffer.from(hashKey(key), "hex");
+  let match = false;
+  for (const h of configuredHashes()) if (timingSafeEqual(h, digest)) match = true;
+  return match ? digest.toString("hex").slice(0, 12) : null;
+}
+var headerKey = (req) => {
+  const v = req.header("x-api-key");
+  return v ? v.trim() : void 0;
+};
+function optionalApiKey(req, res, next) {
+  const key = headerKey(req);
+  if (key === void 0) return next();
+  const id = verifyApiKey(key);
+  if (!id) {
+    res.status(401).json(errorBody("invalid_api_key", "The x-api-key header is not a valid ArthaBench API key."));
+    return;
+  }
+  res.locals.apiKeyId = id;
+  next();
+}
+function requireApiKey(req, res, next) {
+  if (res.locals.apiKeyId) return next();
+  const id = verifyApiKey(headerKey(req));
+  if (!id) {
+    res.status(401).json(errorBody("api_key_required", "This endpoint needs an API key in the x-api-key header."));
+    return;
+  }
+  res.locals.apiKeyId = id;
+  next();
+}
+
+// src/tax-engines/progressive.ts
+var round22 = (n2) => Math.round(n2 * 100) / 100;
+var TaxInputError = class extends Error {
+};
+function allowanceFor(schedule, income) {
+  const taper = schedule.allowance_taper;
+  if (!taper || income <= taper.start) return schedule.allowance;
+  return Math.max(0, schedule.allowance - Math.floor((income - taper.start) / taper.per));
+}
+function bracketTax(schedule, taxable) {
+  let lower = 0;
+  let tax = 0;
+  const lines = [];
+  for (const b of schedule.brackets) {
+    const upper = b.up_to ?? Number.POSITIVE_INFINITY;
+    const inBand = Math.max(0, Math.min(taxable, upper) - lower);
+    const bandTax = inBand * b.rate;
+    lines.push({ from: lower, to: b.up_to, rate: b.rate, taxable_amount: round22(inBand), tax: round22(bandTax) });
+    tax += bandTax;
+    lower = upper;
+    if (taxable <= upper) break;
+  }
+  return { tax, lines };
+}
+function compute(schedule, income, extraDeductions) {
+  const allowance = allowanceFor(schedule, income);
+  const taxable = Math.max(0, income - allowance - extraDeductions);
+  const { tax: gross, lines } = bracketTax(schedule, taxable);
+  const credit = Math.min(gross, schedule.credit ?? 0);
+  return { allowance, taxable, gross, credit, tax: Math.max(0, gross - credit), lines };
+}
+function progressiveEngine(configs) {
+  const first = configs[0];
+  if (!first) throw new Error("A tax engine needs at least one year of rules.");
+  const byYear = new Map(configs.map((c2) => [c2.year, c2]));
+  return {
+    country: first.country,
+    name: first.name,
+    years: configs.map((c2) => c2.year),
+    filingStatuses: Object.keys(first.schedules),
+    calculate(income, year, options = {}) {
+      if (!Number.isFinite(income) || income < 0) throw new TaxInputError("Income must be zero or more.");
+      const cfg = byYear.get(year ?? first.year);
+      if (!cfg) throw new TaxInputError(`${first.name}: rules are available for ${[...byYear.keys()].join(", ")} only.`);
+      const status = options.filing_status ?? Object.keys(cfg.schedules)[0] ?? "default";
+      const schedule = cfg.schedules[status];
+      if (!schedule) throw new TaxInputError(`Filing status must be one of: ${Object.keys(cfg.schedules).join(", ")}.`);
+      const extra = Math.max(0, options.deductions ?? 0);
+      const r = compute(schedule, income, extra);
+      const next = compute(schedule, income + 100, extra);
+      const deductions = [];
+      if (r.allowance > 0)
+        deductions.push({ name: schedule.allowance_taper ? "Personal allowance" : "Standard deduction / allowance", amount: round22(r.allowance) });
+      if (extra > 0) deductions.push({ name: "Other deductions (caller supplied)", amount: round22(extra) });
+      const credits = r.credit > 0 ? [{ name: "Personal relief / tax credit", amount: round22(r.credit) }] : [];
+      return {
+        country: cfg.country,
+        year: cfg.year,
+        year_label: cfg.year_label,
+        currency: cfg.currency,
+        income: round22(income),
+        taxable_income: round22(r.taxable),
+        tax: round22(r.tax),
+        effective_rate: income > 0 ? Math.round(r.tax / income * 1e4) / 1e4 : 0,
+        marginal_rate: Math.round((next.tax - r.tax) / 100 * 1e4) / 1e4,
+        slab_breakdown: r.lines,
+        deductions_applied: deductions,
+        credits_applied: credits,
+        notes: cfg.notes,
+        sources: cfg.sources,
+        last_verified: cfg.last_verified
+      };
+    }
+  };
+}
+
+// src/tax-engines/india.ts
+var YEARS = { "2026": "FY2026-27", "2025": "FY2025-26" };
+var ageCategory = (age) => age >= 80 ? "80-plus" : age >= 60 ? "60-79" : "below-60";
+function slabLines(slabs, taxable) {
+  const lines = [];
+  let lower = 0;
+  for (const s2 of slabs) {
+    const upper = s2.upTo ?? Number.POSITIVE_INFINITY;
+    const inBand = Math.max(0, Math.min(taxable, upper) - lower);
+    lines.push({ from: lower, to: s2.upTo, rate: s2.rate, taxable_amount: Math.round(inBand * 100) / 100, tax: Math.round(inBand * s2.rate * 100) / 100 });
+    lower = upper;
+    if (taxable <= upper) break;
+  }
+  return lines;
+}
+function run(income, fy, opts) {
+  const profile = { ...createDefaultTaxProfile(), financialYear: fy, ageCategory: ageCategory(opts.age ?? 30) };
+  const now = "2026-04-01T00:00:00.000Z";
+  const source = {
+    id: "api",
+    type: opts.salaried === false ? "Freelance" : "Salary",
+    amount: income,
+    currency: "INR",
+    frequency: "Annually",
+    description: "Income",
+    taxStatus: "Pre-tax",
+    startDate: now.slice(0, 10),
+    tags: [],
+    createdAt: now,
+    updatedAt: now
+  };
+  const deductions = (opts.deductions ?? 0) > 0 ? [{ id: "api-80c", type: "80c", amount: opts.deductions ?? 0, description: "Section 80C (caller supplied)", status: "added", createdAt: now }] : [];
+  return compareTaxRegimes([source], profile, deductions, [])[opts.regime ?? "new"];
+}
+var indiaEngine = {
+  country: "IN",
+  name: "India (income tax, resident individual)",
+  years: Object.keys(YEARS),
+  filingStatuses: ["new", "old"],
+  calculate(income, year = "2026", options = {}) {
+    if (!Number.isFinite(income) || income < 0) throw new TaxInputError("Income must be zero or more.");
+    const fy = YEARS[year];
+    if (!fy) throw new TaxInputError(`India: rules are available for ${Object.keys(YEARS).join(", ")} (financial years starting that April).`);
+    const regime = options.regime ?? "new";
+    const rules = getIndiaTaxRules(fy);
+    const r = run(income, fy, { ...options, regime });
+    const next = run(income + 1e3, fy, { ...options, regime });
+    const tax = Number(r.totalTaxLiability);
+    const taxable = Number(r.taxableIncome);
+    const slabs = regime === "new" ? rules.slabs.new : rules.slabs.old[ageCategory(options.age ?? 30)];
+    const deductions = [];
+    const std = Number(r.incomeByHead.salary) < income ? income - Number(r.incomeByHead.salary) : 0;
+    if (std > 0) deductions.push({ name: "Standard deduction (salary)", amount: std });
+    if (Number(r.deductions) > 0) deductions.push({ name: "Chapter VI-A deductions (80C etc.)", amount: Number(r.deductions) });
+    const credits = [];
+    if (Number(r.rebate) > 0) credits.push({ name: "Rebate u/s 87A", amount: Number(r.rebate) });
+    const adds = [];
+    if (Number(r.surcharge) > 0) adds.push({ name: "Surcharge", amount: Number(r.surcharge) });
+    if (Number(r.cess) > 0) adds.push({ name: "Health and education cess (4%)", amount: Number(r.cess) });
+    return {
+      country: "IN",
+      year,
+      year_label: `${fy} (${r.assessmentYear})`,
+      currency: "INR",
+      income,
+      taxable_income: taxable,
+      tax,
+      effective_rate: income > 0 ? Math.round(tax / income * 1e4) / 1e4 : 0,
+      marginal_rate: Math.round((Number(next.totalTaxLiability) - tax) / 1e3 * 1e4) / 1e4,
+      slab_breakdown: slabLines(slabs, taxable),
+      deductions_applied: deductions,
+      credits_applied: [...credits, ...adds.map((a) => ({ name: `${a.name} (added)`, amount: a.amount }))],
+      notes: [
+        `${regime === "new" ? "New" : "Old"} regime, resident individual, ${ageCategory(options.age ?? 30)} age band.`,
+        "Tax includes rebate u/s 87A (with marginal relief), surcharge and 4% cess. Slab lines show tax before rebate, surcharge and cess.",
+        ...r.assumptions.slice(0, 3)
+      ],
+      sources: r.officialSourceUrls,
+      last_verified: r.lastVerifiedAt
+    };
+  }
+};
+
+// src/tax-engines/config/us-2026.json
+var us_2026_default = {
+  country: "US",
+  name: "United States (federal income tax)",
+  currency: "USD",
+  year: "2026",
+  year_label: "Tax year 2026 (returns filed in 2027)",
+  last_verified: "2026-09-30",
+  sources: [
+    "https://www.irs.gov/pub/irs-drop/rp-25-32.pdf",
+    "https://www.irs.gov/filing/federal-income-tax-rates-and-brackets"
+  ],
+  notes: [
+    "Federal ordinary income tax only: no state or local tax, FICA, capital-gains rates, credits (child tax credit, EITC) or AMT.",
+    "Standard deduction applied; itemized deductions can be passed as 'deductions' only if they replace nothing else.",
+    "Brackets and standard deduction from IRS Rev. Proc. 2025-32 (inflation adjustments for 2026)."
+  ],
+  schedules: {
+    single: { allowance: 16100, brackets: [
+      { up_to: 12400, rate: 0.1 },
+      { up_to: 50400, rate: 0.12 },
+      { up_to: 105700, rate: 0.22 },
+      { up_to: 201775, rate: 0.24 },
+      { up_to: 256225, rate: 0.32 },
+      { up_to: 640600, rate: 0.35 },
+      { up_to: null, rate: 0.37 }
+    ] },
+    married_joint: { allowance: 32200, brackets: [
+      { up_to: 24800, rate: 0.1 },
+      { up_to: 100800, rate: 0.12 },
+      { up_to: 211400, rate: 0.22 },
+      { up_to: 403550, rate: 0.24 },
+      { up_to: 512450, rate: 0.32 },
+      { up_to: 768700, rate: 0.35 },
+      { up_to: null, rate: 0.37 }
+    ] },
+    married_separate: { allowance: 16100, brackets: [
+      { up_to: 12400, rate: 0.1 },
+      { up_to: 50400, rate: 0.12 },
+      { up_to: 105700, rate: 0.22 },
+      { up_to: 201775, rate: 0.24 },
+      { up_to: 256225, rate: 0.32 },
+      { up_to: 384350, rate: 0.35 },
+      { up_to: null, rate: 0.37 }
+    ] },
+    head_of_household: { allowance: 24150, brackets: [
+      { up_to: 17700, rate: 0.1 },
+      { up_to: 67450, rate: 0.12 },
+      { up_to: 105700, rate: 0.22 },
+      { up_to: 201750, rate: 0.24 },
+      { up_to: 256200, rate: 0.32 },
+      { up_to: 640600, rate: 0.35 },
+      { up_to: null, rate: 0.37 }
+    ] }
+  }
+};
+
+// src/tax-engines/config/uk-2026.json
+var uk_2026_default = {
+  country: "UK",
+  name: "United Kingdom (income tax, England, Wales and Northern Ireland)",
+  currency: "GBP",
+  year: "2026",
+  year_label: "Tax year 2026-27 (6 April 2026 to 5 April 2027)",
+  last_verified: "2026-09-30",
+  sources: [
+    "https://www.gov.uk/income-tax-rates",
+    "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2026-to-2027"
+  ],
+  notes: [
+    "Non-savings, non-dividend income. Scotland has different rates and is not included.",
+    "Personal allowance \xA312,570, reduced by \xA31 for every \xA32 of income above \xA3100,000 (zero from \xA3125,140); this creates a 60% effective marginal rate between \xA3100,000 and \xA3125,140.",
+    "Excludes National Insurance, student loan repayments, Marriage Allowance and Blind Person's Allowance."
+  ],
+  schedules: {
+    default: { allowance: 12570, allowance_taper: { start: 1e5, per: 2 }, brackets: [
+      { up_to: 37700, rate: 0.2 },
+      { up_to: 125140, rate: 0.4 },
+      { up_to: null, rate: 0.45 }
+    ] }
+  }
+};
+
+// src/tax-engines/config/philippines-2026.json
+var philippines_2026_default = {
+  country: "PH",
+  name: "Philippines (individual income tax, graduated rates)",
+  currency: "PHP",
+  year: "2026",
+  year_label: "Taxable year 2026",
+  last_verified: "2026-09-30",
+  sources: [
+    "https://www.bir.gov.ph/income-tax",
+    "https://www.officialgazette.gov.ph/2017/12/19/republic-act-no-10963/"
+  ],
+  notes: [
+    "Graduated rates under the TRAIN law (RA 10963) schedule that applies from 1 January 2023.",
+    "Income means taxable compensation or business income after exclusions (13th-month pay up to \u20B190,000, mandatory SSS/PhilHealth/Pag-IBIG contributions).",
+    "The optional 8% flat rate for eligible self-employed individuals is not modelled."
+  ],
+  schedules: {
+    default: { allowance: 0, brackets: [
+      { up_to: 25e4, rate: 0 },
+      { up_to: 4e5, rate: 0.15 },
+      { up_to: 8e5, rate: 0.2 },
+      { up_to: 2e6, rate: 0.25 },
+      { up_to: 8e6, rate: 0.3 },
+      { up_to: null, rate: 0.35 }
+    ] }
+  }
+};
+
+// src/tax-engines/config/nigeria-2026.json
+var nigeria_2026_default = {
+  country: "NG",
+  name: "Nigeria (personal income tax, PAYE)",
+  currency: "NGN",
+  year: "2026",
+  year_label: "Year of assessment 2026",
+  last_verified: "2026-09-30",
+  sources: [
+    "https://www.firs.gov.ng/",
+    "Nigeria Tax Act, 2025 (Fourth Schedule, individual rates), effective 1 January 2026"
+  ],
+  notes: [
+    "Rates under the Nigeria Tax Act 2025: first \u20A6800,000 at 0%, then 15%, 18%, 21%, 23% and 25% above \u20A650,000,000.",
+    "Income means chargeable income after allowable deductions (pension, NHF, NHIS, rent relief of 20% of rent up to \u20A6500,000). Pass those as 'deductions' or subtract them first.",
+    "Replaces the consolidated relief allowance of the former Personal Income Tax Act."
+  ],
+  schedules: {
+    default: { allowance: 0, brackets: [
+      { up_to: 8e5, rate: 0 },
+      { up_to: 3e6, rate: 0.15 },
+      { up_to: 12e6, rate: 0.18 },
+      { up_to: 25e6, rate: 0.21 },
+      { up_to: 5e7, rate: 0.23 },
+      { up_to: null, rate: 0.25 }
+    ] }
+  }
+};
+
+// src/tax-engines/config/kenya-2026.json
+var kenya_2026_default = {
+  country: "KE",
+  name: "Kenya (PAYE, resident individual)",
+  currency: "KES",
+  year: "2026",
+  year_label: "Year of income 2026",
+  last_verified: "2026-09-30",
+  sources: [
+    "https://www.kra.go.ke/individual/filing-paying/types-of-taxes/paye"
+  ],
+  notes: [
+    "Annual PAYE bands (monthly bands \xD712): 10% to KSh 288,000; 25% to KSh 388,000; 30% to KSh 6,000,000; 32.5% to KSh 9,600,000; 35% above.",
+    "Personal relief of KSh 28,800 a year (KSh 2,400 a month) is deducted from the tax.",
+    "Income means taxable pay: subtract pension (NSSF), SHIF, Affordable Housing Levy and other allowable deductions first, or pass them as 'deductions'."
+  ],
+  schedules: {
+    default: { allowance: 0, credit: 28800, brackets: [
+      { up_to: 288e3, rate: 0.1 },
+      { up_to: 388e3, rate: 0.25 },
+      { up_to: 6e6, rate: 0.3 },
+      { up_to: 96e5, rate: 0.325 },
+      { up_to: null, rate: 0.35 }
+    ] }
+  }
+};
+
+// src/tax-engines/index.ts
+var ENGINES = {
+  IN: indiaEngine,
+  US: progressiveEngine([us_2026_default]),
+  UK: progressiveEngine([uk_2026_default]),
+  PH: progressiveEngine([philippines_2026_default]),
+  NG: progressiveEngine([nigeria_2026_default]),
+  KE: progressiveEngine([kenya_2026_default])
+};
+function getEngine(countryCode) {
+  return ENGINES[countryCode.toUpperCase()];
+}
+
+// server/v1/params.ts
+var ParamError = class extends Error {
+  constructor(details) {
+    super("Invalid query parameters.");
+    this.details = details;
+  }
+};
+var num = (name, description, opts) => ({
+  kind: "number",
+  name,
+  description,
+  required: opts.required ?? true,
+  ...opts
+});
+var oneOf = (name, description, values, opts = {}) => ({
+  kind: "enum",
+  name,
+  description,
+  values,
+  required: opts.required ?? false,
+  default: opts.default,
+  example: opts.example ?? opts.default ?? values[0] ?? ""
+});
+function firstString(v) {
+  if (typeof v === "string") return v;
+  if (Array.isArray(v) && typeof v[0] === "string") return v[0];
+  return void 0;
+}
+function parseParams(defs, query) {
+  const out = {};
+  const problems = {};
+  for (const def of defs) {
+    const raw = firstString(query[def.name])?.trim();
+    if (raw === void 0 || raw === "") {
+      if (def.required) problems[def.name] = "is required";
+      else out[def.name] = def.default;
+      continue;
+    }
+    if (def.kind === "number") {
+      const cleaned = raw.replace(/[,_\s]/g, "").replace(/^[₹$£€]/, "");
+      const value = Number(cleaned);
+      if (!/^-?\d+(\.\d+)?$/.test(cleaned) || !Number.isFinite(value)) problems[def.name] = "must be a number";
+      else if (def.integer && !Number.isInteger(value)) problems[def.name] = "must be a whole number";
+      else if (value < def.min || value > def.max) problems[def.name] = `must be between ${def.min} and ${def.max}`;
+      else out[def.name] = value;
+    } else {
+      const value = raw.toLowerCase();
+      if (!def.values.includes(value)) problems[def.name] = `must be one of: ${def.values.join(", ")}`;
+      else out[def.name] = value;
+    }
+  }
+  if (Object.keys(problems).length) throw new ParamError(problems);
+  return out;
+}
+function n(values, name) {
+  const v = values[name];
+  if (typeof v !== "number") throw new ParamError({ [name]: "is required" });
+  return v;
+}
+function s(values, name) {
+  const v = values[name];
+  if (typeof v !== "string") throw new ParamError({ [name]: "is required" });
+  return v;
+}
+
+// server/v1/calculators.ts
+var CalcError = class extends Error {
+};
+var MAX_MONEY = 1e12;
+var principal = (name = "principal", description = "Amount in rupees (or any currency)") => num(name, description, { min: 0.01, max: MAX_MONEY, example: 1e6 });
+var ratePct = (description = "Annual interest rate in percent, e.g. 8.5", example = 8.5) => num("rate", description, { min: 0, max: 100, example });
+var yesNo = (name, description, def) => oneOf(name, description, ["yes", "no"], { default: def });
+var TAX_YEAR = (years) => oneOf("year", `Tax year (rules available: ${years.join(", ")})`, years, { default: years[0] });
+function futureValueAnnuityDue(payment, ratePerPeriod, periods) {
+  if (periods <= 0) return 0;
+  if (ratePerPeriod === 0) return payment * periods;
+  return payment * (((1 + ratePerPeriod) ** periods - 1) / ratePerPeriod) * (1 + ratePerPeriod);
+}
+function withTaxErrors(fn) {
+  try {
+    return fn();
+  } catch (e) {
+    if (e instanceof TaxInputError) throw new CalcError(e.message);
+    throw e;
+  }
+}
+var US_STATES = [
+  "al",
+  "ak",
+  "az",
+  "ar",
+  "ca",
+  "co",
+  "ct",
+  "de",
+  "dc",
+  "fl",
+  "ga",
+  "hi",
+  "id",
+  "il",
+  "in",
+  "ia",
+  "ks",
+  "ky",
+  "la",
+  "me",
+  "md",
+  "ma",
+  "mi",
+  "mn",
+  "ms",
+  "mo",
+  "mt",
+  "ne",
+  "nv",
+  "nh",
+  "nj",
+  "nm",
+  "ny",
+  "nc",
+  "nd",
+  "oh",
+  "ok",
+  "or",
+  "pa",
+  "ri",
+  "sc",
+  "sd",
+  "tn",
+  "tx",
+  "ut",
+  "vt",
+  "va",
+  "wa",
+  "wv",
+  "wi",
+  "wy"
+];
+function foreignTax(slug, country, label, extra = []) {
+  const engine2 = getEngine(country);
+  if (!engine2) throw new Error(`No tax engine for ${country}`);
+  return {
+    slug,
+    summary: `${label} income tax`,
+    formula: "taxable = income \u2212 allowance \u2212 deductions; tax = \u03A3 (income in each bracket \xD7 bracket rate) \u2212 credits",
+    source: `ArthaBench tax engine \xB7 ${engine2.name} \xB7 rules in src/tax-engines/config`,
+    params: [
+      num("income", `Annual income in ${label} currency`, { min: 0, max: MAX_MONEY, example: 6e4 }),
+      num("deductions", "Other deductions to subtract before tax (optional)", { min: 0, max: MAX_MONEY, required: false, default: 0, example: 0 }),
+      ...extra,
+      TAX_YEAR(engine2.years)
+    ],
+    compute: (v) => withTaxErrors(() => {
+      const result = engine2.calculate(n(v, "income"), s(v, "year"), {
+        deductions: n(v, "deductions"),
+        filing_status: typeof v.filing_status === "string" ? v.filing_status : void 0
+      });
+      if (typeof v.state === "string") {
+        return { ...result, notes: [...result.notes, `State tax for ${v.state.toUpperCase()} is not included (federal only).`] };
+      }
+      return result;
+    })
+  };
+}
+var CALCULATORS = [
+  {
+    slug: "emi",
+    summary: "Loan EMI (reducing balance)",
+    formula: "EMI = P \xD7 r \xD7 (1+r)^n \xF7 ((1+r)^n \u2212 1), r = annual rate \xF7 12 \xF7 100, n = months",
+    source: "ArthaBench deterministic calculator \xB7 reducing-balance EMI formula",
+    params: [principal("principal", "Loan amount"), ratePct(), num("months", "Loan tenure in months", { min: 1, max: 600, integer: true, example: 240 })],
+    compute: (v) => {
+      const months = n(v, "months");
+      const emi2 = emi(n(v, "principal"), n(v, "rate") / 100, months);
+      const total = money2(emi2 * months);
+      return { emi: emi2, total_payment: total, total_interest: money2(total - n(v, "principal")), months };
+    }
+  },
+  {
+    slug: "compound-interest",
+    summary: "Compound interest",
+    formula: "A = P \xD7 (1 + r/m)^(m \xD7 t); interest = A \u2212 P",
+    source: "ArthaBench deterministic calculator \xB7 compound interest formula",
+    params: [
+      principal(),
+      ratePct("Annual interest rate in percent", 7),
+      num("years", "Number of years", { min: 0, max: 100, example: 10 }),
+      oneOf("compounding", "How often interest compounds", ["yearly", "half-yearly", "quarterly", "monthly", "daily"], { default: "yearly" })
+    ],
+    compute: (v) => {
+      const m = { yearly: 1, "half-yearly": 2, quarterly: 4, monthly: 12, daily: 365 }[s(v, "compounding")] ?? 1;
+      const p = n(v, "principal");
+      const final = p * (1 + n(v, "rate") / 100 / m) ** (m * n(v, "years"));
+      return { final_amount: money2(final), interest: money2(final - p), periods_per_year: m };
+    }
+  },
+  {
+    slug: "break-even",
+    summary: "Break-even point",
+    formula: "units = fixed cost \xF7 (price \u2212 variable cost per unit); revenue = units \xD7 price",
+    source: "ArthaBench deterministic calculator \xB7 contribution-margin break-even formula",
+    params: [
+      num("fixed_cost", "Total fixed costs", { min: 0, max: MAX_MONEY, example: 5e5 }),
+      num("price", "Selling price per unit", { min: 0.01, max: MAX_MONEY, example: 250 }),
+      num("variable_cost", "Variable cost per unit", { min: 0, max: MAX_MONEY, example: 150 })
+    ],
+    compute: (v) => {
+      const margin = n(v, "price") - n(v, "variable_cost");
+      if (margin <= 0)
+        throw new CalcError("Price must be higher than the variable cost per unit, otherwise every sale adds to the loss and there is no break-even point.");
+      const units = n(v, "fixed_cost") / margin;
+      const whole = Math.ceil(units - 1e-9);
+      return {
+        units: Math.round(units * 1e4) / 1e4,
+        units_whole: whole,
+        revenue: money2(units * n(v, "price")),
+        revenue_at_whole_units: money2(whole * n(v, "price")),
+        contribution_margin_per_unit: money2(margin),
+        contribution_margin_ratio: pct2(margin / n(v, "price"))
+      };
+    }
+  },
+  {
+    slug: "sip",
+    summary: "SIP future value",
+    formula: "FV = A \xD7 ((1+i)^n \u2212 1) \xF7 i \xD7 (1+i), i = (1 + annual rate)^(1/periods per year) \u2212 1, paid at the start of each period",
+    source: "ArthaBench deterministic calculator \xB7 annuity-due future value with effective periodic rate",
+    params: [
+      num("amount", "Amount invested each period", { min: 1, max: 1e9, example: 1e4 }),
+      ratePct("Expected annual return in percent", 12),
+      num("years", "Investment period in years", { min: 1, max: 60, example: 15 }),
+      oneOf("frequency", "How often you invest", ["monthly", "quarterly"], { default: "monthly" })
+    ],
+    compute: (v) => {
+      const perYear = s(v, "frequency") === "quarterly" ? 4 : 12;
+      const periods = Math.round(n(v, "years") * perYear);
+      const i = (1 + n(v, "rate") / 100) ** (1 / perYear) - 1;
+      const fv = futureValueAnnuityDue(n(v, "amount"), i, periods);
+      const invested = n(v, "amount") * periods;
+      return {
+        future_value: money2(fv),
+        invested: money2(invested),
+        gains: money2(fv - invested),
+        periods,
+        rate_convention: "effective annual rate converted to an equivalent periodic rate"
+      };
+    }
+  },
+  {
+    slug: "ppf",
+    summary: "Public Provident Fund maturity",
+    formula: "FV = D \xD7 ((1+r)^n \u2212 1) \xF7 r \xD7 (1+r); yearly deposit D (\u20B9500 to \u20B91,50,000) made before 5 April",
+    source: "ArthaBench deterministic calculator \xB7 PPF Scheme 2019 rules; rate is the caller\u2019s or the default",
+    params: [
+      num("contribution", "Yearly deposit (\u20B9500 to \u20B91,50,000)", { min: 500, max: 15e4, example: 15e4 }),
+      num("years", "Years (15-year lock-in, extendable in 5-year blocks)", { min: 15, max: 50, integer: true, required: false, default: 15, example: 15 }),
+      num("rate", "Annual interest rate in percent (set by the government every quarter)", { min: 0, max: 20, required: false, default: 7.1, example: 7.1 })
+    ],
+    assumedDefaults: ["rate"],
+    compute: (v) => {
+      const r = ppfMaturity(n(v, "contribution"), n(v, "rate") / 100, n(v, "years"));
+      return {
+        maturity: r.maturity,
+        invested: r.invested,
+        interest: r.interest,
+        years: n(v, "years"),
+        rate_used_pct: n(v, "rate"),
+        tax_status: "EEE: deposits (old regime, 80C), interest and maturity are tax-free"
+      };
+    }
+  },
+  {
+    slug: "nps",
+    summary: "National Pension System corpus and pension",
+    formula: "corpus = monthly SIP future value; annuity = corpus \xD7 annuity share; pension = annuity \xD7 annuity rate \xF7 12",
+    source: "ArthaBench deterministic calculator \xB7 assumed returns; check current PFRDA exit rules",
+    params: [
+      num("contribution", "Monthly contribution", { min: 100, max: 1e8, example: 5e3 }),
+      num("age", "Current age", { min: 18, max: 70, integer: true, example: 30 }),
+      num("years", "Years of contribution (default: until age 60)", { min: 1, max: 52, integer: true, required: false, example: 30 }),
+      num("rate", "Expected annual return in percent", { min: 0, max: 30, required: false, default: 10, example: 10 }),
+      num("annuity_share", "Percent of corpus used to buy an annuity", { min: 0, max: 100, required: false, default: 40, example: 40 }),
+      num("annuity_rate", "Annual annuity rate in percent", { min: 0, max: 20, required: false, default: 6, example: 6 })
+    ],
+    assumedDefaults: ["rate", "annuity_rate"],
+    compute: (v) => {
+      const years = typeof v.years === "number" ? v.years : 60 - n(v, "age");
+      if (years < 1) throw new CalcError('At age 60 or above, pass "years" for how long you will keep contributing.');
+      const months = years * 12;
+      const i = (1 + n(v, "rate") / 100) ** (1 / 12) - 1;
+      const corpus = futureValueAnnuityDue(n(v, "contribution"), i, months);
+      const annuity = corpus * (n(v, "annuity_share") / 100);
+      return {
+        corpus: money2(corpus),
+        invested: money2(n(v, "contribution") * months),
+        lumpsum: money2(corpus - annuity),
+        annuity_purchase: money2(annuity),
+        monthly_pension: money2(annuity * n(v, "annuity_rate") / 100 / 12),
+        years,
+        exit_age: n(v, "age") + years
+      };
+    }
+  },
+  {
+    slug: "epf",
+    summary: "Employees\u2019 Provident Fund corpus",
+    formula: "Monthly: employee 12% of salary; employer 12% minus EPS (8.33% of min(salary, \u20B915,000)). Interest on the monthly running balance at rate \xF7 12, credited once a year",
+    source: "ArthaBench deterministic calculator \xB7 EPF Scheme 1952 contribution split; rate is the caller\u2019s or the default",
+    params: [
+      num("salary", "Monthly basic salary + DA", { min: 1, max: 1e7, example: 5e4 }),
+      num("years", "Years of service", { min: 1, max: 45, integer: true, example: 25 }),
+      num("rate", "EPF interest rate in percent (declared yearly)", { min: 0, max: 20, required: false, default: 8.25, example: 8.25 }),
+      num("annual_increase", "Yearly salary increase in percent", { min: 0, max: 50, required: false, default: 0, example: 5 })
+    ],
+    assumedDefaults: ["rate"],
+    compute: (v) => {
+      let salary = n(v, "salary");
+      let balance = 0;
+      let employee = 0;
+      let employer = 0;
+      let eps = 0;
+      let interest = 0;
+      for (let y = 0; y < n(v, "years"); y += 1) {
+        let yearInterest = 0;
+        for (let m = 0; m < 12; m += 1) {
+          const e = salary * 0.12;
+          const pension = Math.min(salary, 15e3) * 0.0833;
+          const er = salary * 0.12 - pension;
+          balance += e + er;
+          employee += e;
+          employer += er;
+          eps += pension;
+          yearInterest += balance * n(v, "rate") / 100 / 12;
+        }
+        balance += yearInterest;
+        interest += yearInterest;
+        salary *= 1 + n(v, "annual_increase") / 100;
+      }
+      return {
+        corpus: money2(balance),
+        employee_contribution: money2(employee),
+        employer_contribution_epf: money2(employer),
+        eps_contribution: money2(eps),
+        interest_earned: money2(interest),
+        note: "EPS (pension scheme) contributions are not part of the EPF corpus. Assumes contributions on full salary."
+      };
+    }
+  },
+  {
+    slug: "ssy",
+    summary: "Sukanya Samriddhi Yojana maturity",
+    formula: "Deposits at the start of each of the first N years (N \u2264 15); balance compounds yearly until 21 years from opening",
+    source: "ArthaBench deterministic calculator \xB7 SSY Scheme 2019 rules; rate is the caller\u2019s or the default",
+    params: [
+      num("deposit", "Yearly deposit (\u20B9250 to \u20B91,50,000)", { min: 250, max: 15e4, example: 15e4 }),
+      num("years", "Years you will deposit (at most 15)", { min: 1, max: 15, integer: true, required: false, default: 15, example: 15 }),
+      oneOf("gender", "SSY accounts can be opened only for a girl child", ["girl", "female", "boy", "male"], { required: true, example: "girl" }),
+      num("rate", "Annual interest rate in percent (set by the government every quarter)", { min: 0, max: 20, required: false, default: 8.2, example: 8.2 })
+    ],
+    assumedDefaults: ["rate"],
+    compute: (v) => {
+      if (["boy", "male"].includes(s(v, "gender")))
+        throw new CalcError("Sukanya Samriddhi accounts can only be opened for a girl child under 10. For a boy, compare PPF or a children\u2019s fund.");
+      const r = n(v, "rate") / 100;
+      let balance = 0;
+      for (let year = 1; year <= 21; year += 1) {
+        if (year <= n(v, "years")) balance += n(v, "deposit");
+        balance *= 1 + r;
+      }
+      const invested = n(v, "deposit") * n(v, "years");
+      return { maturity: money2(balance), invested: money2(invested), interest: money2(balance - invested), maturity_after_years: 21 };
+    }
+  },
+  {
+    slug: "gst",
+    summary: "GST on a price",
+    formula: "Exclusive: GST = price \xD7 rate. Inclusive: base = price \xF7 (1 + rate), GST = price \u2212 base. Intra-state splits equally into CGST + SGST; inter-state is IGST",
+    source: "ArthaBench deterministic calculator \xB7 CGST/SGST/IGST split",
+    params: [
+      num("price", "Price", { min: 0, max: MAX_MONEY, example: 1e3 }),
+      num("gst_rate", "GST rate in percent (e.g. 5, 18 or 40 after the September 2025 rate changes)", { min: 0, max: 100, example: 18 }),
+      oneOf("mode", "Is GST already included in the price?", ["exclusive", "inclusive"], { default: "exclusive" }),
+      oneOf("supply", "Intra-state (CGST+SGST) or inter-state (IGST)", ["intra", "inter"], { default: "intra" })
+    ],
+    compute: (v) => {
+      const rate = n(v, "gst_rate") / 100;
+      const inclusive = s(v, "mode") === "inclusive";
+      const base = inclusive ? n(v, "price") / (1 + rate) : n(v, "price");
+      const gst = base * rate;
+      const intra = s(v, "supply") === "intra";
+      return {
+        base_price: money2(base),
+        gst: money2(gst),
+        total: money2(base + gst),
+        cgst: intra ? money2(gst / 2) : 0,
+        sgst: intra ? money2(gst / 2) : 0,
+        igst: intra ? 0 : money2(gst)
+      };
+    }
+  },
+  {
+    slug: "hra",
+    summary: "HRA exemption (section 10(13A), old regime)",
+    formula: "Exempt = least of (HRA received, rent \u2212 10% of basic, 50% of basic in metros or 40% elsewhere)",
+    source: "ArthaBench deterministic calculator \xB7 Income-tax rules for HRA; old regime only",
+    params: [
+      num("basic", "Monthly basic salary + DA", { min: 0, max: 1e8, example: 5e4 }),
+      num("rent", "Monthly rent paid", { min: 0, max: 1e8, example: 2e4 }),
+      oneOf("city_type", "Metro (Delhi, Mumbai, Kolkata, Chennai) or non-metro", ["metro", "non-metro"], { required: true, example: "metro" }),
+      num("hra_received", "Monthly HRA received (optional; without it only the other two limits are applied)", {
+        min: 0,
+        max: 1e8,
+        required: false,
+        example: 25e3
+      })
+    ],
+    compute: (v) => {
+      const rentLimit = Math.max(0, n(v, "rent") - 0.1 * n(v, "basic"));
+      const salaryLimit = (s(v, "city_type") === "metro" ? 0.5 : 0.4) * n(v, "basic");
+      const hra = typeof v.hra_received === "number" ? v.hra_received : null;
+      const exempt = Math.max(0, Math.min(rentLimit, salaryLimit, hra ?? Number.POSITIVE_INFINITY));
+      return {
+        exempt_monthly: money2(exempt),
+        exempt_yearly: money2(exempt * 12),
+        taxable_hra_monthly: hra === null ? null : money2(Math.max(0, hra - exempt)),
+        limits: { hra_received: hra, rent_minus_10pct_basic: money2(rentLimit), pct_of_basic: money2(salaryLimit) },
+        note: hra === null ? "HRA received was not given: the exemption can never be more than the HRA you actually receive." : "HRA exemption is available only in the old tax regime."
+      };
+    }
+  },
+  {
+    slug: "80c",
+    summary: "Section 80C tax saving (old regime)",
+    formula: "deduction = min(investments, \u20B91,50,000); saving = old-regime tax without the deduction \u2212 with it",
+    source: "ArthaBench India tax engine (FY2026-27 rules)",
+    params: [
+      num("income", "Annual gross income", { min: 0, max: MAX_MONEY, example: 12e5 }),
+      num("investments", "Total 80C investments this year (PPF, ELSS, EPF, life insurance, etc.)", { min: 0, max: MAX_MONEY, example: 15e4 }),
+      num("age", "Age", { min: 0, max: 120, integer: true, required: false, default: 30, example: 30 }),
+      yesNo("salaried", "Salary income (standard deduction applies)", "yes")
+    ],
+    compute: (v) => {
+      const opts = { age: n(v, "age"), salaried: s(v, "salaried") === "yes" };
+      const deduction = Math.min(n(v, "investments"), 15e4);
+      const without = indiaEngine.calculate(n(v, "income"), "2026", { ...opts, regime: "old" });
+      const withDed = indiaEngine.calculate(n(v, "income"), "2026", { ...opts, regime: "old", deductions: deduction });
+      const newRegime = indiaEngine.calculate(n(v, "income"), "2026", { ...opts, regime: "new" });
+      return {
+        eligible_deduction: deduction,
+        remaining_room: Math.max(0, 15e4 - n(v, "investments")),
+        old_regime_tax_without: without.tax,
+        old_regime_tax_with: withDed.tax,
+        tax_saved: money2(without.tax - withDed.tax),
+        new_regime_tax: newRegime.tax,
+        lower_regime: withDed.tax < newRegime.tax ? "old" : withDed.tax > newRegime.tax ? "new" : "same",
+        note: "80C applies only in the old regime. Other old-regime deductions (80D, HRA, home loan) are not included here."
+      };
+    }
+  },
+  {
+    slug: "ltcg",
+    summary: "Long-term capital gains tax on listed equity",
+    formula: "Held > 12 months: tax = 12.5% \xD7 max(0, gain \u2212 \u20B91,25,000) + 4% cess. Held \u2264 12 months: 20% short-term rate + 4% cess",
+    source: "ArthaBench deterministic calculator \xB7 sections 112A / 111A rates for transfers on or after 23 July 2024",
+    params: [
+      num("purchase", "Total purchase cost", { min: 0, max: MAX_MONEY, example: 5e5 }),
+      num("sale", "Total sale value", { min: 0, max: MAX_MONEY, example: 8e5 }),
+      num("holding_period", "Holding period in months", { min: 0, max: 1200, example: 18 }),
+      num("exemption_used", "Part of the \u20B91,25,000 yearly LTCG exemption already used", { min: 0, max: 125e3, required: false, default: 0, example: 0 })
+    ],
+    compute: (v) => {
+      const gain = n(v, "sale") - n(v, "purchase");
+      const longTerm = n(v, "holding_period") > 12;
+      const exemption = longTerm ? Math.max(0, 125e3 - n(v, "exemption_used")) : 0;
+      const taxableGain = Math.max(0, gain - exemption);
+      const rate = longTerm ? 0.125 : 0.2;
+      const base = taxableGain * rate;
+      return {
+        type: longTerm ? "long-term" : "short-term",
+        gain: money2(gain),
+        exemption_applied: money2(Math.min(exemption, Math.max(0, gain))),
+        taxable_gain: money2(taxableGain),
+        rate,
+        tax: money2(base),
+        cess: money2(base * 0.04),
+        total_tax: money2(base * 1.04),
+        note: "Listed equity shares and equity mutual funds with STT paid. Surcharge, grandfathering (pre-1 Feb 2018 holdings) and loss set-off are not included."
+      };
+    }
+  },
+  {
+    slug: "stcg",
+    summary: "Short-term capital gains tax on listed equity",
+    formula: "tax = 20% \xD7 max(0, gain) + 4% cess (section 111A, transfers on or after 23 July 2024)",
+    source: "ArthaBench deterministic calculator \xB7 section 111A rate",
+    params: [
+      num("purchase", "Total purchase cost", { min: 0, max: MAX_MONEY, example: 2e5 }),
+      num("sale", "Total sale value", { min: 0, max: MAX_MONEY, example: 26e4 })
+    ],
+    compute: (v) => {
+      const gain = n(v, "sale") - n(v, "purchase");
+      const base = Math.max(0, gain) * 0.2;
+      return {
+        gain: money2(gain),
+        rate: 0.2,
+        tax: money2(base),
+        cess: money2(base * 0.04),
+        total_tax: money2(base * 1.04),
+        note: gain < 0 ? "This is a loss: it can be set off against capital gains and carried forward up to 8 years if you file on time." : "Listed equity with STT paid, held 12 months or less. Surcharge is not included."
+      };
+    }
+  },
+  {
+    slug: "tax-india",
+    summary: "India income tax (resident individual)",
+    formula: "taxable = income \u2212 standard deduction \u2212 deductions; slab tax \u2212 rebate 87A (with marginal relief) + surcharge + 4% cess",
+    source: "ArthaBench India tax engine \xB7 Income-tax Act rules in src/config/taxRules/india",
+    params: [
+      num("income", "Annual gross income in rupees", { min: 0, max: MAX_MONEY, example: 15e5 }),
+      num("age", "Age (sets the old-regime exemption limit)", { min: 0, max: 120, integer: true, required: false, default: 30, example: 30 }),
+      oneOf("regime", "Tax regime", ["new", "old"], { default: "new" }),
+      yesNo("salaried", "Salary income (standard deduction applies)", "yes"),
+      num("deductions", "Section 80C deductions (old regime only)", { min: 0, max: 15e4, required: false, default: 0, example: 0 }),
+      TAX_YEAR(["2026", "2025"])
+    ],
+    compute: (v) => withTaxErrors(
+      () => indiaEngine.calculate(n(v, "income"), s(v, "year"), {
+        age: n(v, "age"),
+        regime: s(v, "regime") === "old" ? "old" : "new",
+        salaried: s(v, "salaried") === "yes",
+        deductions: s(v, "regime") === "old" ? n(v, "deductions") : 0
+      })
+    )
+  },
+  foreignTax("tax-us", "US", "US federal", [
+    oneOf("filing_status", "Filing status", ["single", "married_joint", "married_separate", "head_of_household"], { default: "single" }),
+    oneOf("state", "Two-letter state code (accepted; state tax is not calculated)", US_STATES, { example: "ca" })
+  ]),
+  foreignTax("tax-uk", "UK", "UK"),
+  foreignTax("tax-philippines", "PH", "Philippines"),
+  foreignTax("tax-nigeria", "NG", "Nigeria"),
+  foreignTax("tax-kenya", "KE", "Kenya")
+];
+var calculatorBySlug = (slug) => CALCULATORS.find((c2) => c2.slug === slug);
+
+// server/v1/market.ts
+var SourceUnavailableError = class extends Error {
+};
+async function yahooQuote(symbol) {
+  const r = await fetchYahooFinanceQuote(symbol, "index");
+  if (r.status !== "connected" || r.quote.freshness === "demo" || !Number.isFinite(r.quote.price)) {
+    throw new SourceUnavailableError(r.message || `Yahoo Finance did not return ${symbol}.`);
+  }
+  return r.quote;
+}
+function toQuoteData(q, name) {
+  return {
+    symbol: q.symbol,
+    name,
+    price: q.price,
+    change: q.change === null ? null : money2(q.change),
+    change_percent: q.changePercent === null ? null : pct2(q.changePercent),
+    previous_close: q.previousClose,
+    currency: q.currency,
+    as_of: q.providerTimestamp,
+    freshness: q.freshness
+  };
+}
+async function niftyQuote() {
+  const q = await yahooQuote("^NSEI");
+  return envelope(toQuoteData(q, "NIFTY 50"), `${q.providerName} (NSE index ^NSEI)`, marketReliability("yahoo", q.providerTimestamp), false);
+}
+async function btcQuote() {
+  let markets;
+  try {
+    markets = await getCryptoMarkets();
+  } catch (e) {
+    throw new SourceUnavailableError(e instanceof Error ? e.message : "Binance is unavailable.");
+  }
+  const btc = markets.markets.find((m) => m.symbol === "BTCUSDT");
+  if (!btc) throw new SourceUnavailableError("Binance did not return BTCUSDT.");
+  return envelope(
+    {
+      symbol: "BTCUSDT",
+      name: "Bitcoin / Tether",
+      price: btc.price,
+      change: money2(btc.change),
+      change_percent: pct2(btc.changePercent),
+      previous_close: null,
+      currency: "USDT",
+      as_of: btc.providerTimestamp,
+      freshness: "real_time",
+      high_24h: btc.high24h,
+      low_24h: btc.low24h,
+      volume_24h: btc.volume24h
+    },
+    markets.sourceLabel,
+    marketReliability("binance", btc.providerTimestamp),
+    false
+  );
+}
+var NSE = "https://www.nseindia.com";
+var BROWSER_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36";
+var toNum = (v) => {
+  const x = Number(String(v ?? "").replace(/,/g, ""));
+  return Number.isFinite(x) ? x : Number.NaN;
+};
+function parseNseFlows(payload) {
+  if (!Array.isArray(payload)) throw new SourceUnavailableError("NSE returned an unexpected FII/DII response.");
+  const rows = payload;
+  const pick = (re) => {
+    const row = rows.find((r) => re.test(String(r.category ?? "")));
+    if (!row) throw new SourceUnavailableError("NSE response is missing FII or DII figures.");
+    const side = { buy: toNum(row.buyValue), sell: toNum(row.sellValue), net: toNum(row.netValue), date: String(row.date ?? "") };
+    if (![side.buy, side.sell, side.net].every(Number.isFinite)) throw new SourceUnavailableError("NSE returned non-numeric FII/DII values.");
+    return side;
+  };
+  const fii = pick(/FII|FPI/i);
+  const dii = pick(/DII/i);
+  return {
+    date: fii.date || dii.date,
+    fii: { buy: fii.buy, sell: fii.sell, net: fii.net },
+    dii: { buy: dii.buy, sell: dii.sell, net: dii.net },
+    unit: "\u20B9 crore",
+    segment: "Capital market (cash), provisional"
+  };
+}
+function nseDateToIso(date) {
+  const m = /^(\d{1,2})-([A-Za-z]{3})-(\d{4})$/.exec(date.trim());
+  if (!m) return null;
+  const months = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+  const mi = months.indexOf((m[2] ?? "").toLowerCase());
+  if (mi < 0) return null;
+  return `${m[3]}-${String(mi + 1).padStart(2, "0")}-${String(m[1]).padStart(2, "0")}T15:30:00+05:30`;
+}
+var flowCache;
+async function fiiDiiFlows(fetchImpl = fetch) {
+  if (flowCache && Date.now() - flowCache.at < 5 * 6e4) return flowCache.value;
+  try {
+    const home = await fetchImpl(NSE, { headers: { "User-Agent": BROWSER_UA, Accept: "text/html" }, signal: AbortSignal.timeout(6e3) });
+    const cookies = (home.headers.get("set-cookie") ?? "").split(/,(?=\s*[A-Za-z0-9_]+=)/).map((c2) => c2.split(";")[0]?.trim()).filter(Boolean).join("; ");
+    const res = await fetchImpl(`${NSE}/api/fiidiiTradeReact`, {
+      headers: { "User-Agent": BROWSER_UA, Accept: "application/json", Referer: `${NSE}/reports/fii-dii`, ...cookies ? { Cookie: cookies } : {} },
+      signal: AbortSignal.timeout(6e3)
+    });
+    if (!res.ok) throw new SourceUnavailableError(`NSE answered HTTP ${res.status} (NSE often blocks cloud servers; try again later).`);
+    const data = parseNseFlows(await res.json());
+    const asOf = nseDateToIso(data.date);
+    const value = envelope(
+      data,
+      "NSE India \xB7 FII/DII trading activity (fiidiiTradeReact)",
+      marketReliability("exchange", asOf ? new Date(Date.parse(asOf) + 17 * 36e5).toISOString() : null),
+      false
+    );
+    flowCache = { at: Date.now(), value };
+    return value;
+  } catch (e) {
+    if (e instanceof SourceUnavailableError) throw e;
+    throw new SourceUnavailableError(`NSE FII/DII data is unavailable: ${e instanceof Error ? e.message : "request failed"}.`);
+  }
+}
+var NSE_SECTORS = [
+  { name: "NIFTY BANK", symbol: "^NSEBANK" },
+  { name: "NIFTY IT", symbol: "^CNXIT" },
+  { name: "NIFTY AUTO", symbol: "^CNXAUTO" },
+  { name: "NIFTY PHARMA", symbol: "^CNXPHARMA" },
+  { name: "NIFTY FMCG", symbol: "^CNXFMCG" },
+  { name: "NIFTY METAL", symbol: "^CNXMETAL" },
+  { name: "NIFTY REALTY", symbol: "^CNXREALTY" },
+  { name: "NIFTY ENERGY", symbol: "^CNXENERGY" },
+  { name: "NIFTY MEDIA", symbol: "^CNXMEDIA" },
+  { name: "NIFTY PSU BANK", symbol: "^CNXPSUBANK" }
+];
+async function sectorRotation(quote = yahooQuote) {
+  const settled = await Promise.allSettled(NSE_SECTORS.map((s2) => quote(s2.symbol)));
+  const sectors = [];
+  const unavailable = [];
+  settled.forEach((r, i) => {
+    const def = NSE_SECTORS[i];
+    if (!def) return;
+    if (r.status === "fulfilled" && r.value.changePercent !== null) {
+      sectors.push({ name: def.name, symbol: def.symbol, price: r.value.price, change_percent: pct2(r.value.changePercent), as_of: r.value.providerTimestamp });
+    } else unavailable.push(def.name);
+  });
+  if (sectors.length < NSE_SECTORS.length / 2)
+    throw new SourceUnavailableError(`Only ${sectors.length} of ${NSE_SECTORS.length} sector indices are available right now.`);
+  sectors.sort((a, b) => b.change_percent - a.change_percent);
+  const scores = sectors.map((s2) => marketReliability("yahoo", s2.as_of));
+  const coverage = sectors.length / NSE_SECTORS.length;
+  const latest = sectors.map((s2) => s2.as_of).filter((x) => Boolean(x)).sort().at(-1);
+  return envelope(
+    { period: "1 day (change versus previous close)", sectors, leaders: sectors.slice(0, 3), laggards: sectors.slice(-3).reverse(), unavailable },
+    "Yahoo Finance (NSE sectoral indices)",
+    Math.min(...scores) * coverage,
+    false,
+    latest ?? (/* @__PURE__ */ new Date()).toISOString()
+  );
+}
+async function probe(fn) {
+  try {
+    await fn();
+    return "ok";
+  } catch (e) {
+    return e instanceof SourceUnavailableError ? "degraded" : "down";
+  }
+}
+var healthCache;
+async function sourceHealth() {
+  if (healthCache && Date.now() - healthCache.at < 3e4) return healthCache.value;
+  const [yahoo, binance, nse] = await Promise.all([
+    probe(() => yahooQuote("^NSEI")),
+    probe(() => getCryptoMarkets()),
+    probe(async () => {
+      const r = await fetch(NSE, { method: "GET", headers: { "User-Agent": BROWSER_UA }, signal: AbortSignal.timeout(5e3) });
+      if (!r.ok) throw new SourceUnavailableError(`HTTP ${r.status}`);
+    })
+  ]);
+  const value = { yahoo, binance, nse };
+  healthCache = { at: Date.now(), value };
+  return value;
+}
+
+// server/v1/openapi.ts
+var paramSchema = (p) => p.kind === "number" ? { type: p.integer ? "integer" : "number", minimum: p.min, maximum: p.max, ...p.default !== void 0 ? { default: p.default } : {}, example: p.example } : { type: "string", enum: [...p.values], ...p.default !== void 0 ? { default: p.default } : {}, example: p.example };
+var envelopeRef = (dataDescription) => ({
+  description: dataDescription,
+  content: { "application/json": { schema: { $ref: "#/components/schemas/Envelope" } } }
+});
+var errors = {
+  "400": { description: "Invalid parameters", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } },
+  "429": { description: "Rate limit exceeded", content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } } }
+};
+function buildOpenApi() {
+  const paths = {};
+  for (const c2 of CALCULATORS) {
+    paths[`/calculators/${c2.slug}`] = {
+      get: {
+        tags: ["Calculators"],
+        operationId: `calc_${c2.slug.replace(/-/g, "_")}`,
+        summary: c2.summary,
+        description: `Formula: ${c2.formula}
+
+Source: ${c2.source}. Deterministic, no API key needed, cached 60 s.`,
+        parameters: c2.params.map((p) => ({ name: p.name, in: "query", required: p.required, description: p.description, schema: paramSchema(p) })),
+        responses: {
+          "200": envelopeRef(`${c2.summary} result`),
+          "422": {
+            description: "Inputs are valid numbers but the calculation is not possible",
+            content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } }
+          },
+          ...errors
+        }
+      }
+    };
+  }
+  const market2 = (slug, summary, description) => ({
+    get: {
+      tags: ["Market"],
+      operationId: `market_${slug.replace(/-/g, "_")}`,
+      summary,
+      description,
+      responses: { "200": envelopeRef(summary), "503": { description: "Source unavailable (no substitute data is ever returned)" } }
+    }
+  });
+  paths["/market/nifty"] = market2("nifty", "NIFTY 50 quote", "Yahoo Finance quote for ^NSEI. Usually delayed.");
+  paths["/market/btc"] = market2("btc", "Bitcoin (BTC/USDT)", "Binance public market data, 24-hour statistics.");
+  paths["/market/fii-dii"] = market2(
+    "fii-dii",
+    "FII/DII daily net flows",
+    "NSE provisional cash-market flows in \u20B9 crore for the latest trading day. NSE sometimes blocks cloud servers; then 503."
+  );
+  paths["/market/sector-rotation"] = market2(
+    "sector-rotation",
+    "NSE sector performance (1 day)",
+    "Ten NSE sectoral indices ranked by change versus previous close, with leaders and laggards."
+  );
+  paths["/health"] = {
+    get: {
+      tags: ["Service"],
+      operationId: "health",
+      summary: "Service and data-source health",
+      responses: { "200": envelopeRef("status, uptime_s and per-source health (ok, degraded, down)") }
+    }
+  };
+  paths["/ai/cfo"] = {
+    post: {
+      tags: ["AI (API key)"],
+      operationId: "ai_cfo",
+      summary: "AI CFO brief grounded in live sources",
+      security: [{ ApiKeyAuth: [] }],
+      requestBody: {
+        required: true,
+        content: {
+          "application/json": {
+            schema: {
+              type: "object",
+              required: ["query"],
+              properties: {
+                query: { type: "string", minLength: 3, maxLength: 2e3, example: "Should I prepay my home loan or invest in an index fund?" },
+                context: {
+                  type: "object",
+                  properties: {
+                    country: { type: "string", enum: ["India", "US", "Global"] },
+                    language: { type: "string", enum: ["english", "hindi", "hinglish"] },
+                    detail: { type: "string", enum: ["short", "standard", "detailed"] }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      responses: { "200": envelopeRef("brief, sources, verified_numbers, model_used"), "401": { description: "Missing or invalid API key" } }
+    }
+  };
+  paths["/ai/benchmark"] = {
+    post: {
+      tags: ["AI (API key)"],
+      operationId: "ai_benchmark",
+      summary: "Score an AI model on your numeric questions",
+      security: [{ ApiKeyAuth: [] }],
+      requestBody: {
+        required: true,
+        content: {
+          "application/json": {
+            schema: {
+              type: "object",
+              required: ["items"],
+              properties: {
+                model: { type: "string", enum: ["artha", "nemotron"], default: "artha" },
+                tolerance_pct: { type: "number", minimum: 0, maximum: 20, default: 1 },
+                items: {
+                  type: "array",
+                  minItems: 1,
+                  maxItems: 10,
+                  items: { type: "object", required: ["question", "expected"], properties: { question: { type: "string" }, expected: { type: "number" } } },
+                  example: [{ question: "EMI on \u20B910,00,000 at 8.5% for 20 years?", expected: 8678.23 }]
+                }
+              }
+            }
+          }
+        }
+      },
+      responses: { "200": envelopeRef("accuracy_pct, per-question results, latency"), "401": { description: "Missing or invalid API key" } }
+    }
+  };
+  const webhookBody = {
+    type: "object",
+    required: ["url", "symbol", "condition", "threshold"],
+    properties: {
+      url: { type: "string", format: "uri", example: "https://example.com/hooks/arthabench" },
+      symbol: { type: "string", enum: ["nifty", "btc"] },
+      condition: { type: "string", enum: ["above", "below"] },
+      threshold: { type: "number", example: 25e3 }
+    }
+  };
+  paths["/webhooks"] = {
+    get: {
+      tags: ["Webhooks (API key)"],
+      operationId: "webhooks_list",
+      summary: "List your market-alert webhooks",
+      security: [{ ApiKeyAuth: [] }],
+      responses: { "200": envelopeRef("webhooks") }
+    },
+    post: {
+      tags: ["Webhooks (API key)"],
+      operationId: "webhooks_create",
+      summary: "Create a market-alert webhook",
+      description: "We POST JSON to your https URL when the condition becomes true. Verify X-ArthaBench-Signature: sha256=HMAC-SHA256(secret, raw body). The secret is shown only once.",
+      security: [{ ApiKeyAuth: [] }],
+      requestBody: { required: true, content: { "application/json": { schema: webhookBody } } },
+      responses: { "201": envelopeRef("the webhook including its secret") }
+    }
+  };
+  paths["/webhooks/{id}"] = {
+    delete: {
+      tags: ["Webhooks (API key)"],
+      operationId: "webhooks_delete",
+      summary: "Delete a webhook",
+      security: [{ ApiKeyAuth: [] }],
+      parameters: [{ name: "id", in: "path", required: true, schema: { type: "string", format: "uuid" } }],
+      responses: { "200": envelopeRef("deleted: true") }
+    }
+  };
+  return {
+    openapi: "3.1.0",
+    info: {
+      title: "ArthaBench Public API",
+      version: "1.0.0",
+      description: "Deterministic financial calculators (no key), market data and AI endpoints. Every response is { data, source, timestamp, reliability_score, is_deterministic }. Free: 100 requests/minute per IP. With an API key: 1000/minute. Educational use; not investment, tax or legal advice.",
+      license: { name: "See repository licence", url: "https://github.com/shreyashsinghegi2-oss/artha-bench-pro" }
+    },
+    servers: [{ url: "/api/v1" }],
+    tags: [{ name: "Calculators" }, { name: "Market" }, { name: "AI (API key)" }, { name: "Webhooks (API key)" }, { name: "Service" }],
+    paths,
+    components: {
+      securitySchemes: { ApiKeyAuth: { type: "apiKey", in: "header", name: "x-api-key" } },
+      schemas: {
+        Envelope: {
+          type: "object",
+          required: ["data", "source", "timestamp", "reliability_score", "is_deterministic"],
+          properties: {
+            data: { description: "Endpoint-specific result" },
+            source: { type: "string", description: "Where the data or rules came from" },
+            timestamp: { type: "string", format: "date-time", description: "When the data was produced (as-of time for market data)" },
+            reliability_score: { type: "integer", minimum: 0, maximum: 100, description: "Source confidence adjusted for freshness; see /developers" },
+            is_deterministic: { type: "boolean", description: "true when the same inputs always give the same output" }
+          }
+        },
+        Error: {
+          type: "object",
+          properties: {
+            error: {
+              type: "object",
+              properties: { code: { type: "string" }, message: { type: "string" }, details: { type: "object", additionalProperties: { type: "string" } } }
+            },
+            timestamp: { type: "string", format: "date-time" }
+          }
+        }
+      }
+    }
+  };
+}
+var SWAGGER_HTML = `<!doctype html>
+<html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>ArthaBench API docs</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.17.14/swagger-ui.css"/>
+<style>body{margin:0;background:#fff}.topbar{display:none}</style></head>
+<body><div id="ui"></div>
+<script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.17.14/swagger-ui-bundle.js" crossorigin="anonymous"></script>
+<script>window.ui=SwaggerUIBundle({url:'/api/v1/openapi.json',dom_id:'#ui',deepLinking:true,tryItOutEnabled:true,persistAuthorization:true});</script>
+</body></html>`;
+
+// server/v1/webhooks.ts
+import { createHmac, randomBytes as randomBytes2, timingSafeEqual as timingSafeEqual2 } from "node:crypto";
+import { z as z13 } from "zod";
+var WebhookError = class extends Error {
+  constructor(message, status) {
+    super(message);
+    this.status = status;
+  }
+};
+var WEBHOOK_SYMBOLS = ["nifty", "btc"];
+var MAX_WEBHOOKS_PER_KEY = 10;
+var createWebhookSchema = z13.object({
+  url: z13.string().trim().url().max(500),
+  symbol: z13.enum(WEBHOOK_SYMBOLS),
+  condition: z13.enum(["above", "below"]),
+  threshold: z13.number().finite().positive()
+});
+var publicView = ({ secret: _s, key_id: _k, ...rest }) => rest;
+function store3() {
+  const url = (process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || "").replace(/\/$/, "");
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+  if (!url || !key) throw new WebhookError("Webhooks are not configured on this server (Supabase service key missing).", 503);
+  return async (path, init = {}) => {
+    const res = await fetch(`${url}/rest/v1/${path}`, {
+      ...init,
+      headers: { apikey: key, Authorization: `Bearer ${key}`, "Content-Type": "application/json", Prefer: "return=representation", ...init.headers },
+      signal: AbortSignal.timeout(8e3)
+    });
+    const text = await res.text();
+    if (!res.ok) {
+      if (res.status === 404 || /PGRST205|api_webhooks/.test(text))
+        throw new WebhookError("Webhook storage is not set up yet (apply migration 20260930100000_api_webhooks.sql).", 503);
+      throw new WebhookError(`Webhook storage error (HTTP ${res.status}).`, 502);
+    }
+    return text ? JSON.parse(text) : null;
+  };
+}
+async function assertDeliverable(raw) {
+  const url = new URL(raw);
+  if (url.protocol !== "https:") throw new WebhookError("Webhook URLs must use https.", 422);
+  try {
+    await assertPublic(url);
+  } catch {
+    throw new WebhookError("Webhook URLs must point to a public internet address.", 422);
+  }
+  return url;
+}
+async function createWebhook(keyId, input) {
+  await assertDeliverable(input.url);
+  const db = store3();
+  const existing = await db(`api_webhooks?select=id&key_id=eq.${encodeURIComponent(keyId)}&active=eq.true`);
+  if (existing.length >= MAX_WEBHOOKS_PER_KEY) throw new WebhookError(`Each API key can have at most ${MAX_WEBHOOKS_PER_KEY} active webhooks.`, 409);
+  const secret = `whsec_${randomBytes2(24).toString("base64url")}`;
+  const rows = await db("api_webhooks", { method: "POST", body: JSON.stringify({ key_id: keyId, ...input, secret }) });
+  const row = rows[0];
+  if (!row) throw new WebhookError("Webhook could not be saved.", 502);
+  return { ...publicView(row), secret };
+}
+async function listWebhooks(keyId) {
+  const rows = await store3()(`api_webhooks?key_id=eq.${encodeURIComponent(keyId)}&order=created_at.desc`);
+  return rows.map(publicView);
+}
+async function deleteWebhook(keyId, id) {
+  if (!/^[0-9a-f-]{36}$/i.test(id)) throw new WebhookError("Unknown webhook id.", 404);
+  const rows = await store3()(`api_webhooks?id=eq.${id}&key_id=eq.${encodeURIComponent(keyId)}`, { method: "DELETE" });
+  return rows.length > 0;
+}
+var signPayload = (secret, body) => `sha256=${createHmac("sha256", secret).update(body).digest("hex")}`;
+function cronAuthorized(header) {
+  const secret = process.env.CRON_SECRET;
+  if (!secret || !header) return false;
+  const a = Buffer.from(header);
+  const b = Buffer.from(`Bearer ${secret}`);
+  return a.length === b.length && timingSafeEqual2(a, b);
+}
+function evaluate(rows, prices) {
+  const out = [];
+  for (const row of rows) {
+    const price = prices[row.symbol];
+    if (price === void 0) continue;
+    const state = row.condition === "above" ? price > row.threshold : price < row.threshold;
+    out.push({ row, state, fire: state && row.last_state !== true, price });
+  }
+  return out;
+}
+async function runWebhooks() {
+  const db = store3();
+  const rows = await db("api_webhooks?active=eq.true&limit=500");
+  const prices = {};
+  const asOf = {};
+  if (rows.some((r) => r.symbol === "nifty")) {
+    try {
+      const q = await niftyQuote();
+      prices.nifty = q.data.price;
+      asOf.nifty = q.data.as_of;
+    } catch {
+    }
+  }
+  if (rows.some((r) => r.symbol === "btc")) {
+    try {
+      const q = await btcQuote();
+      prices.btc = q.data.price;
+      asOf.btc = q.data.as_of;
+    } catch {
+    }
+  }
+  let fired = 0;
+  let failed = 0;
+  for (const { row, state, fire, price } of evaluate(rows, prices)) {
+    const patch = { last_state: state };
+    if (fire) {
+      const body = JSON.stringify({
+        event: "price_alert",
+        webhook_id: row.id,
+        symbol: row.symbol,
+        condition: row.condition,
+        threshold: row.threshold,
+        price,
+        as_of: asOf[row.symbol] ?? null,
+        sent_at: (/* @__PURE__ */ new Date()).toISOString()
+      });
+      let status = 0;
+      try {
+        await assertDeliverable(row.url);
+        const res = await fetch(row.url, {
+          method: "POST",
+          redirect: "manual",
+          headers: { "Content-Type": "application/json", "User-Agent": "ArthaBench-Webhooks/1.0", "X-ArthaBench-Signature": signPayload(row.secret, body) },
+          body,
+          signal: AbortSignal.timeout(5e3)
+        });
+        status = res.status;
+      } catch {
+        status = 0;
+      }
+      if (status >= 200 && status < 300) fired += 1;
+      else failed += 1;
+      patch.last_fired_at = (/* @__PURE__ */ new Date()).toISOString();
+      patch.last_status = status;
+    }
+    if (patch.last_state !== row.last_state || fire) await db(`api_webhooks?id=eq.${row.id}`, { method: "PATCH", body: JSON.stringify(patch) });
+  }
+  return { checked: rows.length, fired, failed, prices };
+}
+
+// server/v1/router.ts
+var FREE_LIMIT_PER_MIN = 100;
+var KEY_LIMIT_PER_MIN = 1e3;
+var STARTED_AT = Date.now();
+var wrap = (fn) => (req, res, next) => {
+  Promise.resolve(fn(req, res)).catch(next);
+};
+var windows = /* @__PURE__ */ new Map();
+var sweep = setInterval(() => {
+  const now = Date.now();
+  for (const [k, w] of windows) if (w.reset <= now) windows.delete(k);
+}, 6e4);
+sweep.unref?.();
+function clientIp(req) {
+  const fwd = req.header("x-forwarded-for");
+  return fwd?.split(",")[0]?.trim() || req.socket.remoteAddress || "unknown";
+}
+function rateLimit(req, res, next) {
+  const keyId = res.locals.apiKeyId;
+  const limit = keyId ? KEY_LIMIT_PER_MIN : FREE_LIMIT_PER_MIN;
+  const bucket = keyId ? `key:${keyId}` : `ip:${clientIp(req)}`;
+  const now = Date.now();
+  let w = windows.get(bucket);
+  if (!w || w.reset <= now) {
+    w = { count: 0, reset: now + 6e4 };
+    windows.set(bucket, w);
+  }
+  w.count += 1;
+  res.setHeader("X-RateLimit-Limit", String(limit));
+  res.setHeader("X-RateLimit-Remaining", String(Math.max(0, limit - w.count)));
+  res.setHeader("X-RateLimit-Reset", String(Math.ceil(w.reset / 1e3)));
+  if (w.count > limit) {
+    res.setHeader("Retry-After", String(Math.ceil((w.reset - now) / 1e3)));
+    res.status(429).json(
+      errorBody(
+        "rate_limited",
+        keyId ? `Limit of ${limit} requests a minute reached for this API key.` : `Limit of ${limit} requests a minute reached for this IP. Use an API key for ${KEY_LIMIT_PER_MIN} a minute.`
+      )
+    );
+    return;
+  }
+  next();
+}
+var cache60 = (res) => res.setHeader("Cache-Control", "public, max-age=0, s-maxage=60, stale-while-revalidate=60");
+var noStore = (res) => res.setHeader("Cache-Control", "no-store");
+var v1Router = Router8();
+v1Router.use((req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, x-api-key");
+  res.setHeader("Access-Control-Max-Age", "86400");
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  if (req.method === "OPTIONS") {
+    res.status(204).end();
+    return;
+  }
+  next();
+});
+v1Router.use(express.json({ limit: "64kb" }));
+v1Router.use(optionalApiKey);
+v1Router.use(rateLimit);
+v1Router.get("/calculators", (_req, res) => {
+  cache60(res);
+  res.json(
+    envelope(
+      CALCULATORS.map((c2) => ({ slug: c2.slug, summary: c2.summary, formula: c2.formula, path: `/api/v1/calculators/${c2.slug}`, params: c2.params })),
+      "ArthaBench calculator registry",
+      100,
+      true
+    )
+  );
+});
+v1Router.get("/calculators/:slug", (req, res) => {
+  const def = calculatorBySlug(req.params.slug ?? "");
+  if (!def) {
+    res.status(404).json(errorBody("unknown_calculator", `No calculator "${req.params.slug}". See /api/v1/calculators for the list.`));
+    return;
+  }
+  const values = parseParams(def.params, req.query);
+  const usedAssumedDefault = (def.assumedDefaults ?? []).some((name) => req.query[name] === void 0);
+  const data = def.compute(values);
+  cache60(res);
+  res.json(envelope({ ...data, inputs: values }, def.source, usedAssumedDefault ? 90 : 100, true));
+});
+var market = (fn) => wrap(async (_req, res) => {
+  const result = await fn();
+  cache60(res);
+  res.json(result);
+});
+v1Router.get("/market/nifty", market(niftyQuote));
+v1Router.get("/market/btc", market(btcQuote));
+v1Router.get(
+  "/market/fii-dii",
+  market(() => fiiDiiFlows())
+);
+v1Router.get(
+  "/market/sector-rotation",
+  market(() => sectorRotation())
+);
+v1Router.get(
+  "/health",
+  wrap(async (_req, res) => {
+    const sources = await sourceHealth();
+    const status = Object.values(sources).every((s2) => s2 === "ok") ? "ok" : "degraded";
+    noStore(res);
+    res.json(
+      envelope({ status, uptime_s: Math.round((Date.now() - STARTED_AT) / 1e3), sources }, "ArthaBench API live probes", status === "ok" ? 100 : 70, false)
+    );
+  })
+);
+v1Router.get("/openapi.json", (_req, res) => {
+  cache60(res);
+  res.json(buildOpenApi());
+});
+v1Router.get("/docs", (_req, res) => {
+  cache60(res);
+  res.type("html").send(SWAGGER_HTML);
+});
+v1Router.post(
+  "/ai/cfo",
+  requireApiKey,
+  groundingMiddleware,
+  wrap(async (req, res) => {
+    noStore(res);
+    res.json(await cfoBrief(cfoBodySchema.parse(req.body)));
+  })
+);
+v1Router.post(
+  "/ai/benchmark",
+  requireApiKey,
+  wrap(async (req, res) => {
+    noStore(res);
+    res.json(await runBenchmark(benchmarkBodySchema.parse(req.body)));
+  })
+);
+var cronRun = wrap(async (req, res) => {
+  noStore(res);
+  if (!cronAuthorized(req.header("authorization"))) {
+    res.status(401).json(errorBody("unauthorized", "Webhook runs need Authorization: Bearer <CRON_SECRET>."));
+    return;
+  }
+  res.json(envelope(await runWebhooks(), "ArthaBench webhook runner", 100, false));
+});
+v1Router.get("/webhooks/run", cronRun);
+v1Router.post("/webhooks/run", cronRun);
+v1Router.get(
+  "/webhooks",
+  requireApiKey,
+  wrap(async (_req, res) => {
+    noStore(res);
+    res.json(envelope(await listWebhooks(res.locals.apiKeyId ?? ""), "ArthaBench webhooks", 100, true));
+  })
+);
+v1Router.post(
+  "/webhooks",
+  requireApiKey,
+  wrap(async (req, res) => {
+    noStore(res);
+    res.status(201).json(envelope(await createWebhook(res.locals.apiKeyId ?? "", createWebhookSchema.parse(req.body)), "ArthaBench webhooks", 100, true));
+  })
+);
+v1Router.delete(
+  "/webhooks/:id",
+  requireApiKey,
+  wrap(async (req, res) => {
+    noStore(res);
+    const deleted = await deleteWebhook(res.locals.apiKeyId ?? "", req.params.id ?? "");
+    if (!deleted) {
+      res.status(404).json(errorBody("not_found", "No webhook with that id for this API key."));
+      return;
+    }
+    res.json(envelope({ deleted: true }, "ArthaBench webhooks", 100, true));
+  })
+);
+v1Router.use((req, res) => {
+  res.status(404).json(errorBody("not_found", `No endpoint ${req.method} /api/v1${req.path}. See /api/v1/docs.`));
+});
+v1Router.use((err, _req, res, _next) => {
+  noStore(res);
+  if (err instanceof ParamError)
+    return void res.status(400).json(errorBody("invalid_parameters", "Some query parameters are missing or invalid.", err.details));
+  if (err instanceof ZodError) {
+    const details = Object.fromEntries(err.issues.map((i) => [i.path.join(".") || "body", i.message]));
+    return void res.status(400).json(errorBody("invalid_body", "The request body is invalid.", details));
+  }
+  if (err instanceof SyntaxError) return void res.status(400).json(errorBody("invalid_json", "The request body is not valid JSON."));
+  if (err instanceof CalcError) return void res.status(422).json(errorBody("not_calculable", err.message));
+  if (err instanceof SourceUnavailableError) return void res.status(503).json(errorBody("source_unavailable", err.message));
+  if (err instanceof WebhookError) return void res.status(err.status).json(errorBody("webhook_error", err.message));
+  console.error("[api/v1] unexpected error", err);
+  res.status(500).json(errorBody("internal_error", "Something went wrong on our side."));
+});
+
 // server/vercelHandler.ts
-var app = express();
+var app = express2();
 var GROUNDED_AI_PATHS = /* @__PURE__ */ new Set(["/ai/chat", "/ai/tutor", "/tutor", "/nvidia-tutor", "/crypto/assistant", "/company/assistant", "/dashboard/assistant", "/personal/assistant", "/finance/scenario-assistant", "/news/explain", "/news/brief"]);
 app.disable("x-powered-by");
-app.use(express.json({ limit: "2mb" }));
+app.use(express2.json({ limit: "2mb" }));
 app.get("/api/news/image", handleNewsImage);
+app.use("/api/v1", v1Router);
 app.use("/api", stripUserProfile);
 app.use("/api", (req, res, next) => GROUNDED_AI_PATHS.has(req.path) ? groundingMiddleware(req, res, next) : next());
 app.get("/api/ai/live-sources", (_req, res) => {

@@ -49,10 +49,11 @@ export function parseAmfiNav(text: string): AmfiScheme[] {
   return out;
 }
 
-let amfiCache: { at: number; list: AmfiScheme[]; byCode: Map<string, AmfiScheme>; byIsin: Map<string, AmfiScheme> } | null = null;
-let amfiLoading: Promise<NonNullable<typeof amfiCache>> | null = null;
+interface AmfiIndex { at: number; list: AmfiScheme[]; byCode: Map<string, AmfiScheme>; byIsin: Map<string, AmfiScheme> }
+let amfiCache: AmfiIndex | null = null;
+let amfiLoading: Promise<AmfiIndex> | null = null;
 
-export async function amfiSchemes() {
+export async function amfiSchemes(): Promise<AmfiIndex> {
   if (amfiCache && Date.now() - amfiCache.at < AMFI_TTL_MS) return amfiCache;
   if (amfiLoading) return amfiLoading;
   amfiLoading = (async () => {

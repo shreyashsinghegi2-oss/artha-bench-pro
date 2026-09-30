@@ -1,3 +1,4 @@
+import type { LearningLanguage } from '../types';
 import {
   NormalizedMarketQuote,
   NormalizedNewsItem,
@@ -68,7 +69,7 @@ export async function fetchIndiaEconomicOverview(): Promise<EconomicIndicator[]>
 }
 export async function fetchIndiaEconomicSeries(indicatorId: string, limit = 60): Promise<EconomicSeriesResponse> { return fetchJSON<EconomicSeriesResponse>(`/api/economy/india/series?indicatorId=${encodeURIComponent(indicatorId)}&limit=${limit}`); }
 
-export async function generateLessonAI(params: { trackId: string; moduleId: string; lessonId: string; objective: string; learnerLevel: 'beginner' | 'intermediate' | 'advanced'; language: 'english' | 'hindi' | 'hinglish'; learningMode: string; }) {
+export async function generateLessonAI(params: { trackId: string; moduleId: string; lessonId: string; objective: string; learnerLevel: 'beginner' | 'intermediate' | 'advanced'; language: LearningLanguage; learningMode: string; }) {
   return fetchJSON<{ lesson: any; safetyNotice?: string }>('/api/learning/lesson', { method: 'POST', body: JSON.stringify(params) });
 }
 export async function reviewQuizAnswerAI(params: { lessonId: string; question: string; selectedOptionIndex: number; correctOptionIndex: number; userNote?: string; }) {

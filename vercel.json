@@ -4,28 +4,75 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "functions": {
-    "api/index.js": { "maxDuration": 60 }
+    "api/index.js": {
+      "maxDuration": 60
+    }
   },
   "headers": [
     {
       "source": "/api/news",
       "headers": [
-        { "key": "Cache-Control", "value": "public, s-maxage=30, stale-while-revalidate=90" }
+        {
+          "key": "Cache-Control",
+          "value": "public, s-maxage=30, stale-while-revalidate=90"
+        }
       ]
     }
   ],
   "rewrites": [
-    { "source": "/api/:path*", "destination": "/api/index" },
-    { "source": "/finance/:path*", "destination": "/index.html" },
-    { "source": "/workspace/:path*", "destination": "/index.html" },
-    { "source": "/auth", "destination": "/index.html" },
-    { "source": "/trust", "destination": "/index.html" },
-    { "source": "/about", "destination": "/index.html" },
-    { "source": "/methodology", "destination": "/index.html" },
-    { "source": "/roadmap", "destination": "/index.html" },
-    { "source": "/support", "destination": "/index.html" },
-    { "source": "/changelog", "destination": "/index.html" },
-    { "source": "/access", "destination": "/index.html" },
-    { "source": "/:path*", "destination": "/index.html" }
+    {
+      "source": "/api/:path*",
+      "destination": "/api/index"
+    },
+    {
+      "source": "/finance/:path*",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/workspace/:path*",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/auth",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/trust",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/about",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/methodology",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/roadmap",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/support",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/changelog",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/access",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/:path*",
+      "destination": "/index.html"
+    }
+  ],
+  "crons": [
+    {
+      "path": "/api/v1/webhooks/run",
+      "schedule": "30 3 * * *"
+    }
   ]
 }

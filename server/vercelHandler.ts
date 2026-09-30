@@ -9,6 +9,7 @@ import { freeMarketRouter } from './freeMarketRoutes';
 import { handleNvidiaTutor } from './nvidiaService';
 import { handleNewsImage } from './newsImageProxy';
 import { groundingMiddleware, stripUserProfile, liveSourceStatus, webSearch } from './liveGrounding';
+import { v1Router } from './v1/router';
 
 const app = express();
 /** Assistant endpoints that answer with live market data, news and web search. */
@@ -16,6 +17,8 @@ const GROUNDED_AI_PATHS = new Set(['/ai/chat', '/ai/tutor', '/tutor', '/nvidia-t
 app.disable('x-powered-by');
 app.use(express.json({ limit: '2mb' }));
 app.get('/api/news/image', handleNewsImage);
+// Public API: its own CORS, rate limits and error format, so it is mounted before the app's /api routers.
+app.use('/api/v1', v1Router);
 app.use('/api', stripUserProfile);
 app.use('/api', (req, res, next) => (GROUNDED_AI_PATHS.has(req.path) ? groundingMiddleware(req, res, next) : next()));
 app.get('/api/ai/live-sources', (_req, res) => { res.json(liveSourceStatus()); }); app.get('/api/ai/web-search', async (req, res) => { const q = String(req.query.q ?? '').slice(0, 200).trim(); if (!q) return res.status(400).json({ error: 'Add ?q=your question' }); try { res.json({ query: q, retrievedAt: new Date().toISOString(), ...(await webSearch(q)) }); } catch { res.status(502).json({ error: 'Web search is unavailable right now.' }); } });

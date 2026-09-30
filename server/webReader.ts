@@ -23,7 +23,7 @@ export function isPrivateAddress(ip: string): boolean {
   return v === '::' || v === '::1' || v.startsWith('fc') || v.startsWith('fd') || v.startsWith('fe8') || v.startsWith('fe9') || v.startsWith('fea') || v.startsWith('feb') || v.startsWith('ff');
 }
 
-async function assertPublic(url: URL) {
+export async function assertPublic(url: URL) {
   if (url.protocol !== 'https:' && url.protocol !== 'http:') throw new Error('Only web links (http or https) can be read.');
   if (url.username || url.password) throw new Error('Links with passwords cannot be read.');
   if (url.port && !['80', '443', '8080', '8443'].includes(url.port)) throw new Error('This link uses an unusual port and cannot be read.');

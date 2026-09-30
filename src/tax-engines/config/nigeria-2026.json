@@ -1,0 +1,22 @@
+{
+  "country": "NG",
+  "name": "Nigeria (personal income tax, PAYE)",
+  "currency": "NGN",
+  "year": "2026",
+  "year_label": "Year of assessment 2026",
+  "last_verified": "2026-09-30",
+  "sources": [
+    "https://www.firs.gov.ng/",
+    "Nigeria Tax Act, 2025 (Fourth Schedule, individual rates), effective 1 January 2026"
+  ],
+  "notes": [
+    "Rates under the Nigeria Tax Act 2025: first ₦800,000 at 0%, then 15%, 18%, 21%, 23% and 25% above ₦50,000,000.",
+    "Income means chargeable income after allowable deductions (pension, NHF, NHIS, rent relief of 20% of rent up to ₦500,000). Pass those as 'deductions' or subtract them first.",
+    "Replaces the consolidated relief allowance of the former Personal Income Tax Act."
+  ],
+  "schedules": {
+    "default": { "allowance": 0, "brackets": [
+      { "up_to": 800000, "rate": 0 }, { "up_to": 3000000, "rate": 0.15 }, { "up_to": 12000000, "rate": 0.18 },
+      { "up_to": 25000000, "rate": 0.21 }, { "up_to": 50000000, "rate": 0.23 }, { "up_to": null, "rate": 0.25 } ] }
+  }
+}

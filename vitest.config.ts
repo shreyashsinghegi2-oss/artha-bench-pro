@@ -22,6 +22,8 @@ export default mergeConfig(
           'server/rateLimiter.ts',
           'rag/rag_engine.ts',
           'server/fetch/*.ts',
+          'server/v1/{envelope,params,calculators,auth,openapi,ai}.ts',
+          'src/tax-engines/*.ts',
         ],
         thresholds: { lines: 80, functions: 80, statements: 80, branches: 75 },
       },

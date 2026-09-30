@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "strict": true,
+    "noImplicitAny": true,
+    "noUncheckedIndexedAccess": false,
+    "noFallthroughCasesInSwitch": true
+  },
+  "include": [
+    "server/v1/**/*.ts",
+    "src/tax-engines/**/*.ts",
+    "src/components/developers/**/*.tsx",
+    "scripts/create-api-key.ts"
+  ]
+}

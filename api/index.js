@@ -1054,14 +1054,14 @@ function computeFullReliabilityEvaluation(query, primaryResponse, secondaryRespo
   };
   let totalWeightedScore = 0;
   const dimensions = [];
-  for (const [id2, config] of Object.entries(RELIABILITY_DIMENSIONS_CONFIG)) {
+  for (const [id2, config2] of Object.entries(RELIABILITY_DIMENSIONS_CONFIG)) {
     const data = rawScores[id2] || { raw: 50, reason: "Evaluation default", evidenceStr: [], pass: false };
-    const weighted = data.raw * config.weight;
+    const weighted = data.raw * config2.weight;
     totalWeightedScore += weighted;
     dimensions.push({
-      id: config.id,
-      name: config.name,
-      weight: config.weight,
+      id: config2.id,
+      name: config2.name,
+      weight: config2.weight,
       rawScore: data.raw,
       weightedScore: Math.round(weighted * 100) / 100,
       reason: data.reason,
@@ -1424,22 +1424,22 @@ function thinHistory(points) {
 async function fundDetail(code) {
   if (!/^\d{3,8}$/.test(code)) throw new Error("Invalid scheme code.");
   const amfi = await amfiSchemes().catch(() => null);
-  let cached = historyCache.get(code);
-  if (!cached || Date.now() - cached.at > HISTORY_TTL_MS) {
+  let cached2 = historyCache.get(code);
+  if (!cached2 || Date.now() - cached2.at > HISTORY_TTL_MS) {
     try {
       const { meta, points } = await mfapiScheme(code);
-      cached = { at: Date.now(), points, meta };
-      historyCache.set(code, cached);
+      cached2 = { at: Date.now(), points, meta };
+      historyCache.set(code, cached2);
       if (historyCache.size > 300) historyCache.delete(historyCache.keys().next().value);
     } catch {
       const a = amfi?.byCode.get(code);
-      cached = { at: Date.now(), points: a ? [{ date: a.navDate, nav: a.nav }] : [], meta: null };
+      cached2 = { at: Date.now(), points: a ? [{ date: a.navDate, nav: a.nav }] : [], meta: null };
     }
   }
-  const last = cached.points[cached.points.length - 1];
-  const scheme = amfi?.byCode.get(code) ?? schemeFromMeta(code, cached.meta, last);
-  if (!scheme && !cached.points.length) throw new Error("Scheme not found.");
-  return { scheme, history: thinHistory(cached.points), returns: trailingReturns(cached.points), sources: [amfi ? "AMFI (official NAVs)" : "mfapi.in (AMFI NAV data)"] };
+  const last = cached2.points[cached2.points.length - 1];
+  const scheme = amfi?.byCode.get(code) ?? schemeFromMeta(code, cached2.meta, last);
+  if (!scheme && !cached2.points.length) throw new Error("Scheme not found.");
+  return { scheme, history: thinHistory(cached2.points), returns: trailingReturns(cached2.points), sources: [amfi ? "AMFI (official NAVs)" : "mfapi.in (AMFI NAV data)"] };
 }
 async function matchFund(isin, name) {
   const id = isin.trim().toUpperCase();
@@ -2526,8 +2526,8 @@ async function fetchNewsData(query, category, region, page, endpointUrl = getCon
   };
 }
 async function getCachedOrFetch(key, loader) {
-  const cached = cache.get(key);
-  if (cached && cached.expiresAt > Date.now()) return cached.result;
+  const cached2 = cache.get(key);
+  if (cached2 && cached2.expiresAt > Date.now()) return cached2.result;
   const existing = inFlight.get(key);
   if (existing) return existing;
   const request = loader().then((result) => {
@@ -3878,7 +3878,7 @@ function createSources(deps) {
       }));
     }
   };
-  const market2 = {
+  const market3 = {
     id: "market",
     kind: "market",
     priority: 2,
@@ -3971,7 +3971,7 @@ function createSources(deps) {
       return out;
     }
   };
-  const news = {
+  const news2 = {
     id: "news",
     kind: "news",
     priority: 3,
@@ -3993,7 +3993,7 @@ function createSources(deps) {
       }));
     }
   };
-  const web = {
+  const web2 = {
     id: "web",
     kind: "web",
     priority: 4,
@@ -4068,7 +4068,7 @@ ${page.text.slice(0, 2400)}`;
       ];
     }
   };
-  return [rag, official, market2, fund, userPage, news, web, wikipedia];
+  return [rag, official, market3, fund, userPage, news2, web2, wikipedia];
 }
 var firecrawlEnabled = () => Boolean(process.env.FIRECRAWL_API_KEY?.trim());
 async function firecrawlScrape(url, fetchImpl = fetch) {
@@ -4834,11 +4834,11 @@ function find(prompt, words) {
 function offlineSnapshot(prompt) {
   const income = find(prompt, "earn|earning|salary|income|ctc|take[- ]home|make|\u0938\u0948\u0932\u0930\u0940|\u0935\u0947\u0924\u0928|\u0924\u0928\u0916\u094D\u0935\u093E\u0939|\u0915\u092E\u093E\u0908|\u0906\u092F|\u092A\u0917\u093E\u0930");
   const spend = find(prompt, "spend|spending|expenses?|expenditure|\u0916\u0930\u094D\u091A|\u0916\u0930\u094D\u091A\u093E");
-  const emi2 = find(prompt, "emis?|loan repayment|\u0908\u090F\u092E\u0906\u0908|\u0915\u093F\u0938\u094D\u0924");
+  const emi3 = find(prompt, "emis?|loan repayment|\u0908\u090F\u092E\u0906\u0908|\u0915\u093F\u0938\u094D\u0924");
   if (!income) return null;
   const monthlyIncome = income.yearly ? income.value / 12 : income.value;
   const monthlySpend = spend ? spend.yearly ? spend.value / 12 : spend.value : null;
-  const monthlyEmi = emi2 ? emi2.yearly ? emi2.value / 12 : emi2.value : 0;
+  const monthlyEmi = emi3 ? emi3.yearly ? emi3.value / 12 : emi3.value : 0;
   const lines = [`Monthly income: ${inr2(monthlyIncome)}${income.yearly ? ` (${inr2(income.value)} a year \xF7 12, before tax)` : ""}.`];
   const takeaways = [];
   if (monthlyEmi) {
@@ -4960,22 +4960,22 @@ function parseIntents(question) {
   const out = [];
   const rate = rateIn(q);
   const tenure = tenureIn(q);
-  const money3 = moneyIn(q);
-  if (/\bemi\b|\bloan\b/i.test(q) && money3[0] && rate && tenure)
-    out.push({ kind: "emi", amount: asDecimalString(money3[0].value), ratePct: rate, months: tenure.months });
-  if (/\bsip\b/i.test(q) && money3[0] && rate && tenure)
-    out.push({ kind: "sip", amount: asDecimalString(money3[0].value), ratePct: rate, months: tenure.months });
+  const money4 = moneyIn(q);
+  if (/\bemi\b|\bloan\b/i.test(q) && money4[0] && rate && tenure)
+    out.push({ kind: "emi", amount: asDecimalString(money4[0].value), ratePct: rate, months: tenure.months });
+  if (/\bsip\b/i.test(q) && money4[0] && rate && tenure)
+    out.push({ kind: "sip", amount: asDecimalString(money4[0].value), ratePct: rate, months: tenure.months });
   const cg = q.match(new RegExp(`\\bfrom\\s+${AMOUNT_RE}\\s+to\\s+${AMOUNT_RE}`, "i"));
   if (/\bcagr\b|\bgrew\b|\bgrown\b|\bgrowth rate\b/i.test(q) && cg && tenure) {
     const a = readAmount(`${cg[1]}${cg[2] ?? ""}`);
     const b = readAmount(`${cg[3]}${cg[4] ?? ""}`);
     if (a && b) out.push({ kind: "cagr", amount: asDecimalString(a), endAmount: asDecimalString(b), years: tenure.years });
   }
-  if (/\b(income )?tax\b/i.test(q) && !/\bgst\b|\btds\b|\bcapital gains?\b/i.test(q) && money3[0] && /\b(salary|income|ctc|earn|package|lpa)\b/i.test(q)) {
+  if (/\b(income )?tax\b/i.test(q) && !/\bgst\b|\btds\b|\bcapital gains?\b/i.test(q) && money4[0] && /\b(salary|income|ctc|earn|package|lpa)\b/i.test(q)) {
     const saysOld = /\bold\b/i.test(q) && /\bregime\b/i.test(q);
     const saysNew = /\bnew\b/i.test(q) && /\bregime\b/i.test(q);
     const regime = saysOld && !saysNew ? "old" : saysNew && !saysOld ? "new" : "both";
-    out.push({ kind: "tax", amount: asDecimalString(money3[0].value), regime, salaried: /\b(salary|salaried|ctc|package|lpa|job)\b/i.test(q) });
+    out.push({ kind: "tax", amount: asDecimalString(money4[0].value), regime, salaried: /\b(salary|salaried|ctc|package|lpa|job)\b/i.test(q) });
   }
   return out;
 }
@@ -5283,8 +5283,8 @@ async function webSearch(query) {
     } catch {
     }
   }
-  const [news, ddg] = await Promise.all([withTimeout(googleNews(q), 6500), withTimeout(duckduckgo(q), 5e3)]);
-  return { provider: "Google News (live, newest first)", results: [...news ?? [], ...(ddg ?? []).slice(0, 1)].slice(0, 6) };
+  const [news2, ddg] = await Promise.all([withTimeout(googleNews(q), 6500), withTimeout(duckduckgo(q), 5e3)]);
+  return { provider: "Google News (live, newest first)", results: [...news2 ?? [], ...(ddg ?? []).slice(0, 1)].slice(0, 6) };
 }
 var cache3 = /* @__PURE__ */ new Map();
 var CACHE_MS = 6e4;
@@ -5304,13 +5304,13 @@ async function fundContext(q) {
   const query = fundQueryFrom(q);
   if (!query) return { lines: [], sources: [] };
   const { results } = await searchFunds(query, 3);
-  const pick = results[0];
-  if (!pick) return { lines: [`Mutual fund data: no scheme matched "${query}"; ask the user for the exact fund name.`], sources: [] };
-  const d = await fundDetail(pick.code);
+  const pick2 = results[0];
+  if (!pick2) return { lines: [`Mutual fund data: no scheme matched "${query}"; ask the user for the exact fund name.`], sources: [] };
+  const d = await fundDetail(pick2.code);
   const last = d.history[d.history.length - 1];
   const r = d.returns;
   const pc = (k, label) => r[k] !== void 0 ? `${label} ${(r[k] * 100).toFixed(1)}%` : "";
-  const name = d.scheme?.name ?? pick.name;
+  const name = d.scheme?.name ?? pick2.name;
   const line = `- ${name}${d.scheme?.category ? ` [${d.scheme.category}]` : ""}: NAV \u20B9${last?.nav} on ${last?.date}; returns ${[pc("1Y", "1 year"), pc("3Y", "3 years (a year)"), pc("5Y", "5 years (a year)")].filter(Boolean).join(", ")}. Source: ${d.sources.join(", ")}. Past returns do not guarantee future returns.`;
   return { lines: ["Mutual fund data (official NAVs):", line], sources: [{ name: `AMFI NAV: ${name.slice(0, 80)}`, dataDate: last?.date ?? "", freshness: "end of day", kind: "fund" }] };
 }
@@ -5452,9 +5452,9 @@ function numberedFactsForFallback(ctx) {
   }).filter(Boolean);
 }
 function liveSourceStatus() {
-  const web = process.env.SERPER_API_KEY?.trim() ? "Google via Serper" : process.env.TAVILY_API_KEY?.trim() ? "Tavily" : process.env.BRAVE_SEARCH_API_KEY?.trim() ? "Brave Search" : "Google News (keyless)";
+  const web2 = process.env.SERPER_API_KEY?.trim() ? "Google via Serper" : process.env.TAVILY_API_KEY?.trim() ? "Tavily" : process.env.BRAVE_SEARCH_API_KEY?.trim() ? "Brave Search" : "Google News (keyless)";
   return {
-    webSearch: { provider: web, keyed: !web.includes("keyless") },
+    webSearch: { provider: web2, keyed: !web2.includes("keyless") },
     marketData: process.env.TWELVE_DATA_API_KEY?.trim() ? "Yahoo Finance + Twelve Data" : "Yahoo Finance (delayed)",
     news: process.env.NEWSDATA_API_KEY?.trim() || process.env.NEWS_API_KEY?.trim() || process.env.BUSINESS_NEWS_API_KEY?.trim() ? "News API + public RSS" : "Public RSS feeds",
     ai: process.env.GROQ_API_KEY?.trim() ? "Groq" : process.env.NVIDIA_API_KEY?.trim() ? "NVIDIA NIM" : "Not configured"
@@ -7745,9 +7745,9 @@ function normalizeRestCandle(value) {
 }
 async function getCryptoKlines(symbol, interval) {
   const cacheKey = `${symbol}:${interval}`;
-  const cached = klineCache.get(cacheKey);
-  if (cached && cached.expiresAt > Date.now()) {
-    return { sourceLabel: SOURCE_LABEL2, symbol, interval, ...cached.value };
+  const cached2 = klineCache.get(cacheKey);
+  if (cached2 && cached2.expiresAt > Date.now()) {
+    return { sourceLabel: SOURCE_LABEL2, symbol, interval, ...cached2.value };
   }
   const payload = await fetchBinanceJson(`/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=500`);
   if (!Array.isArray(payload)) throw new Error("Binance returned an invalid candle response.");
@@ -7868,10 +7868,10 @@ function aggregateCandles(candles, bucketSeconds) {
 var yahooProvider = {
   name: "Yahoo Finance (experimental, delayed)",
   async fetchCandles(instrument, interval) {
-    const config = YAHOO_INTERVALS[interval];
-    const series = await fetchYahooFinanceChart(instrument.providerSymbol, config.range, config.interval);
+    const config2 = YAHOO_INTERVALS[interval];
+    const series = await fetchYahooFinanceChart(instrument.providerSymbol, config2.range, config2.interval);
     let candles = pointsToCandles(series.points);
-    if (config.aggregate) candles = aggregateCandles(candles, config.aggregate * 3600);
+    if (config2.aggregate) candles = aggregateCandles(candles, config2.aggregate * 3600);
     if (!candles.length) throw new Error("No candles returned for this interval.");
     const hasOhlc = series.points.some((point) => point.open !== void 0 && point.high !== void 0 && point.low !== void 0);
     const delay = series.delayMinutes;
@@ -7916,8 +7916,8 @@ async function getTerminalCandles(id, interval) {
   const instrument = findInstrument(id);
   if (!instrument) throw new Error("Unknown instrument.");
   const key = `${id}:${interval}`;
-  const cached = candleCache.get(key);
-  if (cached && cached.expiresAt > Date.now()) return cached.value;
+  const cached2 = candleCache.get(key);
+  if (cached2 && cached2.expiresAt > Date.now()) return cached2.value;
   const pending = inflight.get(key);
   if (pending) return pending;
   const request = (async () => {
@@ -7938,7 +7938,7 @@ async function getTerminalCandles(id, interval) {
       candleCache.set(key, { value, expiresAt: Date.now() + candleTtlMs(instrument, interval) });
       return value;
     } catch (error) {
-      if (cached) return { ...cached.value, stale: true };
+      if (cached2) return { ...cached2.value, stale: true };
       throw error;
     } finally {
       inflight.delete(key);
@@ -9606,8 +9606,8 @@ function calculateEMI(principal2, annualRatePercent, years) {
   const n2 = Math.round(t.toNumber() * 12);
   if (n2 < 1) throw new Error("Loan tenure must produce at least one monthly payment.");
   const r = annual.div(100).div(12);
-  const emi2 = r.isZero() ? P.div(n2) : P.times(r).times(new Decimal4(1).plus(r).pow(n2)).div(new Decimal4(1).plus(r).pow(n2).minus(1));
-  const monthly = rounded(emi2);
+  const emi3 = r.isZero() ? P.div(n2) : P.times(r).times(new Decimal4(1).plus(r).pow(n2)).div(new Decimal4(1).plus(r).pow(n2).minus(1));
+  const monthly = rounded(emi3);
   return { principal: P.toNumber(), annualRatePercent: annual.toNumber(), years: t.toNumber(), payments: n2, monthlyRatePercent: rounded(r.times(100)), emi: monthly, totalPayments: rounded(new Decimal4(monthly).times(n2)), totalInterest: rounded(new Decimal4(monthly).times(n2).minus(P)) };
 }
 function calculateEmergencyFund(monthlyExpenses, months) {
@@ -10881,9 +10881,9 @@ var CALCULATORS = [
     params: [principal("principal", "Loan amount"), ratePct(), num("months", "Loan tenure in months", { min: 1, max: 600, integer: true, example: 240 })],
     compute: (v) => {
       const months = n(v, "months");
-      const emi2 = emi(n(v, "principal"), n(v, "rate") / 100, months);
-      const total = money2(emi2 * months);
-      return { emi: emi2, total_payment: total, total_interest: money2(total - n(v, "principal")), months };
+      const emi3 = emi(n(v, "principal"), n(v, "rate") / 100, months);
+      const total = money2(emi3 * months);
+      return { emi: emi3, total_payment: total, total_interest: money2(total - n(v, "principal")), months };
     }
   },
   {
@@ -11318,15 +11318,15 @@ var toNum = (v) => {
 function parseNseFlows(payload) {
   if (!Array.isArray(payload)) throw new SourceUnavailableError("NSE returned an unexpected FII/DII response.");
   const rows = payload;
-  const pick = (re) => {
+  const pick2 = (re) => {
     const row = rows.find((r) => re.test(String(r.category ?? "")));
     if (!row) throw new SourceUnavailableError("NSE response is missing FII or DII figures.");
     const side = { buy: toNum(row.buyValue), sell: toNum(row.sellValue), net: toNum(row.netValue), date: String(row.date ?? "") };
     if (![side.buy, side.sell, side.net].every(Number.isFinite)) throw new SourceUnavailableError("NSE returned non-numeric FII/DII values.");
     return side;
   };
-  const fii = pick(/FII|FPI/i);
-  const dii = pick(/DII/i);
+  const fii = pick2(/FII|FPI/i);
+  const dii = pick2(/DII/i);
   return {
     date: fii.date || dii.date,
     fii: { buy: fii.buy, sell: fii.sell, net: fii.net },
@@ -11383,23 +11383,23 @@ var NSE_SECTORS = [
 ];
 async function sectorRotation(quote = yahooQuote) {
   const settled = await Promise.allSettled(NSE_SECTORS.map((s2) => quote(s2.symbol)));
-  const sectors = [];
+  const sectors2 = [];
   const unavailable = [];
   settled.forEach((r, i) => {
     const def = NSE_SECTORS[i];
     if (!def) return;
     if (r.status === "fulfilled" && r.value.changePercent !== null) {
-      sectors.push({ name: def.name, symbol: def.symbol, price: r.value.price, change_percent: pct2(r.value.changePercent), as_of: r.value.providerTimestamp });
+      sectors2.push({ name: def.name, symbol: def.symbol, price: r.value.price, change_percent: pct2(r.value.changePercent), as_of: r.value.providerTimestamp });
     } else unavailable.push(def.name);
   });
-  if (sectors.length < NSE_SECTORS.length / 2)
-    throw new SourceUnavailableError(`Only ${sectors.length} of ${NSE_SECTORS.length} sector indices are available right now.`);
-  sectors.sort((a, b) => b.change_percent - a.change_percent);
-  const scores = sectors.map((s2) => marketReliability("yahoo", s2.as_of));
-  const coverage = sectors.length / NSE_SECTORS.length;
-  const latest = sectors.map((s2) => s2.as_of).filter((x) => Boolean(x)).sort().at(-1);
+  if (sectors2.length < NSE_SECTORS.length / 2)
+    throw new SourceUnavailableError(`Only ${sectors2.length} of ${NSE_SECTORS.length} sector indices are available right now.`);
+  sectors2.sort((a, b) => b.change_percent - a.change_percent);
+  const scores = sectors2.map((s2) => marketReliability("yahoo", s2.as_of));
+  const coverage = sectors2.length / NSE_SECTORS.length;
+  const latest = sectors2.map((s2) => s2.as_of).filter((x) => Boolean(x)).sort().at(-1);
   return envelope(
-    { period: "1 day (change versus previous close)", sectors, leaders: sectors.slice(0, 3), laggards: sectors.slice(-3).reverse(), unavailable },
+    { period: "1 day (change versus previous close)", sectors: sectors2, leaders: sectors2.slice(0, 3), laggards: sectors2.slice(-3).reverse(), unavailable },
     "Yahoo Finance (NSE sectoral indices)",
     Math.min(...scores) * coverage,
     false,
@@ -11417,13 +11417,13 @@ async function probe(fn) {
 var healthCache;
 async function sourceHealth() {
   if (healthCache && Date.now() - healthCache.at < 3e4) return healthCache.value;
-  const [yahoo, binance, nse] = await Promise.all([
+  const [yahoo2, binance, nse] = await Promise.all([
     probe(() => yahooQuote("^NSEI")),
     probe(() => getCryptoMarkets()),
     // The data call itself (cached 5 min): NSE's homepage can refuse cloud IPs while its data API still works.
     probe(() => fiiDiiFlows())
   ]);
-  const value = { yahoo, binance, nse };
+  const value = { yahoo: yahoo2, binance, nse };
   healthCache = { at: Date.now(), value };
   return value;
 }
@@ -11461,7 +11461,7 @@ Source: ${c2.source}. Deterministic, no API key needed, cached 60 s.`,
       }
     };
   }
-  const market2 = (slug, summary, description) => ({
+  const market3 = (slug, summary, description) => ({
     get: {
       tags: ["Market"],
       operationId: `market_${slug.replace(/-/g, "_")}`,
@@ -11470,14 +11470,14 @@ Source: ${c2.source}. Deterministic, no API key needed, cached 60 s.`,
       responses: { "200": envelopeRef(summary), "503": { description: "Source unavailable (no substitute data is ever returned)" } }
     }
   });
-  paths["/market/nifty"] = market2("nifty", "NIFTY 50 quote", "Yahoo Finance quote for ^NSEI. Usually delayed.");
-  paths["/market/btc"] = market2("btc", "Bitcoin (BTC/USDT)", "Binance public market data, 24-hour statistics.");
-  paths["/market/fii-dii"] = market2(
+  paths["/market/nifty"] = market3("nifty", "NIFTY 50 quote", "Yahoo Finance quote for ^NSEI. Usually delayed.");
+  paths["/market/btc"] = market3("btc", "Bitcoin (BTC/USDT)", "Binance public market data, 24-hour statistics.");
+  paths["/market/fii-dii"] = market3(
     "fii-dii",
     "FII/DII daily net flows",
     "NSE provisional cash-market flows in \u20B9 crore for the latest trading day. NSE sometimes blocks cloud servers; then 503."
   );
-  paths["/market/sector-rotation"] = market2(
+  paths["/market/sector-rotation"] = market3(
     "sector-rotation",
     "NSE sector performance (1 day)",
     "Ten NSE sectoral indices ranked by change versus previous close, with leaders and laggards."
@@ -12161,9 +12161,11 @@ function classifyAmount(before, after) {
   const lastWords = b.slice(-40);
   if (/\b(?:salary|earn(?:ing)?s?|income|ctc|take[- ]home|package|lpa|kamata|kamati|kamai)\b|सैलरी|वेतन|कमाई|आय/.test(lastWords) || /\blpa\b/.test(a.slice(0, 6)))
     return { type: "income", explicit: true, period: period ?? (/\b(?:ctc|package|lpa)\b/.test(near) ? "yearly" : void 0) };
+  if (/\bloans?\s*(?:of|amount|for|:)?\s*$/.test(b)) return { type: "lump_sum", explicit: true };
   if (/\b(?:spend(?:ing)?|expenses?|expenditure|kharch|kharcha|emi|rent)\b|खर्च|किराया/.test(lastWords)) return { type: "expense", explicit: true, period };
+  if (/\bsips?\s*(?:of|amount|:)?\s*$/.test(b)) return { type: "monthly", explicit: true, period: "monthly" };
   if (/\b(?:target|goal|corpus|need|want|become|reach|accumulate|build)\b|लक्ष्य/.test(lastWords)) return { type: "target", explicit: true, period };
-  if (/\bsips?\s*(?:of|amount|:)?\s*$/.test(b) || monthly) return { type: "monthly", explicit: true, period: "monthly" };
+  if (monthly) return { type: "monthly", explicit: true, period: "monthly" };
   if (yearly) return { type: "yearly", explicit: true, period: "yearly" };
   if (/\b(?:lump\s*-?\s*sum|one[- ]time|bonus)\b/.test(near)) return { type: "lump_sum", explicit: true };
   if (/\b(?:invest|investing|put|deposit|park|have|savings|saved|corpus of|lagana|lagau|lagaun)\b|निवेश/.test(lastWords))
@@ -12435,7 +12437,1228 @@ function createGroqExtractor(opts = {}) {
   };
 }
 
+// src/advisor/data-gathering.ts
+var DEFAULT_TIMEOUT_MS = 5e3;
+var STALE_AFTER_MS = 60 * 60 * 1e3;
+var MAX_WEB_RESULTS = 2;
+function skipped(source, note) {
+  return { status: "skipped", data: null, source, as_of: null, reliability: 0, latency_ms: 0, note };
+}
+async function run2(key, source, fn, timeoutMs, now, staleAfterMs) {
+  if (!fn) return { status: "unavailable", data: null, source, as_of: null, reliability: 0, latency_ms: 0, note: `${key} source is not configured` };
+  const started = now();
+  let timer;
+  try {
+    const result = await Promise.race([
+      fn(),
+      new Promise((_, reject) => {
+        timer = setTimeout(() => reject(new Error(`timed out after ${timeoutMs} ms`)), timeoutMs);
+      })
+    ]);
+    const asOfMs = result.as_of ? Date.parse(result.as_of) : Number.NaN;
+    const stale = Number.isFinite(asOfMs) && now() - asOfMs > staleAfterMs;
+    return {
+      status: "ok",
+      data: result.data,
+      source: result.source,
+      as_of: result.as_of,
+      reliability: Math.max(0, Math.min(100, Math.round(result.reliability))),
+      latency_ms: now() - started,
+      ...stale && result.as_of ? { stale_warning: `Data from ${result.as_of}` } : {}
+    };
+  } catch (e) {
+    return {
+      status: "unavailable",
+      data: null,
+      source,
+      as_of: null,
+      reliability: 0,
+      latency_ms: now() - started,
+      note: e instanceof Error ? e.message.slice(0, 200) : "failed"
+    };
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+function searchQuery(question, parsed) {
+  const base = question.replace(/\s+/g, " ").trim().slice(0, 160);
+  return /india|₹|nifty|sensex|rbi|sebi/i.test(base) || parsed.entities.some((e) => ["USDINR", "SP500", "NASDAQ", "BTC", "ETH"].includes(e)) ? base : `${base} India`;
+}
+function hasProfile(p) {
+  return Boolean(p && Object.values(p).some((v) => v !== void 0 && v !== null && !(Array.isArray(v) && v.length === 0)));
+}
+async function gatherContext(opts) {
+  const now = opts.now ?? Date.now;
+  const started = now();
+  const t = (k) => opts.timeoutMs?.[k] ?? DEFAULT_TIMEOUT_MS;
+  const stale = opts.staleAfterMs ?? STALE_AFTER_MS;
+  const f = opts.fetchers;
+  const query = searchQuery(opts.question, opts.parsed);
+  const webFn = f.web ? async () => {
+    const r = await f.web(query);
+    return { ...r, data: r.data.slice(0, MAX_WEB_RESULTS) };
+  } : void 0;
+  const [market3, marketState2, rbi2, fiiDii2, sectors2, news2, webFirst] = await Promise.all([
+    run2("market", "Market quotes", f.market, t("market"), now, stale),
+    run2("market_state", "NIFTY daily history", f.marketState, t("market_state"), now, stale),
+    run2("rbi", "RBI press releases", f.rbi, t("rbi"), now, stale),
+    run2("fii_dii", "NSE FII/DII activity", f.fiiDii, t("fii_dii"), now, stale),
+    run2("sectors", "NSE sector indices", f.sectors, t("sectors"), now, stale),
+    opts.parsed.is_time_sensitive ? run2("news", "Business news", f.news ? () => f.news(query) : void 0, t("news"), now, stale) : Promise.resolve(skipped("Business news", "question is not time-sensitive")),
+    opts.parsed.is_novel ? run2("web", "Web search", webFn, t("web"), now, stale) : Promise.resolve(null)
+  ]);
+  const marketStale = Boolean(market3.stale_warning || marketState2.stale_warning);
+  const web2 = webFirst ?? (marketStale ? await run2("web", "Web search", webFn, t("web"), now, stale) : skipped("Web search", "answer is cached and market data is fresh"));
+  const profile = hasProfile(opts.profile) ? { status: "ok", data: opts.profile, source: "Your saved profile", as_of: null, reliability: 100, latency_ms: 0 } : skipped("Your saved profile", "no profile shared; answers use general assumptions");
+  return {
+    market: market3,
+    market_state: marketState2,
+    rbi: rbi2,
+    fii_dii: fiiDii2,
+    sectors: sectors2,
+    profile,
+    news: news2,
+    web: web2,
+    gathered_at: new Date(started).toISOString(),
+    total_ms: now() - started
+  };
+}
+function sourceSummary(bundle) {
+  const keys = ["market", "market_state", "rbi", "fii_dii", "sectors", "profile", "news", "web"];
+  return keys.map((key) => {
+    const s2 = bundle[key];
+    return { key, status: s2.status, source: s2.source, as_of: s2.as_of, reliability: s2.reliability, ...s2.note ? { note: s2.note } : {} };
+  });
+}
+
+// src/advisor/features.ts
+var MIN_HISTORY = 201;
+function rsiSeries(closes, period = 14) {
+  const out = closes.map(() => null);
+  if (closes.length <= period) return out;
+  let gain = 0;
+  let loss = 0;
+  for (let i = 1; i <= period; i += 1) {
+    const d = (closes[i] ?? 0) - (closes[i - 1] ?? 0);
+    if (d >= 0) gain += d;
+    else loss -= d;
+  }
+  gain /= period;
+  loss /= period;
+  out[period] = loss === 0 ? 100 : 100 - 100 / (1 + gain / loss);
+  for (let i = period + 1; i < closes.length; i += 1) {
+    const d = (closes[i] ?? 0) - (closes[i - 1] ?? 0);
+    gain = (gain * (period - 1) + Math.max(d, 0)) / period;
+    loss = (loss * (period - 1) + Math.max(-d, 0)) / period;
+    out[i] = loss === 0 ? 100 : 100 - 100 / (1 + gain / loss);
+  }
+  return out;
+}
+function computeFeatures(series) {
+  const clean2 = series.filter((p) => Number.isFinite(p.close) && p.close > 0);
+  const closes = clean2.map((p) => p.close);
+  const rsi = rsiSeries(closes);
+  const out = [];
+  let sum50 = 0;
+  let sum200 = 0;
+  for (let i = 0; i < closes.length; i += 1) {
+    const c2 = closes[i] ?? 0;
+    sum50 += c2;
+    sum200 += c2;
+    if (i >= 50) sum50 -= closes[i - 50] ?? 0;
+    if (i >= 200) sum200 -= closes[i - 200] ?? 0;
+    if (i < MIN_HISTORY - 1) continue;
+    const logReturns = [];
+    for (let k = i - 19; k <= i; k += 1) logReturns.push(Math.log((closes[k] ?? 1) / (closes[k - 1] ?? 1)));
+    const mean = logReturns.reduce((a, b) => a + b, 0) / logReturns.length;
+    const variance = logReturns.reduce((a, b) => a + (b - mean) ** 2, 0) / (logReturns.length - 1);
+    out.push({
+      date: clean2[i]?.date ?? "",
+      close: c2,
+      return_5d: c2 / (closes[i - 5] ?? c2) - 1,
+      return_20d: c2 / (closes[i - 20] ?? c2) - 1,
+      volatility_20d: Math.sqrt(variance) * Math.sqrt(252),
+      rsi_14: rsi[i] ?? 50,
+      dist_ma50: c2 / (sum50 / 50) - 1,
+      dist_ma200: c2 / (sum200 / 200) - 1
+    });
+  }
+  return out;
+}
+
+// server/advisor/fetchers.ts
+var cache5 = /* @__PURE__ */ new Map();
+async function cached(key, ttlMs, fn) {
+  const hit = cache5.get(key);
+  if (hit && Date.now() - hit.at < ttlMs) return hit.value;
+  const value = await fn();
+  cache5.set(key, { at: Date.now(), value });
+  return value;
+}
+async function yahoo(symbol, name) {
+  const r = await fetchYahooFinanceQuote(symbol, "index");
+  if (r.status !== "connected" || r.quote.freshness === "demo" || !Number.isFinite(r.quote.price)) throw new Error(`${name} unavailable`);
+  return { symbol, name, price: r.quote.price, change_percent: r.quote.changePercent, currency: r.quote.currency, as_of: r.quote.providerTimestamp };
+}
+async function market2() {
+  return cached("market", 6e4, async () => {
+    const btc = async () => {
+      const m = (await getCryptoMarkets()).markets.find((x) => x.symbol === "BTCUSDT");
+      if (!m) throw new Error("BTC unavailable");
+      return { symbol: "BTCUSDT", name: "Bitcoin", price: m.price, change_percent: m.changePercent, currency: "USDT", as_of: m.providerTimestamp };
+    };
+    const [nifty, sp500, bitcoin, usdinr, gold] = await Promise.allSettled([
+      yahoo("^NSEI", "NIFTY 50"),
+      yahoo("^GSPC", "S&P 500"),
+      btc(),
+      yahoo("INR=X", "USD/INR"),
+      yahoo("GC=F", "Gold (COMEX, USD/oz)")
+    ]);
+    const v = (r) => r.status === "fulfilled" ? r.value : null;
+    const data = { nifty: v(nifty), sp500: v(sp500), btc: v(bitcoin), usdinr: v(usdinr), gold: v(gold) };
+    const got = Object.values(data).filter((q) => q !== null);
+    if (!got.length) throw new Error("no market quotes available");
+    const scores = got.map((q) => marketReliability(q.symbol === "BTCUSDT" ? "binance" : "yahoo", q.as_of));
+    return {
+      data,
+      source: "Yahoo Finance (NIFTY, S&P 500, USD/INR, gold) and Binance (BTC)",
+      as_of: data.nifty?.as_of ?? got[0]?.as_of ?? null,
+      reliability: Math.min(...scores) * (got.length / 5)
+    };
+  });
+}
+async function niftyHistory() {
+  return cached("nifty-10y", 36e5, async () => {
+    const chart = await fetchYahooFinanceChart("^NSEI", "10y", "1d");
+    const points = chart.points.map((p) => ({ date: p.date.slice(0, 10), close: p.close ?? p.price }));
+    if (points.length < 260) throw new Error("not enough NIFTY history");
+    return points;
+  });
+}
+async function marketState() {
+  const features = computeFeatures(await niftyHistory());
+  const last = features.at(-1);
+  if (!last) throw new Error("not enough NIFTY history for features");
+  return {
+    data: last,
+    source: "NIFTY 50 daily closes (Yahoo Finance ^NSEI), features computed by ArthaBench",
+    as_of: `${last.date}T10:00:00Z`,
+    reliability: marketReliability("yahoo", `${last.date}T10:00:00Z`)
+  };
+}
+var RBI_RSS = "https://www.rbi.org.in/pressreleases_rss.xml";
+var REPO_RE = /policy repo rate[^.]{0,120}?(\d{1,2}(?:\.\d{1,2})?)\s*(?:per\s*cent|%)/i;
+async function rbi() {
+  return cached("rbi", 18e5, async () => {
+    const xml = await politeGetText(RBI_RSS, { timeoutMs: 6e3 });
+    const items = [...xml.matchAll(/<item>([\s\S]*?)<\/item>/g)].map((m) => {
+      const body = m[1] ?? "";
+      const tag3 = (t) => (new RegExp(`<${t}>([\\s\\S]*?)</${t}>`).exec(body)?.[1] ?? "").replace(/<!\[CDATA\[|\]\]>/g, "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+      return { title: tag3("title"), url: tag3("link"), date: tag3("pubDate") || null, text: `${tag3("title")} ${tag3("description")}` };
+    });
+    if (!items.length) throw new Error("RBI feed returned no items");
+    const policy = items.find((i) => REPO_RE.test(i.text));
+    const match = policy ? REPO_RE.exec(policy.text) : null;
+    const latest = items[0]?.date ? new Date(items[0].date).toISOString() : null;
+    return {
+      data: {
+        repo_rate_pct: match?.[1] ? Number(match[1]) : null,
+        repo_rate_statement: policy ? policy.title : null,
+        recent: items.slice(0, 5).map(({ title, url, date }) => ({ title, url, date }))
+      },
+      source: "RBI press releases (rbi.org.in RSS)",
+      as_of: latest,
+      reliability: marketReliability("exchange", latest)
+    };
+  });
+}
+async function fiiDii() {
+  const r = await fiiDiiFlows();
+  return {
+    data: { date: r.data.date, fii_net_cr: r.data.fii.net, dii_net_cr: r.data.dii.net, history_30d: null },
+    source: r.source,
+    as_of: r.timestamp,
+    reliability: r.reliability_score
+  };
+}
+async function sectors() {
+  return cached("sectors", 36e5, async () => {
+    const rows = await Promise.all(
+      NSE_SECTORS.map(async (s2) => {
+        try {
+          const c2 = (await fetchYahooFinanceChart(s2.symbol, "2mo", "1d")).points.map((p) => p.close ?? p.price);
+          const last = c2.at(-1);
+          const prev = c2.at(-2);
+          const back = c2.at(-21);
+          return { name: s2.name, symbol: s2.symbol, return_1d: last && prev ? last / prev - 1 : null, return_20d: last && back ? last / back - 1 : null };
+        } catch {
+          return { name: s2.name, symbol: s2.symbol, return_1d: null, return_20d: null };
+        }
+      })
+    );
+    const ranked = rows.filter((r) => r.return_20d !== null).sort((a, b) => (b.return_20d ?? 0) - (a.return_20d ?? 0));
+    if (ranked.length < 5) throw new Error("too few sector indices available");
+    return {
+      data: { sectors: rows, leaders: ranked.slice(0, 3), laggards: ranked.slice(-3).reverse() },
+      source: "NSE sectoral indices via Yahoo Finance (20 trading days)",
+      as_of: (/* @__PURE__ */ new Date()).toISOString(),
+      reliability: 80 * (ranked.length / rows.length)
+    };
+  });
+}
+async function news(query) {
+  const r = await getBusinessNews(query);
+  const items = r.items.slice(0, 5).map((n2) => ({ title: n2.title, source: n2.sourceName, url: n2.sourceUrl, published_at: n2.publishedAt }));
+  if (!items.length) throw new Error("no news found");
+  return { data: items, source: r.providerName, as_of: items[0]?.published_at ?? null, reliability: 70 };
+}
+async function web(query) {
+  const r = await webSearch(query);
+  const items = r.results.slice(0, 2).map((w) => ({ title: w.title, url: w.url, snippet: w.snippet.slice(0, 300) }));
+  if (!items.length) throw new Error("no web results");
+  return { data: items, source: `Web search (${r.provider})`, as_of: r.results[0]?.publishedAt ?? null, reliability: 60 };
+}
+var serverFetchers = { market: market2, marketState, rbi, fiiDii, sectors, news, web };
+
+// src/advisor/math-engine.ts
+var ASSUMPTIONS = {
+  equity_scenarios: [8, 10, 12],
+  debt_return: 7,
+  fd_rate: 7,
+  inflation: 6,
+  loan_rate: { HOME_LOAN: 8.5, CAR_LOAN: 9.5, PERSONAL_LOAN: 13, EDUCATION_LOAN: 10 },
+  loan_years: { HOME_LOAN: 20, CAR_LOAN: 5, PERSONAL_LOAN: 5, EDUCATION_LOAN: 7 },
+  default_years: 10,
+  emergency_months: 6
+};
+var MAX_AMOUNT = 1e11;
+function inr3(value, decimals = 0) {
+  return `\u20B9${value.toLocaleString("en-IN", { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}`;
+}
+function pctStr(value, decimals = 2) {
+  return `${Number(value.toFixed(decimals))}%`;
+}
+var round23 = (x) => Math.round(x * 100) / 100;
+function horizonYears(h) {
+  if (!h) return null;
+  const n2 = Number(h.slice(0, -1));
+  return h.endsWith("m") ? n2 / 12 : n2;
+}
+function sipFutureValue2(monthly, annualPct, years) {
+  const r = annualPct / 100 / 12;
+  const n2 = Math.round(years * 12);
+  if (r === 0) return monthly * n2;
+  return monthly * (((1 + r) ** n2 - 1) / r) * (1 + r);
+}
+function lumpSumFutureValue(principal2, annualPct, years) {
+  return principal2 * (1 + annualPct / 100) ** years;
+}
+function emi2(principal2, annualPct, years) {
+  const r = annualPct / 100 / 12;
+  const n2 = Math.round(years * 12);
+  if (r === 0) return principal2 / n2;
+  return principal2 * r * (1 + r) ** n2 / ((1 + r) ** n2 - 1);
+}
+function fdMaturity(principal2, annualPct, years) {
+  return principal2 * (1 + annualPct / 100 / 4) ** (4 * years);
+}
+function inflate(amount, inflationPct, years) {
+  return amount * (1 + inflationPct / 100) ** years;
+}
+function yearsInput(years, fromQuestion) {
+  return { name: "Time", value: years, unit: "years", source: fromQuestion ? "your question" : "assumption" };
+}
+function sipCalc(monthly, years, yearsFromQuestion, id = "sip") {
+  const [lo, mid, hi] = ASSUMPTIONS.equity_scenarios;
+  const n2 = Math.round(years * 12);
+  const invested = monthly * n2;
+  const fv = (p) => round23(sipFutureValue2(monthly, p, years));
+  const midFv = fv(mid);
+  return {
+    id,
+    title: `SIP of ${inr3(monthly)} a month for ${years} years`,
+    formula: "FV = P \xD7 [((1 + r)^n \u2212 1) \xF7 r] \xD7 (1 + r), r = annual return \xF7 12, n = months",
+    inputs: [
+      { name: "Monthly SIP", value: monthly, unit: "\u20B9", source: "your question" },
+      yearsInput(years, yearsFromQuestion),
+      { name: "Annual return (scenarios)", value: mid, unit: "%", source: "assumption" }
+    ],
+    steps: [
+      `n = ${years} \xD7 12 = ${n2} months; total invested = ${inr3(monthly)} \xD7 ${n2} = ${inr3(invested)}`,
+      `At ${lo}% a year: r = ${lo}% \xF7 12 \u2192 FV = ${inr3(fv(lo))}`,
+      `At ${mid}% a year: r = ${mid}% \xF7 12 \u2192 FV = ${inr3(midFv)}`,
+      `At ${hi}% a year: r = ${hi}% \xF7 12 \u2192 FV = ${inr3(fv(hi))}`
+    ],
+    result: { value: midFv, unit: "\u20B9", label: `Value after ${years} years at ${mid}% a year (middle scenario)` },
+    extras: [
+      { label: "Total invested", value: invested, unit: "\u20B9" },
+      { label: `Value at ${lo}%`, value: fv(lo), unit: "\u20B9" },
+      { label: `Value at ${hi}%`, value: fv(hi), unit: "\u20B9" },
+      { label: `Gain at ${mid}%`, value: round23(midFv - invested), unit: "\u20B9" }
+    ]
+  };
+}
+function lumpSumCalc(principal2, years, yearsFromQuestion, equity) {
+  const rates = equity ? [...ASSUMPTIONS.equity_scenarios] : [ASSUMPTIONS.debt_return];
+  const mid = rates[Math.floor(rates.length / 2)] ?? ASSUMPTIONS.debt_return;
+  const fv = (p) => round23(lumpSumFutureValue(principal2, p, years));
+  return {
+    id: "lump_sum",
+    title: `${inr3(principal2)} invested once for ${years} years`,
+    formula: "FV = P \xD7 (1 + r)^t",
+    inputs: [
+      { name: "Amount invested", value: principal2, unit: "\u20B9", source: "your question" },
+      yearsInput(years, yearsFromQuestion),
+      { name: equity ? "Annual return (scenarios)" : "Annual return (debt)", value: mid, unit: "%", source: "assumption" }
+    ],
+    steps: rates.map((p) => `At ${p}% a year: ${inr3(principal2)} \xD7 (1 + ${p / 100})^${years} = ${inr3(fv(p))}`),
+    result: { value: fv(mid), unit: "\u20B9", label: `Value after ${years} years at ${mid}% a year` },
+    extras: rates.filter((p) => p !== mid).map((p) => ({ label: `Value at ${p}%`, value: fv(p), unit: "\u20B9" }))
+  };
+}
+function emiCalc(principal2, loan, years, yearsFromQuestion, ratePct2) {
+  const rate = ratePct2 ?? ASSUMPTIONS.loan_rate[loan] ?? 10;
+  const n2 = Math.round(years * 12);
+  const monthly = round23(emi2(principal2, rate, years));
+  const total = round23(monthly * n2);
+  return {
+    id: "emi",
+    title: `EMI on a ${inr3(principal2)} loan over ${years} years`,
+    formula: "EMI = P \xD7 r \xD7 (1 + r)^n \xF7 ((1 + r)^n \u2212 1), r = annual rate \xF7 12, n = months",
+    inputs: [
+      { name: "Loan amount", value: principal2, unit: "\u20B9", source: "your question" },
+      { name: "Interest rate", value: rate, unit: "%", source: ratePct2 === void 0 ? "assumption" : "your question" },
+      yearsInput(years, yearsFromQuestion)
+    ],
+    steps: [
+      `r = ${rate}% \xF7 12 = ${(rate / 12).toFixed(4)}% a month; n = ${years} \xD7 12 = ${n2}`,
+      `EMI = ${inr3(monthly, 2)} a month`,
+      `Total paid = ${inr3(monthly, 2)} \xD7 ${n2} = ${inr3(total)}; interest = ${inr3(round23(total - principal2))}`
+    ],
+    result: { value: monthly, unit: "\u20B9", label: "Monthly EMI" },
+    extras: [
+      { label: "Total paid", value: total, unit: "\u20B9" },
+      { label: "Total interest", value: round23(total - principal2), unit: "\u20B9" }
+    ]
+  };
+}
+function fdCalc(principal2, years, yearsFromQuestion) {
+  const rate = ASSUMPTIONS.fd_rate;
+  const value = round23(fdMaturity(principal2, rate, years));
+  return {
+    id: "fd",
+    title: `Fixed deposit of ${inr3(principal2)} for ${years} years`,
+    formula: "Maturity = P \xD7 (1 + r \xF7 4)^(4t)  (quarterly compounding)",
+    inputs: [
+      { name: "Deposit", value: principal2, unit: "\u20B9", source: "your question" },
+      { name: "FD rate", value: rate, unit: "%", source: "assumption" },
+      yearsInput(years, yearsFromQuestion)
+    ],
+    steps: [`${inr3(principal2)} \xD7 (1 + ${rate / 100} \xF7 4)^(${4 * years}) = ${inr3(value)}`, "Interest is taxed at your slab rate every year."],
+    result: { value, unit: "\u20B9", label: `Maturity value before tax at ${rate}%` },
+    extras: [{ label: "Interest earned", value: round23(value - principal2), unit: "\u20B9" }]
+  };
+}
+function inflationCalc(target, years) {
+  const value = round23(inflate(target, ASSUMPTIONS.inflation, years));
+  return {
+    id: "inflation",
+    title: `What ${inr3(target)} of today costs in ${years} years`,
+    formula: "Future cost = today\u2019s cost \xD7 (1 + inflation)^t",
+    inputs: [
+      { name: "Cost today", value: target, unit: "\u20B9", source: "your question" },
+      { name: "Inflation", value: ASSUMPTIONS.inflation, unit: "%", source: "assumption" },
+      yearsInput(years, true)
+    ],
+    steps: [`${inr3(target)} \xD7 (1 + ${ASSUMPTIONS.inflation / 100})^${years} = ${inr3(value)}`],
+    result: { value, unit: "\u20B9", label: `Cost in ${years} years at ${ASSUMPTIONS.inflation}% inflation` },
+    extras: []
+  };
+}
+function requiredSipCalc(target, years) {
+  const [, mid] = ASSUMPTIONS.equity_scenarios;
+  const future = inflate(target, ASSUMPTIONS.inflation, years);
+  const perRupee = sipFutureValue2(1, mid, years);
+  const monthly = round23(future / perRupee);
+  return {
+    id: "required_sip",
+    title: `Monthly SIP needed to reach ${inr3(target)} (today\u2019s value) in ${years} years`,
+    formula: "SIP = future target \xF7 [((1 + r)^n \u2212 1) \xF7 r \xD7 (1 + r)]",
+    inputs: [
+      { name: "Goal in today\u2019s money", value: target, unit: "\u20B9", source: "your question" },
+      { name: "Inflation", value: ASSUMPTIONS.inflation, unit: "%", source: "assumption" },
+      { name: "Annual return", value: mid, unit: "%", source: "assumption" },
+      yearsInput(years, true)
+    ],
+    steps: [
+      `Future target = ${inr3(target)} \xD7 (1.06)^${years} = ${inr3(round23(future))}`,
+      `\u20B91 a month grows to ${inr3(round23(perRupee), 2)} at ${mid}% over ${Math.round(years * 12)} months`,
+      `SIP = ${inr3(round23(future))} \xF7 ${round23(perRupee)} = ${inr3(monthly)} a month`
+    ],
+    result: { value: monthly, unit: "\u20B9", label: "Monthly SIP needed" },
+    extras: [{ label: "Goal in future money", value: round23(future), unit: "\u20B9" }]
+  };
+}
+function taxCalc(income, age) {
+  const newR = indiaEngine.calculate(income, "2026", { regime: "new", age });
+  const oldR = indiaEngine.calculate(income, "2026", { regime: "old", age });
+  return {
+    id: "income_tax",
+    title: `Income tax on ${inr3(income)} (${newR.year_label})`,
+    formula: "Tax = \u03A3 slab rate \xD7 income in slab \u2212 rebate + 4% cess (standard deduction for salary)",
+    inputs: [{ name: "Annual income", value: income, unit: "\u20B9", source: "your question" }],
+    steps: [
+      ...newR.slab_breakdown.filter((s2) => s2.tax > 0).map((s2) => `New regime: ${pctStr(s2.rate * 100, 1)} on ${inr3(s2.taxable_amount)} = ${inr3(s2.tax)}`),
+      `New regime total (with cess) = ${inr3(newR.tax)}; effective rate ${pctStr(newR.effective_rate * 100)}`,
+      `Old regime total (no deductions entered) = ${inr3(oldR.tax)}`
+    ],
+    result: { value: newR.tax, unit: "\u20B9", label: "Tax under the new regime" },
+    extras: [
+      { label: "Tax under the old regime (no deductions)", value: oldR.tax, unit: "\u20B9" },
+      { label: "Effective rate (new)", value: round23(newR.effective_rate * 100), unit: "%" }
+    ]
+  };
+}
+function guardrails(parsed, profile, calcs) {
+  const out = [];
+  const has = (e) => parsed.entities.includes(e);
+  const years = horizonYears(parsed.time_horizon);
+  const equity = has("NIFTY") || has("SENSEX") || has("STOCK") || has("MUTUAL_FUND") || has("INDEX_FUND") || has("ELSS") || has("SIP");
+  const isLoan = LOANS.some((l) => has(l)) || has("EMI");
+  const lump = isLoan ? void 0 : parsed.amounts.find((a) => a.type === "lump_sum");
+  const volatile = equity || has("CRYPTO") || has("BTC") || has("ETH");
+  if (volatile && years !== null && years < 3) {
+    out.push({
+      id: "short_horizon",
+      level: "warning",
+      message: `Equity over ${years < 1 ? `${Math.round(years * 12)} months` : `${years} years`} can easily be down when you need the money. For under 3 years, debt funds or FDs are usually safer.`
+    });
+  }
+  if (has("CRYPTO") || has("BTC") || has("ETH")) {
+    const inv = profile?.investments;
+    const share = lump && inv ? lump.value / (inv + lump.value) : null;
+    out.push({
+      id: "crypto",
+      level: share !== null && share > 0.05 ? "warning" : "caution",
+      message: share !== null && share > 0.05 ? `This would make crypto ${pctStr(share * 100, 1)} of your investments; most planners cap it at 5%.` : "Crypto is highly volatile and lightly regulated in India (30% tax on gains, 1% TDS). Keep it a small slice."
+    });
+  }
+  if (lump && profile?.investments && (has("STOCK") || has("CRYPTO") || has("BTC"))) {
+    const share = lump.value / (profile.investments + lump.value);
+    if (share > 0.2)
+      out.push({
+        id: "concentration",
+        level: "warning",
+        message: `${inr3(lump.value)} would be ${pctStr(share * 100, 1)} of your investments in a single asset. Spreading it lowers the risk.`
+      });
+  }
+  const emiCalcResult = calcs.find((c2) => c2.id === "emi");
+  if (emiCalcResult && profile?.annual_income) {
+    const monthlyIncome = profile.annual_income / 12;
+    const burden = (emiCalcResult.result.value + (profile.monthly_emi ?? 0)) / monthlyIncome;
+    if (burden > 0.4)
+      out.push({
+        id: "emi_burden",
+        level: "warning",
+        message: `Total EMIs would take ${pctStr(burden * 100, 1)} of your monthly income; lenders and planners treat above 40% as risky.`
+      });
+  }
+  if (profile?.monthly_expenses !== void 0 && profile.liquid_savings !== void 0 && (lump || has("SIP"))) {
+    const need = profile.monthly_expenses * ASSUMPTIONS.emergency_months;
+    if (profile.liquid_savings < need)
+      out.push({
+        id: "emergency_first",
+        level: "caution",
+        message: `Your savings (${inr3(profile.liquid_savings)}) are below ${ASSUMPTIONS.emergency_months} months of expenses (${inr3(need)}). Build the emergency fund before investing more.`
+      });
+  }
+  if (parsed.amounts.some((a) => a.value > MAX_AMOUNT))
+    out.push({ id: "amount_check", level: "caution", message: "One of the amounts looks unusually large; please check it." });
+  if (calcs.some((c2) => c2.inputs.some((i) => i.source === "assumption"))) {
+    out.push({ id: "assumptions", level: "info", message: "Some inputs are planning assumptions, not guarantees. Actual returns and rates will differ." });
+  }
+  return out;
+}
+var LOANS = ["HOME_LOAN", "CAR_LOAN", "PERSONAL_LOAN", "EDUCATION_LOAN"];
+var NO_PROJECTION = ["STOCK", "CRYPTO", "BTC", "ETH", "GOLD", "SGB", "REAL_ESTATE"];
+function pick(amounts, ...types) {
+  return amounts.find((a) => types.includes(a.type) && a.currency === "INR" && a.value > 0 && a.value <= MAX_AMOUNT);
+}
+function runMath(parsed, context2) {
+  const profile = context2?.profile.status === "ok" ? context2.profile.data : null;
+  const has = (e) => parsed.entities.includes(e);
+  const qYears = horizonYears(parsed.time_horizon);
+  const calcs = [];
+  const assumptions = /* @__PURE__ */ new Set();
+  const years = (fallback) => ({ y: qYears ?? fallback, fromQ: qYears !== null });
+  const monthly = pick(parsed.amounts, "monthly");
+  const lump = pick(parsed.amounts, "lump_sum", "unknown");
+  const target = pick(parsed.amounts, "target");
+  const income = pick(parsed.amounts, "income") ?? (has("INCOME_TAX") ? pick(parsed.amounts, "yearly", "unknown") : void 0);
+  const loan = LOANS.find((l) => has(l)) ?? (has("EMI") ? "PERSONAL_LOAN" : void 0);
+  if (monthly && (has("SIP") || has("MUTUAL_FUND") || has("INDEX_FUND") || !loan)) {
+    const { y, fromQ } = years(ASSUMPTIONS.default_years);
+    calcs.push(sipCalc(monthly.value, y, fromQ));
+  }
+  if (loan && (lump ?? target)) {
+    const principal2 = (lump ?? target)?.value ?? 0;
+    const { y, fromQ } = years(ASSUMPTIONS.loan_years[loan] ?? 10);
+    calcs.push(emiCalc(principal2, loan, y, fromQ));
+  } else if (lump && (has("FD") || has("RD"))) {
+    const { y, fromQ } = years(5);
+    calcs.push(fdCalc(lump.value, y, fromQ));
+  } else if (lump && NO_PROJECTION.some((e) => has(e))) {
+    assumptions.add("No return projection for single stocks, crypto or gold: there is no reliable long-run rate to assume for them.");
+  } else if (lump && !has("INCOME_TAX")) {
+    const equity = !has("DEBT_FUND") && !has("PPF") && !has("EPF");
+    const { y, fromQ } = years(ASSUMPTIONS.default_years);
+    calcs.push(lumpSumCalc(lump.value, y, fromQ, equity));
+  }
+  if (target && !loan && qYears !== null) {
+    calcs.push(inflationCalc(target.value, qYears));
+    calcs.push(requiredSipCalc(target.value, qYears));
+  }
+  if (income && has("INCOME_TAX")) calcs.push(taxCalc(income.value, profile?.age));
+  for (const c2 of calcs)
+    for (const i of c2.inputs) if (i.source === "assumption") assumptions.add(`${i.name}: ${i.unit === "%" ? pctStr(i.value) : `${i.value} ${i.unit}`}`);
+  if (calcs.some((c2) => c2.inputs.some((i) => i.name.includes("scenarios"))))
+    assumptions.add(`Equity return scenarios: ${ASSUMPTIONS.equity_scenarios.join("%, ")}% a year (long-run planning ranges, not forecasts)`);
+  return { calculations: calcs, guardrails: guardrails(parsed, profile, calcs), assumptions: [...assumptions] };
+}
+
+// src/advisor/explainer.ts
+var pct1 = (x) => pctStr(x * 100, 1);
+function buildFacts(input) {
+  const { context: c2, pattern, math, profile } = input;
+  const lines = [];
+  if (c2) {
+    const m = c2.market.data;
+    if (m) {
+      for (const q of [m.nifty, m.sp500, m.usdinr, m.gold, m.btc]) {
+        if (q)
+          lines.push(
+            `MARKET ${q.name}: ${q.price.toLocaleString("en-IN", { maximumFractionDigits: 2 })} ${q.currency}${q.change_percent !== null ? ` (${pctStr(q.change_percent)} today)` : ""}, as of ${q.as_of ?? "unknown"}`
+          );
+      }
+    }
+    const s2 = c2.market_state.data;
+    if (s2)
+      lines.push(
+        `NIFTY STATE ${s2.date}: 5-day ${pct1(s2.return_5d)}, 20-day ${pct1(s2.return_20d)}, volatility ${pct1(s2.volatility_20d)}, RSI ${s2.rsi_14.toFixed(0)}, vs 200-day average ${pct1(s2.dist_ma200)}`
+      );
+    const r = c2.rbi.data;
+    if (r?.repo_rate_pct !== null && r?.repo_rate_pct !== void 0) lines.push(`RBI repo rate: ${r.repo_rate_pct}% (${r.repo_rate_statement ?? "RBI"})`);
+    if (r?.recent.length)
+      lines.push(
+        `RBI latest: ${r.recent.slice(0, 2).map((x) => x.title).join(" | ")}`
+      );
+    const f = c2.fii_dii.data;
+    if (f) lines.push(`FII/DII ${f.date}: FII net \u20B9${f.fii_net_cr.toLocaleString("en-IN")} crore, DII net \u20B9${f.dii_net_cr.toLocaleString("en-IN")} crore`);
+    const sec = c2.sectors.data;
+    if (sec)
+      lines.push(
+        `SECTORS 20-day leaders: ${sec.leaders.map((x) => `${x.name} ${pct1(x.return_20d ?? 0)}`).join(", ")}; laggards: ${sec.laggards.map((x) => `${x.name} ${pct1(x.return_20d ?? 0)}`).join(", ")}`
+      );
+    for (const n2 of c2.news.data ?? []) lines.push(`NEWS: ${n2.title} (${n2.source})`);
+    for (const w of c2.web.data ?? []) lines.push(`WEB: ${w.title}: ${w.snippet}`);
+    const stale = Object.values(c2).filter((v) => typeof v === "object" && v && "stale_warning" in v && v.stale_warning).map((v) => `${v.source}: ${v.stale_warning}`);
+    if (stale.length) lines.push(`STALE: ${stale.join("; ")}`);
+  }
+  if (pattern) {
+    const [s20, s60] = pattern.stats;
+    const [b20, b60] = pattern.baseline;
+    lines.push(
+      `PATTERN (${pattern.matches.length} similar past NIFTY days since ${pattern.history_from}, confidence ${pattern.confidence}): next 20 days median ${pct1(s20?.median ?? 0)} (higher in ${pct1(s20?.positive_share ?? 0)} of cases); next 60 days median ${pct1(s60?.median ?? 0)}, middle range ${pct1(s60?.p25 ?? 0)} to ${pct1(s60?.p75 ?? 0)}, worst ${pct1(s60?.worst ?? 0)}. Any-day baseline: 20 days ${pct1(b20?.median ?? 0)}, 60 days ${pct1(b60?.median ?? 0)}. ${pattern.disclaimer}`
+    );
+  }
+  for (const calc of math.calculations) {
+    lines.push(
+      `CALC ${calc.title}: ${calc.result.label} = ${calc.result.unit === "\u20B9" ? inr3(calc.result.value, calc.id === "emi" ? 2 : 0) : pctStr(calc.result.value)}`
+    );
+    for (const e of calc.extras) lines.push(`  ${e.label} = ${e.unit === "\u20B9" ? inr3(e.value) : pctStr(e.value)}`);
+    for (const i of calc.inputs)
+      lines.push(`  input ${i.name} = ${i.unit === "\u20B9" ? inr3(i.value) : i.unit === "%" ? pctStr(i.value) : `${i.value} ${i.unit}`} (${i.source})`);
+  }
+  for (const a of math.assumptions) lines.push(`ASSUMPTION: ${a}`);
+  for (const g of math.guardrails) lines.push(`GUARDRAIL (${g.level}): ${g.message}`);
+  lines.push(`PROFILE FIT: ${profile.suitability} \u2014 ${profile.suitability_reason}`);
+  for (const ch of profile.checks.filter((x) => x.relevant).slice(0, 4))
+    lines.push(`PROFILE CHECK ${ch.title} (${ch.status}): ${ch.detail} ${ch.benchmark_note}`);
+  if (profile.missing.length) lines.push(`PROFILE MISSING: ${profile.missing.join(", ")}`);
+  return lines.join("\n");
+}
+var EXPLAINER_SYSTEM_PROMPT = [
+  "You are ArthaMind, an Indian personal-finance explainer. You EXPLAIN the FACTS below in plain, warm English for an Indian reader.",
+  "Hard rules:",
+  "1. Use ONLY numbers that appear in the FACTS or the question, written exactly as they appear there (same \u20B9 amounts, same percentages). Never calculate, round differently, estimate or add new numbers.",
+  '2. Never promise returns. Past patterns are "historical patterns, not predictions".',
+  "3. Mention every GUARDRAIL of level warning, and the profile fit if it is caution or mismatch.",
+  "4. If a fact is missing, say it is unavailable; do not fill it from memory.",
+  '5. Structure: a 1-2 sentence direct answer, then 3-5 short bullet points, then one line "What would change this:".',
+  "6. Keep it under 220 words. No headings. Use Indian digit grouping (\u20B912,00,000)."
+].join("\n");
+function buildUserPrompt(question, facts, feedback) {
+  return `QUESTION: ${question}
+
+FACTS:
+${facts || "(no facts available)"}${feedback ? `
+
+YOUR PREVIOUS DRAFT WAS REJECTED. ${feedback}` : ""}`;
+}
+var SCALE = {
+  lakh: 1e5,
+  lakhs: 1e5,
+  lac: 1e5,
+  lacs: 1e5,
+  l: 1e5,
+  crore: 1e7,
+  crores: 1e7,
+  cr: 1e7,
+  k: 1e3,
+  thousand: 1e3,
+  million: 1e6,
+  mn: 1e6,
+  billion: 1e9,
+  bn: 1e9
+};
+var NUM_RE = /(₹\s*)?(-?\d[\d,]*(?:\.\d+)?)\s*(lakhs?|lacs?|crores?|cr\b|k\b|thousand|million|mn\b|billion|bn\b|l\b)?\s*(%|per\s*cent)?/gi;
+function extractNumbers2(text) {
+  const out = [];
+  for (const m of text.matchAll(NUM_RE)) {
+    const digits = (m[2] ?? "").replace(/,/g, "");
+    if (!digits || digits === "-") continue;
+    const base = Number(digits);
+    if (!Number.isFinite(base)) continue;
+    const scale = m[3] ? SCALE[m[3].toLowerCase()] ?? 1 : 1;
+    const decimals = digits.includes(".") ? digits.split(".")[1]?.length ?? 0 : 0;
+    out.push({ raw: m[0].trim(), value: base * scale, tolerance: 0.5 * 10 ** -decimals * scale, isPercent: Boolean(m[4]) });
+  }
+  return out;
+}
+function harmless(n2) {
+  return !n2.isPercent && !n2.raw.includes("\u20B9") && Number.isInteger(n2.value) && Math.abs(n2.value) <= 12 && n2.tolerance <= 0.5;
+}
+function checkNumbers(text, allowedSources) {
+  const allowed = allowedSources.flatMap(extractNumbers2).map((n2) => n2.value);
+  const bad = [];
+  for (const n2 of extractNumbers2(text)) {
+    if (harmless(n2)) continue;
+    const ok = allowed.some((a) => Math.abs(Math.abs(a) - Math.abs(n2.value)) <= Math.max(n2.tolerance, 1e-9) + 1e-9 * Math.abs(a));
+    if (!ok) bad.push(n2.raw);
+  }
+  return [...new Set(bad)];
+}
+function rawSummary(input) {
+  const lines = [];
+  const { math, profile, pattern } = input;
+  for (const c2 of math.calculations) {
+    lines.push(`\u2022 ${c2.result.label}: ${c2.result.unit === "\u20B9" ? inr3(c2.result.value, c2.id === "emi" ? 2 : 0) : pctStr(c2.result.value)} (${c2.title}).`);
+    for (const e of c2.extras.slice(0, 2)) lines.push(`  \u2013 ${e.label}: ${e.unit === "\u20B9" ? inr3(e.value) : pctStr(e.value)}`);
+  }
+  if (pattern) {
+    const s60 = pattern.stats[1];
+    if (s60)
+      lines.push(
+        `\u2022 In ${pattern.matches.length} similar past NIFTY setups, the median move over the next 60 trading days was ${pct1(s60.median)} (middle range ${pct1(s60.p25)} to ${pct1(s60.p75)}). ${pattern.disclaimer}`
+      );
+  }
+  for (const g of math.guardrails.filter((x) => x.level !== "info")) lines.push(`\u2022 ${g.level === "warning" ? "Warning" : "Note"}: ${g.message}`);
+  if (profile.suitability === "caution" || profile.suitability === "mismatch") lines.push(`\u2022 ${profile.suitability_reason}`);
+  for (const ch of profile.checks.filter((x) => x.relevant && x.status !== "good").slice(0, 3)) lines.push(`\u2022 ${ch.title}: ${ch.detail}`);
+  if (math.assumptions.length) lines.push(`Assumptions: ${math.assumptions.join("; ")}.`);
+  if (!lines.length)
+    lines.push(
+      "I could not compute anything specific for this question. Add an amount and a time period (for example \u201C\u20B910,000 a month for 10 years\u201D) for exact numbers."
+    );
+  return lines.join("\n");
+}
+async function explain(input, llm) {
+  if (!llm) return { text: rawSummary(input), mode: "raw", rejected_numbers: [], attempts: 0, error: "AI explainer not configured" };
+  const facts = buildFacts(input);
+  const sources = [facts, input.question, rawSummary(input)];
+  let feedback;
+  let rejected = [];
+  for (let attempt = 1; attempt <= 2; attempt += 1) {
+    try {
+      const text = (await llm(EXPLAINER_SYSTEM_PROMPT, buildUserPrompt(input.question, facts, feedback))).trim();
+      if (!text) throw new Error("empty reply");
+      rejected = checkNumbers(text, sources);
+      if (!rejected.length) return { text, mode: attempt === 1 ? "ai" : "ai-retry", rejected_numbers: [], attempts: attempt, error: null };
+      feedback = `These numbers are not in the FACTS: ${rejected.join(", ")}. Rewrite using only numbers exactly as written in the FACTS.`;
+    } catch (e) {
+      return {
+        text: rawSummary(input),
+        mode: "raw",
+        rejected_numbers: rejected,
+        attempts: attempt,
+        error: e instanceof Error ? e.message.slice(0, 200) : "AI failed"
+      };
+    }
+  }
+  return { text: rawSummary(input), mode: "raw", rejected_numbers: rejected, attempts: 2, error: "AI reply used numbers that could not be traced" };
+}
+
+// src/advisor/pattern-matcher.ts
+var PATTERN_DISCLAIMER = "Historical pattern, not a prediction. Past market behaviour does not guarantee future returns.";
+var FEATURE_KEYS = ["return_5d", "return_20d", "volatility_20d", "rsi_14", "dist_ma50", "dist_ma200"];
+var DEFAULT_K = 15;
+var MIN_GAP = 10;
+var HORIZONS = [20, 60];
+function quantile(sorted, q) {
+  if (!sorted.length) return Number.NaN;
+  const pos = (sorted.length - 1) * q;
+  const lo = Math.floor(pos);
+  const hi = Math.ceil(pos);
+  const a = sorted[lo] ?? 0;
+  const b = sorted[hi] ?? a;
+  return a + (b - a) * (pos - lo);
+}
+function horizonStats(values, horizon) {
+  const s2 = [...values].sort((a, b) => a - b);
+  return {
+    horizon_days: horizon,
+    median: quantile(s2, 0.5),
+    p25: quantile(s2, 0.25),
+    p75: quantile(s2, 0.75),
+    worst: s2[0] ?? Number.NaN,
+    best: s2.at(-1) ?? Number.NaN,
+    positive_share: s2.length ? s2.filter((v) => v > 0).length / s2.length : Number.NaN
+  };
+}
+function zScorer(history) {
+  const params = FEATURE_KEYS.map((k) => {
+    const v = history.map((h) => h[k]);
+    const mean = v.reduce((a, b) => a + b, 0) / v.length;
+    const sd = Math.sqrt(v.reduce((a, b) => a + (b - mean) ** 2, 0) / Math.max(1, v.length - 1)) || 1;
+    return { k, mean, sd };
+  });
+  return (s2) => params.map(({ k, mean, sd }) => (s2[k] - mean) / sd);
+}
+function matchPatterns(history, current = history.at(-1), k = DEFAULT_K) {
+  if (!current) throw new Error("no market history");
+  const maxH = Math.max(...HORIZONS);
+  if (history.length < maxH + 250) throw new Error(`need at least ${maxH + 250} days of features, got ${history.length}`);
+  const z15 = zScorer(history);
+  const target = z15(current);
+  const candidates = [];
+  for (let i = 0; i + maxH < history.length; i += 1) {
+    const row = history[i];
+    if (!row || row.date >= current.date) continue;
+    const v = z15(row);
+    let d = 0;
+    for (let j = 0; j < v.length; j += 1) d += ((v[j] ?? 0) - (target[j] ?? 0)) ** 2;
+    candidates.push({ i, d: Math.sqrt(d) });
+  }
+  candidates.sort((a, b) => a.d - b.d);
+  const chosen = [];
+  for (const c2 of candidates) {
+    if (chosen.length >= k) break;
+    if (chosen.every((x) => Math.abs(x.i - c2.i) >= MIN_GAP)) chosen.push(c2);
+  }
+  const fwd = (i, h) => (history[i + h]?.close ?? Number.NaN) / (history[i]?.close ?? Number.NaN) - 1;
+  const matches = chosen.map(({ i, d }) => ({
+    date: history[i]?.date ?? "",
+    close: history[i]?.close ?? Number.NaN,
+    similarity: 1 / (1 + d),
+    forward_20d: fwd(i, 20),
+    forward_60d: fwd(i, 60)
+  }));
+  const stats = HORIZONS.map(
+    (h) => horizonStats(
+      matches.map((m) => h === 20 ? m.forward_20d : m.forward_60d),
+      h
+    )
+  );
+  const baseline = HORIZONS.map(
+    (h) => horizonStats(
+      Array.from({ length: history.length - h }, (_, i) => fwd(i, h)),
+      h
+    )
+  );
+  const meanSim = matches.reduce((a, m) => a + m.similarity, 0) / Math.max(1, matches.length);
+  const s60 = stats[1];
+  const spread = s60 ? s60.p75 - s60.p25 : Number.POSITIVE_INFINITY;
+  const confidence = matches.length < 8 || meanSim < 0.4 ? "low" : meanSim >= 0.6 && spread < 0.08 ? "high" : "medium";
+  const confidence_reason = `${matches.length} past episodes, average similarity ${(meanSim * 100).toFixed(0)}%, 60-day middle range ${(spread * 100).toFixed(1)} points wide`;
+  return {
+    as_of: current.date,
+    current,
+    matches,
+    stats,
+    baseline,
+    confidence,
+    confidence_reason,
+    history_days: history.length,
+    history_from: history[0]?.date ?? "",
+    disclaimer: PATTERN_DISCLAIMER
+  };
+}
+
+// src/advisor/profile-matcher.ts
+var GUIDELINES = {
+  emergency_months: 6,
+  emi_share_max: 40,
+  savings_rate_min: 20,
+  term_cover_multiple: 10,
+  health_cover_min: 1e6,
+  limit_80c: 15e4,
+  limit_nps_extra: 5e4
+};
+var EQUITY = ["NIFTY", "SENSEX", "BANKNIFTY", "STOCK", "MUTUAL_FUND", "INDEX_FUND", "ELSS", "SIP", "SP500", "NASDAQ"];
+var HIGH_RISK = ["CRYPTO", "BTC", "ETH", "STOCK"];
+var LOAN = ["HOME_LOAN", "CAR_LOAN", "PERSONAL_LOAN", "EDUCATION_LOAN", "EMI", "CREDIT_CARD"];
+var TAX = ["INCOME_TAX", "80C", "80D", "ELSS", "PPF", "NPS", "HRA", "LTCG", "STCG"];
+var INSURANCE = ["TERM_INSURANCE", "HEALTH_INSURANCE", "INSURANCE", "80D"];
+var PROFILE_FIELDS = [
+  ["age", "age"],
+  ["annual_income", "annual income"],
+  ["monthly_expenses", "monthly expenses"],
+  ["liquid_savings", "savings in bank / liquid funds"],
+  ["risk_tolerance", "risk comfort (low / medium / high)"]
+];
+function matchProfile(parsed, profile) {
+  const any = (list) => parsed.entities.some((e) => list.includes(e));
+  const investing = any(EQUITY) || any(HIGH_RISK) || !any(LOAN) && parsed.amounts.some((a) => a.type === "lump_sum" || a.type === "monthly");
+  if (!profile) {
+    return {
+      available: false,
+      checks: [],
+      suitability: "unknown",
+      suitability_reason: "No profile shared, so the answer is general, not personal.",
+      missing: PROFILE_FIELDS.map(([, label]) => label)
+    };
+  }
+  const checks = [];
+  const monthlyIncome = profile.annual_income !== void 0 ? profile.annual_income / 12 : void 0;
+  if (profile.monthly_expenses && profile.liquid_savings !== void 0) {
+    const months = profile.liquid_savings / profile.monthly_expenses;
+    checks.push({
+      id: "emergency_fund",
+      title: "Emergency fund",
+      status: months >= GUIDELINES.emergency_months ? "good" : months >= 3 ? "attention" : "gap",
+      detail: `${inr3(profile.liquid_savings)} covers ${months.toFixed(1)} months of your ${inr3(profile.monthly_expenses)} monthly expenses.`,
+      value: Number(months.toFixed(1)),
+      benchmark: GUIDELINES.emergency_months,
+      unit: "months",
+      benchmark_note: `Guideline: ${GUIDELINES.emergency_months} months of expenses in safe, liquid savings.`,
+      relevant: investing || parsed.entities.includes("EMERGENCY_FUND")
+    });
+  }
+  if (monthlyIncome && profile.monthly_emi !== void 0) {
+    const share = profile.monthly_emi / monthlyIncome * 100;
+    checks.push({
+      id: "emi_share",
+      title: "EMIs vs income",
+      status: share <= 30 ? "good" : share <= GUIDELINES.emi_share_max ? "attention" : "gap",
+      detail: `Your EMIs of ${inr3(profile.monthly_emi)} are ${pctStr(share, 1)} of your monthly income of ${inr3(Math.round(monthlyIncome))}.`,
+      value: Number(share.toFixed(1)),
+      benchmark: GUIDELINES.emi_share_max,
+      unit: "%",
+      benchmark_note: `Guideline: keep all EMIs under ${GUIDELINES.emi_share_max}% of take-home income.`,
+      relevant: any(LOAN)
+    });
+  }
+  if (monthlyIncome && profile.monthly_expenses !== void 0) {
+    const rate = (monthlyIncome - profile.monthly_expenses - (profile.monthly_emi ?? 0)) / monthlyIncome * 100;
+    checks.push({
+      id: "savings_rate",
+      title: "Savings rate",
+      status: rate >= GUIDELINES.savings_rate_min ? "good" : rate >= 10 ? "attention" : "gap",
+      detail: `You keep ${pctStr(rate, 1)} of income after expenses${profile.monthly_emi ? " and EMIs" : ""}.`,
+      value: Number(rate.toFixed(1)),
+      benchmark: GUIDELINES.savings_rate_min,
+      unit: "%",
+      benchmark_note: `Guideline: save at least ${GUIDELINES.savings_rate_min}% of income.`,
+      relevant: investing || parsed.intent === "PLAN"
+    });
+  }
+  if (profile.annual_income) {
+    const need = profile.annual_income * GUIDELINES.term_cover_multiple;
+    const have = profile.term_cover ?? 0;
+    const hasDependants = (profile.dependants ?? 0) > 0;
+    checks.push({
+      id: "term_cover",
+      title: "Life (term) cover",
+      status: have >= need ? "good" : !hasDependants && have === 0 ? "attention" : "gap",
+      detail: `Cover of ${inr3(have)} vs about ${inr3(need)} (${GUIDELINES.term_cover_multiple}\xD7 income)${hasDependants ? `, with ${profile.dependants} dependant(s)` : ""}.`,
+      value: have,
+      benchmark: need,
+      unit: "\u20B9",
+      benchmark_note: `Guideline: term cover of at least ${GUIDELINES.term_cover_multiple}\xD7 annual income if anyone depends on you.`,
+      relevant: any(INSURANCE) || parsed.intent === "PLAN"
+    });
+  }
+  if (profile.health_cover !== void 0) {
+    checks.push({
+      id: "health_cover",
+      title: "Health cover",
+      status: profile.health_cover >= GUIDELINES.health_cover_min ? "good" : profile.health_cover > 0 ? "attention" : "gap",
+      detail: `Health cover of ${inr3(profile.health_cover)}.`,
+      value: profile.health_cover,
+      benchmark: GUIDELINES.health_cover_min,
+      unit: "\u20B9",
+      benchmark_note: `Guideline: at least ${inr3(GUIDELINES.health_cover_min)} for a family in a city.`,
+      relevant: any(INSURANCE)
+    });
+  }
+  if (profile.section_80c_used !== void 0) {
+    const room = Math.max(0, GUIDELINES.limit_80c - profile.section_80c_used);
+    checks.push({
+      id: "80c_room",
+      title: "Section 80C room (old regime)",
+      status: room === 0 ? "good" : "attention",
+      detail: room === 0 ? "You have used the full \u20B91,50,000 limit." : `${inr3(room)} of the ${inr3(GUIDELINES.limit_80c)} limit is unused.`,
+      value: room,
+      benchmark: 0,
+      unit: "\u20B9",
+      benchmark_note: "Section 80C allows up to \u20B91,50,000 a year, only under the old tax regime.",
+      relevant: any(TAX)
+    });
+  }
+  if (profile.nps_extra_used !== void 0) {
+    const room = Math.max(0, GUIDELINES.limit_nps_extra - profile.nps_extra_used);
+    checks.push({
+      id: "nps_room",
+      title: "NPS extra deduction, 80CCD(1B) (old regime)",
+      status: room === 0 ? "good" : "attention",
+      detail: room === 0 ? "You have used the full \u20B950,000." : `${inr3(room)} of the \u20B950,000 extra NPS deduction is unused.`,
+      value: room,
+      benchmark: 0,
+      unit: "\u20B9",
+      benchmark_note: "Section 80CCD(1B) allows an extra \u20B950,000 for NPS, only under the old tax regime.",
+      relevant: any(TAX) || parsed.entities.includes("RETIREMENT")
+    });
+  }
+  if (profile.age !== void 0 && profile.equity_share !== void 0) {
+    const guide = Math.max(20, Math.min(80, 100 - profile.age));
+    const diff = profile.equity_share - guide;
+    checks.push({
+      id: "equity_mix",
+      title: "Equity share of investments",
+      status: Math.abs(diff) <= 15 ? "good" : "attention",
+      detail: `${pctStr(profile.equity_share, 0)} of your investments are in equity; a common starting point at age ${profile.age} is about ${guide}%.`,
+      value: profile.equity_share,
+      benchmark: guide,
+      unit: "%",
+      benchmark_note: "Rule of thumb: equity % \u2248 100 \u2212 age (between 20% and 80%). Adjust for your risk comfort.",
+      relevant: any(EQUITY)
+    });
+  }
+  let suitability = "fits";
+  const reasons = [];
+  if (investing) {
+    if (profile.risk_tolerance === "low" && any(HIGH_RISK)) {
+      suitability = "mismatch";
+      reasons.push("you said your risk comfort is low, and this is a high-risk asset");
+    } else if (profile.risk_tolerance === "low" && any(EQUITY)) {
+      suitability = "caution";
+      reasons.push("equity can fall 30% or more in a bad year, which is hard with low risk comfort");
+    }
+    const ef = checks.find((c2) => c2.id === "emergency_fund");
+    if (ef?.status === "gap") {
+      if (suitability === "fits") suitability = "caution";
+      reasons.push("your emergency fund is below 3 months");
+    }
+    if (profile.income_stability === "variable" && any(HIGH_RISK)) {
+      if (suitability === "fits") suitability = "caution";
+      reasons.push("your income varies, so keep high-risk bets small");
+    }
+  } else if (!checks.length) {
+    suitability = "unknown";
+  }
+  const suitability_reason = suitability === "fits" ? investing ? "Nothing in your profile argues against this." : "Your profile was used to personalise the checks below." : suitability === "unknown" ? "Not enough profile detail to judge fit." : `Be careful: ${reasons.join("; ")}.`;
+  const missing = PROFILE_FIELDS.filter(([k]) => profile[k] === void 0).map(([, label]) => label);
+  checks.sort((a, b) => Number(b.relevant) - Number(a.relevant));
+  return { available: true, checks, suitability, suitability_reason, missing };
+}
+
+// src/advisor/pipeline.ts
+var PATTERN_ENTITIES = ["NIFTY", "SENSEX", "BANKNIFTY", "INDEX_FUND", "MUTUAL_FUND", "STOCK", "SIP", "LUMP_SUM", "ELSS", "FII_DII"];
+function wantsPattern(parsed) {
+  return parsed.entities.some((e) => PATTERN_ENTITIES.includes(e));
+}
+async function runPipeline(question, deps) {
+  const now = deps.now ?? Date.now;
+  const started = now();
+  const layers = [];
+  const emit = (e) => {
+    layers.push(e);
+    deps.onLayer?.(e);
+  };
+  const time = async (fn) => {
+    const t0 = now();
+    const v = await fn();
+    return [v, now() - t0];
+  };
+  const [{ parsed, meta }, parseMs] = await time(() => parseQuery(question, { userId: deps.userId, ai: deps.extractor }));
+  emit({ layer: "parse", status: "done", ms: parseMs, note: meta.method });
+  const [context2, dataMs] = await time(() => gatherContext({ question, parsed, profile: deps.profile ?? null, fetchers: deps.fetchers }));
+  const sources = sourceSummary(context2);
+  const okCount = sources.filter((s2) => s2.status === "ok").length;
+  emit({ layer: "data", status: "done", ms: dataMs, note: `${okCount} of ${sources.length} sources` });
+  let pattern = null;
+  if (wantsPattern(parsed) && deps.history) {
+    const t0 = now();
+    try {
+      const history = await deps.history();
+      pattern = matchPatterns(history);
+      emit({ layer: "pattern", status: "done", ms: now() - t0, note: `${pattern.matches.length} similar days` });
+    } catch (e) {
+      emit({ layer: "pattern", status: "failed", ms: now() - t0, note: e instanceof Error ? e.message.slice(0, 160) : "failed" });
+    }
+  } else {
+    emit({ layer: "pattern", status: "skipped", ms: 0, note: "not a market question" });
+  }
+  const [math, mathMs] = await time(() => runMath(parsed, context2));
+  emit({
+    layer: "math",
+    status: math.calculations.length ? "done" : "skipped",
+    ms: mathMs,
+    note: `${math.calculations.length} calculations, ${math.guardrails.length} checks`
+  });
+  const [profile, profMs] = await time(() => matchProfile(parsed, context2.profile.status === "ok" ? context2.profile.data : null));
+  emit({ layer: "profile", status: profile.available ? "done" : "skipped", ms: profMs, note: profile.suitability });
+  const [explanation, explMs] = await time(() => explain({ question, parsed, context: context2, pattern, math, profile }, deps.llm));
+  emit({ layer: "explain", status: explanation.mode === "raw" && explanation.error ? "failed" : "done", ms: explMs, note: explanation.mode });
+  return {
+    question,
+    parsed,
+    parse_meta: meta,
+    context: context2,
+    sources,
+    pattern,
+    math,
+    profile,
+    explanation,
+    layers,
+    created_at: new Date(started).toISOString(),
+    total_ms: now() - started
+  };
+}
+
+// server/advisor/groq-explainer.ts
+var GROQ_URL2 = "https://api.groq.com/openai/v1/chat/completions";
+var DEFAULT_EXPLAINER_MODEL = "llama-3.3-70b-versatile";
+function createGroqExplainer(opts = {}) {
+  const apiKey = opts.apiKey ?? process.env.GROQ_API_KEY?.trim();
+  if (!apiKey) return void 0;
+  const model = opts.model ?? (process.env.GROQ_EXPLAINER_MODEL?.trim() || DEFAULT_EXPLAINER_MODEL);
+  const doFetch = opts.fetchImpl ?? fetch;
+  const timeoutMs = opts.timeoutMs ?? 12e3;
+  return async (system, user) => {
+    const res = await doFetch(GROQ_URL2, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      signal: AbortSignal.timeout(timeoutMs),
+      body: JSON.stringify({
+        model,
+        temperature: 0.2,
+        max_tokens: 600,
+        messages: [
+          { role: "system", content: system },
+          { role: "user", content: user }
+        ]
+      })
+    });
+    if (!res.ok) throw new Error(`Groq explainer HTTP ${res.status}`);
+    const body = await res.json();
+    const content = body.choices?.[0]?.message?.content;
+    if (typeof content !== "string") throw new Error("Groq explainer returned no content");
+    return content;
+  };
+}
+
+// server/advisor/audit.ts
+import { randomBytes as randomBytes3 } from "node:crypto";
+var DEFAULT_URL = "https://agjbvoosukxfvrritgto.supabase.co";
+var DEFAULT_KEY = "sb_publishable_KOdXB7LW5Ho5hDjsi3GMiw_xdogy5oR";
+function config() {
+  const url = (process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || DEFAULT_URL).replace(/\/$/, "");
+  const key = process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY || DEFAULT_KEY;
+  return { url, key };
+}
+var newShareId = () => randomBytes3(12).toString("base64url");
+function auditRecord(answer) {
+  return { ...answer, context: { ...answer.context, profile: { ...answer.context.profile, data: null } } };
+}
+function supabaseAuditStore(fetchImpl = fetch) {
+  const headers = (token) => {
+    const { key } = config();
+    return { apikey: key, Authorization: `Bearer ${token ?? key}`, "Content-Type": "application/json" };
+  };
+  return {
+    async save(token, answer) {
+      const { url } = config();
+      const share_id = newShareId();
+      const res = await fetchImpl(`${url}/rest/v1/advisor_audit?select=id,share_id`, {
+        method: "POST",
+        headers: { ...headers(token), Prefer: "return=representation" },
+        body: JSON.stringify({ share_id, question: answer.question.slice(0, 1e3), answer: auditRecord(answer), answer_mode: answer.explanation.mode }),
+        signal: AbortSignal.timeout(4e3)
+      });
+      if (!res.ok) throw new Error(`audit save HTTP ${res.status}`);
+      const rows = await res.json();
+      const row = rows[0];
+      if (!row) throw new Error("audit save returned no row");
+      return row;
+    },
+    async share(token, id) {
+      const { url } = config();
+      const res = await fetchImpl(`${url}/rest/v1/advisor_audit?id=eq.${encodeURIComponent(id)}&select=share_id`, {
+        method: "PATCH",
+        headers: { ...headers(token), Prefer: "return=representation" },
+        body: JSON.stringify({ shared: true }),
+        signal: AbortSignal.timeout(4e3)
+      });
+      if (!res.ok) throw new Error(`audit share HTTP ${res.status}`);
+      const rows = await res.json();
+      return rows[0]?.share_id ?? null;
+    },
+    async getShared(shareId) {
+      const { url } = config();
+      const res = await fetchImpl(`${url}/rest/v1/rpc/get_shared_advice`, {
+        method: "POST",
+        headers: headers(),
+        body: JSON.stringify({ p_share_id: shareId }),
+        signal: AbortSignal.timeout(4e3)
+      });
+      if (!res.ok) throw new Error(`shared advice HTTP ${res.status}`);
+      const body = await res.json();
+      return body ?? null;
+    }
+  };
+}
+
 // server/advisor/routes.ts
+var money3 = z14.number().finite().min(0).max(1e11);
+var profileSchema3 = z14.object({
+  age: z14.number().int().min(15).max(100),
+  annual_income: money3,
+  monthly_expenses: money3,
+  monthly_emi: money3,
+  liquid_savings: money3,
+  investments: money3,
+  dependants: z14.number().int().min(0).max(20),
+  risk_tolerance: z14.enum(["low", "medium", "high"]),
+  income_stability: z14.enum(["stable", "variable"]),
+  equity_share: z14.number().min(0).max(100),
+  term_cover: money3,
+  health_cover: money3,
+  section_80c_used: money3,
+  nps_extra_used: money3,
+  retire_age: z14.number().int().min(30).max(90),
+  goals: z14.array(z14.object({ name: z14.string().max(80), target_amount: money3, years: z14.number().min(0).max(60) })).max(10)
+}).partial().strict();
+var askSchema = z14.object({ question: z14.string().trim().min(2).max(MAX_QUESTION_CHARS), profile: profileSchema3.nullish() });
+var SHARE_ID = /^[A-Za-z0-9_-]{16,32}$/;
+var UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+var featureCache = null;
+async function featureHistory() {
+  if (featureCache && Date.now() - featureCache.at < 36e5) return featureCache.rows;
+  const rows = computeFeatures(await niftyHistory());
+  featureCache = { at: Date.now(), rows };
+  return rows;
+}
 var bodySchema = z14.object({ question: z14.string().trim().min(2).max(MAX_QUESTION_CHARS) });
 async function defaultResolveUser(req) {
   const token = bearer(req);
@@ -12465,6 +13688,111 @@ function createAdvisorRouter(deps = {}) {
     } catch (e) {
       console.error("[advisor/parse] unexpected error", e);
       res.status(500).json({ error: { code: "internal_error", message: "The question could not be parsed." } });
+    }
+  });
+  router.post("/context", limiter2, async (req, res) => {
+    res.setHeader("Cache-Control", "no-store");
+    const body = bodySchema.safeParse(req.body);
+    if (!body.success) {
+      res.status(400).json({ error: { code: "invalid_question", message: `Send { "question": "..." } with 2 to ${MAX_QUESTION_CHARS} characters.` } });
+      return;
+    }
+    try {
+      const userId = await resolveUser(req) ?? "anonymous";
+      const { parsed } = await parseQuery(body.data.question, { userId, ai: aiFor() });
+      const context2 = await gatherContext({ question: body.data.question, parsed, fetchers: deps.fetchers ?? serverFetchers });
+      res.json({ parsed, context: context2, sources: sourceSummary(context2) });
+    } catch (e) {
+      console.error("[advisor/context] unexpected error", e);
+      res.status(500).json({ error: { code: "internal_error", message: "Market context could not be gathered." } });
+    }
+  });
+  const audit = deps.audit ?? supabaseAuditStore();
+  const llmFor = deps.llm ?? (() => createGroqExplainer());
+  router.post("/ask", limiter2, async (req, res) => {
+    res.setHeader("Cache-Control", "no-store");
+    const body = askSchema.safeParse(req.body);
+    if (!body.success) {
+      res.status(400).json({
+        error: { code: "invalid_request", message: `Send { "question": "..." } with 2 to ${MAX_QUESTION_CHARS} characters, and an optional valid profile.` }
+      });
+      return;
+    }
+    const userId = await resolveUser(req);
+    res.status(200);
+    res.setHeader("Content-Type", "application/x-ndjson; charset=utf-8");
+    res.setHeader("X-Accel-Buffering", "no");
+    const line = (o) => res.write(`${JSON.stringify(o)}
+`);
+    try {
+      const answer = await runPipeline(body.data.question, {
+        userId: userId ?? "anonymous",
+        profile: body.data.profile ?? null,
+        extractor: aiFor(),
+        fetchers: deps.fetchers ?? serverFetchers,
+        history: deps.history ?? featureHistory,
+        llm: llmFor(),
+        onLayer: (e) => line({ type: "layer", ...e })
+      });
+      let ref = null;
+      let auditNote = userId ? null : "Sign in to save answers and share them.";
+      const token = bearer(req);
+      if (userId && token) {
+        try {
+          ref = await audit.save(token, answer);
+        } catch (e) {
+          auditNote = "This answer could not be saved to your history.";
+          console.warn("[advisor/ask] audit save failed", e instanceof Error ? e.message : e);
+        }
+      }
+      line({ type: "answer", answer, audit: ref, audit_note: auditNote });
+    } catch (e) {
+      console.error("[advisor/ask] unexpected error", e);
+      line({ type: "error", message: "The advisor could not answer right now. Please try again." });
+    }
+    res.end();
+  });
+  router.post("/share", limiter2, async (req, res) => {
+    res.setHeader("Cache-Control", "no-store");
+    const id = typeof req.body?.id === "string" ? req.body.id : "";
+    const token = bearer(req);
+    if (!UUID.test(id)) {
+      res.status(400).json({ error: { code: "invalid_id", message: 'Send { "id": "<answer id>" }.' } });
+      return;
+    }
+    if (!token || !await resolveUser(req)) {
+      res.status(401).json({ error: { code: "sign_in_required", message: "Sign in to share answers." } });
+      return;
+    }
+    try {
+      const shareId = await audit.share(token, id);
+      if (!shareId) {
+        res.status(404).json({ error: { code: "not_found", message: "Answer not found." } });
+        return;
+      }
+      res.json({ share_id: shareId });
+    } catch (e) {
+      console.warn("[advisor/share] failed", e instanceof Error ? e.message : e);
+      res.status(502).json({ error: { code: "share_failed", message: "Could not create the share link." } });
+    }
+  });
+  router.get("/shared/:shareId", async (req, res) => {
+    const shareId = String(req.params.shareId ?? "");
+    if (!SHARE_ID.test(shareId)) {
+      res.status(400).json({ error: { code: "invalid_share_id", message: "Invalid share link." } });
+      return;
+    }
+    try {
+      const shared = await audit.getShared(shareId);
+      if (!shared) {
+        res.status(404).json({ error: { code: "not_found", message: "This shared answer does not exist or is no longer shared." } });
+        return;
+      }
+      res.setHeader("Cache-Control", "public, max-age=300");
+      res.json(shared);
+    } catch (e) {
+      console.warn("[advisor/shared] failed", e instanceof Error ? e.message : e);
+      res.status(502).json({ error: { code: "lookup_failed", message: "Could not load the shared answer." } });
     }
   });
   return router;

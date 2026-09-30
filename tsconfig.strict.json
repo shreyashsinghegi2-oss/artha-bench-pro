@@ -4,7 +4,11 @@
     "strict": true,
     "noImplicitAny": true,
     "noUncheckedIndexedAccess": false,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+    "types": [
+      "node",
+      "vite/client"
+    ]
   },
   "include": [
     "server/v1/**/*.ts",
@@ -12,6 +16,7 @@
     "src/components/developers/**/*.tsx",
     "scripts/create-api-key.ts",
     "src/advisor/**/*.ts",
-    "server/advisor/**/*.ts"
+    "server/advisor/**/*.ts",
+    "src/components/advisor/**/*.tsx"
   ]
 }

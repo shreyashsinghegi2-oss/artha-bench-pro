@@ -284,7 +284,8 @@ export function guardrails(parsed: ParsedQuery, profile: UserProfile | null, cal
   const has = (e: Entity) => parsed.entities.includes(e);
   const years = horizonYears(parsed.time_horizon);
   const equity = has('NIFTY') || has('SENSEX') || has('STOCK') || has('MUTUAL_FUND') || has('INDEX_FUND') || has('ELSS') || has('SIP');
-  const lump = parsed.amounts.find((a) => a.type === 'lump_sum');
+  const isLoan = LOANS.some((l) => has(l)) || has('EMI');
+  const lump = isLoan ? undefined : parsed.amounts.find((a) => a.type === 'lump_sum');
   const volatile = equity || has('CRYPTO') || has('BTC') || has('ETH');
 
   if (volatile && years !== null && years < 3) {

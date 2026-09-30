@@ -59,7 +59,7 @@ const PROFILE_FIELDS: Array<[keyof UserProfile, string]> = [
 
 export function matchProfile(parsed: ParsedQuery, profile: UserProfile | null): ProfileMatch {
   const any = (list: Entity[]) => parsed.entities.some((e) => list.includes(e));
-  const investing = any(EQUITY) || any(HIGH_RISK) || parsed.amounts.some((a) => a.type === 'lump_sum' || a.type === 'monthly');
+  const investing = any(EQUITY) || any(HIGH_RISK) || (!any(LOAN) && parsed.amounts.some((a) => a.type === 'lump_sum' || a.type === 'monthly'));
   if (!profile) {
     return {
       available: false,

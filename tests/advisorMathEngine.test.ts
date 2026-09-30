@@ -89,3 +89,13 @@ describe('Layer D: runMath', () => {
     for (const c of m.calculations) expect(nums).toContain(c.result.value);
   });
 });
+
+describe('Layer D: loans are not investments', () => {
+  it('a loan amount does not trigger the emergency-fund-before-investing check', () => {
+    const m = runMath(
+      parse('Home loan of 50 lakh for 20 years EMI?'),
+      withProfile({ monthly_expenses: 60_000, liquid_savings: 200_000, annual_income: 1_800_000 }),
+    );
+    expect(m.guardrails.map((g) => g.id)).not.toContain('emergency_first');
+  });
+});

@@ -69,9 +69,9 @@ export const ConnectedLandingPage:React.FC<Props>=({signedIn,onEnter,onSignIn})=
  <header className={'cl-header '+(scrolled?'is-scrolled':'')}><div className="cl-wrap cl-nav">
   <a href="#top" className="cl-brand" aria-label="ArthaMind AI by Artha Bench Pro, back to top"><ArthaMindMark size={34}/><span className="am-brand-text"><b>ArthaMind <em>AI</em></b><small>by Artha Bench Pro</small></span></a>
   <nav className="cl-links" aria-label="Page sections">{NAV_LINKS.map(([id,label])=><a key={id} className={active===id?'on':''} href={'#'+id} aria-current={active===id?'true':undefined}>{label}</a>)}</nav>
-  <div className="cl-right"><LanguageSelector compact/>{!signedIn&&<button type="button" className="cl-signin" onClick={onSignIn}>Sign in</button>}<button type="button" className="cl-menu-button" aria-label={menuOpen?'Close menu':'Open menu'} aria-expanded={menuOpen} aria-controls="cl-mobile-menu" onClick={()=>setMenuOpen(v=>!v)}>{menuOpen?<X size={20}/>:<Menu size={20}/>}</button></div>
+  <div className="cl-right"><LanguageSelector compact/><a className="cl-signin" href="/advisor">Ask Advisor</a>{!signedIn&&<button type="button" className="cl-signin" onClick={onSignIn}>Sign in</button>}<button type="button" className="cl-menu-button" aria-label={menuOpen?'Close menu':'Open menu'} aria-expanded={menuOpen} aria-controls="cl-mobile-menu" onClick={()=>setMenuOpen(v=>!v)}>{menuOpen?<X size={20}/>:<Menu size={20}/>}</button></div>
  </div>
- <div id="cl-mobile-menu" className={'cl-mobile-menu '+(menuOpen?'open':'')} hidden={!menuOpen}><nav aria-label="Page sections">{NAV_LINKS.map(([id,label])=><a key={id} href={'#'+id} onClick={()=>setMenuOpen(false)}>{label}</a>)}</nav></div>
+ <div id="cl-mobile-menu" className={'cl-mobile-menu '+(menuOpen?'open':'')} hidden={!menuOpen}><nav aria-label="Page sections">{NAV_LINKS.map(([id,label])=><a key={id} href={'#'+id} onClick={()=>setMenuOpen(false)}>{label}</a>)}<a href="/advisor">Ask Advisor</a></nav></div>
  </header>
  <main id="top">
  <LandingHero onSample={()=>scrollToId('money-check')} onExplore={()=>open('overview')}/>

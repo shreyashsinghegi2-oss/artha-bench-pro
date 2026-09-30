@@ -128,11 +128,9 @@ export function createAdvisorRouter(deps: AdvisorRouterDeps = {}): Router {
     res.setHeader('Cache-Control', 'no-store');
     const body = askSchema.safeParse(req.body);
     if (!body.success) {
-      res
-        .status(400)
-        .json({
-          error: { code: 'invalid_request', message: `Send { "question": "..." } with 2 to ${MAX_QUESTION_CHARS} characters, and an optional valid profile.` },
-        });
+      res.status(400).json({
+        error: { code: 'invalid_request', message: `Send { "question": "..." } with 2 to ${MAX_QUESTION_CHARS} characters, and an optional valid profile.` },
+      });
       return;
     }
     const userId = await resolveUser(req);

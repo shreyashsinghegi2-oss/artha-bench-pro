@@ -6,7 +6,8 @@ export type AppLocation =
   | { kind: 'workspace'; destination: AppNavigationDestination }
   | { kind: 'public'; page: PublicPageId }
   | { kind: 'auth'; returnTo: string }
-  | { kind: 'developers' };
+  | { kind: 'developers' }
+  | { kind: 'advisor'; shareId?: string };
 
 const financePaths: Partial<Record<AppNavigationDestination, string>> = {
   overview: '/finance/overview',
@@ -106,6 +107,9 @@ export function readAppLocation(): AppLocation {
     return { kind: 'auth', returnTo };
   }
   if (normalized === '/developers') return { kind: 'developers' };
+  if (normalized === '/advisor') return { kind: 'advisor' };
+  const shared = /^\/advice\/([A-Za-z0-9_-]{16,32})$/.exec(normalized);
+  if (shared?.[1]) return { kind: 'advisor', shareId: shared[1] };
   const publicPage = pathToPublic.get(normalized);
   if (publicPage) return { kind: 'public', page: publicPage };
   if (normalized.startsWith('/finance/markets/india/')) return { kind: 'workspace', destination: 'india-markets' };

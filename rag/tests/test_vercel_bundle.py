@@ -45,13 +45,14 @@ def test_build_load_and_query(tmp_path):
         {"url": (tmp_path / "ltcg.html").as_uri(), "kind": "html", "authority": "CBDT", "title": "LTCG"},
         {"url": (tmp_path / "rbi.xml").as_uri(), "kind": "rss", "authority": "RBI", "title": "RBI press releases"},
         {"url": (tmp_path / "missing.html").as_uri(), "kind": "html", "authority": "CBDT", "title": "missing"},
+        {"path": "docs/not-uploaded.pdf", "source_url": "https://example.gov.in/x.pdf", "kind": "pdf", "authority": "CBDT", "title": "Not uploaded"},
     ]}
     (tmp_path / "sources.json").write_text(json.dumps(sources), encoding="utf-8")
     out = tmp_path / "index.json"
     assert bundle_builder.build(tmp_path / "sources.json", out) == 0
     data = json.loads(out.read_text(encoding="utf-8"))
     assert "vectors" not in data and data["dim"] == 768 and len(data["chunks"]) >= 2
-    assert [s["status"] for s in data["sources"]] == ["ok", "ok", "failed"]
+    assert [s["status"] for s in data["sources"]] == ["ok", "ok", "failed", "missing"]
 
     store, embedder = rag_fn.load_bundle(str(out))
     assert len(store.vectors) == len(store.chunks)

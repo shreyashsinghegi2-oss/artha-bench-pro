@@ -102,13 +102,19 @@ def build(sources_path: Path, out_path: Path) -> int:
     store = InMemoryStore()
     embedder = HashingEmbedder()
     report = []
+    root = sources_path.resolve().parent.parent
     for src in sources:
-        url, kind, authority = src["url"], src["kind"], src["authority"]
+        kind, authority = src["kind"], src["authority"]
+        # "path": a file committed to the repo (for sites that block servers); "url": downloaded here.
+        url = src.get("source_url") or src.get("url") or src.get("path", "")
         meta = {"authority": authority, "title": src.get("title"), "url": url}
         try:
-            raw = fetch(url)
+            raw = (root / src["path"]).read_bytes() if src.get("path") else fetch(src["url"])
             if kind == "pdf":
                 r = ingest_pdf(raw, store, embedder, url, meta)
+                report.append({"url": url, "status": "ok", "chunks": r.chunks})
+            elif kind == "text":
+                r = ingest_text(raw.decode("utf-8", errors="replace"), url, store, embedder, meta)
                 report.append({"url": url, "status": "ok", "chunks": r.chunks})
             elif kind == "html":
                 text = html_to_text(raw)
@@ -127,6 +133,8 @@ def build(sources_path: Path, out_path: Path) -> int:
                 report.append({"url": url, "status": "ok", "chunks": n})
             else:
                 raise ValueError(f"unknown kind {kind}")
+        except FileNotFoundError:
+            report.append({"url": url, "status": "missing", "error": f"{src.get('path')} is not in the repository yet"})
         except Exception as e:  # noqa: BLE001 - report every source, never stop the whole build
             report.append({"url": url, "status": "failed", "error": str(e)[:200]})
     for line in report:

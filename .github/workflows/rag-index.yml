@@ -7,6 +7,7 @@ on:
   push:
     paths:
       - 'rag/sources.json'
+      - 'rag/documents/**'
       - 'rag/indexer.py'
       - 'scripts/build_rag_bundle.py'
       - '.github/workflows/rag-index.yml'

@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BTMS Physics-Informed ML Lab</title>
+  <meta name="description" content="Physics-informed neural network for a PCM + pulsating heat pipe battery thermal management system: predictions, unseen-material test and PCM design explorer." />
+  <link rel="icon" href="/favicon.svg" />
+  <style>
+    :root {
+      color-scheme: light;
+      --surface-0: #f4f4f1; --surface-1: #fcfcfb; --line: #e2e1dc; --grid: #ecebe6;
+      --text-primary: #0b0b0b; --text-secondary: #52514e; --text-muted: #6f6e69;
+      --series-1: #2a78d6; --series-2: #eb6834; --series-3: #1baf7a;
+      --warn-bg: #fff4dc; --warn-line: #eda100; --accent: #2a78d6;
+      --font: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      --mono: ui-monospace, 'SFMono-Regular', Menlo, monospace;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:where(:not([data-theme="light"])) {
+        color-scheme: dark;
+        --surface-0: #121211; --surface-1: #1a1a19; --line: #33322f; --grid: #2a2a28;
+        --text-primary: #ffffff; --text-secondary: #c3c2b7; --text-muted: #9a9990;
+        --series-1: #3987e5; --series-2: #d95926; --series-3: #199e70;
+        --warn-bg: #3a2c0c; --warn-line: #c98500; --accent: #3987e5;
+      }
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; }
+    body { background: var(--surface-0); color: var(--text-primary); font: 400 16px/1.55 var(--font); }
+    .wrap { max-width: 1040px; margin: 0 auto; padding: 0 16px; }
+    header.top { padding: 40px 0 20px; }
+    .eyebrow { margin: 0; font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-secondary); font-weight: 600; }
+    h1 { margin: 6px 0 8px; font-size: clamp(1.6rem, 4vw, 2.4rem); line-height: 1.15; text-wrap: balance; }
+    h2 { margin: 0 0 4px; font-size: 1.25rem; }
+    .lede { margin: 0; color: var(--text-secondary); max-width: 70ch; }
+    .banner { margin: 18px 0 0; padding: 12px 14px; border: 1px solid var(--warn-line); background: var(--warn-bg); border-radius: 10px; font-size: 0.92rem; }
+    .banner b { font-weight: 700; }
+    main { display: grid; gap: 20px; padding-bottom: 48px; }
+    .card { background: var(--surface-1); border: 1px solid var(--line); border-radius: 14px; padding: 20px; min-width: 0; }
+    .card > p.sub { margin: 0 0 14px; color: var(--text-secondary); font-size: 0.94rem; max-width: 75ch; }
+    .controls { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: end; margin-bottom: 14px; }
+    label { display: grid; gap: 4px; font-size: 0.82rem; color: var(--text-secondary); font-weight: 600; }
+    select, input[type=range] { font: inherit; color: var(--text-primary); }
+    select { background: var(--surface-1); border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; min-width: 9rem; }
+    input[type=range] { width: 11rem; accent-color: var(--accent); }
+    output { font-family: var(--mono); font-size: 0.85rem; color: var(--text-primary); }
+    .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr)); gap: 10px; margin-bottom: 14px; }
+    .tile { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+    .tile .k { font-size: 0.78rem; color: var(--text-secondary); font-weight: 600; }
+    .tile .v { font-size: 1.5rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .tile .n { font-size: 0.78rem; color: var(--text-muted); }
+    .chart { position: relative; }
+    .chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+    .chart .tip { position: absolute; pointer-events: none; background: var(--surface-1); border: 1px solid var(--line); border-radius: 8px; padding: 6px 9px; font-size: 0.8rem; box-shadow: 0 4px 14px rgb(0 0 0 / 0.12); white-space: nowrap; }
+    .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 0.82rem; color: var(--text-secondary); margin-top: 6px; align-items: center; }
+    .legend i { display: inline-block; width: 16px; height: 0; border-top: 2px solid; vertical-align: middle; margin-right: 6px; }
+    .legend button { margin-left: auto; background: none; border: 0; color: var(--accent); font: inherit; font-weight: 600; cursor: pointer; text-decoration: underline; }
+    table { border-collapse: collapse; width: 100%; font-size: 0.86rem; }
+    th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); }
+    th { color: var(--text-secondary); font-weight: 600; }
+    td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+    .scroll { overflow-x: auto; max-height: 340px; }
+    .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(420px, 100%), 1fr)); gap: 20px; }
+    footer { color: var(--text-secondary); font-size: 0.86rem; padding: 0 0 40px; }
+    footer a, .card a { color: var(--accent); }
+    :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+    .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="top">
+      <p class="eyebrow">Research lab · Battery thermal management</p>
+      <h1>Physics-informed ML for PCM + heat-pipe battery cooling</h1>
+      <p class="lede">A neural network that learns cell temperature from data while obeying the energy balance
+        <em>heat in = heat stored + heat removed</em>. It extends Mane et al., <cite>Journal of Energy Storage</cite> 180 (2026) 124313,
+        with honest testing on unseen materials and a PCM design explorer.</p>
+      <div class="banner" id="data-note"><b>Demonstration data.</b> Loading…</div>
+    </header>
+
+    <main>
+      <section class="card" aria-labelledby="h-predict">
+        <h2 id="h-predict">1 · Predict a cell's temperature</h2>
+        <p class="sub">Choose the phase change material (PCM), the cooling at the heat-pipe condenser and the cell. The PINN runs in your browser; the physics line is the energy balance with the constants the PINN learned from the data.</p>
+        <div class="controls">
+          <label>PCM <select id="p-pcm"><option value="om42">OM42</option><option value="om48">OM48</option><option value="paraffin">Paraffin</option><option value="none">No PCM</option></select></label>
+          <label>Cooling <select id="p-cool"><option value="natural">Natural (still air)</option><option value="forced">Forced (fan)</option></select></label>
+          <label>Cell <select id="p-cell"><option value="1">C1 (outer)</option><option value="2" selected>C2 (core)</option><option value="3">C3 (outer)</option><option value="4">C4 (outer)</option><option value="5">C5 (core)</option><option value="6">C6 (outer)</option></select></label>
+        </div>
+        <div class="tiles" id="p-tiles"></div>
+        <div class="chart" id="p-chart"></div>
+      </section>
+
+      <section class="card" aria-labelledby="h-unseen">
+        <h2 id="h-unseen">2 · Does it work on a material it has never seen?</h2>
+        <p class="sub">Both networks below were trained <b>without any OM42 data</b>. The plain network only learned from data; the PINN also had to satisfy the energy balance, where OM42 enters through its measured properties. This is the test a random train/test split cannot do.</p>
+        <div class="controls">
+          <label>Cooling <select id="u-cool"><option value="natural">Natural</option><option value="forced">Forced</option></select></label>
+          <label>Cell <select id="u-cell"><option value="1">C1</option><option value="2" selected>C2</option><option value="3">C3</option><option value="4">C4</option><option value="5">C5</option><option value="6">C6</option></select></label>
+        </div>
+        <div class="tiles" id="u-tiles"></div>
+        <div class="chart" id="u-chart"></div>
+      </section>
+
+      <section class="card" aria-labelledby="h-design">
+        <h2 id="h-design">3 · PCM design explorer</h2>
+        <p class="sub">Which melting point keeps the hottest cell coolest? Change the material and the conditions; every curve is a fresh simulation of the calibrated energy balance. On a hot day a PCM that melts too low is already liquid before the ride starts.</p>
+        <div class="controls">
+          <label>Melting point <span><input type="range" id="d-melt" min="30" max="66" step="1" value="44" /> <output id="d-melt-o">44 °C</output></span></label>
+          <label>Latent heat <span><input type="range" id="d-lat" min="150" max="300" step="10" value="250" /> <output id="d-lat-o">250 J/g</output></span></label>
+          <label>Ambient <select id="d-amb"><option value="27">27 °C (lab)</option><option value="35">35 °C</option><option value="40">40 °C (hot day)</option></select></label>
+          <label>Ride length <select id="d-dur"><option value="1200">20 min</option><option value="3600">60 min</option></select></label>
+          <label>Cooling <select id="d-cool"><option value="natural">Natural</option><option value="forced">Forced</option></select></label>
+        </div>
+        <div class="tiles" id="d-tiles"></div>
+        <div class="grid2">
+          <div><p class="eyebrow">Core-cell temperature over the ride</p><div class="chart" id="d-curve"></div></div>
+          <div><p class="eyebrow">Peak temperature vs melting point</p><div class="chart" id="d-sweep"></div></div>
+        </div>
+      </section>
+
+      <section class="card" aria-labelledby="h-results">
+        <h2 id="h-results">4 · Experiment results</h2>
+        <p class="sub">The paper's five models rebuilt in Python, then tested honestly. E1 uses the paper's random split; E2–E4 hold out one PCM at a time; E5 checks whether 90% uncertainty intervals really cover 90% of unseen-material cases. Errors are in °C.</p>
+        <div class="scroll" id="r-table"></div>
+        <h3 style="font-size:1rem;margin:18px 0 6px">90% conformal intervals on a held-out PCM</h3>
+        <div class="scroll" id="r-conf"></div>
+        <h3 style="font-size:1rem;margin:18px 0 6px">Physical constants the PINN learned from the data</h3>
+        <div class="scroll" id="r-const"></div>
+      </section>
+    </main>
+
+    <footer>
+      <p><b>Method.</b> Lumped energy balance <span style="font-family:var(--mono)">C_eff(T)·dT/dt = Q − G·(T − T_amb)</span>, with the PCM's latent heat
+        as an apparent heat capacity over its melting range. Network: 9 inputs → 64 → 64 → 1, tanh. Loss = data error + energy-balance residual + initial condition.
+        Code, tests and data notes: <code>btms-ml</code> research repository.</p>
+      <p><b>Status.</b> Built by Shreyash Singh (Ajeenkya DY Patil University) on the experimental setup of Mane et al. (2026). Results here are a methods
+        demonstration; they become research findings only after retraining on the experimental dataset.</p>
+      <p><a href="https://doi.org/10.1016/j.est.2026.124313">Original paper (DOI)</a> · <a href="/">ArthaBench Pro</a></p>
+    </footer>
+  </div>
+  <script type="module" src="/research/btms/app.js"></script>
+</body>
+</html>

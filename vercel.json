@@ -93,6 +93,14 @@
       "destination": "/index.html"
     },
     {
+      "source": "/research/btms",
+      "destination": "/research/btms/index.html"
+    },
+    {
+      "source": "/research/btms/",
+      "destination": "/research/btms/index.html"
+    },
+    {
       "source": "/:path*",
       "destination": "/index.html"
     }

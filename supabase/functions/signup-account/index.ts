@@ -34,6 +34,12 @@ Deno.serve(async (req) => {
   if (req.method !== "POST") return json(405, { error: "Method not allowed" }, origin);
   if (origin && !allowedOrigins.has(origin)) return json(403, { error: "Origin not allowed" }, origin);
 
+  // With email codes switched on, accounts must prove the email address; this shortcut (which creates or
+  // confirms accounts without any email) is closed. The app then uses Supabase's own sign-up and codes.
+  if (/^(1|true|on)$/i.test(Deno.env.get("REQUIRE_EMAIL_VERIFICATION") || "")) {
+    return json(403, { error: "Email verification is required. Please update the app and sign up again." }, origin);
+  }
+
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
   const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");

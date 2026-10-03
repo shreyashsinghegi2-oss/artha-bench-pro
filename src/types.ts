@@ -30,7 +30,9 @@ export interface EconomicObservation { date:string; value:number; }
 export interface EconomicSeriesResponse { seriesId:string; observations:EconomicObservation[]; status:ConnectionStatus; message:string; }
 export interface DashboardAssistantSnapshot { capturedAt:string; selectedSymbol:string; selectedRange:string; selectedCountry:'us'|'india'; quotes:any[]; marketHistory:any; economicIndicators:any[]; providerHealth:any; latestEvaluation:any; }
 export type FinancialExampleDataStatus='live'|'latest_available'|'delayed'|'illustrative'|'not_applicable';
-export interface StructuredFinancialAnswer { title:string; directAnswer:string; steps:Array<{title:string;explanation:string}>; formula:{expression:string;variables:Array<{symbol:string;meaning:string}>;whenToUse:string}; example:{title:string;dataStatus:FinancialExampleDataStatus;dataAsOf:string;inputs:string[];calculation:string[];result:string}; interpretation:string[]; risks:string[]; keyTakeaways:string[]; sources:Array<{name:string;dataDate:string;freshness:string}>; }
+export interface StructuredFinancialAnswer { title:string; directAnswer:string; steps:Array<{title:string;explanation:string}>; formula:{expression:string;variables:Array<{symbol:string;meaning:string}>;whenToUse:string}; example:{title:string;dataStatus:FinancialExampleDataStatus;dataAsOf:string;inputs:string[];calculation:string[];result:string}; interpretation:string[]; risks:string[]; keyTakeaways:string[]; sources:Array<{name:string;dataDate:string;freshness:string;url?:string}>; verifiedNumbers?:VerifiedAnswerNumber[]; }
+/** A number the app computed itself (not the model). certified = proven by the precision engine. */
+export interface VerifiedAnswerNumber { id:string; label:string; display:string; value:string; certified:boolean; method:'precision-engine'|'app-calculator'; badge?:string; assumptions:string[]; }
 export type TutorCountry='US'|'India'|'Global';
 export type TutorCurrency='USD'|'INR'|'EUR'|'GBP';
 export type TutorActivity='lesson'|'quiz'|'calculation'|'scenario'|'flashcards'|'revision'|'mock-test';

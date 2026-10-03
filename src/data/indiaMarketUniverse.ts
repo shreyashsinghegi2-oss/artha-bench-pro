@@ -41,7 +41,7 @@ export const INDIA_MARKET_UNIVERSE: IndiaMarketCompany[] = [
   c('hcl-tech','HCL Technologies Limited','HCL Technologies','HCLTECH.NS','Information Technology','IT Services','https://www.hcltech.com'),
   c('wipro','Wipro Limited','Wipro','WIPRO.NS','Information Technology','IT Services','https://www.wipro.com'),
   c('tech-mahindra','Tech Mahindra Limited','Tech Mahindra','TECHM.NS','Information Technology','IT Services','https://www.techmahindra.com'),
-  c('ltimindtree','LTIMindtree Limited','LTIMindtree','LTIM.NS','Information Technology','IT Services','https://www.ltimindtree.com'),
+  c('ltimindtree','LTM Limited (formerly LTIMindtree)','LTM (LTIMindtree)','LTM.NS','Information Technology','IT Services','https://www.ltimindtree.com'),
   c('persistent','Persistent Systems Limited','Persistent Systems','PERSISTENT.NS','Information Technology','Software & IT Services','https://www.persistent.com'),
   c('mphasis','Mphasis Limited','Mphasis','MPHASIS.NS','Information Technology','IT Services','https://www.mphasis.com'),
   c('coforge','Coforge Limited','Coforge','COFORGE.NS','Information Technology','IT Services','https://www.coforge.com'),
@@ -70,7 +70,8 @@ export const INDIA_MARKET_UNIVERSE: IndiaMarketCompany[] = [
 
   c('maruti','Maruti Suzuki India Limited','Maruti Suzuki','MARUTI.NS','Automobile','Passenger Vehicles','https://www.marutisuzuki.com'),
   c('mahindra','Mahindra & Mahindra Limited','Mahindra & Mahindra','M&M.NS','Automobile','Automobiles & Farm Equipment','https://www.mahindra.com'),
-  c('tata-motors','Tata Motors Limited','Tata Motors','TATAMOTORS.NS','Automobile','Automobiles','https://www.tatamotors.com'),
+  c('tata-motors-pv','Tata Motors Passenger Vehicles Limited','Tata Motors PV','TMPV.NS','Automobile','Automobiles','https://www.tatamotors.com'),
+  c('tata-motors','Tata Motors Limited (commercial vehicles)','Tata Motors CV','TMCV.NS','Automobile','Automobiles','https://www.tatamotors.com'),
   c('bajaj-auto','Bajaj Auto Limited','Bajaj Auto','BAJAJ-AUTO.NS','Automobile','Two-Wheelers & Three-Wheelers','https://www.bajajauto.com'),
   c('eicher','Eicher Motors Limited','Eicher Motors','EICHERMOT.NS','Automobile','Automobiles','https://www.eichermotors.com'),
   c('hero','Hero MotoCorp Limited','Hero MotoCorp','HEROMOTOCO.NS','Automobile','Two-Wheelers','https://www.heromotocorp.com'),

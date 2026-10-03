@@ -32,7 +32,7 @@ export const LEARNING_TRACKS: LearningTrack[] = [
             objective: 'Calculate gross income, net income, fixed/variable expenses, and current net worth.',
             explanationSeed: 'Net worth is the total value of what you own (assets) minus what you owe (liabilities).',
             keyConcepts: ['Gross Income', 'Net Income', 'Assets', 'Liabilities', 'Net Worth'],
-            examplePrompt: 'How do I calculate my net worth if I have $10k savings, $5k car loan, and $2k credit card balance?',
+            examplePrompt: 'How do I calculate my net worth if I have ₹10,00,000 savings, ₹5,00,000 car loan, and ₹20,000 credit card balance?',
             practiceActivity: 'List top 3 monthly expenses and calculate cash flow buffer.',
             knowledgeCheck: {
               id: 'kc-pf-m1-l1',
@@ -103,7 +103,7 @@ export const LEARNING_TRACKS: LearningTrack[] = [
             objective: 'Compare mathematical (Avalanche) and psychological (Snowball) debt elimination strategies.',
             explanationSeed: 'Avalanche targets highest interest rates first; Snowball targets smallest balances first.',
             keyConcepts: ['Debt Avalanche', 'Debt Snowball', 'APR', 'Interest Savings'],
-            examplePrompt: 'Compare Avalanche vs Snowball for $3k credit card @ 22% APR and $8k loan @ 7% APR.',
+            examplePrompt: 'Compare Avalanche vs Snowball for ₹30,000 credit card @ 36% APR and ₹8,00,000 loan @ 11% APR.',
             practiceActivity: 'Order sample debt list by interest rate vs balance.',
             knowledgeCheck: {
               id: 'kc-pf-m2-l2',
@@ -284,7 +284,7 @@ export const LEARNING_TRACKS: LearningTrack[] = [
             objective: 'Calculate exact position sizes based on account risk tolerance (e.g., 1% max loss per trade).',
             explanationSeed: 'Position size = (Account Balance × Risk %) / (Entry Price - Stop Loss Price).',
             keyConcepts: ['Fixed Percentage Risk', 'Stop-Loss Distance', 'Position Units'],
-            examplePrompt: 'Calculate share position size for $50k account, 1% risk ($500), Entry $100, Stop $95.',
+            examplePrompt: 'Calculate share position size for ₹5,00,000 account, 1% risk (₹5,000), entry ₹1,000, stop ₹950.',
             practiceActivity: 'Units = $500 / ($100 - $95) = 100 shares.',
             knowledgeCheck: {
               id: 'kc-tr-m1-l2',

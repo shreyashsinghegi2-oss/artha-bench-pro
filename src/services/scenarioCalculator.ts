@@ -57,7 +57,7 @@ export function calculateScenarioLocally(tab: CalculatorTab, inputs: Record<stri
     } else {
       balance = P;
       const totalMonths = Math.round(new Decimal(years).times(12).toNumber());
-      const effectiveMonthlyRate = new Decimal(1).plus(r.div(n)).pow(n.div(12).toNumber()).minus(1);
+      const effectiveMonthlyRate = new Decimal(1).plus(r.div(n)).pow(n.div(12)).minus(1);
       for (let month = 0; month < totalMonths; month += 1) {
         balance = balance.plus(PMT).times(new Decimal(1).plus(effectiveMonthlyRate));
         totalContributions = totalContributions.plus(PMT);

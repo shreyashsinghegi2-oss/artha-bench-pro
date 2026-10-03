@@ -12,7 +12,7 @@ const RELIABILITY_ARCHITECTURE = [
 ];
 
 function formatCurrency(value:number,currency='USD'){try{return new Intl.NumberFormat(currency==='INR'?'en-IN':'en-US',{style:'currency',currency,maximumFractionDigits:2}).format(value);}catch{return `${currency} ${value.toLocaleString(undefined,{maximumFractionDigits:2})}`;}}
-function formatCompact(value:number){return new Intl.NumberFormat('en-US',{notation:'compact',maximumFractionDigits:1}).format(value);}
+function formatCompact(value:number){return Math.round(value).toLocaleString('en-IN');}
 function formatDate(value:string){const date=new Date(value);if(Number.isNaN(date.getTime()))return value;return new Intl.DateTimeFormat('en-IN',{day:'numeric',month:'short',year:'numeric'}).format(date);}
 
 export function MarketPerformanceChart({data,currency='USD',rangeReturn=null}:{data:Array<{date:string;price:number;volume?:number}>;currency?:string;rangeReturn?:number|null;}){

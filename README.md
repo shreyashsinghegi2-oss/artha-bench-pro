@@ -36,6 +36,20 @@ The platform combines:
 
 ---
 
+## Research
+
+Technical reports on the methods behind the platform ([index](docs/research/README.md)):
+
+| Report | Topic |
+|---|---|
+| [TR-01 · Certified Financial Arithmetic](docs/research/TR-01-certified-financial-arithmetic.md) | Calculations that return a proven error bound, or no number at all |
+| [TR-02 · AI Explains, It Never Calculates](docs/research/TR-02-grounded-financial-advisor.md) | An A–H pipeline where every number is traced and checked |
+| [TR-03 · Reproducible Monte Carlo](docs/research/TR-03-reproducible-monte-carlo.md) | Seeded, multi-asset goal-probability simulation |
+
+Cite this work with [`CITATION.cff`](CITATION.cff).
+
+---
+
 ## Why ArthaBench Pro?
 
 Financial AI systems can produce fluent answers even when underlying data is stale, incomplete, or inconsistent. ArthaBench Pro is being built around a different principle:

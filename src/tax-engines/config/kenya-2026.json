@@ -1,0 +1,21 @@
+{
+  "country": "KE",
+  "name": "Kenya (PAYE, resident individual)",
+  "currency": "KES",
+  "year": "2026",
+  "year_label": "Year of income 2026",
+  "last_verified": "2026-09-30",
+  "sources": [
+    "https://www.kra.go.ke/individual/filing-paying/types-of-taxes/paye"
+  ],
+  "notes": [
+    "Annual PAYE bands (monthly bands ×12): 10% to KSh 288,000; 25% to KSh 388,000; 30% to KSh 6,000,000; 32.5% to KSh 9,600,000; 35% above.",
+    "Personal relief of KSh 28,800 a year (KSh 2,400 a month) is deducted from the tax.",
+    "Income means taxable pay: subtract pension (NSSF), SHIF, Affordable Housing Levy and other allowable deductions first, or pass them as 'deductions'."
+  ],
+  "schedules": {
+    "default": { "allowance": 0, "credit": 28800, "brackets": [
+      { "up_to": 288000, "rate": 0.10 }, { "up_to": 388000, "rate": 0.25 }, { "up_to": 6000000, "rate": 0.30 },
+      { "up_to": 9600000, "rate": 0.325 }, { "up_to": null, "rate": 0.35 } ] }
+  }
+}

@@ -6,6 +6,7 @@ import { CompanyIntelligence, NormalizedMarketQuote } from '../../types';
 import { SafetyBanner } from '../SafetyBanner';
 import { CompanyIntelligencePanel } from './CompanyIntelligencePanel';
 import { MarketStrip, MarketStripInstrument } from './MarketStrip';
+import { CompanyLogo } from './CompanyLogo';
 
 const MARKET_STRIP_INSTRUMENTS: MarketStripInstrument[] = [
   { symbol: 'NIFTY:NSE', label: 'NIFTY 50' },
@@ -270,7 +271,7 @@ export const MarketView: React.FC = () => {
                   >
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="font-bold text-ink text-xs">{q.symbol}</span>
+                        <CompanyLogo symbol={q.symbol} size={22} className="rounded-md border border-line" /><span className="font-bold text-ink text-xs">{q.symbol}</span>
                         <span className="text-[10px] text-secondary truncate max-w-[100px]">{q.name}</span>
                       </div>
                       <div className="text-sm font-bold text-ink mt-1">${q.price.toFixed(2)}</div>

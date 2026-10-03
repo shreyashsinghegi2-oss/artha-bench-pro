@@ -1,0 +1,28 @@
+.pai-launch{position:fixed;right:18px;bottom:18px;z-index:60;display:inline-flex;align-items:center;gap:8px;height:46px;padding:0 18px 0 14px;border:0;border-radius:999px;background:linear-gradient(135deg,#0f9d8a,#0b6e61);color:#fff;font:800 13.5px Inter,system-ui,sans-serif;box-shadow:0 12px 28px -12px rgba(15,118,110,.9);cursor:pointer;transition:transform .15s}
+.pai-launch:hover{}
+.pai-launch.raised{bottom:84px}
+.pai-sheet{position:fixed;inset:0;z-index:125;background:rgba(2,6,23,.35);display:flex;justify-content:flex-end}
+.pai-panel{position:relative;width:min(460px,100%);height:100%;overflow-y:auto;padding:14px;background:var(--bg-canvas);box-shadow:-20px 0 50px -20px rgba(2,6,23,.4);animation:pai-in .2s ease-out}
+.pai-panel .pa{border-radius:18px}
+.pai-close{position:absolute;top:22px;right:22px;z-index:2;border:0;border-radius:10px;padding:6px;background:var(--bg-subtle);color:var(--text-primary);cursor:pointer}
+.pai-panel .pa-head{padding-right:40px}
+@keyframes pai-in{from{transform:translateX(24px);opacity:0}to{transform:none;opacity:1}}
+@media (max-width:1023px){
+  .pai-launch{height:44px;padding:0 14px}
+  .pai-sheet{align-items:flex-end}
+  .pai-panel{height:auto;max-height:90dvh;border-radius:22px 22px 0 0;animation:none}
+}
+@media (prefers-reduced-motion:reduce){.pai-panel{animation:none}.pai-launch{transition:none}}
+/* Drag to move: the launch button and, on larger screens, the panel itself. On desktop the panel
+   floats without a dimmed backdrop so the page underneath stays readable and usable. */
+.pai-launch{touch-action:none}
+.pai-launch.is-dragging{cursor:grabbing;transition:none;transform:none;box-shadow:0 18px 40px -12px rgba(2,6,23,.55)}
+.pai-grip{display:none}
+@media (min-width:721px){
+  .pai-sheet{background:transparent;pointer-events:none;padding:84px 18px 18px;align-items:flex-start}
+  .pai-panel{pointer-events:auto;height:calc(100dvh - 102px);border-radius:22px;border:1px solid var(--border-subtle);box-shadow:0 30px 70px -24px rgba(2,6,23,.45)}
+  .pai-panel.is-dragging{transition:none;opacity:.96}
+  .pai-grip{display:flex;align-items:center;justify-content:center;gap:6px;margin:-4px 36px 8px 0;padding:6px;border-radius:12px;color:var(--text-secondary);font-size:11.5px;font-weight:600;cursor:grab;touch-action:none;user-select:none}
+  .pai-grip:hover{background:var(--bg-subtle)}
+  .pai-panel.is-dragging .pai-grip{cursor:grabbing}
+}

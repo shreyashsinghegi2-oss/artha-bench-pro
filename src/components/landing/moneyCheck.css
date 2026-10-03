@@ -1,0 +1,64 @@
+/* Money Check: one form, instant report. Black and white; red only flags a gap. */
+.mc-section{padding:88px 0;background:#fafafa;color:#0a0a0a;border-block:1px solid #ececec}
+.connected-landing .mc-eyebrow{color:#0a0a0a}
+.mc-section h2{margin:10px 0 10px;font-size:clamp(28px,3.6vw,44px);line-height:1.1;letter-spacing:-.02em;color:#0a0a0a}
+.mc-lead{margin:0;max-width:640px;font-size:16px;color:#525252}
+.mc-grid{margin-top:34px;display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);gap:24px;align-items:start}
+
+.mc-form{position:sticky;top:90px;padding:22px;border-radius:22px;background:#fff;border:1px solid #e5e5e5;box-shadow:0 30px 60px -44px rgba(0,0,0,.35)}
+.mc-fields{display:grid;grid-template-columns:1fr 1fr;gap:12px;overflow:hidden}
+.mc-fields-more{margin-top:12px}
+.mc-field{display:flex;flex-direction:column;gap:5px;min-width:0}
+.mc-field>span{font-size:12px;font-weight:800;color:#262626}
+.mc-field input{width:100%;box-sizing:border-box;border:1px solid #d4d4d4;border-radius:11px;padding:10px 12px;font:inherit;font-size:15px;font-weight:700;color:#0a0a0a;background:#fff;outline:none;transition:border-color .2s,box-shadow .2s}
+.mc-field input:focus{border-color:#0a0a0a;box-shadow:0 0 0 3px rgba(10,10,10,.08)}
+.mc-field small{font-size:11px;color:#8a8a8a}
+.mc-deps{margin-top:16px;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px}
+.mc-deps>span{font-size:12px;font-weight:800;color:#262626}
+.mc-deps div{display:inline-flex;gap:4px;padding:3px;border:1px solid #e5e5e5;border-radius:11px}
+.mc-deps button{min-width:38px;border:0;border-radius:8px;padding:7px 10px;background:none;font:inherit;font-size:13px;font-weight:800;color:#525252;cursor:pointer;transition:background .2s,color .2s}
+.mc-deps button.on{background:#0a0a0a;color:#fff}
+.mc-more{margin-top:14px;display:inline-flex;align-items:center;gap:6px;border:0;background:none;padding:4px 0;font:inherit;font-size:13px;font-weight:800;color:#0a0a0a;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.mc-more svg{transition:transform .3s}.mc-more svg.up{transform:rotate(180deg)}
+.mc-example{margin:12px 0 0;font-size:12px;color:#737373}
+.mc-error{margin:12px 0 0;font-size:13px;font-weight:700;color:#b91c1c}
+
+.mc-report{display:grid;gap:14px}
+.mc-score{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:center;padding:20px;border-radius:22px;background:#0a0a0a;color:#fff}
+.mc-ring{--deg:0deg;width:104px;height:104px;border-radius:50%;display:grid;place-content:center;text-align:center;background:radial-gradient(closest-side,#0a0a0a 78%,transparent 79%),conic-gradient(#fff var(--deg),#333 0);transition:background .6s}
+.mc-ring b{font-size:32px;line-height:1}
+.mc-ring span{font-size:11px;color:#a3a3a3}
+.mc-score small{font-size:10.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#a3a3a3}
+.mc-score>div>b{display:block;font-size:22px;margin:2px 0 4px}
+.mc-score p{margin:0;font-size:13.5px;line-height:1.55;color:#d4d4d4}
+.mc-tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.mc-tile{padding:16px;border-radius:18px;background:#fff;border:1px solid #e5e5e5;display:flex;flex-direction:column;gap:3px;transition:border-color .25s,box-shadow .25s}
+.mc-tile:hover{border-color:#0a0a0a;box-shadow:0 18px 36px -26px rgba(0,0,0,.4)}
+.mc-tile small{font-size:10.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#737373}
+.mc-tile>b{font-size:21px;font-weight:900;letter-spacing:-.01em;color:#0a0a0a;font-variant-numeric:tabular-nums}
+.mc-tile.neg>b{color:#b91c1c}
+.mc-sub{font-size:12.5px;color:#525252}
+.mc-how{margin-top:6px;align-self:flex-start;display:inline-flex;align-items:center;gap:4px;border:0;background:none;padding:0;font:inherit;font-size:11.5px;font-weight:700;color:#737373;cursor:pointer}
+.mc-how:hover{color:#0a0a0a}
+.mc-how-text{margin:6px 0 0;font-size:12px;line-height:1.55;color:#525252;border-top:1px dashed #e5e5e5;padding-top:8px}
+.mc-actions{padding:18px 20px;border-radius:18px;background:#fff;border:1px solid #e5e5e5}
+.mc-actions>b{font-size:14px}
+.mc-actions ol{margin:10px 0 0;padding:0;list-style:none;counter-reset:a;display:grid;gap:10px}
+.mc-actions li{counter-increment:a;display:grid;grid-template-columns:26px 1fr;gap:2px 10px;font-size:13px;line-height:1.5;color:#525252}
+.mc-actions li::before{content:counter(a);grid-row:span 2;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:#0a0a0a;color:#fff;font-size:11px;font-weight:900}
+.mc-actions strong{color:#0a0a0a}
+.mc-foot{display:flex;flex-wrap:wrap;align-items:center;gap:12px}
+.mc-ask{display:inline-flex;align-items:center;gap:8px;border:0;border-radius:12px;padding:12px 18px;background:#0a0a0a;color:#fff;font:inherit;font-size:14px;font-weight:800;cursor:pointer;transition:transform .25s,box-shadow .25s}
+.mc-ask:hover{transform:translateY(-2px);box-shadow:0 16px 30px -14px #0a0a0a}
+.mc-foot small{flex:1;min-width:220px;font-size:11.5px;color:#8a8a8a}
+.mc-empty{padding:40px;border-radius:18px;border:1px dashed #d4d4d4;text-align:center;color:#737373}
+
+@media (max-width:960px){.mc-grid{grid-template-columns:1fr}.mc-form{position:static}}
+@media (max-width:480px){.mc-fields{grid-template-columns:1fr}.mc-tiles{grid-template-columns:1fr}.mc-score{grid-template-columns:1fr;justify-items:start}}
+
+/* ---- Money report: cards keep their original black-and-white look; only the numbers carry colour
+   (green healthy / progress, red problem, amber watch, blue information). ---- */
+.mc-tile.pos>b{color:#047857!important}.mc-tile.neg>b{color:#b91c1c!important}.mc-tile.warn>b{color:#b45309!important}.mc-tile.info>b{color:#1d4ed8!important}
+.mc-score.pos{--sc:#10b981}.mc-score.warn{--sc:#f59e0b}.mc-score.neg{--sc:#ef4444}
+.mc-score .mc-ring{background:radial-gradient(closest-side,#0a0a0a 78%,transparent 79%),conic-gradient(var(--sc,#fff) var(--deg),#333 0)}
+.mc-score.pos>div>b{color:#34d399}.mc-score.warn>div>b{color:#fbbf24}.mc-score.neg>div>b{color:#f87171}

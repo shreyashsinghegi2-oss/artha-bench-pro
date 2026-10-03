@@ -43,7 +43,7 @@ export const BentoCard: React.FC<BentoCardProps> = ({
     <div
       onClick={onClick}
       className={`bg-surface border border-line rounded-2xl p-5 shadow-sm transition-all ${
-        onClick ? 'cursor-pointer hover:border-interactive/50 hover:bg-surface' : ''
+        onClick ? 'cursor-pointer hover:bg-surface' : ''
       } ${className}`}
     >
       {(title || icon || badge) && (

@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Class Timetable</title>
+    <meta name="description" content="Today's classes, the class on now and the next subject, with the official term timetable." />
+    <meta name="theme-color" content="#14213d" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2314213d'/%3E%3Ccircle cx='32' cy='32' r='18' fill='none' stroke='%23fca311' stroke-width='5'/%3E%3Cpath d='M32 21v12l8 5' stroke='%23fca311' stroke-width='5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Manrope:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header class="top">
+      <div class="wrap top-row">
+        <div class="brand">
+          <h1 id="title">Class Timetable</h1>
+          <p id="term" class="term"></p>
+        </div>
+        <div class="clock" aria-live="off">
+          <span id="clock-time" class="clock-time">--:--</span>
+          <span id="clock-date" class="clock-date">India time</span>
+        </div>
+      </div>
+    </header>
+
+    <main class="wrap" id="public-view">
+      <section class="status" aria-live="polite">
+        <article class="card now-card" id="now-card">
+          <p class="eyebrow">On now</p>
+          <p class="subject" id="now-subject">Loading…</p>
+          <p class="meta" id="now-meta"></p>
+          <div class="bar" id="now-bar" hidden><span id="now-bar-fill"></span></div>
+        </article>
+        <article class="card next-card" id="next-card">
+          <p class="eyebrow">Next subject</p>
+          <p class="subject" id="next-subject">Loading…</p>
+          <p class="meta" id="next-meta"></p>
+          <p class="countdown" id="next-countdown"></p>
+        </article>
+      </section>
+
+      <section class="today">
+        <h2 id="today-title">Today</h2>
+        <ol class="periods" id="today-list"></ol>
+      </section>
+
+      <section class="week" id="week-section" hidden>
+        <h2>This week</h2>
+        <div class="week-scroll"><table class="week-table" id="week-table"></table></div>
+      </section>
+
+      <section class="official" id="official-section" hidden>
+        <h2>Official timetable</h2>
+        <p class="meta" id="official-meta"></p>
+        <div class="official-view" id="official-view"></div>
+      </section>
+
+      <p class="foot">
+        <span id="updated"></span>
+        <a href="#admin" class="admin-link">Admin</a>
+      </p>
+    </main>
+
+    <main class="wrap" id="admin-view" hidden>
+      <p><a href="#" class="back">← Back to timetable</a></p>
+      <section class="card admin-card" id="login-card">
+        <h2>Admin sign in</h2>
+        <form id="login-form" class="stack">
+          <label for="admin-password">Password</label>
+          <input id="admin-password" type="password" inputmode="numeric" autocomplete="current-password" required />
+          <button type="submit" class="btn primary">Sign in</button>
+          <p class="error" id="login-error" role="alert"></p>
+        </form>
+      </section>
+
+      <section id="admin-panel" hidden class="stack-lg">
+        <article class="card admin-card stack">
+          <h2>Update the timetable</h2>
+          <p class="hint">Publishing replaces the current timetable for everyone.</p>
+          <div class="grid2">
+            <div class="stack">
+              <label for="edit-title">Name</label>
+              <input id="edit-title" maxlength="120" placeholder="e.g. B.Tech CSE · Section A" />
+            </div>
+            <div class="stack">
+              <label for="edit-term">Term</label>
+              <input id="edit-term" maxlength="120" placeholder="e.g. Semester 3 · Jul–Dec 2026" />
+            </div>
+          </div>
+          <div class="stack">
+            <label for="edit-file">Timetable image or PDF</label>
+            <input id="edit-file" type="file" accept="image/png,image/jpeg,image/webp,application/pdf" />
+            <p class="hint" id="file-note">The uploaded file is shown to everyone as the official timetable.</p>
+            <div class="preview" id="file-preview" hidden></div>
+          </div>
+          <div class="row-actions">
+            <button type="button" class="btn" id="btn-extract" disabled>Read classes from the file with AI</button>
+            <span class="hint" id="extract-note"></span>
+          </div>
+        </article>
+
+        <article class="card admin-card stack">
+          <div class="rows-head">
+            <h2>Classes</h2>
+            <span class="hint" id="rows-count"></span>
+          </div>
+          <p class="hint">These rows power “On now” and “Next subject”. Check them against the file.</p>
+          <div class="rows-scroll">
+            <table class="rows-table">
+              <thead>
+                <tr><th>Day</th><th>Start</th><th>End</th><th>Subject</th><th>Teacher</th><th>Room</th><th><span class="sr">Remove</span></th></tr>
+              </thead>
+              <tbody id="rows-body"></tbody>
+            </table>
+          </div>
+          <div class="row-actions">
+            <button type="button" class="btn" id="btn-add">Add class</button>
+            <details class="paste">
+              <summary>Paste from a spreadsheet</summary>
+              <div class="stack">
+                <label for="paste-box">One class per line: Day, Start, End, Subject, Teacher, Room</label>
+                <textarea id="paste-box" rows="5" placeholder="Mon	09:00	09:50	Mathematics	Dr. Rao	101"></textarea>
+                <button type="button" class="btn" id="btn-paste">Replace rows with pasted classes</button>
+              </div>
+            </details>
+          </div>
+        </article>
+
+        <div class="publish-bar">
+          <button type="button" class="btn primary" id="btn-publish">Publish timetable</button>
+          <span id="publish-note" role="status"></span>
+        </div>
+
+        <article class="card admin-card stack">
+          <h2>Change admin password</h2>
+          <form id="pw-form" class="grid2">
+            <div class="stack">
+              <label for="pw-new">New password</label>
+              <input id="pw-new" type="password" minlength="4" autocomplete="new-password" required />
+            </div>
+            <div class="stack end">
+              <button type="submit" class="btn">Change password</button>
+            </div>
+          </form>
+          <p id="pw-note" role="status" class="hint"></p>
+        </article>
+        <p><button type="button" class="btn ghost" id="btn-logout">Sign out</button></p>
+      </section>
+    </main>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" defer></script>
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>

@@ -5,10 +5,20 @@ export type AppLocation =
   | { kind: 'landing' }
   | { kind: 'workspace'; destination: AppNavigationDestination }
   | { kind: 'public'; page: PublicPageId }
-  | { kind: 'auth'; returnTo: string };
+  | { kind: 'auth'; returnTo: string }
+  | { kind: 'developers' }
+  | { kind: 'advisor'; shareId?: string }
+  | { kind: 'simulation' };
 
 const financePaths: Partial<Record<AppNavigationDestination, string>> = {
   overview: '/finance/overview',
+  'my-dashboard': '/finance/dashboard',
+  'money-planner': '/finance/planner',
+  'retirement-planner': '/finance/retirement',
+  'platform-guide': '/finance/guide',
+  'education-planner': '/finance/education',
+  'job-switch-planner': '/finance/job-switch',
+  portfolio: '/finance/portfolio',
   'financial-health': '/finance/health',
   income: '/finance/income',
   expenses: '/finance/expenses',
@@ -97,6 +107,11 @@ export function readAppLocation(): AppLocation {
     const returnTo = new URLSearchParams(window.location.search).get('returnTo') || '/finance/overview';
     return { kind: 'auth', returnTo };
   }
+  if (normalized === '/developers') return { kind: 'developers' };
+  if (normalized === '/advisor') return { kind: 'advisor' };
+  if (normalized === '/simulation') return { kind: 'simulation' };
+  const shared = /^\/advice\/([A-Za-z0-9_-]{16,32})$/.exec(normalized);
+  if (shared?.[1]) return { kind: 'advisor', shareId: shared[1] };
   const publicPage = pathToPublic.get(normalized);
   if (publicPage) return { kind: 'public', page: publicPage };
   if (normalized.startsWith('/finance/markets/india/')) return { kind: 'workspace', destination: 'india-markets' };

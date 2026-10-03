@@ -1,0 +1,47 @@
+name: RAG index
+
+# Builds rag/index/official-index.json from the official sources in rag/sources.json (Income Tax Department
+# acts and pages, RBI and SEBI feeds) and commits it, so the next Vercel deployment serves it from
+# /api/rag_engine. Runs when the source list or indexer changes, weekly on the default branch, or by hand.
+on:
+  push:
+    paths:
+      - 'rag/sources.json'
+      - 'rag/documents/**'
+      - 'rag/indexer.py'
+      - 'scripts/build_rag_bundle.py'
+      - '.github/workflows/rag-index.yml'
+  schedule:
+    - cron: '17 1 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: rag-index-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-index:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install indexer dependencies
+        run: pip install "numpy>=1.26,<3" "pypdf>=4.0"
+      - name: Download official sources and build the index
+        run: python scripts/build_rag_bundle.py
+      - name: Commit the index if it changed
+        run: |
+          if git diff --quiet -- rag/index/official-index.json && git ls-files --error-unmatch rag/index/official-index.json >/dev/null 2>&1; then
+            echo "Index unchanged."; exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add rag/index/official-index.json
+          git commit -m "chore(rag): rebuild official document index"
+          git push

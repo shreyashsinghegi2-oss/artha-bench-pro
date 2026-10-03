@@ -1,4 +1,5 @@
 import React from 'react';
+import { CompanyLogo } from '../market/CompanyLogo';
 import { RotateCcw, ChevronDown, Search, SlidersHorizontal, CandlestickChart } from 'lucide-react';
 import { CRYPTO_INTERVALS, CRYPTO_SYMBOLS, CryptoInterval, CryptoSymbol } from '../crypto/cryptoTypes';
 
@@ -54,7 +55,7 @@ export const CryptoAssetSelector: React.FC<Props> = ({
       <div className="crypto-asset-combobox">
         <button type="button" className="crypto-asset-trigger" aria-haspopup="listbox" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
           <span className="crypto-coin-mark" aria-hidden="true">₿</span>
-          <span className="crypto-asset-copy"><strong>{cryptoDisplayName(symbol)}</strong><small>{symbol}</small></span>
+          <CompanyLogo symbol={symbol} size={24}/><span className="crypto-asset-copy"><strong>{cryptoDisplayName(symbol)}</strong><small>{symbol}</small></span>
           <ChevronDown className="crypto-chevron" size={15} aria-hidden="true" />
         </button>
         {open && (

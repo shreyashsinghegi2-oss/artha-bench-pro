@@ -1,0 +1,31 @@
+.nb{position:absolute;inset:0;z-index:0;overflow:hidden;pointer-events:none;contain:strict}
+.nb-sky{position:absolute;inset:0;background:linear-gradient(180deg,#cfe8f3 0%,#e9f1ee 45%,#fdebd6 72%,#fff4e6 100%)}
+.nb-sun{position:absolute;left:73.6%;top:52%;width:440px;height:440px;margin:-220px 0 0 -220px;border-radius:50%;background:radial-gradient(circle,#fff7df 0%,rgba(255,227,163,.95) 18%,rgba(255,201,122,.35) 38%,rgba(255,201,122,0) 50%);animation:nb-sun 9s ease-in-out infinite;will-change:transform}
+.nb-sun i{position:absolute;left:50%;top:50%;width:116px;height:116px;margin:-58px 0 0 -58px;border-radius:50%;background:#fff3cf;opacity:.95}
+.nb-cloud{position:absolute;left:0;opacity:.85;will-change:transform;animation:nb-drift linear infinite}
+.nb-cloud svg,.nb-birds svg{display:block;width:100%;height:auto}
+.nb-c1{top:14%;animation-duration:70s}.nb-c2{top:9%;opacity:.7;animation-duration:95s;animation-delay:-30s}.nb-c3{top:24%;opacity:.6;animation-duration:80s;animation-delay:-55s}
+.nb-birds{position:absolute;left:0;top:0;width:90px;will-change:transform;animation:nb-fly 26s linear infinite}
+.nb-layer{position:absolute;inset:0}
+.nb-layer svg{position:absolute;inset:0;width:100%;height:100%}
+.nb-far{animation:nb-sway 38s ease-in-out infinite;will-change:transform}
+.nb-mid{animation:nb-sway 28s ease-in-out infinite reverse;will-change:transform}
+.nb-mist{position:absolute;left:-15%;right:-15%;height:11%;background:linear-gradient(180deg,rgba(255,255,255,0),rgba(255,255,255,.7),rgba(255,255,255,0));will-change:transform;animation:nb-mist 22s ease-in-out infinite}
+.nb-m1{top:58%}.nb-m2{top:69%;animation-duration:30s;animation-direction:reverse}
+.nb-fade{position:absolute;left:0;right:0;bottom:0;height:16%;background:linear-gradient(180deg,rgba(255,255,255,0),rgba(255,255,255,.9))}
+.nb-paused *{animation-play-state:paused!important}
+@keyframes nb-sun{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+@keyframes nb-drift{from{transform:translateX(-400px)}to{transform:translateX(110vw)}}
+@keyframes nb-fly{0%{transform:translate(-120px,30vh)}100%{transform:translate(110vw,16vh)}}
+@keyframes nb-sway{0%,100%{transform:translateX(0)}50%{transform:translateX(-18px)}}
+@keyframes nb-mist{0%,100%{transform:translateX(0);opacity:.75}50%{transform:translateX(8%);opacity:1}}
+@media (prefers-reduced-motion:reduce){.nb *{animation:none!important}}
+@media (max-width:900px){.nb-far,.nb-mid{animation:none}.nb-sun{width:300px;height:300px;margin:-150px 0 0 -150px;left:80%;top:40%}}
+/* Hero on the landscape */
+.hx.hx-nature{background:transparent;position:relative;overflow:hidden}
+.hx.hx-nature .hx-wrap{position:relative;z-index:1}
+.hx.hx-nature .hx-offer{position:relative;z-index:1}
+.hx-copy h1.hx-one{margin:0;font-size:clamp(26px,2.7vw,40px);line-height:1.2;letter-spacing:-.02em;font-weight:700;max-width:24ch;color:#0f1b22;text-wrap:pretty;text-shadow:0 1px 0 rgba(255,255,255,.6)}
+.hx-copy h1.hx-one span{color:#0f6b5f;text-shadow:none;background:none}
+.hx.hx-nature .hx-ctas{margin-top:28px}
+@media (max-width:980px){.hx-copy h1.hx-one{max-width:none;font-size:clamp(24px,6.4vw,34px)}}

@@ -81,7 +81,7 @@ export function computeFullReliabilityEvaluation(
   const numRawScore = groundTruthRes.hasNumericalCheck
     ? groundTruthRes.pass
       ? 100
-      : Math.max(0, 100 - Math.round(groundTruthRes.numericalErrorPercent || 50))
+      : Math.max(0, 100 - Math.round(groundTruthRes.numericalErrorPercent ?? 50))
     : 90;
 
   // Dimension 2: Dual-Model Consensus

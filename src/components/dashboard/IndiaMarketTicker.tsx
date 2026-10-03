@@ -5,6 +5,7 @@ import type {
   IndiaMarketTickerResponse,
 } from '../../types';
 import { fetchIndiaMarketTicker } from '../../services/learningApi';
+import { CompanyLogo } from '../market/CompanyLogo';
 
 const REFRESH_INTERVAL_MS = 60_000;
 const DEFAULT_SOURCE_LABEL = 'Yahoo Finance · delayed / availability varies';
@@ -66,6 +67,7 @@ function TickerItem({ item }: { item: IndiaMarketTickerItem }) {
 
   return (
     <li className="flex h-10 shrink-0 items-center gap-2.5 border-r border-slate-700/80 px-5 text-xs tabular-nums">
+      <CompanyLogo symbol={item.yahooSymbol} size={22} className="rounded-md" />
       <span className="font-semibold text-slate-100">{item.label}</span>
       <span className="min-w-[5.5rem] text-right font-medium text-white">
         {formatPrice(item.price, item.currency)}

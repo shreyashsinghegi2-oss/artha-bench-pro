@@ -7,12 +7,12 @@ import{NormalizedMarketQuote}from'../../types';
 import{ArthaMindLogo}from'./ArthaMindLogo';
 import{HeroProductMockup}from'./HeroProductMockup';
 import{LiveMarketTicker}from'./LiveMarketTicker';
-import{CryptoMarketPreview}from'./CryptoMarketPreview';
+import{LazyCryptoMarketPreview as CryptoMarketPreview}from'./LazyCryptoMarketPreview';
 import{BusinessBrief,BusinessNewsTicker,normalizeBusinessNews}from'./BusinessBrief';
 import{InteractiveFeatureCard,MotionReveal,SectionMood}from'./LandingPrimitives';
 import{LanguageSelector}from'../LanguageSelector';
 import'./landingAnimations.css';import'./landingPolish.css';import'./landingColorSystem.css';
-import{ConnectedLandingPage}from'./ConnectedLandingPage';
+import{ConnectedLandingPage}from'./ConnectedLandingPage';import'./landingPerf.css';
 
 type Props={signedIn:boolean;onEnter:(destination?:NavigationDestination)=>void;onSignIn:()=>void};
 const features=[
@@ -159,6 +159,7 @@ const IndiaMarketPulse: React.FC = () => {
     company,
     quote,
   }: {
+    key?: string;
     company: (typeof INDIA_MARKET_UNIVERSE)[number];
     quote: NormalizedMarketQuote;
   }) => {

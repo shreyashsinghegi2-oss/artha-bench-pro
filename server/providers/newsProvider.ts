@@ -136,10 +136,28 @@ async function fetchNewsData(query: string, category: string, region: string, pa
   if (normalizedRegion === 'india' || normalizedRegion === 'in') url.searchParams.set('country', 'in');
   if (normalizedRegion === 'us' || normalizedRegion === 'usa') url.searchParams.set('country', 'us');
 
-  const response = await fetch(url, {
+  let response = await fetch(url, {
     headers: { Accept: 'application/json', 'User-Agent': 'ArthaBench-Pro/2.0' },
     signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
   });
+
+  if (response.status === 422) {
+    // 422 means NewsData rejected a parameter (plan limits on size/options, or a long query).
+    // Log its reason, then retry once with only the basic, always-allowed parameters.
+    const reason = await response.text().catch(() => '');
+    console.warn(`${providerName} 422: ${reason.replace(/apikey=[^&\s"]+/gi, 'apikey=[redacted]').slice(0, 300)}`);
+    const basic = new URL(url.origin + url.pathname);
+    basic.searchParams.set('apikey', apiKey);
+    basic.searchParams.set('language', 'en');
+    const shortQuery = (query.trim() || categoryQuery(category) || 'business finance markets').replace(/[()]/g, ' ').split(/\s+OR\s+|\s+/).filter(Boolean).slice(0, 4).join(' OR ');
+    if (shortQuery) basic.searchParams.set('q', shortQuery.slice(0, 100));
+    const country = url.searchParams.get('country');
+    if (country) basic.searchParams.set('country', country);
+    response = await fetch(basic, {
+      headers: { Accept: 'application/json', 'User-Agent': 'ArthaBench-Pro/2.0' },
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    });
+  }
 
   if (!response.ok) {
     if (response.status === 401 || response.status === 403) {

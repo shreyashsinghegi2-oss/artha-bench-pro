@@ -1,0 +1,26 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "strict": true,
+    "noImplicitAny": true,
+    "noUncheckedIndexedAccess": false,
+    "noFallthroughCasesInSwitch": true,
+    "types": [
+      "node",
+      "vite/client"
+    ]
+  },
+  "include": [
+    "server/v1/**/*.ts",
+    "src/tax-engines/**/*.ts",
+    "src/components/developers/**/*.tsx",
+    "scripts/create-api-key.ts",
+    "src/advisor/**/*.ts",
+    "server/advisor/**/*.ts",
+    "src/components/advisor/**/*.tsx",
+    "src/simulation/**/*.ts",
+    "server/simulation/**/*.ts",
+    "src/components/simulation/**/*.tsx",
+    "server/timetable/**/*.ts"
+  ]
+}

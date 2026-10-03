@@ -66,8 +66,8 @@ export function buildFinancialTwin(inputs: FinancialTwinInputs): FinancialTwinRe
   const budgetPlanned = budget ? budget.categories.reduce((sum, item) => new Decimal(sum).plus(item.plannedAmount).toNumber(), 0) : null;
   const savingsTarget = budget?.savingsTarget ?? null;
 
-  const scenarioIncome = round(new Decimal(income).times(new Decimal(100 + inputs.incomeDeltaPercent).div(100)).toNumber());
-  const scenarioExpenses = round(new Decimal(expenses).times(new Decimal(100 + inputs.expenseDeltaPercent).div(100)).toNumber());
+  const scenarioIncome = Math.max(0, round(new Decimal(income).times(new Decimal(100 + inputs.incomeDeltaPercent).div(100)).toNumber()));
+  const scenarioExpenses = Math.max(0, round(new Decimal(expenses).times(new Decimal(100 + inputs.expenseDeltaPercent).div(100)).toNumber()));
   const scenarioEmi = round(new Decimal(monthlyEmi).plus(Math.max(0, inputs.additionalMonthlyEmi)).toNumber());
   const scenarioSavingsTarget = savingsTarget == null ? null : Math.max(0, round(new Decimal(savingsTarget).plus(inputs.savingsTargetDelta).toNumber()));
 

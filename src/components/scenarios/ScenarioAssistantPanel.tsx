@@ -1,4 +1,8 @@
+import { MicButton } from '../ai/MicButton';
+import { AssistantLogo } from '../ai/AssistantLogo';
+import { ThinkingSteps } from '../ai/ThinkingSteps';
 import React, { useEffect, useState } from 'react';
+import { WebSearchToggle } from '../ai/WebSearchToggle';
 import { AlertCircle, Calculator, Database, Globe2, Send, ShieldCheck, Sparkles } from 'lucide-react';
 import type { StructuredFinancialAnswer } from '../../types';
 import { StructuredFinancialAnswerView } from '../ai/StructuredFinancialAnswer';
@@ -108,7 +112,7 @@ export const ScenarioAssistantPanel: React.FC<ScenarioAssistantPanelProps> = ({
     <section className="space-y-4 rounded-3xl border border-interactive/25 bg-surface p-5 shadow-sm sm:p-6" aria-label="ArthaMind scenario assistant">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <div className="flex items-center gap-2 text-sm font-black text-ink"><Sparkles className="h-4 w-4 text-interactive" /> ArthaMind Scenario Assistant</div>
+          <div className="flex items-center gap-2 text-sm font-black text-ink"><AssistantLogo size={18}/> ArthaMind Scenario Intelligence</div>
           <p className="mt-1 max-w-3xl text-[11px] leading-5 text-secondary">Available for every calculator. When you analyze, the server first recalculates the current inputs with Decimal.js and then asks ArthaMind to explain that verified result. Connected provider data is a separate evidence layer and never replaces the deterministic inputs.</p>
         </div>
         <span className="inline-flex items-center gap-1.5 self-start rounded-full border border-success-fill/25 bg-success-soft px-2.5 py-1 text-[9px] font-black uppercase tracking-wider text-success"><ShieldCheck className="h-3.5 w-3.5" /> Math locked to engine</span>
@@ -126,14 +130,18 @@ export const ScenarioAssistantPanel: React.FC<ScenarioAssistantPanelProps> = ({
         <span className={`rounded-full border px-2.5 py-1 ${hasVerifiedResult ? 'border-success-fill/25 bg-success-soft text-success' : 'border-warning-fill/25 bg-warning-soft text-warning'}`}>{hasVerifiedResult ? 'Deterministic result calculated' : 'Assistant will calculate before analysis'}</span>
       </div>
 
+      <div className="mb-2"><WebSearchToggle/></div>
       <div className="flex flex-col gap-2 sm:flex-row">
         <textarea
           value={question}
           onChange={(event) => setQuestion(event.target.value)}
+          onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); if (!loading) void analyze(); } }}
+          aria-label="Question for the ArthaMind scenario assistant"
           rows={3}
           className="min-h-[84px] flex-1 resize-y rounded-2xl border border-line bg-canvas px-3.5 py-3 text-xs leading-5 text-ink outline-none focus:border-interactive"
           placeholder="Ask ArthaMind to calculate, explain, compare assumptions, or connect the result to verified context..."
         />
+        <MicButton onText={setQuestion} disabled={loading}/>
         <button
           type="button"
           onClick={() => void analyze()}
@@ -144,6 +152,7 @@ export const ScenarioAssistantPanel: React.FC<ScenarioAssistantPanelProps> = ({
         </button>
       </div>
 
+      <ThinkingSteps active={loading} compact/>
       {error && <div className="flex items-start gap-2 rounded-xl border border-danger bg-danger-soft p-3 text-xs text-danger"><AlertCircle className="mt-0.5 h-4 w-4 shrink-0" /> {error}</div>}
 
       {response && (
@@ -158,7 +167,7 @@ export const ScenarioAssistantPanel: React.FC<ScenarioAssistantPanelProps> = ({
             </div>
           ) : null}
           {response.suggestedQuestions?.length ? (
-            <div className="flex flex-wrap gap-2">{response.suggestedQuestions.map((item) => <button key={item} type="button" onClick={() => { setQuestion(item); void analyze(item); }} className="rounded-full border border-line bg-surface px-3 py-1.5 text-[10px] font-bold text-secondary hover:border-interactive hover:text-interactive">{item}</button>)}</div>
+            <div className="flex flex-wrap gap-2">{response.suggestedQuestions.map((item) => <button key={item} type="button" onClick={() => { setQuestion(item); void analyze(item); }} className="rounded-full border border-line bg-surface px-3 py-1.5 text-[10px] font-bold text-secondary hover:text-interactive">{item}</button>)}</div>
           ) : null}
         </div>
       )}

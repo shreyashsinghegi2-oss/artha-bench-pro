@@ -85,12 +85,12 @@ function supabaseConfig() {
   return { url, anonKey, serviceRole };
 }
 
-function bearer(req: Request): string | null {
+export function bearer(req: Request): string | null {
   const header = req.headers.authorization || '';
   return header.startsWith('Bearer ') ? header.slice(7).trim() : null;
 }
 
-async function verifyUser(token: string): Promise<VerifiedUser> {
+export async function verifyUser(token: string): Promise<VerifiedUser> {
   const { url, anonKey } = supabaseConfig();
   const response = await fetch(`${url}/auth/v1/user`, {
     headers: { apikey: anonKey, Authorization: `Bearer ${token}` },

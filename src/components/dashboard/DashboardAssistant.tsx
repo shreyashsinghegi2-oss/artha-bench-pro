@@ -1,4 +1,8 @@
+import { MicButton } from '../ai/MicButton';
+import { AssistantLogo } from '../ai/AssistantLogo';
+import { ThinkingSteps } from '../ai/ThinkingSteps';
 import React, { FormEvent, useEffect, useRef, useState } from 'react';
+import { WebSearchToggle } from '../ai/WebSearchToggle';
 import {
   ArrowUp, Bot, ChevronDown, Database, ExternalLink, LoaderCircle, LockKeyhole,
   ShieldCheck, Sparkles, Trash2, User, Wrench,
@@ -116,10 +120,10 @@ export const DashboardAssistant: React.FC<DashboardAssistantProps> = ({ snapshot
       <div className="border-b border-line bg-surface p-5 sm:p-6">
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-start gap-3">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-brand/25 bg-brand-soft text-brand"><Sparkles className="h-5 w-5" /></div>
+            <AssistantLogo size={44}/>
             <div>
               <div className="flex flex-wrap items-center gap-2">
-                <h2 className="text-base font-extrabold text-ink">Ask ArthaMind AI</h2>
+                <h2 className="text-base font-extrabold text-ink">ArthaMind CFO Intelligence</h2>
                 <span className="rounded-full border border-success-fill/30 bg-success-fill/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-success">Data grounded</span>
                 <span className="inline-flex items-center gap-1 rounded-full border border-interactive/30 bg-interactive-soft px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-interactive"><Wrench className="h-3 w-3" /> Tool-Calling Enabled</span>
               </div>
@@ -156,16 +160,18 @@ export const DashboardAssistant: React.FC<DashboardAssistantProps> = ({ snapshot
             </div>
           </div>
         ))}
-        {loading && <div className="flex items-center gap-2.5 text-xs text-secondary"><div className="flex h-7 w-7 items-center justify-center rounded-lg border border-interactive/30 bg-interactive/10 text-interactive"><LoaderCircle className="h-3.5 w-3.5 animate-spin" /></div>Reading enabled evidence and context…</div>}
+        <ThinkingSteps active={loading} compact/>
         <div ref={messagesEndRef} />
       </div>
 
       <div className="border-t border-line bg-surface p-4 sm:p-5">
         {error && <div className="mb-3 rounded-xl border border-danger/25 bg-danger/10 px-3 py-2 text-[11px] leading-relaxed text-danger">{error}</div>}
-        <div className="scrollbar-thin mb-3 flex gap-2 overflow-x-auto pb-1">{suggestions.slice(0, 4).map((suggestion) => <button key={suggestion} type="button" disabled={!ready || loading} onClick={() => void submitQuestion(suggestion)} className="shrink-0 rounded-full border border-line bg-subtle px-3 py-1.5 text-[10px] font-semibold text-secondary transition hover:border-interactive/40 hover:bg-interactive-soft hover:text-interactive disabled:opacity-45">{suggestion}</button>)}</div>
+        <div className="scrollbar-thin mb-3 flex gap-2 overflow-x-auto pb-1">{suggestions.slice(0, 4).map((suggestion) => <button key={suggestion} type="button" disabled={!ready || loading} onClick={() => void submitQuestion(suggestion)} className="shrink-0 rounded-full border border-line bg-subtle px-3 py-1.5 text-[10px] font-semibold text-secondary transition hover:bg-interactive-soft hover:text-interactive disabled:opacity-45">{suggestion}</button>)}</div>
+        <div className="mb-2"><WebSearchToggle/></div>
         <form onSubmit={handleSubmit} className="relative">
           <label htmlFor="dashboard-assistant-question" className="sr-only">Ask ArthaMind AI about this dashboard</label>
           <textarea id="dashboard-assistant-question" value={question} onChange={(event) => setQuestion(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); void submitQuestion(question); } }} rows={3} maxLength={1200} disabled={!ready || loading} placeholder="Ask about public data or your explicitly enabled personal context…" className="w-full resize-none rounded-2xl border border-line-strong bg-surface px-4 py-3 pr-12 text-xs leading-5 text-ink outline-none placeholder:text-secondary focus:border-interactive focus:ring-2 focus:ring-interactive disabled:opacity-60" />
+          <MicButton className="absolute bottom-3 right-14" onText={setQuestion} disabled={!ready || loading}/>
           <button type="submit" disabled={!ready || loading || !question.trim()} aria-label="Send dashboard question" className="absolute bottom-3 right-3 flex h-8 w-8 items-center justify-center rounded-xl bg-brand text-brand-foreground hover:text-white transition hover:bg-brand-hover disabled:opacity-40"><ArrowUp className="h-4 w-4" /></button>
         </form>
         <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-[9px] text-secondary"><div className="flex items-center gap-1.5"><ShieldCheck className="h-3 w-3 text-success" />Educational analysis only — not investment, tax, legal, or financial advice.</div><button type="button" onClick={() => onNavigate('tutor')} className="inline-flex items-center gap-1 font-semibold text-interactive">Open full tutor <ExternalLink className="h-3 w-3" /></button></div>

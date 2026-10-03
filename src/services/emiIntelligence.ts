@@ -141,7 +141,12 @@ export function buildEmiIntelligenceSnapshot(records: EmiRecord[]): EmiIntellige
   const scheduleCompletenessPercent = active.length ? round(mean(scheduleFields) * 100) : null;
 
   const commitmentLoadScore = commitmentToIncomePercent == null ? null : clamp(100 - Math.min(commitmentToIncomePercent / 50, 1) * 100);
-  const cashFlowCoverage = activeMonthlyCommitment > 0 && recordedNetCashFlow > 0 ? recordedNetCashFlow / activeMonthlyCommitment : activeMonthlyCommitment === 0 && monthlyIncome > 0 ? 2 : null;
+  // A zero or negative recorded net cash flow is real evidence of 0× coverage, not missing data.
+  const cashFlowCoverage = monthlyIncome <= 0
+    ? null
+    : activeMonthlyCommitment > 0
+      ? Math.max(0, recordedNetCashFlow) / activeMonthlyCommitment
+      : 2;
   const cashFlowCoverageScore = cashFlowCoverage == null ? null : clamp(Math.min(cashFlowCoverage / 2, 1) * 100);
   const calendarScore = scheduleCompletenessPercent;
 
@@ -170,7 +175,7 @@ export function buildEmiIntelligenceSnapshot(records: EmiRecord[]): EmiIntellige
 
   const dimensions: EmiHealthDimension[] = [
     healthDimension('commitment-load', 'Commitment Load', commitmentLoadScore, '100 minus the active recorded commitment-to-income ratio scaled across a 0–50% descriptive range.', commitmentToIncomePercent == null ? 'Recorded income is needed for this ratio.' : `Active recorded commitments represent ${commitmentToIncomePercent}% of current recorded monthly income.`, [`Active commitments: ${active.length}`, `Monthly commitment: ₹${Math.round(activeMonthlyCommitment).toLocaleString('en-IN')}`], ['Internal descriptive ratio only; not lender affordability or eligibility.']),
-    healthDimension('cash-flow-coverage', 'Cash-Flow Coverage', cashFlowCoverageScore, 'Recorded monthly net cash flow divided by active monthly recorded commitments; full reference score at 2× coverage.', cashFlowCoverage == null ? 'Positive recorded net cash flow and commitment amounts are needed.' : `Recorded net cash flow covers active recorded commitments by ${round(cashFlowCoverage)}×.`, [`Recorded income: ₹${Math.round(monthlyIncome).toLocaleString('en-IN')}`, `Recorded current-month expenses: ₹${Math.round(recordedExpenseTotal).toLocaleString('en-IN')}`], ['If EMI payments are also recorded as expenses, this comparison can overlap those outflows; review the expense records for interpretation.']),
+    healthDimension('cash-flow-coverage', 'Cash-Flow Coverage', cashFlowCoverageScore, 'Recorded monthly net cash flow divided by active monthly recorded commitments; full reference score at 2× coverage.', cashFlowCoverage == null ? 'Recorded income is needed before coverage can be calculated.' : `Recorded net cash flow covers active recorded commitments by ${round(cashFlowCoverage)}×.`, [`Recorded income: ₹${Math.round(monthlyIncome).toLocaleString('en-IN')}`, `Recorded current-month expenses: ₹${Math.round(recordedExpenseTotal).toLocaleString('en-IN')}`], ['If EMI payments are also recorded as expenses, this comparison can overlap those outflows; review the expense records for interpretation.']),
     healthDimension('calendar-readiness', 'Payment Calendar Readiness', calendarScore, 'Average completeness of EMI amount, next due date and remaining instalment fields across active commitments.', calendarScore == null ? 'Add an active EMI to evaluate schedule readiness.' : `${calendarScore}% of the core active schedule fields are recorded.`, [`Active commitments: ${active.length}`], ['A recorded due date does not prove payment status.']),
     healthDimension('concentration-risk', 'Concentration Risk', concentrationScore, 'Measures the share of active recorded monthly commitment assigned to the largest recorded lender; no score without lender labels.', topLenderShare == null ? 'Lender information is needed to assess concentration.' : `${round(topLenderShare * 100)}% of lender-labeled active monthly commitment is associated with the largest recorded lender.`, [`Lenders represented: ${lenderAmounts.size}`], ['This is portfolio concentration only; it is not a lender-quality or credit-risk assessment.']),
     healthDimension('tenure-exposure', 'Tenure Exposure', tenureScore, 'Descriptive score declines as average remaining recorded monthly instalments approach 120 months.', averageRemainingTenureMonths == null ? 'Remaining instalments or end-date data is needed.' : `Average remaining recorded tenure is ${averageRemainingTenureMonths} months.`, [`Commitments with remaining tenure: ${remainingTenures.length}/${active.length}`], ['Longer tenure is not automatically bad; this dimension only describes duration exposure.']),
@@ -196,6 +201,7 @@ export function buildEmiIntelligenceSnapshot(records: EmiRecord[]): EmiIntellige
   const upcomingTimeline: EmiTimelineItem[] = twelveMonthRows.map(({ record, row }) => {
     const dueTime = new Date(`${row.dueDate}T00:00:00Z`).getTime();
     const paid = paymentByDueDate.has(`${record.id}:${row.dueDate}`);
+    const paymentStatus: EmiTimelineItem['paymentStatus'] = paid ? 'Paid' : 'Payment status not recorded';
     return {
       recordId: record.id,
       name: record.name,
@@ -203,7 +209,7 @@ export function buildEmiIntelligenceSnapshot(records: EmiRecord[]): EmiIntellige
       loanType: record.loanType,
       dueDate: row.dueDate,
       amount: row.amount,
-      paymentStatus: paid ? 'Paid' : 'Payment status not recorded',
+      paymentStatus,
       isPastDate: Number.isFinite(dueTime) && dueTime < today,
     };
   }).sort((a, b) => a.dueDate.localeCompare(b.dueDate));

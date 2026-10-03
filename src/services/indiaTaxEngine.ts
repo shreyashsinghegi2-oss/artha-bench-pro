@@ -15,6 +15,9 @@ import {
 Decimal.set({ precision: 30, rounding: Decimal.ROUND_HALF_UP });
 
 const ZERO = new Decimal(0);
+const HOUSE_PROPERTY_LOSS_SET_OFF_LIMIT = 200_000;
+/** Surcharge on listed-equity STCG/LTCG (sections 111A/112A) is capped at 15%. */
+const EQUITY_GAINS_SURCHARGE_CAP = 0.15;
 const money = (value: Decimal.Value | undefined | null) => new Decimal(value ?? 0);
 const nonNegative = (value: Decimal) => Decimal.max(ZERO, value);
 const output = (value: Decimal) => value.toDecimalPlaces(0).toFixed(0);
@@ -29,12 +32,35 @@ function annualAmount(source: IncomeSource): Decimal {
   }
 }
 
-function monthsBetween(start?: string, end?: string): number | null {
+/**
+ * Whole months completed between two ISO dates. A month counts only once the day of month is reached,
+ * so 15 Jan 2024 → 10 Jan 2025 is 11 months (short-term), while 15 Jan 2024 → 16 Jan 2025 is 12 months.
+ * Month-end purchases are clamped: 31 Jan → 29 Feb counts as one full month.
+ */
+export function monthsBetween(start?: string, end?: string): number | null {
   if (!start || !end) return null;
   const startDate = new Date(`${start}T00:00:00Z`);
   const endDate = new Date(`${end}T00:00:00Z`);
   if (!Number.isFinite(startDate.getTime()) || !Number.isFinite(endDate.getTime()) || endDate < startDate) return null;
-  return (endDate.getUTCFullYear() - startDate.getUTCFullYear()) * 12 + endDate.getUTCMonth() - startDate.getUTCMonth();
+  let months = (endDate.getUTCFullYear() - startDate.getUTCFullYear()) * 12 + endDate.getUTCMonth() - startDate.getUTCMonth();
+  const endMonthLastDay = new Date(Date.UTC(endDate.getUTCFullYear(), endDate.getUTCMonth() + 1, 0)).getUTCDate();
+  if (endDate.getUTCDate() < Math.min(startDate.getUTCDate(), endMonthLastDay)) months -= 1;
+  return months;
+}
+
+/** Long-term only when held for MORE than the threshold months (e.g. listed equity: > 12 months). */
+function isHeldLongerThan(start: string | undefined, end: string | undefined, thresholdMonths: number): boolean | null {
+  const months = monthsBetween(start, end);
+  if (months === null) return null;
+  if (months > thresholdMonths) return true;
+  if (months < thresholdMonths) return false;
+  // Exactly N whole months: long-term only if at least one day beyond the N-month anniversary.
+  const startDate = new Date(`${start}T00:00:00Z`);
+  const endDate = new Date(`${end}T00:00:00Z`);
+  const anniversary = new Date(Date.UTC(startDate.getUTCFullYear(), startDate.getUTCMonth() + thresholdMonths, 1));
+  const lastDay = new Date(Date.UTC(anniversary.getUTCFullYear(), anniversary.getUTCMonth() + 1, 0)).getUTCDate();
+  anniversary.setUTCDate(Math.min(startDate.getUTCDate(), lastDay));
+  return endDate > anniversary;
 }
 
 export function calculateGrossIncome(sources: IncomeSource[]): Decimal {
@@ -91,6 +117,9 @@ export function calculateIncomeFromHouseProperty(
   if (regime === 'new' && taxable.lt(0)) {
     warnings.push('House-property loss is not set off against other income under the new regime in this estimate.');
     taxable = ZERO;
+  } else if (taxable.lt(-HOUSE_PROPERTY_LOSS_SET_OFF_LIMIT)) {
+    warnings.push('House-property loss set-off against other income is capped at ₹2,00,000; the excess is carried forward and excluded from this estimate.');
+    taxable = money(-HOUSE_PROPERTY_LOSS_SET_OFF_LIMIT);
   }
   return { taxable, tds, warnings };
 }
@@ -124,7 +153,7 @@ export function calculateBusinessOrProfessionalIncome(
 export function calculateCapitalGains(
   sources: IncomeSource[],
   rules: IndiaTaxRuleConfig,
-): { normalRateGain: Decimal; totalGain: Decimal; specialRateTax: Decimal; warnings: string[] } {
+): { normalRateGain: Decimal; totalGain: Decimal; specialRateTax: Decimal; equityGainsTax: Decimal; warnings: string[] } {
   let normalRateGain = ZERO;
   let totalGain = ZERO;
   let listedEquityLtcg = ZERO;
@@ -153,11 +182,11 @@ export function calculateCapitalGains(
       continue;
     }
     if (subtype === 'listed-equity' || subtype === 'equity-mutual-fund' || subtype === 'reit-invit') {
-      const heldMonths = monthsBetween(details?.buyDate, details?.sellDate);
-      if (heldMonths === null) {
+      const longTerm = isHeldLongerThan(details?.buyDate, details?.sellDate, rules.capitalGains.listedEquityLongTermMonths);
+      if (longTerm === null) {
         warnings.push('Listed-equity holding period is missing; the gain is marked for review and taxed at the short-term configured rate.');
         listedEquityStcg = listedEquityStcg.plus(gain);
-      } else if (heldMonths >= rules.capitalGains.listedEquityLongTermMonths) {
+      } else if (longTerm) {
         listedEquityLtcg = listedEquityLtcg.plus(gain);
       } else {
         listedEquityStcg = listedEquityStcg.plus(gain);
@@ -176,11 +205,12 @@ export function calculateCapitalGains(
   }
 
   const taxableLtcg = nonNegative(listedEquityLtcg.minus(rules.capitalGains.listedEquityLtcgExemption));
-  const specialRateTax = listedEquityStcg.times(rules.capitalGains.listedEquityStcgRate)
-    .plus(taxableLtcg.times(rules.capitalGains.listedEquityLtcgRate))
+  const equityGainsTax = listedEquityStcg.times(rules.capitalGains.listedEquityStcgRate)
+    .plus(taxableLtcg.times(rules.capitalGains.listedEquityLtcgRate));
+  const specialRateTax = equityGainsTax
     .plus(vdaGain.times(rules.capitalGains.vdaRate))
     .plus(otherSpecialTax);
-  return { normalRateGain, totalGain, specialRateTax, warnings };
+  return { normalRateGain, totalGain, specialRateTax, equityGainsTax, warnings };
 }
 
 export function calculateIncomeFromOtherSources(sources: IncomeSource[]): { taxable: Decimal; exempt: Decimal; specialRateTax: Decimal; warnings: string[] } {
@@ -268,10 +298,14 @@ export function calculateSurcharge(
   taxAfterRebate: Decimal,
   regime: TaxRegimeResolved,
   rules: IndiaTaxRuleConfig,
+  equityGainsTax: Decimal = ZERO,
 ): Decimal {
   const bracket = rules.surcharge.find((item) => totalIncome.gt(item.above));
   if (!bracket) return ZERO;
-  return taxAfterRebate.times(regime === 'new' && bracket.newRate !== undefined ? bracket.newRate : bracket.rate);
+  const rate = new Decimal(regime === 'new' && bracket.newRate !== undefined ? bracket.newRate : bracket.rate);
+  const equityPortion = Decimal.min(nonNegative(equityGainsTax), nonNegative(taxAfterRebate));
+  const otherPortion = nonNegative(taxAfterRebate).minus(equityPortion);
+  return otherPortion.times(rate).plus(equityPortion.times(Decimal.min(rate, EQUITY_GAINS_SURCHARGE_CAP)));
 }
 
 export function calculateCess(taxAndSurcharge: Decimal, rules: IndiaTaxRuleConfig): Decimal {
@@ -335,7 +369,7 @@ function calculateForRegime(
   }
   const slabTax = nonNegative(slabTaxBeforeRebate.minus(rebate));
   const taxBeforeSurcharge = slabTax.plus(specialRateTax);
-  const surcharge = calculateSurcharge(taxableTotal, taxBeforeSurcharge, regime, rules);
+  const surcharge = calculateSurcharge(taxableTotal, taxBeforeSurcharge, regime, rules, capital.equityGainsTax);
   const cess = calculateCess(taxBeforeSurcharge.plus(surcharge), rules);
   const totalTaxLiability = taxBeforeSurcharge.plus(surcharge).plus(cess);
 

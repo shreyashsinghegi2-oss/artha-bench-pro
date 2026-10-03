@@ -1,11 +1,13 @@
 import type { Request, Response } from 'express';
+import { withDateContext } from './dateContext';
+import { extractQuestion, groundSystemPrompt } from './liveGrounding';
 
 export const DEFAULT_NVIDIA_MODEL = 'nvidia/nemotron-3-ultra-550b-a55b';
 export const NVIDIA_BASE_URL = 'https://integrate.api.nvidia.com/v1';
 const allowedModels = new Set([DEFAULT_NVIDIA_MODEL]);
 
 function buildMessages(systemPrompt: string, userPrompt: string, history?: Array<{ role: string; content: string }>) {
-  const messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [{ role: 'system', content: systemPrompt }];
+  const messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [{ role: 'system', content: withDateContext(systemPrompt) }];
   for (const item of Array.isArray(history) ? history.slice(-10) : []) {
     if ((item.role === 'user' || item.role === 'assistant') && typeof item.content === 'string' && item.content.trim()) messages.push({ role: item.role, content: item.content.slice(0, 4_000) });
   }
@@ -36,7 +38,7 @@ export async function callNvidiaNemotron(userPrompt: string, history?: Array<{ r
         headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
           model,
-          messages: buildMessages(systemPrompt || 'You are ArthaBench NVIDIA Nemotron financial-learning assistant. Explain clearly, reason carefully, and never provide personalized buy/sell trading instructions. Never output JSON, code, API payloads or developer instructions.', userPrompt, history),
+          messages: buildMessages(await groundSystemPrompt(systemPrompt || 'You are ArthaBench NVIDIA Nemotron financial-learning assistant. Explain clearly, reason carefully, and never provide personalized buy/sell trading instructions. Never output JSON, code, API payloads or developer instructions.', extractQuestion(userPrompt)), userPrompt, history),
           temperature: 0.2,
           top_p: 0.7,
           max_tokens: 2_000,

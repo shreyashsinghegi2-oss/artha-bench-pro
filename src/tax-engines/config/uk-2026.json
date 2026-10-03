@@ -1,0 +1,21 @@
+{
+  "country": "UK",
+  "name": "United Kingdom (income tax, England, Wales and Northern Ireland)",
+  "currency": "GBP",
+  "year": "2026",
+  "year_label": "Tax year 2026-27 (6 April 2026 to 5 April 2027)",
+  "last_verified": "2026-09-30",
+  "sources": [
+    "https://www.gov.uk/income-tax-rates",
+    "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2026-to-2027"
+  ],
+  "notes": [
+    "Non-savings, non-dividend income. Scotland has different rates and is not included.",
+    "Personal allowance £12,570, reduced by £1 for every £2 of income above £100,000 (zero from £125,140); this creates a 60% effective marginal rate between £100,000 and £125,140.",
+    "Excludes National Insurance, student loan repayments, Marriage Allowance and Blind Person's Allowance."
+  ],
+  "schedules": {
+    "default": { "allowance": 12570, "allowance_taper": { "start": 100000, "per": 2 }, "brackets": [
+      { "up_to": 37700, "rate": 0.20 }, { "up_to": 125140, "rate": 0.40 }, { "up_to": null, "rate": 0.45 } ] }
+  }
+}

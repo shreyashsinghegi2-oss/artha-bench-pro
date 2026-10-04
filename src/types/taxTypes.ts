@@ -96,16 +96,7 @@ export interface IncomeTaxDetails {
   documentStatus?: DocumentStatus;
 }
 
-export type DeductionType =
-  | '80c'
-  | 'health-insurance'
-  | 'nps'
-  | 'education-loan-interest'
-  | 'donations'
-  | 'savings-interest'
-  | 'home-loan'
-  | 'hra'
-  | 'other';
+export type DeductionType = '80c' | 'health-insurance' | 'nps' | 'education-loan-interest' | 'donations' | 'savings-interest' | 'home-loan' | 'hra' | 'other';
 
 export interface TaxDeductionEntry {
   id: string;

@@ -4,7 +4,13 @@ import { getWebSearchMode } from './webSearchMode';
 
 /** Mirrors useMyDataEnabled() in ./userContext (keep USE_MY_DATA_KEY in sync), read here so that module (and its finance engines) loads only when an AI request is sent. */
 const USE_MY_DATA_KEY = 'arthamind-use-my-data-v1';
-const myDataEnabled = (): boolean => { try { return localStorage.getItem(USE_MY_DATA_KEY) !== 'off'; } catch { return false; } };
+const myDataEnabled = (): boolean => {
+  try {
+    return localStorage.getItem(USE_MY_DATA_KEY) !== 'off';
+  } catch {
+    return false;
+  }
+};
 
 const FALLBACK_PATHS = new Set([
   '/api/dashboard/assistant',
@@ -70,12 +76,22 @@ function fallbackFor(path: string, body: Record<string, any>) {
     const answer = buildGroundedFallbackAnswer(question, snapshot);
     return jsonResponse({
       answer,
-      structuredAnswer: buildFallbackStructuredAnswer({ title: 'ArthaMind dashboard fallback', question, answer, sourceLabels: sources, dataAsOf: snapshot.capturedAt || now }),
+      structuredAnswer: buildFallbackStructuredAnswer({
+        title: 'ArthaMind dashboard fallback',
+        question,
+        answer,
+        sourceLabels: sources,
+        dataAsOf: snapshot.capturedAt || now,
+      }),
       provider: 'demo',
       model: null,
       groundedAt: now,
       sourceLabels: sources,
-      suggestedQuestions: ['Explain the selected market snapshot.', 'What data is missing from this dashboard?', 'Summarise provider freshness and limitations.'],
+      suggestedQuestions: [
+        'Explain the selected market snapshot.',
+        'What data is missing from this dashboard?',
+        'Summarise provider freshness and limitations.',
+      ],
       disclaimer: DISCLAIMER,
       requestId: `fallback-${Date.now()}`,
     });
@@ -86,12 +102,22 @@ function fallbackFor(path: string, body: Record<string, any>) {
     const answer = `${buildGroundedFallbackAnswer(question, publicContext)}\n\nPersonal context note\nThe authenticated personal-data endpoint was unavailable, so this fallback did not read or infer private finance records.`;
     return jsonResponse({
       answer,
-      structuredAnswer: buildFallbackStructuredAnswer({ title: 'ArthaMind public-context fallback', question, answer, sourceLabels: ['Visible public dashboard snapshot'], dataAsOf: publicContext.capturedAt || now }),
+      structuredAnswer: buildFallbackStructuredAnswer({
+        title: 'ArthaMind public-context fallback',
+        question,
+        answer,
+        sourceLabels: ['Visible public dashboard snapshot'],
+        dataAsOf: publicContext.capturedAt || now,
+      }),
       provider: 'demo',
       model: null,
       groundedAt: now,
       sourceLabels: ['Visible public dashboard snapshot'],
-      suggestedQuestions: ['Explain the visible public data.', 'What personal context is unavailable right now?', 'What can I verify directly on the dashboard?'],
+      suggestedQuestions: [
+        'Explain the visible public data.',
+        'What personal context is unavailable right now?',
+        'What can I verify directly on the dashboard?',
+      ],
       disclaimer: DISCLAIMER,
       requestId: `fallback-${Date.now()}`,
       personalDataUsed: false,
@@ -106,12 +132,22 @@ function fallbackFor(path: string, body: Record<string, any>) {
     return jsonResponse({
       symbol,
       answer,
-      structuredAnswer: buildFallbackStructuredAnswer({ title: `${symbol} company assistant fallback`, question, answer, sourceLabels: [`Selected identity: ${symbol}`], dataAsOf: now }),
+      structuredAnswer: buildFallbackStructuredAnswer({
+        title: `${symbol} company assistant fallback`,
+        question,
+        answer,
+        sourceLabels: [`Selected identity: ${symbol}`],
+        dataAsOf: now,
+      }),
       provider: 'demo',
       model: null,
       groundedAt: now,
       disclaimer: DISCLAIMER,
-      suggestedQuestions: ['Explain what company data is currently unavailable.', 'What should I verify from the visible company panel?', 'Explain the difference between quote data and fundamentals.'],
+      suggestedQuestions: [
+        'Explain what company data is currently unavailable.',
+        'What should I verify from the visible company panel?',
+        'Explain the difference between quote data and fundamentals.',
+      ],
       requestId: `fallback-${Date.now()}`,
     });
   }
@@ -133,7 +169,13 @@ function fallbackFor(path: string, body: Record<string, any>) {
     };
     const answer = `${buildGroundedFallbackAnswer(question, visible)}\n\nCalculation boundary\nThe scenario AI endpoint was unavailable, so this fallback does not claim a newly verified deterministic result. Use the calculator's visible deterministic result as the numerical source of truth.`;
     return jsonResponse({
-      structuredAnswer: buildFallbackStructuredAnswer({ title: 'ArthaMind scenario fallback', question, answer, sourceLabels: ['Visible scenario inputs / calculator state'], dataAsOf: now }),
+      structuredAnswer: buildFallbackStructuredAnswer({
+        title: 'ArthaMind scenario fallback',
+        question,
+        answer,
+        sourceLabels: ['Visible scenario inputs / calculator state'],
+        dataAsOf: now,
+      }),
       sourceLabels: ['Visible scenario inputs / calculator state'],
       contextNotes: ['External AI generation unavailable; no hidden market or company fact was substituted.'],
       suggestedQuestions: ['Which visible assumption should I review?', 'What data is missing from this scenario?', 'Explain the limitation of this fallback.'],
@@ -152,7 +194,13 @@ function fallbackFor(path: string, body: Record<string, any>) {
       publishedAt: body.publishedAt,
     };
     const answer = buildGroundedFallbackAnswer(question || `Explain this supplied headline: ${body.title || ''}`, visible);
-    const structuredAnswer = buildFallbackStructuredAnswer({ title: 'News explanation fallback', question, answer, sourceLabels: [String(body.sourceName || 'Supplied news source')], dataAsOf: body.publishedAt || now });
+    const structuredAnswer = buildFallbackStructuredAnswer({
+      title: 'News explanation fallback',
+      question,
+      answer,
+      sourceLabels: [String(body.sourceName || 'Supplied news source')],
+      dataAsOf: body.publishedAt || now,
+    });
     return jsonResponse({
       explanation: answer,
       structuredAnswer,
@@ -183,7 +231,14 @@ export function installAiFetchResilience() {
       logFromRequestBody(originalInit?.body, path);
       // With the user's consent, attach one summary of their data from every feature.
       if (myDataEnabled() && typeof originalInit?.body === 'string') {
-        try { const body = JSON.parse(originalInit.body); const { buildUserContext } = await import('./userContext'); const ctx = buildUserContext(); if (ctx && body && typeof body === 'object') init = { ...init, body: JSON.stringify({ ...body, userProfile: ctx }) }; } catch { /* not JSON */ }
+        try {
+          const body = JSON.parse(originalInit.body);
+          const { buildUserContext } = await import('./userContext');
+          const ctx = buildUserContext();
+          if (ctx && body && typeof body === 'object') init = { ...init, body: JSON.stringify({ ...body, userProfile: ctx }) };
+        } catch {
+          /* not JSON */
+        }
       }
     }
     const isFallbackPath = FALLBACK_PATHS.has(path);

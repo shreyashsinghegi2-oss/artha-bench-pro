@@ -27,7 +27,10 @@ export function installPersonalAiRequestGuard(): void {
         }
         const required = [...new Set(missing)];
         if (required.length) {
-          return new Response(JSON.stringify({ error: `Enable ${required.join(' + ')} context before asking ArthaMind to use those personal records.` }), { status: 403, headers: { 'Content-Type': 'application/json' } });
+          return new Response(JSON.stringify({ error: `Enable ${required.join(' + ')} context before asking ArthaMind to use those personal records.` }), {
+            status: 403,
+            headers: { 'Content-Type': 'application/json' },
+          });
         }
       } catch {
         // Preserve non-JSON/public Tutor requests.

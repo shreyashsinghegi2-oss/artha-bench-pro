@@ -20,14 +20,27 @@ const LOGOS: Record<string, { src: string; name: string; match: RegExp }> = {
 
 /** Other spellings of the same instrument used across providers and sample data. */
 const ALIASES: Record<string, string> = {
-  '^NSEI': 'NIFTY50', NIFTY: 'NIFTY50', 'NIFTY 50': 'NIFTY50', 'NIFTY 50 INDEX': 'NIFTY50', 'NSE INDEX': 'NIFTY50',
-  '^BSESN': 'SENSEX', 'BSE SENSEX': 'SENSEX', 'S&P BSE SENSEX': 'SENSEX',
-  'APPLE INC.': 'AAPL', APPLE: 'AAPL', MICROSOFT: 'MSFT', NVIDIA: 'NVDA',
+  '^NSEI': 'NIFTY50',
+  NIFTY: 'NIFTY50',
+  'NIFTY 50': 'NIFTY50',
+  'NIFTY 50 INDEX': 'NIFTY50',
+  'NSE INDEX': 'NIFTY50',
+  '^BSESN': 'SENSEX',
+  'BSE SENSEX': 'SENSEX',
+  'S&P BSE SENSEX': 'SENSEX',
+  'APPLE INC.': 'AAPL',
+  APPLE: 'AAPL',
+  MICROSOFT: 'MSFT',
+  NVIDIA: 'NVDA',
 };
 
 /** "RELIANCE.NS", "TCS:NSE" and "hdfcbank" all resolve to the same key. */
 export const logoKey = (symbol: string) => {
-  const key = symbol.toUpperCase().replace(/\.(NS|BO)$/, '').replace(/:(NSE|BSE|NASDAQ|NYSE)$/, '').trim();
+  const key = symbol
+    .toUpperCase()
+    .replace(/\.(NS|BO)$/, '')
+    .replace(/:(NSE|BSE|NASDAQ|NYSE)$/, '')
+    .trim();
   return ALIASES[key] ?? key;
 };
 
@@ -44,7 +57,17 @@ export const hasMarketMark = (symbol: string) => Boolean(companyLogoSrc(symbol) 
 
 export const CompanyLogo: React.FC<{ symbol: string; size?: number; className?: string }> = ({ symbol, size = 28, className = '' }) => {
   const logo = LOGOS[logoKey(symbol)];
-  if (!logo) return assetKind(symbol) ? <AssetIcon symbol={symbol} size={size} className={className}/> : null;
-  return <img src={logo.src} alt={`${logo.name} logo`} width={size} height={size} loading="lazy" decoding="async"
-    className={`shrink-0 rounded-lg bg-white object-contain ${className}`.trim()} style={{ width: size, height: size }} />;
+  if (!logo) return assetKind(symbol) ? <AssetIcon symbol={symbol} size={size} className={className} /> : null;
+  return (
+    <img
+      src={logo.src}
+      alt={`${logo.name} logo`}
+      width={size}
+      height={size}
+      loading="lazy"
+      decoding="async"
+      className={`shrink-0 rounded-lg bg-white object-contain ${className}`.trim()}
+      style={{ width: size, height: size }}
+    />
+  );
 };

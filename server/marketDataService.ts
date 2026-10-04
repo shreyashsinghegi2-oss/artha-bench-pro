@@ -8,11 +8,7 @@ import { NormalizedMarketQuote } from '../src/types';
 import { fetchQuoteFromProvider, fetchHistoryFromProvider } from './providers/marketDataProvider';
 
 function isUsableQuote(quote: NormalizedMarketQuote | null | undefined) {
-  return Boolean(
-    quote &&
-    quote.freshness !== 'demo' &&
-    Number.isFinite(quote.price),
-  );
+  return Boolean(quote && quote.freshness !== 'demo' && Number.isFinite(quote.price));
 }
 
 export async function getMarketQuote(symbol: string, assetType = 'equity') {
@@ -39,9 +35,5 @@ export async function getMarketHistory(symbol: string, range = '1m') {
 
 export async function getMarketOverview(symbols: string[]) {
   const settled = await Promise.allSettled(symbols.map((symbol) => getMarketQuote(symbol)));
-  return settled.flatMap((result) =>
-    result.status === 'fulfilled' && isUsableQuote(result.value.quote)
-      ? [result.value.quote]
-      : [],
-  );
+  return settled.flatMap((result) => (result.status === 'fulfilled' && isUsableQuote(result.value.quote) ? [result.value.quote] : []));
 }

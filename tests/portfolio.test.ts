@@ -29,7 +29,18 @@ describe('CAS import', () => {
     expect(cas.statementPeriod).toBe('2024-04-01 to 2026-09-24');
     expect(cas.schemes).toHaveLength(2);
     const [pp, hdfc] = cas.schemes;
-    expect(pp).toMatchObject({ name: 'Parag Parikh Flexi Cap Fund - Direct Plan - Growth', isin: 'INF879O01027', folio: '12345678 / 90', units: 267.857, nav: 92, navDate: '2026-09-24', cost: 20000, value: 24642.84, advisor: 'DIRECT', amc: 'Parag Parikh Mutual Fund' });
+    expect(pp).toMatchObject({
+      name: 'Parag Parikh Flexi Cap Fund - Direct Plan - Growth',
+      isin: 'INF879O01027',
+      folio: '12345678 / 90',
+      units: 267.857,
+      nav: 92,
+      navDate: '2026-09-24',
+      cost: 20000,
+      value: 24642.84,
+      advisor: 'DIRECT',
+      amc: 'Parag Parikh Mutual Fund',
+    });
     expect(pp.txns).toHaveLength(2); // stamp duty ignored
     expect(hdfc).toMatchObject({ name: 'HDFC Top 100 Fund - Regular Plan - Growth', value: 104500, advisor: 'ARN-12345' });
     expect(hdfc.txns[0]).toMatchObject({ kind: 'sell', amount: 5000, date: '2025-01-15' });
@@ -44,13 +55,27 @@ describe('CAS import', () => {
 describe('XIRR', () => {
   it('matches a known annual return', () => {
     // 1,00,000 invested, worth 1,10,000 exactly one year later → 10%.
-    expect(xirr([{ date: '2025-01-01', amount: -100000 }, { date: '2026-01-01', amount: 110000 }])!).toBeCloseTo(0.1, 3);
+    expect(
+      xirr([
+        { date: '2025-01-01', amount: -100000 },
+        { date: '2026-01-01', amount: 110000 },
+      ])!,
+    ).toBeCloseTo(0.1, 3);
   });
   it('handles a SIP (two instalments) and refuses impossible inputs', () => {
-    const r = xirr([{ date: '2024-04-10', amount: -10000 }, { date: '2025-04-10', amount: -10000 }, { date: '2026-04-10', amount: 23100 }])!;
+    const r = xirr([
+      { date: '2024-04-10', amount: -10000 },
+      { date: '2025-04-10', amount: -10000 },
+      { date: '2026-04-10', amount: 23100 },
+    ])!;
     expect(r).toBeCloseTo(0.1, 2); // 10000·1.1² + 10000·1.1 = 23,100
     expect(xirr([{ date: '2025-01-01', amount: -100 }])).toBeNull();
-    expect(xirr([{ date: '2025-01-01', amount: 100 }, { date: '2026-01-01', amount: 200 }])).toBeNull();
+    expect(
+      xirr([
+        { date: '2025-01-01', amount: 100 },
+        { date: '2026-01-01', amount: 200 },
+      ]),
+    ).toBeNull();
   });
 });
 
@@ -88,7 +113,8 @@ describe('SIP check', () => {
   it('buys monthly at actual NAVs and values at the latest NAV', () => {
     // NAV 100 flat for 2 years, then 110 on the last day → every unit gains 10%.
     const hist: Array<{ date: string; nav: number }> = [];
-    for (let d = new Date('2024-01-01'); d <= new Date('2026-01-01'); d.setUTCDate(d.getUTCDate() + 7)) hist.push({ date: d.toISOString().slice(0, 10), nav: 100 });
+    for (let d = new Date('2024-01-01'); d <= new Date('2026-01-01'); d.setUTCDate(d.getUTCDate() + 7))
+      hist.push({ date: d.toISOString().slice(0, 10), nav: 100 });
     hist.push({ date: '2026-01-02', nav: 110 });
     const r = sipBacktest(hist, 5000, 1)!;
     expect(r.months).toBe(12);

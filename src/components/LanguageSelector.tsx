@@ -25,7 +25,28 @@ export const SUPPORTED_LANGUAGES = [
 ] as const;
 
 /** English names, shown next to each native name so the menu stays readable in any language. */
-const ENGLISH_NAME: Record<string, string> = { en: 'English', hi: 'Hindi', mr: 'Marathi', gu: 'Gujarati', bn: 'Bengali', ta: 'Tamil', te: 'Telugu', kn: 'Kannada', ml: 'Malayalam', pa: 'Punjabi', ur: 'Urdu', or: 'Odia', as: 'Assamese', es: 'Spanish', fr: 'French', de: 'German', ar: 'Arabic', pt: 'Portuguese', it: 'Italian', ja: 'Japanese' };
+const ENGLISH_NAME: Record<string, string> = {
+  en: 'English',
+  hi: 'Hindi',
+  mr: 'Marathi',
+  gu: 'Gujarati',
+  bn: 'Bengali',
+  ta: 'Tamil',
+  te: 'Telugu',
+  kn: 'Kannada',
+  ml: 'Malayalam',
+  pa: 'Punjabi',
+  ur: 'Urdu',
+  or: 'Odia',
+  as: 'Assamese',
+  es: 'Spanish',
+  fr: 'French',
+  de: 'German',
+  ar: 'Arabic',
+  pt: 'Portuguese',
+  it: 'Italian',
+  ja: 'Japanese',
+};
 
 type GoogleTranslateElementConstructor = new (
   options: { pageLanguage: string; includedLanguages: string; autoDisplay: boolean },
@@ -71,8 +92,13 @@ function restoreOriginal() {
   for (const frame of Array.from(document.querySelectorAll<HTMLIFrameElement>('iframe.goog-te-banner-frame, iframe.skiptranslate, iframe[id$=".container"]'))) {
     try {
       const button = frame.contentDocument?.querySelector<HTMLElement>('[id$=".restore"], button[id*="restore"]');
-      if (button) { button.click(); return true; }
-    } catch { /* cross-origin frame: try the next approach */ }
+      if (button) {
+        button.click();
+        return true;
+      }
+    } catch {
+      /* cross-origin frame: try the next approach */
+    }
   }
   // Fallback: choosing the empty option in Google's own selector also restores the original.
   const select = document.querySelector<HTMLSelectElement>('.goog-te-combo');
@@ -89,10 +115,18 @@ function restoreOriginal() {
 let pageLanguage = 'en';
 let booted = false;
 const listeners = new Set<(code: string) => void>();
-const setPageLanguage = (code: string) => { pageLanguage = code; listeners.forEach((fn) => fn(code)); };
+const setPageLanguage = (code: string) => {
+  pageLanguage = code;
+  listeners.forEach((fn) => fn(code));
+};
 /** The language the page is shown in now (e.g. 'hi'), and a way to follow changes. */
 export const currentPageLanguage = () => pageLanguage;
-export const onPageLanguage = (fn: (code: string) => void) => { listeners.add(fn); return () => { listeners.delete(fn); }; };
+export const onPageLanguage = (fn: (code: string) => void) => {
+  listeners.add(fn);
+  return () => {
+    listeners.delete(fn);
+  };
+};
 
 function applyGoogleLanguage(code: string) {
   const select = document.querySelector<HTMLSelectElement>('.goog-te-combo');
@@ -159,7 +193,9 @@ export const LanguageSelector: React.FC<{ compact?: boolean }> = ({ compact = fa
   useEffect(() => {
     listeners.add(setLanguage);
     setLanguage(pageLanguage);
-    return () => { listeners.delete(setLanguage); };
+    return () => {
+      listeners.delete(setLanguage);
+    };
   }, []);
 
   useEffect(() => {
@@ -220,8 +256,15 @@ export const LanguageSelector: React.FC<{ compact?: boolean }> = ({ compact = fa
       clearGoogleCookies();
       // Restore the original page now; retry while Google finishes, and reload once only if the
       // page is still translated after that (the cookie is already cleared, so it loads in English).
-      [0, 250, 700].forEach((delay) => window.setTimeout(() => { if (isPageTranslated()) restoreOriginal(); hideGoogleChrome(); }, delay));
-      window.setTimeout(() => { if (isPageTranslated() && pageLanguage === 'en') window.location.reload(); }, 1600);
+      [0, 250, 700].forEach((delay) =>
+        window.setTimeout(() => {
+          if (isPageTranslated()) restoreOriginal();
+          hideGoogleChrome();
+        }, delay),
+      );
+      window.setTimeout(() => {
+        if (isPageTranslated() && pageLanguage === 'en') window.location.reload();
+      }, 1600);
       return;
     }
 
@@ -245,10 +288,7 @@ export const LanguageSelector: React.FC<{ compact?: boolean }> = ({ compact = fa
 
   return (
     <div className="relative flex items-center notranslate" translate="no" title={`Language: ${currentName}`}>
-      <Languages
-        className="pointer-events-none absolute left-2.5 h-4 w-4 text-secondary"
-        aria-hidden="true"
-      />
+      <Languages className="pointer-events-none absolute left-2.5 h-4 w-4 text-secondary" aria-hidden="true" />
       <label className="sr-only" htmlFor="artha-global-language">
         Select language
       </label>

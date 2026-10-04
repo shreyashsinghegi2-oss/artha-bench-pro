@@ -63,10 +63,7 @@ export function getBatchRunProgress(runId: string): BatchRunProgress | undefined
 /**
  * Executes a batch benchmark run across dataset scenarios.
  */
-export async function executeBatchBenchmark(
-  scenarioIds?: string[],
-  profile: 'India' | 'US' | 'Global' = 'US'
-): Promise<BatchRunProgress> {
+export async function executeBatchBenchmark(scenarioIds?: string[], profile: 'India' | 'US' | 'Global' = 'US'): Promise<BatchRunProgress> {
   const runId = `batch-${Date.now()}`;
   let scenariosToRun = BENCHMARK_DATASET_V1;
 

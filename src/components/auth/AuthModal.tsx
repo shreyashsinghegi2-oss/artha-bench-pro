@@ -89,7 +89,10 @@ export const AuthModal: React.FC = () => {
 
   useEffect(() => {
     setError(null);
-    if (auth.authScreen === 'otp') { setOtpCode(''); setResendIn(60); }
+    if (auth.authScreen === 'otp') {
+      setOtpCode('');
+      setResendIn(60);
+    }
   }, [auth.authScreen]);
 
   useEffect(() => {
@@ -184,40 +187,94 @@ export const AuthModal: React.FC = () => {
     });
   };
 
-  const title = auth.authScreen === 'login' ? 'Welcome back'
-    : auth.authScreen === 'signup' ? 'Create your free account'
-      : auth.authScreen === 'forgot' ? 'Reset your password'
-        : auth.authScreen === 'reset' ? 'Choose a new password'
-          : auth.authScreen === 'onboarding' ? 'Personalize your workspace'
-            : auth.authScreen === 'otp' ? 'Enter your email code'
-              : 'Check your email';
+  const title =
+    auth.authScreen === 'login'
+      ? 'Welcome back'
+      : auth.authScreen === 'signup'
+        ? 'Create your free account'
+        : auth.authScreen === 'forgot'
+          ? 'Reset your password'
+          : auth.authScreen === 'reset'
+            ? 'Choose a new password'
+            : auth.authScreen === 'onboarding'
+              ? 'Personalize your workspace'
+              : auth.authScreen === 'otp'
+                ? 'Enter your email code'
+                : 'Check your email';
 
-  const description = auth.authScreen === 'login'
-    ? 'Sign in to your portfolio, money report and AI CFO.'
-    : auth.authScreen === 'signup'
-      ? 'Track income, expenses, EMIs and investments, and get answers in your language.'
-      : auth.authScreen === 'onboarding'
-        ? 'These preferences personalize the interface. Optional values are never treated as verified financial facts.'
-        : auth.authScreen === 'otp'
-          ? 'A one-time code proves this email is yours. It expires soon and works only once.'
-        : 'Authentication is handled by Supabase Auth. Artha Bench never stores your raw password.';
+  const description =
+    auth.authScreen === 'login'
+      ? 'Sign in to your portfolio, money report and AI CFO.'
+      : auth.authScreen === 'signup'
+        ? 'Track income, expenses, EMIs and investments, and get answers in your language.'
+        : auth.authScreen === 'onboarding'
+          ? 'These preferences personalize the interface. Optional values are never treated as verified financial facts.'
+          : auth.authScreen === 'otp'
+            ? 'A one-time code proves this email is yours. It expires soon and works only once.'
+            : 'Authentication is handled by Supabase Auth. Artha Bench never stores your raw password.';
 
   return (
-    <div className="am-overlay" role="dialog" aria-modal="true" aria-labelledby="auth-title" onMouseDown={(e) => { if (e.target === e.currentTarget) auth.closeAuth(); }}>
+    <div
+      className="am-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="auth-title"
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) auth.closeAuth();
+      }}
+    >
       <div className="am-card">
         <aside className="am-brand">
-          <div className="am-glow" aria-hidden="true"/>
+          <div className="am-glow" aria-hidden="true" />
           <div className="am-brand-top">
             <ArthaBenchLogo compact />
-            <span className="am-pill"><ShieldCheck size={13}/> Private by design</span>
+            <span className="am-pill">
+              <ShieldCheck size={13} /> Private by design
+            </span>
           </div>
           <div className="am-brand-mid">
-            <h2>Your money, understood.<br/><em>In your language.</em></h2>
+            <h2>
+              Your money, understood.
+              <br />
+              <em>In your language.</em>
+            </h2>
             <ul className="am-points">
-              <li><span><PieChart size={16}/></span><div><b>Portfolio & net worth</b><small>Import your mutual fund statement, add stocks, FDs and gold. See true returns (XIRR).</small></div></li>
-              <li><span><Languages size={16}/></span><div><b>AI CFO in 13 Indian languages</b><small>Ask by voice, listen to answers, download voice notes.</small></div></li>
-              <li><span><LineChart size={16}/></span><div><b>Live markets and mutual funds</b><small>NIFTY, SENSEX, official AMFI NAVs and business news.</small></div></li>
-              <li><span><LockKeyhole size={16}/></span><div><b>Your data stays yours</b><small>Secure sign-in; personal records are visible only to your account.</small></div></li>
+              <li>
+                <span>
+                  <PieChart size={16} />
+                </span>
+                <div>
+                  <b>Portfolio & net worth</b>
+                  <small>Import your mutual fund statement, add stocks, FDs and gold. See true returns (XIRR).</small>
+                </div>
+              </li>
+              <li>
+                <span>
+                  <Languages size={16} />
+                </span>
+                <div>
+                  <b>AI CFO in 13 Indian languages</b>
+                  <small>Ask by voice, listen to answers, download voice notes.</small>
+                </div>
+              </li>
+              <li>
+                <span>
+                  <LineChart size={16} />
+                </span>
+                <div>
+                  <b>Live markets and mutual funds</b>
+                  <small>NIFTY, SENSEX, official AMFI NAVs and business news.</small>
+                </div>
+              </li>
+              <li>
+                <span>
+                  <LockKeyhole size={16} />
+                </span>
+                <div>
+                  <b>Your data stays yours</b>
+                  <small>Secure sign-in; personal records are visible only to your account.</small>
+                </div>
+              </li>
             </ul>
           </div>
           <p className="am-brand-foot">{returnLabel ? `After sign-in we’ll take you to ${returnLabel}.` : 'Education only, not investment advice.'}</p>
@@ -225,18 +282,44 @@ export const AuthModal: React.FC = () => {
 
         <section className="am-form">
           <div className="am-form-top">
-            <div className="am-mobile-logo"><ArthaBenchLogo compact /></div>
-            <button type="button" onClick={auth.closeAuth} className="am-close" aria-label="Close account dialog"><X size={18}/></button>
+            <div className="am-mobile-logo">
+              <ArthaBenchLogo compact />
+            </div>
+            <button type="button" onClick={auth.closeAuth} className="am-close" aria-label="Close account dialog">
+              <X size={18} />
+            </button>
           </div>
           <div className="am-form-body">
-            {(auth.authScreen === 'login' || auth.authScreen === 'signup') && <div className="am-switch" role="tablist" aria-label="Account">
-              <button type="button" role="tab" aria-selected={auth.authScreen === 'login'} className={auth.authScreen === 'login' ? 'on' : ''} onClick={() => auth.openAuth('login')}>Sign in</button>
-              <button type="button" role="tab" aria-selected={auth.authScreen === 'signup'} className={auth.authScreen === 'signup' ? 'on' : ''} onClick={() => auth.openAuth('signup')}>Create account</button>
-            </div>}
+            {(auth.authScreen === 'login' || auth.authScreen === 'signup') && (
+              <div className="am-switch" role="tablist" aria-label="Account">
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={auth.authScreen === 'login'}
+                  className={auth.authScreen === 'login' ? 'on' : ''}
+                  onClick={() => auth.openAuth('login')}
+                >
+                  Sign in
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={auth.authScreen === 'signup'}
+                  className={auth.authScreen === 'signup' ? 'on' : ''}
+                  onClick={() => auth.openAuth('signup')}
+                >
+                  Create account
+                </button>
+              </div>
+            )}
             <div className="am-heading">
               <h1 id="auth-title">{title}</h1>
               <p>{description}</p>
-              {returnLabel && auth.authScreen === 'login' && <span className="am-return"><ArrowRight size={12}/> Continue to {returnLabel} after sign-in</span>}
+              {returnLabel && auth.authScreen === 'login' && (
+                <span className="am-return">
+                  <ArrowRight size={12} /> Continue to {returnLabel} after sign-in
+                </span>
+              )}
             </div>
 
             {!auth.configured && auth.authScreen !== 'onboarding' && (
@@ -246,7 +329,10 @@ export const AuthModal: React.FC = () => {
             )}
 
             {(error || auth.authMessage) && (
-              <div role="alert" className={`mb-5 rounded-2xl border px-4 py-3 text-xs leading-5 ${error ? 'border-danger/30 bg-danger-soft text-danger' : 'border-success-fill/30 bg-success-soft text-success'}`}>
+              <div
+                role="alert"
+                className={`mb-5 rounded-2xl border px-4 py-3 text-xs leading-5 ${error ? 'border-danger/30 bg-danger-soft text-danger' : 'border-success-fill/30 bg-success-soft text-success'}`}
+              >
                 {error || auth.authMessage}
               </div>
             )}
@@ -254,59 +340,184 @@ export const AuthModal: React.FC = () => {
             {auth.authScreen === 'login' && (
               <form onSubmit={submitLogin} className="space-y-4">
                 <div>
-                  <label className={labelClass} htmlFor="login-email">Email address</label>
+                  <label className={labelClass} htmlFor="login-email">
+                    Email address
+                  </label>
                   <div className="relative">
                     <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-secondary" />
-                    <input id="login-email" className={`${inputClass} pl-10`} type="email" autoComplete="email" placeholder="you@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} />
+                    <input
+                      id="login-email"
+                      className={`${inputClass} pl-10`}
+                      type="email"
+                      autoComplete="email"
+                      placeholder="you@example.com"
+                      required
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                    />
                   </div>
                 </div>
                 <div>
-                  <label className={labelClass} htmlFor="login-password">Password</label>
+                  <label className={labelClass} htmlFor="login-password">
+                    Password
+                  </label>
                   <div className="relative">
                     <LockKeyhole className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-secondary" />
-                    <input id="login-password" className={`${inputClass} pl-10 pr-11`} type={showPassword ? 'text' : 'password'} autoComplete="current-password" placeholder="Enter your password" required value={password} onChange={(e) => setPassword(e.target.value)} />
-                    <button type="button" onClick={() => setShowPassword((value) => !value)} className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-1 text-secondary hover:text-ink" aria-label={showPassword ? 'Hide password' : 'Show password'}>
+                    <input
+                      id="login-password"
+                      className={`${inputClass} pl-10 pr-11`}
+                      type={showPassword ? 'text' : 'password'}
+                      autoComplete="current-password"
+                      placeholder="Enter your password"
+                      required
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((value) => !value)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-1 text-secondary hover:text-ink"
+                      aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    >
                       {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
                 </div>
                 <div className="flex items-center justify-between gap-3 text-xs">
-                  <label className="flex items-center gap-2 text-secondary"><input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} /> Remember me</label>
-                  <button type="button" onClick={() => auth.openAuth('forgot')} className="font-bold text-interactive hover:underline">Forgot password?</button>
+                  <label className="flex items-center gap-2 text-secondary">
+                    <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} /> Remember me
+                  </label>
+                  <button type="button" onClick={() => auth.openAuth('forgot')} className="font-bold text-interactive hover:underline">
+                    Forgot password?
+                  </button>
                 </div>
                 <button disabled={busy || !auth.configured} className="am-cta">
-                  {busy ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />} {auth.emailOtp ? 'Continue' : 'Sign in securely'}
+                  {busy ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}{' '}
+                  {auth.emailOtp ? 'Continue' : 'Sign in securely'}
                 </button>
-                {auth.emailOtp && <p className="text-center text-[11px] leading-5 text-secondary"><ShieldCheck className="mr-1 inline h-3.5 w-3.5 align-[-2px]" />Two-step sign-in: after your password we email you a 6-digit code.</p>}
+                {auth.emailOtp && (
+                  <p className="text-center text-[11px] leading-5 text-secondary">
+                    <ShieldCheck className="mr-1 inline h-3.5 w-3.5 align-[-2px]" />
+                    Two-step sign-in: after your password we email you a 6-digit code.
+                  </p>
+                )}
                 <div className="rounded-2xl border border-line bg-canvas p-4 text-center text-xs text-secondary">
-                  New to ArthaMind? <button type="button" onClick={() => auth.openAuth('signup')} className="font-black text-interactive hover:underline">Create an account</button>
+                  New to ArthaMind?{' '}
+                  <button type="button" onClick={() => auth.openAuth('signup')} className="font-black text-interactive hover:underline">
+                    Create an account
+                  </button>
                 </div>
-                <p className="text-center text-[10px] leading-5 text-secondary">Educational analysis only — not investment, tax, legal, or financial advice. Privacy and data controls remain available in Account.</p>
+                <p className="text-center text-[10px] leading-5 text-secondary">
+                  Educational analysis only - not investment, tax, legal, or financial advice. Privacy and data controls remain available in Account.
+                </p>
               </form>
             )}
 
             {auth.authScreen === 'signup' && (
               <form onSubmit={submitSignup} className="space-y-4">
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <div><label className={labelClass} htmlFor="signup-name">Full name</label><input id="signup-name" className={inputClass} autoComplete="name" placeholder="Your name" required value={fullName} onChange={(e) => setFullName(e.target.value)} /></div>
-                  <div><label className={labelClass}>Country / region</label><select className={inputClass} value={country} onChange={(e) => setCountry(e.target.value)}><option>India</option><option>United States</option><option>United Kingdom</option><option>Other</option></select></div>
+                  <div>
+                    <label className={labelClass} htmlFor="signup-name">
+                      Full name
+                    </label>
+                    <input
+                      id="signup-name"
+                      className={inputClass}
+                      autoComplete="name"
+                      placeholder="Your name"
+                      required
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label className={labelClass}>Country / region</label>
+                    <select className={inputClass} value={country} onChange={(e) => setCountry(e.target.value)}>
+                      <option>India</option>
+                      <option>United States</option>
+                      <option>United Kingdom</option>
+                      <option>Other</option>
+                    </select>
+                  </div>
                 </div>
-                <div><label className={labelClass} htmlFor="signup-email">Email address</label><input id="signup-email" className={inputClass} type="email" autoComplete="email" placeholder="you@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} /></div>
+                <div>
+                  <label className={labelClass} htmlFor="signup-email">
+                    Email address
+                  </label>
+                  <input
+                    id="signup-email"
+                    className={inputClass}
+                    type="email"
+                    autoComplete="email"
+                    placeholder="you@example.com"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                </div>
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <div><label className={labelClass}>Password</label><input className={inputClass} type="password" autoComplete="new-password" placeholder="At least 8 characters" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} /></div>
-                  <div><label className={labelClass}>Confirm password</label><input className={inputClass} type="password" autoComplete="new-password" placeholder="Repeat password" required minLength={8} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} /></div>
+                  <div>
+                    <label className={labelClass}>Password</label>
+                    <input
+                      className={inputClass}
+                      type="password"
+                      autoComplete="new-password"
+                      placeholder="At least 8 characters"
+                      required
+                      minLength={8}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label className={labelClass}>Confirm password</label>
+                    <input
+                      className={inputClass}
+                      type="password"
+                      autoComplete="new-password"
+                      placeholder="Repeat password"
+                      required
+                      minLength={8}
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                    />
+                  </div>
                 </div>
-                <label className="flex items-start gap-3 rounded-xl border border-line bg-canvas p-3 text-xs leading-5 text-secondary"><input className="mt-0.5" type="checkbox" checked={termsConsent} onChange={(e) => setTermsConsent(e.target.checked)} /><span>I agree to the <a href="/terms.html" className="font-bold text-interactive hover:underline">Terms</a> and <a href="/privacy.html" className="font-bold text-interactive hover:underline">Privacy Policy</a>.</span></label>
-                <label className="flex items-start gap-3 rounded-xl border border-line bg-canvas p-3 text-xs leading-5 text-secondary"><input className="mt-0.5" type="checkbox" checked={financialConsent} onChange={(e) => setFinancialConsent(e.target.checked)} /><span>I allow ArthaMind to use financial data categories I explicitly authorize for personalized educational analysis. I can turn this off later.</span></label>
-                <button disabled={busy || !auth.configured} className="am-cta">{busy && <LoaderCircle className="h-4 w-4 animate-spin" />} Create secure account</button>
-                <p className="text-center text-[10px] leading-5 text-secondary">Your records start empty until you add them. ArthaMind does not add sample income, expenses, balances or EMIs for your account.</p>
+                <label className="flex items-start gap-3 rounded-xl border border-line bg-canvas p-3 text-xs leading-5 text-secondary">
+                  <input className="mt-0.5" type="checkbox" checked={termsConsent} onChange={(e) => setTermsConsent(e.target.checked)} />
+                  <span>
+                    I agree to the{' '}
+                    <a href="/terms.html" className="font-bold text-interactive hover:underline">
+                      Terms
+                    </a>{' '}
+                    and{' '}
+                    <a href="/privacy.html" className="font-bold text-interactive hover:underline">
+                      Privacy Policy
+                    </a>
+                    .
+                  </span>
+                </label>
+                <label className="flex items-start gap-3 rounded-xl border border-line bg-canvas p-3 text-xs leading-5 text-secondary">
+                  <input className="mt-0.5" type="checkbox" checked={financialConsent} onChange={(e) => setFinancialConsent(e.target.checked)} />
+                  <span>
+                    I allow ArthaMind to use financial data categories I explicitly authorize for personalized educational analysis. I can turn this off later.
+                  </span>
+                </label>
+                <button disabled={busy || !auth.configured} className="am-cta">
+                  {busy && <LoaderCircle className="h-4 w-4 animate-spin" />} Create secure account
+                </button>
+                <p className="text-center text-[10px] leading-5 text-secondary">
+                  Your records start empty until you add them. ArthaMind does not add sample income, expenses, balances or EMIs for your account.
+                </p>
               </form>
             )}
 
             {auth.authScreen === 'otp' && (
               <form onSubmit={submitOtp} className="space-y-4">
                 <div>
-                  <label className={labelClass} htmlFor="otp-code">6-digit code{auth.otpEmail ? ` sent to ${auth.otpEmail}` : ''}</label>
+                  <label className={labelClass} htmlFor="otp-code">
+                    6-digit code{auth.otpEmail ? ` sent to ${auth.otpEmail}` : ''}
+                  </label>
                   <input
                     id="otp-code"
                     className={`${inputClass} am-otp`}
@@ -321,28 +532,73 @@ export const AuthModal: React.FC = () => {
                     onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
                   />
                 </div>
-                <button disabled={busy} className="am-cta">{busy ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />} Verify and continue</button>
+                <button disabled={busy} className="am-cta">
+                  {busy ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />} Verify and continue
+                </button>
                 <div className="flex items-center justify-between gap-3 text-xs">
-                  <button type="button" onClick={() => auth.openAuth('login')} className="inline-flex items-center gap-1 font-bold text-secondary"><ArrowLeft className="h-3.5 w-3.5" /> Use a different email</button>
-                  <button type="button" disabled={busy || resendIn > 0} onClick={resendOtp} className="font-bold text-interactive hover:underline disabled:cursor-not-allowed disabled:text-secondary disabled:no-underline">{resendIn > 0 ? `Resend code in ${resendIn}s` : 'Resend code'}</button>
+                  <button type="button" onClick={() => auth.openAuth('login')} className="inline-flex items-center gap-1 font-bold text-secondary">
+                    <ArrowLeft className="h-3.5 w-3.5" /> Use a different email
+                  </button>
+                  <button
+                    type="button"
+                    disabled={busy || resendIn > 0}
+                    onClick={resendOtp}
+                    className="font-bold text-interactive hover:underline disabled:cursor-not-allowed disabled:text-secondary disabled:no-underline"
+                  >
+                    {resendIn > 0 ? `Resend code in ${resendIn}s` : 'Resend code'}
+                  </button>
                 </div>
-                <p className="text-center text-[10px] leading-5 text-secondary">Check Spam or Promotions if the email is not in your inbox. Never share this code with anyone; ArthaMind will never ask for it by phone or chat.</p>
+                <p className="text-center text-[10px] leading-5 text-secondary">
+                  Check Spam or Promotions if the email is not in your inbox. Never share this code with anyone; ArthaMind will never ask for it by phone or
+                  chat.
+                </p>
               </form>
             )}
 
             {auth.authScreen === 'forgot' && (
               <form onSubmit={submitForgot} className="space-y-4">
-                <button type="button" onClick={() => auth.openAuth('login')} className="inline-flex items-center gap-1 text-xs font-bold text-secondary"><ArrowLeft className="h-3.5 w-3.5" /> Back to sign in</button>
-                <div><label className={labelClass}>Email address</label><input className={inputClass} type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} /></div>
-                <button disabled={busy || !auth.configured} className="am-cta">{busy && <LoaderCircle className="h-4 w-4 animate-spin" />} Send reset link</button>
+                <button type="button" onClick={() => auth.openAuth('login')} className="inline-flex items-center gap-1 text-xs font-bold text-secondary">
+                  <ArrowLeft className="h-3.5 w-3.5" /> Back to sign in
+                </button>
+                <div>
+                  <label className={labelClass}>Email address</label>
+                  <input className={inputClass} type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+                </div>
+                <button disabled={busy || !auth.configured} className="am-cta">
+                  {busy && <LoaderCircle className="h-4 w-4 animate-spin" />} Send reset link
+                </button>
               </form>
             )}
 
             {auth.authScreen === 'reset' && (
               <form onSubmit={submitReset} className="space-y-4">
-                <div><label className={labelClass}>New password</label><input className={inputClass} type="password" autoComplete="new-password" minLength={8} required value={password} onChange={(e) => setPassword(e.target.value)} /></div>
-                <div><label className={labelClass}>Confirm new password</label><input className={inputClass} type="password" autoComplete="new-password" minLength={8} required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} /></div>
-                <button disabled={busy} className="am-cta">{busy && <LoaderCircle className="h-4 w-4 animate-spin" />} Update password</button>
+                <div>
+                  <label className={labelClass}>New password</label>
+                  <input
+                    className={inputClass}
+                    type="password"
+                    autoComplete="new-password"
+                    minLength={8}
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className={labelClass}>Confirm new password</label>
+                  <input
+                    className={inputClass}
+                    type="password"
+                    autoComplete="new-password"
+                    minLength={8}
+                    required
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                  />
+                </div>
+                <button disabled={busy} className="am-cta">
+                  {busy && <LoaderCircle className="h-4 w-4 animate-spin" />} Update password
+                </button>
               </form>
             )}
 
@@ -351,30 +607,118 @@ export const AuthModal: React.FC = () => {
                 <CheckCircle2 className="mx-auto h-12 w-12 text-success" />
                 <div>
                   <h3 className="text-lg font-black text-ink">Verify your email once</h3>
-                  <p className="mt-2 text-sm leading-6 text-secondary">Your account is already created. Open the latest Artha Bench / Supabase confirmation email and click the verification link. After verification, the same email and password can sign in normally.</p>
+                  <p className="mt-2 text-sm leading-6 text-secondary">
+                    Your account is already created. Open the latest Artha Bench / Supabase confirmation email and click the verification link. After
+                    verification, the same email and password can sign in normally.
+                  </p>
                 </div>
-                {verificationSent && <div className="rounded-xl border border-success-fill/30 bg-success-soft px-4 py-3 text-xs font-bold text-success">A fresh verification email has been sent.</div>}
+                {verificationSent && (
+                  <div className="rounded-xl border border-success-fill/30 bg-success-soft px-4 py-3 text-xs font-bold text-success">
+                    A fresh verification email has been sent.
+                  </div>
+                )}
                 <div className="grid gap-2 sm:grid-cols-2">
-                  <button type="button" disabled={busy || !email.trim()} onClick={resendVerification} className="rounded-xl border border-line-strong bg-surface px-5 py-3 text-sm font-black text-ink disabled:cursor-not-allowed disabled:opacity-50">{busy ? 'Sending…' : 'Resend verification email'}</button>
-                  <button type="button" onClick={() => auth.openAuth('login')} className="am-cta">I verified it — sign in</button>
+                  <button
+                    type="button"
+                    disabled={busy || !email.trim()}
+                    onClick={resendVerification}
+                    className="rounded-xl border border-line-strong bg-surface px-5 py-3 text-sm font-black text-ink disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {busy ? 'Sending…' : 'Resend verification email'}
+                  </button>
+                  <button type="button" onClick={() => auth.openAuth('login')} className="am-cta">
+                    I verified it - sign in
+                  </button>
                 </div>
-                <p className="text-[10px] leading-5 text-secondary">If the email is not visible, check Spam or Promotions. Verification is required once so another person cannot create an account using your email address.</p>
+                <p className="text-[10px] leading-5 text-secondary">
+                  If the email is not visible, check Spam or Promotions. Verification is required once so another person cannot create an account using your
+                  email address.
+                </p>
               </div>
             )}
 
             {auth.authScreen === 'onboarding' && (
               <form onSubmit={submitOnboarding} className="space-y-4">
-                <div className="grid gap-4 sm:grid-cols-2"><div><label className={labelClass}>Full name</label><input className={inputClass} value={fullName} onChange={(e) => setFullName(e.target.value)} /></div><div><label className={labelClass}>Country</label><input className={inputClass} value={country} onChange={(e) => setCountry(e.target.value)} /></div></div>
-                <div><label className={labelClass}>Primary goal</label><select className={inputClass} value={goal} onChange={(e) => setGoal(e.target.value)}><option value="learn">Learn finance</option><option value="manage">Manage personal finances</option><option value="markets">Follow markets</option><option value="evaluate">Test financial AI</option><option value="all">All of these</option></select></div>
-                <div className="grid gap-4 sm:grid-cols-2"><div><label className={labelClass}>Preferred currency</label><select className={inputClass} value={currency} onChange={(e) => setCurrency(e.target.value)}><option>INR</option><option>USD</option><option>EUR</option><option>GBP</option></select></div><div><label className={labelClass}>Market focus</label><select className={inputClass} value={marketFocus} onChange={(e) => setMarketFocus(e.target.value as typeof marketFocus)}><option>India</option><option>US</option><option>Global</option></select></div></div>
-                <div className="grid gap-4 sm:grid-cols-2"><div><label className={labelClass}>Monthly income range (optional)</label><input className={inputClass} placeholder="e.g. ₹25,000 – ₹50,000" value={incomeRange} onChange={(e) => setIncomeRange(e.target.value)} /></div><div><label className={labelClass}>Learning level</label><select className={inputClass} value={learningLevel} onChange={(e) => setLearningLevel(e.target.value as typeof learningLevel)}><option value="beginner">Beginner</option><option value="intermediate">Intermediate</option><option value="advanced">Advanced</option></select></div></div>
-                <div><label className={labelClass}>Savings or financial goal (optional)</label><input className={inputClass} placeholder="Describe a goal without sensitive account details" value={financialGoal} onChange={(e) => setFinancialGoal(e.target.value)} /></div>
-                <label className="flex items-start gap-3 rounded-xl border border-line bg-canvas p-3 text-xs text-secondary"><input className="mt-0.5" type="checkbox" checked={personalInsights} onChange={(e) => setPersonalInsights(e.target.checked)} /><span>Enable personalized ArthaMind insights using only the data sources I explicitly authorize.</span></label>
-                <div className="flex flex-col gap-2 sm:flex-row"><button disabled={busy} className="am-cta">Save preferences</button><button type="button" onClick={auth.closeAuth} className="rounded-xl border border-line px-4 py-3 text-sm font-bold text-secondary">Skip for now</button></div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <label className={labelClass}>Full name</label>
+                    <input className={inputClass} value={fullName} onChange={(e) => setFullName(e.target.value)} />
+                  </div>
+                  <div>
+                    <label className={labelClass}>Country</label>
+                    <input className={inputClass} value={country} onChange={(e) => setCountry(e.target.value)} />
+                  </div>
+                </div>
+                <div>
+                  <label className={labelClass}>Primary goal</label>
+                  <select className={inputClass} value={goal} onChange={(e) => setGoal(e.target.value)}>
+                    <option value="learn">Learn finance</option>
+                    <option value="manage">Manage personal finances</option>
+                    <option value="markets">Follow markets</option>
+                    <option value="evaluate">Test financial AI</option>
+                    <option value="all">All of these</option>
+                  </select>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <label className={labelClass}>Preferred currency</label>
+                    <select className={inputClass} value={currency} onChange={(e) => setCurrency(e.target.value)}>
+                      <option>INR</option>
+                      <option>USD</option>
+                      <option>EUR</option>
+                      <option>GBP</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className={labelClass}>Market focus</label>
+                    <select className={inputClass} value={marketFocus} onChange={(e) => setMarketFocus(e.target.value as typeof marketFocus)}>
+                      <option>India</option>
+                      <option>US</option>
+                      <option>Global</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <label className={labelClass}>Monthly income range (optional)</label>
+                    <input className={inputClass} placeholder="e.g. ₹25,000 – ₹50,000" value={incomeRange} onChange={(e) => setIncomeRange(e.target.value)} />
+                  </div>
+                  <div>
+                    <label className={labelClass}>Learning level</label>
+                    <select className={inputClass} value={learningLevel} onChange={(e) => setLearningLevel(e.target.value as typeof learningLevel)}>
+                      <option value="beginner">Beginner</option>
+                      <option value="intermediate">Intermediate</option>
+                      <option value="advanced">Advanced</option>
+                    </select>
+                  </div>
+                </div>
+                <div>
+                  <label className={labelClass}>Savings or financial goal (optional)</label>
+                  <input
+                    className={inputClass}
+                    placeholder="Describe a goal without sensitive account details"
+                    value={financialGoal}
+                    onChange={(e) => setFinancialGoal(e.target.value)}
+                  />
+                </div>
+                <label className="flex items-start gap-3 rounded-xl border border-line bg-canvas p-3 text-xs text-secondary">
+                  <input className="mt-0.5" type="checkbox" checked={personalInsights} onChange={(e) => setPersonalInsights(e.target.checked)} />
+                  <span>Enable personalized ArthaMind insights using only the data sources I explicitly authorize.</span>
+                </label>
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <button disabled={busy} className="am-cta">
+                    Save preferences
+                  </button>
+                  <button type="button" onClick={auth.closeAuth} className="rounded-xl border border-line px-4 py-3 text-sm font-bold text-secondary">
+                    Skip for now
+                  </button>
+                </div>
               </form>
             )}
 
-            <p className="am-secure"><LockKeyhole size={13}/> Secure sign-in by Supabase Auth. ArthaMind never stores your raw password.</p>
+            <p className="am-secure">
+              <LockKeyhole size={13} /> Secure sign-in by Supabase Auth. ArthaMind never stores your raw password.
+            </p>
           </div>
         </section>
       </div>
@@ -388,7 +732,12 @@ const TrustRow: React.FC<{
   text: string;
 }> = ({ icon: Icon, title, text }) => (
   <div className="flex gap-3 rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-teal-300/10 text-teal-200"><Icon className="h-4 w-4" /></div>
-    <div><div className="text-xs font-black text-white">{title}</div><div className="mt-1 text-[10px] leading-5 text-slate-400">{text}</div></div>
+    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-teal-300/10 text-teal-200">
+      <Icon className="h-4 w-4" />
+    </div>
+    <div>
+      <div className="text-xs font-black text-white">{title}</div>
+      <div className="mt-1 text-[10px] leading-5 text-slate-400">{text}</div>
+    </div>
   </div>
 );

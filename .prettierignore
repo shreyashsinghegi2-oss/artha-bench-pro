@@ -1,4 +1,4 @@
-# Prettier runs only on the files listed in the format:check script; this keeps editors from reformatting the rest.
+# Files Prettier skips (build output and generated files).
 dist
 api
 coverage

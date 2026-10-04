@@ -19,16 +19,27 @@ const STEPS = [
 export const ThinkingSteps: React.FC<{ active: boolean; compact?: boolean }> = ({ active, compact }) => {
   const [elapsed, setElapsed] = useState(0);
   useEffect(() => {
-    if (!active) { setElapsed(0); return; }
+    if (!active) {
+      setElapsed(0);
+      return;
+    }
     const start = performance.now();
     const id = window.setInterval(() => setElapsed(performance.now() - start), 250);
     return () => window.clearInterval(id);
   }, [active]);
   if (!active) return null;
   const current = STEPS.reduce((n, s, i) => (elapsed >= s.at ? i : n), 0);
-  return <ol className={`am-steps ${compact ? 'compact' : ''}`} aria-live="polite" aria-label="What the assistant is doing">
-    {STEPS.slice(0, current + 1).map((s, i) => <li key={s.text} className={i < current ? 'done' : 'now'}>
-      <i>{i < current ? <Check size={12}/> : <Loader2 size={12} className="am-spin"/>}</i><span>{s.text}{i === current ? '…' : ''}</span>
-    </li>)}
-  </ol>;
+  return (
+    <ol className={`am-steps ${compact ? 'compact' : ''}`} aria-live="polite" aria-label="What the assistant is doing">
+      {STEPS.slice(0, current + 1).map((s, i) => (
+        <li key={s.text} className={i < current ? 'done' : 'now'}>
+          <i>{i < current ? <Check size={12} /> : <Loader2 size={12} className="am-spin" />}</i>
+          <span>
+            {s.text}
+            {i === current ? '…' : ''}
+          </span>
+        </li>
+      ))}
+    </ol>
+  );
 };

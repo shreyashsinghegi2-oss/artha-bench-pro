@@ -27,12 +27,20 @@ export function loadMoneyProfile(): MoneyProfile | null {
 }
 
 export function saveMoneyProfile(profile: MoneyProfile): void {
-  try { window.localStorage.setItem(KEY, JSON.stringify(profile)); } catch { /* storage unavailable: keep in memory only */ }
+  try {
+    window.localStorage.setItem(KEY, JSON.stringify(profile));
+  } catch {
+    /* storage unavailable: keep in memory only */
+  }
   window.dispatchEvent(new CustomEvent(EVENT, { detail: profile }));
 }
 
 export function clearMoneyProfile(): void {
-  try { window.localStorage.removeItem(KEY); } catch { /* ignore */ }
+  try {
+    window.localStorage.removeItem(KEY);
+  } catch {
+    /* ignore */
+  }
   window.dispatchEvent(new CustomEvent(EVENT, { detail: null }));
 }
 

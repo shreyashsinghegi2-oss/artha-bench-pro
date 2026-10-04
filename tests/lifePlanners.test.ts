@@ -1,9 +1,20 @@
 import { describe, expect, it } from 'vitest';
-import { corpusForIncome, planEducationGoal, planJobSwitch, planRetirement, RETIREMENT_DEFAULTS, salaryBreakup, sipNeededFor, steppedSipFutureValue, JOB_SWITCH_DEFAULTS } from '../src/services/lifePlanners';
+import {
+  corpusForIncome,
+  planEducationGoal,
+  planJobSwitch,
+  planRetirement,
+  RETIREMENT_DEFAULTS,
+  salaryBreakup,
+  sipNeededFor,
+  steppedSipFutureValue,
+  JOB_SWITCH_DEFAULTS,
+} from '../src/services/lifePlanners';
 
 describe('life planners', () => {
   it('SIP future value matches the closed form with no step-up', () => {
-    const r = 1.12 ** (1 / 12) - 1, n = 120;
+    const r = 1.12 ** (1 / 12) - 1,
+      n = 120;
     const closed = 10_000 * (((1 + r) ** n - 1) / r) * (1 + r);
     expect(steppedSipFutureValue(10_000, 0.12, 10)).toBeCloseTo(closed, 4);
     expect(steppedSipFutureValue(10_000, 0.12, 10, 0.1)).toBeGreaterThan(closed);
@@ -34,7 +45,8 @@ describe('life planners', () => {
     expect(g.sipIfDelayed3y!).toBeGreaterThan(g.monthlySip);
   });
   it('job switch: take-home rises with CTC and costs set break-even', () => {
-    const a = salaryBreakup(12_00_000, 0.4, 0.1), b = salaryBreakup(16_00_000, 0.4, 0.1);
+    const a = salaryBreakup(12_00_000, 0.4, 0.1),
+      b = salaryBreakup(16_00_000, 0.4, 0.1);
     expect(b.annualTakeHome).toBeGreaterThan(a.annualTakeHome);
     expect(a.employerPf).toBe(57_600);
     const p = planJobSwitch(JOB_SWITCH_DEFAULTS);

@@ -22,10 +22,12 @@ afterEach(() => {
 
 describe('AI endpoint resilience boundary', () => {
   it('passes a successful AI response through unchanged', async () => {
-    const native = vi.fn().mockResolvedValue(new Response(JSON.stringify({ answer: 'real model response' }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    }));
+    const native = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ answer: 'real model response' }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    );
     const browser = installWithNativeFetch(native);
     const response = await browser.fetch('/api/crypto/assistant', {
       method: 'POST',
@@ -80,10 +82,12 @@ describe('AI endpoint resilience boundary', () => {
 
   it('does not mask authentication and authorization failures', async () => {
     for (const status of [401, 403]) {
-      const native = vi.fn().mockResolvedValue(new Response(JSON.stringify({ error: 'not authorized' }), {
-        status,
-        headers: { 'Content-Type': 'application/json' },
-      }));
+      const native = vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ error: 'not authorized' }), {
+          status,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
       const browser = installWithNativeFetch(native);
       const response = await browser.fetch('/api/personal/assistant', {
         method: 'POST',

@@ -35,14 +35,25 @@ export const voiceLanguageFor = (siteCode: string) => VOICE_LANGUAGES.find((l) =
 
 // ---------------- Speech recognition ----------------
 
-interface RecognitionResultList { length: number; [i: number]: { isFinal: boolean; 0: { transcript: string } } }
-interface RecognitionEvent { resultIndex: number; results: RecognitionResultList }
+interface RecognitionResultList {
+  length: number;
+  [i: number]: { isFinal: boolean; 0: { transcript: string } };
+}
+interface RecognitionEvent {
+  resultIndex: number;
+  results: RecognitionResultList;
+}
 interface Recognition {
-  lang: string; interimResults: boolean; continuous: boolean; maxAlternatives: number;
+  lang: string;
+  interimResults: boolean;
+  continuous: boolean;
+  maxAlternatives: number;
   onresult: ((e: RecognitionEvent) => void) | null;
   onerror: ((e: { error: string }) => void) | null;
   onend: (() => void) | null;
-  start(): void; stop(): void; abort(): void;
+  start(): void;
+  stop(): void;
+  abort(): void;
 }
 type RecognitionCtor = new () => Recognition;
 
@@ -69,22 +80,42 @@ export function listenOnce(lang: string, onText: (text: string) => void): { done
   const Ctor = recognitionCtor();
   if (!Ctor) return { done: Promise.reject(new Error('Voice input works in Chrome or Edge. Please type your question.')), stop: () => undefined };
   const rec = new Ctor();
-  rec.lang = lang; rec.interimResults = true; rec.continuous = false; rec.maxAlternatives = 1;
-  let finalText = '', failure: string | null = null;
+  rec.lang = lang;
+  rec.interimResults = true;
+  rec.continuous = false;
+  rec.maxAlternatives = 1;
+  let finalText = '',
+    failure: string | null = null;
   const done = new Promise<string>((resolve, reject) => {
     rec.onresult = (e) => {
       let interim = '';
       for (let i = e.resultIndex; i < e.results.length; i++) {
         const r = e.results[i];
-        if (r.isFinal) finalText += r[0].transcript; else interim += r[0].transcript;
+        if (r.isFinal) finalText += r[0].transcript;
+        else interim += r[0].transcript;
       }
       onText((finalText + interim).trim());
     };
-    rec.onerror = (e) => { if (e.error !== 'aborted') failure = LISTEN_ERRORS[e.error] ?? 'Voice input stopped. Please try again or type your question.'; };
+    rec.onerror = (e) => {
+      if (e.error !== 'aborted') failure = LISTEN_ERRORS[e.error] ?? 'Voice input stopped. Please try again or type your question.';
+    };
     rec.onend = () => (failure && !finalText.trim() ? reject(new Error(failure)) : resolve(finalText.trim()));
   });
-  try { rec.start(); } catch { /* already started */ }
-  return { done, stop: () => { try { rec.stop(); } catch { /* ignore */ } } };
+  try {
+    rec.start();
+  } catch {
+    /* already started */
+  }
+  return {
+    done,
+    stop: () => {
+      try {
+        rec.stop();
+      } catch {
+        /* ignore */
+      }
+    },
+  };
 }
 
 // ---------------- Speech synthesis ----------------
@@ -103,7 +134,8 @@ export function voicesReady(): Promise<SpeechSynthesisVoice[]> {
 /** Best installed voice for a language: exact region first, then any voice of that language; Google/natural voices preferred. */
 export function pickVoice(voices: SpeechSynthesisVoice[], code: string): SpeechSynthesisVoice | null {
   const norm = (s: string) => s.replace('_', '-').toLowerCase();
-  const want = norm(code), base = want.split('-')[0];
+  const want = norm(code),
+    base = want.split('-')[0];
   const score = (v: SpeechSynthesisVoice) => (/(google|natural|neural|online)/i.test(v.name) ? 2 : 0) + (v.localService ? 0 : 1);
   const exact = voices.filter((v) => norm(v.lang) === want);
   const same = exact.length ? exact : voices.filter((v) => norm(v.lang).split('-')[0] === base);
@@ -123,15 +155,21 @@ export function speakableText(text: string): string {
 
 /** Split into short pieces on sentence ends (including the Hindi danda) so long answers are not cut off. */
 export function speechChunks(text: string, max = 180): string[] {
-  const parts = speakableText(text).split(/(?<=[.!?।॥؟])\s+/).filter(Boolean);
+  const parts = speakableText(text)
+    .split(/(?<=[.!?।॥؟])\s+/)
+    .filter(Boolean);
   const out: string[] = [];
   for (const p of parts) {
-    if (p.length <= max) { out.push(p); continue; }
+    if (p.length <= max) {
+      out.push(p);
+      continue;
+    }
     let rest = p;
     while (rest.length > max) {
       const cut = Math.max(rest.lastIndexOf(',', max), rest.lastIndexOf(' ', max));
       const at = cut > 40 ? cut + 1 : max;
-      out.push(rest.slice(0, at).trim()); rest = rest.slice(at);
+      out.push(rest.slice(0, at).trim());
+      rest = rest.slice(at);
     }
     if (rest.trim()) out.push(rest.trim());
   }
@@ -148,9 +186,15 @@ export function speak(text: string, voice: SpeechSynthesisVoice, rate = 0.95, on
     const next = () => {
       if (i >= chunks.length) return resolve();
       const u = new SpeechSynthesisUtterance(chunks[i]);
-      u.voice = voice; u.lang = voice.lang; u.rate = rate; u.pitch = 1;
+      u.voice = voice;
+      u.lang = voice.lang;
+      u.rate = rate;
+      u.pitch = 1;
       onProgress?.(i, chunks.length);
-      u.onend = () => { i++; next(); };
+      u.onend = () => {
+        i++;
+        next();
+      };
       u.onerror = () => resolve();
       synth.speak(u);
     };
@@ -158,7 +202,9 @@ export function speak(text: string, voice: SpeechSynthesisVoice, rate = 0.95, on
   });
 }
 
-export const stopSpeaking = () => { if (canSpeak()) window.speechSynthesis.cancel(); };
+export const stopSpeaking = () => {
+  if (canSpeak()) window.speechSynthesis.cancel();
+};
 
 // ---------------- Server voice (works on every device) ----------------
 
@@ -166,7 +212,11 @@ export const stopSpeaking = () => { if (canSpeak()) window.speechSynthesis.cance
 export const shortCode = (code: string) => code.split('-')[0];
 
 export async function translateFor(text: string, code: string): Promise<string> {
-  const res = await fetch('/api/voice/translate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: text.slice(0, 3000), lang: shortCode(code) }) });
+  const res = await fetch('/api/voice/translate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text: text.slice(0, 3000), lang: shortCode(code) }),
+  });
   const data = await res.json().catch(() => ({}));
   if (!res.ok || !data.text) throw new Error(data.error || 'Translation is unavailable right now.');
   return String(data.text);
@@ -174,9 +224,16 @@ export async function translateFor(text: string, code: string): Promise<string> 
 
 /** MP3 voice note for the text, generated on the server (no installed voice needed). */
 export async function cloudSpeech(text: string, code: string, rate = 1): Promise<Blob> {
-  const res = await fetch('/api/voice/tts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: speakableText(text).slice(0, 3000), lang: shortCode(code), rate: 1 }) });
+  const res = await fetch('/api/voice/tts', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text: speakableText(text).slice(0, 3000), lang: shortCode(code), rate: 1 }),
+  });
   void rate; // speed is applied on playback (playBlob), so downloads stay at natural speed
-  if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.error || 'Voice is unavailable right now.'); }
+  if (!res.ok) {
+    const d = await res.json().catch(() => ({}));
+    throw new Error(d.error || 'Voice is unavailable right now.');
+  }
   const blob = await res.blob();
   if (!blob.size) throw new Error('Voice is unavailable right now.');
   return blob;
@@ -185,9 +242,29 @@ export async function cloudSpeech(text: string, code: string, rate = 1): Promise
 let currentAudio: HTMLAudioElement | null = null;
 const SPEED_KEY = 'arthamind-voice-rate';
 /** The listening speed chosen anywhere in the app (0.75× to 1.75×). */
-export function voiceSpeed(): number { try { const v = Number(localStorage.getItem(SPEED_KEY)); return v >= 0.5 && v <= 2 ? v : 1; } catch { return 1; } }
-export function setVoiceSpeed(v: number) { try { localStorage.setItem(SPEED_KEY, String(v)); } catch { /* ignore */ } if (currentAudio) currentAudio.playbackRate = v; }
-export const SPEEDS: Array<[number, string]> = [[0.75, 'Slow'], [1, 'Normal'], [1.25, 'Fast'], [1.5, 'Faster'], [1.75, 'Fastest']];
+export function voiceSpeed(): number {
+  try {
+    const v = Number(localStorage.getItem(SPEED_KEY));
+    return v >= 0.5 && v <= 2 ? v : 1;
+  } catch {
+    return 1;
+  }
+}
+export function setVoiceSpeed(v: number) {
+  try {
+    localStorage.setItem(SPEED_KEY, String(v));
+  } catch {
+    /* ignore */
+  }
+  if (currentAudio) currentAudio.playbackRate = v;
+}
+export const SPEEDS: Array<[number, string]> = [
+  [0.75, 'Slow'],
+  [1, 'Normal'],
+  [1.25, 'Fast'],
+  [1.5, 'Faster'],
+  [1.75, 'Fastest'],
+];
 /**
  * Play an audio blob at the chosen speed (applied in the browser, so every voice and provider
  * honours it, pitch preserved); stops anything already playing. Changing speed mid-play applies at once.
@@ -199,16 +276,33 @@ export function playBlob(blob: Blob, onEnd?: () => void, rate = voiceSpeed()): (
   audio.playbackRate = rate;
   (audio as HTMLAudioElement & { preservesPitch?: boolean }).preservesPitch = true;
   currentAudio = audio;
-  const finish = () => { if (currentAudio === audio) currentAudio = null; onEnd?.(); };
-  audio.onended = finish; audio.onerror = finish;
+  const finish = () => {
+    if (currentAudio === audio) currentAudio = null;
+    onEnd?.();
+  };
+  audio.onended = finish;
+  audio.onerror = finish;
   void audio.play().catch(finish);
-  return () => { audio.pause(); finish(); };
+  return () => {
+    audio.pause();
+    finish();
+  };
 }
-export const stopAudio = () => { if (currentAudio) { currentAudio.pause(); currentAudio = null; } stopSpeaking(); };
+export const stopAudio = () => {
+  if (currentAudio) {
+    currentAudio.pause();
+    currentAudio = null;
+  }
+  stopSpeaking();
+};
 
 export function downloadBlob(blob: Blob, name: string) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+  a.href = url;
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
   window.setTimeout(() => URL.revokeObjectURL(url), 10_000);
 }

@@ -3,40 +3,69 @@ import { Calculator, CheckCircle2, Fingerprint, Info, ShieldCheck } from 'lucide
 import type { CalculatorTab, ScenarioCurrency } from './ScenarioAssistantPanel';
 
 const number = (value: number) => new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 }).format(value);
-const money = (value: number, currency: ScenarioCurrency) => new Intl.NumberFormat(currency === 'INR' ? 'en-IN' : 'en-US', { style: 'currency', currency, maximumFractionDigits: 2 }).format(value);
+const money = (value: number, currency: ScenarioCurrency) =>
+  new Intl.NumberFormat(currency === 'INR' ? 'en-IN' : 'en-US', { style: 'currency', currency, maximumFractionDigits: 2 }).format(value);
 
-export const CalculationResultPanel: React.FC<{ activeTab: CalculatorTab; result: Record<string, unknown>; currency: ScenarioCurrency }> = ({ activeTab, result, currency }) => {
+export const CalculationResultPanel: React.FC<{ activeTab: CalculatorTab; result: Record<string, unknown>; currency: ScenarioCurrency }> = ({
+  activeTab,
+  result,
+  currency,
+}) => {
   const definition = buildDefinition(activeTab, result, currency);
   const serverVerified = result.verificationStatus === 'server' || Boolean(result.verificationCode);
   return (
     <section className="space-y-5 rounded-3xl border border-line bg-surface p-6 shadow-sm" aria-label="Deterministic calculation result">
       <div className="flex flex-col gap-3 border-b border-line pb-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h3 className="flex items-center gap-2 text-sm font-black text-ink"><CheckCircle2 className="h-4 w-4 text-success" /> Deterministic Engine Result</h3>
-          <p className="mt-1 text-[10px] text-secondary">Calculated by Decimal.js. When the API is reachable, Artha Bench verifies the same inputs again on the server and attaches a verification code.</p>
+          <h3 className="flex items-center gap-2 text-sm font-black text-ink">
+            <CheckCircle2 className="h-4 w-4 text-success" /> Deterministic Engine Result
+          </h3>
+          <p className="mt-1 text-[10px] text-secondary">
+            Calculated by Decimal.js. When the API is reachable, Artha Bench verifies the same inputs again on the server and attaches a verification code.
+          </p>
         </div>
-        <span className={`inline-flex items-center gap-1.5 self-start rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-wider ${serverVerified ? 'border-success-fill/25 bg-success-soft text-success' : 'border-warning-fill/25 bg-warning-soft text-warning'}`}>
-          {serverVerified ? <ShieldCheck className="h-3.5 w-3.5" /> : <Calculator className="h-3.5 w-3.5" />} {serverVerified ? 'Server verified' : 'Local Decimal.js result'}
+        <span
+          className={`inline-flex items-center gap-1.5 self-start rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-wider ${serverVerified ? 'border-success-fill/25 bg-success-soft text-success' : 'border-warning-fill/25 bg-warning-soft text-warning'}`}
+        >
+          {serverVerified ? <ShieldCheck className="h-3.5 w-3.5" /> : <Calculator className="h-3.5 w-3.5" />}{' '}
+          {serverVerified ? 'Server verified' : 'Local Decimal.js result'}
         </span>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {definition.metrics.map((metric) => <Metric key={metric.label} label={metric.label} value={metric.value} emphasize={metric.emphasize} />)}
+        {definition.metrics.map((metric) => (
+          <Metric key={metric.label} label={metric.label} value={metric.value} emphasize={metric.emphasize} />
+        ))}
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[0.8fr_1.2fr]">
-        <div className="rounded-2xl border border-interactive/20 bg-interactive-soft/50 p-4"><div className="text-[9px] font-black uppercase tracking-wider text-interactive">Formula / method</div><div className="mt-2 font-mono text-xs font-bold leading-6 text-ink">{definition.formula}</div></div>
-        <div className="rounded-2xl border border-line bg-canvas p-4"><div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-secondary"><Info className="h-3.5 w-3.5" /> Interpretation</div><p className="mt-2 text-xs leading-6 text-ink">{definition.interpretation}</p></div>
+        <div className="rounded-2xl border border-interactive/20 bg-interactive-soft/50 p-4">
+          <div className="text-[9px] font-black uppercase tracking-wider text-interactive">Formula / method</div>
+          <div className="mt-2 font-mono text-xs font-bold leading-6 text-ink">{definition.formula}</div>
+        </div>
+        <div className="rounded-2xl border border-line bg-canvas p-4">
+          <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-secondary">
+            <Info className="h-3.5 w-3.5" /> Interpretation
+          </div>
+          <p className="mt-2 text-xs leading-6 text-ink">{definition.interpretation}</p>
+        </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl border border-line bg-canvas px-3.5 py-2.5 text-[10px] text-secondary">
         <span className="font-bold text-ink">Engine: {String(result.engine || 'Decimal.js')}</span>
         <span className="font-bold text-ink">Verification: {serverVerified ? 'Server + browser' : 'Browser calculation; server pending'}</span>
-        {result.verificationCode && <span className="inline-flex items-center gap-1"><Fingerprint className="h-3 w-3" /> {String(result.verificationCode)}</span>}
+        {result.verificationCode && (
+          <span className="inline-flex items-center gap-1">
+            <Fingerprint className="h-3 w-3" /> {String(result.verificationCode)}
+          </span>
+        )}
         {result.calculatedAt && <span>Calculated: {new Date(String(result.calculatedAt)).toLocaleString()}</span>}
       </div>
 
-      <p className="text-[10px] leading-5 text-secondary">This calculator uses only the values entered in the scenario. External market, company, economic, tax, or lender data is never silently inserted into the deterministic formula. ArthaMind may show connected context separately when you ask it to analyze the result.</p>
+      <p className="text-[10px] leading-5 text-secondary">
+        This calculator uses only the values entered in the scenario. External market, company, economic, tax, or lender data is never silently inserted into
+        the deterministic formula. ArthaMind may show connected context separately when you ask it to analyze the result.
+      </p>
     </section>
   );
 };
@@ -104,5 +133,8 @@ function buildDefinition(activeTab: CalculatorTab, result: Record<string, unknow
 }
 
 const Metric: React.FC<{ label: string; value: React.ReactNode; emphasize?: boolean }> = ({ label, value, emphasize }) => (
-  <div className="rounded-2xl border border-line bg-canvas p-4"><div className="text-[9px] font-black uppercase tracking-wider text-secondary">{label}</div><div className={`mt-1 break-words text-lg font-black ${emphasize ? 'text-success' : 'text-ink'}`}>{value}</div></div>
+  <div className="rounded-2xl border border-line bg-canvas p-4">
+    <div className="text-[9px] font-black uppercase tracking-wider text-secondary">{label}</div>
+    <div className={`mt-1 break-words text-lg font-black ${emphasize ? 'text-success' : 'text-ink'}`}>{value}</div>
+  </div>
 );

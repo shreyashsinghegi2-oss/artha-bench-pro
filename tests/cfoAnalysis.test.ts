@@ -60,7 +60,19 @@ describe('AI CFO health check', () => {
   });
 
   it('builds a personal plan prompt from intake answers and verified numbers', () => {
-    const profile = { name: 'Asha', age: '25–34', work: 'Salaried', monthlyIncome: 85000, monthlyExpenses: 55000, monthlyEmi: 8000, savings: 120000, dependents: '2', insurance: 'Health only', goal: 'Buy a home', goalYears: '3–5 years' };
+    const profile = {
+      name: 'Asha',
+      age: '25–34',
+      work: 'Salaried',
+      monthlyIncome: 85000,
+      monthlyExpenses: 55000,
+      monthlyEmi: 8000,
+      savings: 120000,
+      dependents: '2',
+      insurance: 'Health only',
+      goal: 'Buy a home',
+      goalYears: '3–5 years',
+    };
     const report = buildCfoHealthReport({ monthlyIncome: 85000, monthlyExpenses: 55000, monthlyEmi: 8000, emergencySavings: 120000 });
     const prompt = cfoPlanPrompt(profile, report);
     expect(prompt).toContain('PERSONAL CFO PLAN');

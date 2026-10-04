@@ -1,13 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { NormalizedMarketQuote } from '../src/types';
-import {
-  FOREX_PAIRS,
-  historyStats,
-  isUnsafeTradingAdviceRequest,
-  MARKET_SAFE_REDIRECT,
-  marketDataState,
-  US_MARKET_UNIVERSE,
-} from '../src/services/marketPro';
+import { FOREX_PAIRS, historyStats, isUnsafeTradingAdviceRequest, MARKET_SAFE_REDIRECT, marketDataState, US_MARKET_UNIVERSE } from '../src/services/marketPro';
 
 function quote(freshness: NormalizedMarketQuote['freshness'], providerTimestamp: string | null = '2026-09-01T01:00:00Z'): NormalizedMarketQuote {
   return {
@@ -44,14 +37,23 @@ describe('ArthaMind Pro market truthfulness', () => {
 
   it('contains the requested FX research registry without quote fixtures', () => {
     expect(FOREX_PAIRS.map((item) => item.pair)).toEqual([
-      'USD/INR','EUR/INR','GBP/INR','JPY/INR','EUR/USD','GBP/USD','USD/JPY','AUD/USD','USD/CAD','USD/CHF',
+      'USD/INR',
+      'EUR/INR',
+      'GBP/INR',
+      'JPY/INR',
+      'EUR/USD',
+      'GBP/USD',
+      'USD/JPY',
+      'AUD/USD',
+      'USD/CAD',
+      'USD/CHF',
     ]);
     expect(FOREX_PAIRS.every((item) => !('price' in item))).toBe(true);
   });
 
   it('preserves the core US references and expands the registry', () => {
     const symbols = US_MARKET_UNIVERSE.map((item) => item.symbol);
-    expect(symbols).toEqual(expect.arrayContaining(['SPY','AAPL','NVDA','MSFT']));
+    expect(symbols).toEqual(expect.arrayContaining(['SPY', 'AAPL', 'NVDA', 'MSFT']));
     expect(symbols.length).toBeGreaterThanOrEqual(10);
   });
 

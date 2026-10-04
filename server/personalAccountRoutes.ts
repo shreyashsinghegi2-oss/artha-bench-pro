@@ -2,11 +2,7 @@ import { Router, Request, Response } from 'express';
 import Decimal from 'decimal.js';
 import { z } from 'zod';
 import { callGroqStructuredFinancialAnswer, getGroqModels } from './groqService';
-import {
-  buildStructuredFinancialAnswerInstructions,
-  createFallbackStructuredFinancialAnswer,
-  serializeStructuredFinancialAnswer,
-} from './aiResponseStandard';
+import { buildStructuredFinancialAnswerInstructions, createFallbackStructuredFinancialAnswer, serializeStructuredFinancialAnswer } from './aiResponseStandard';
 import { checkPromptSafety } from './safetyChecker';
 
 export const personalAccountRouter = Router();
@@ -31,33 +27,54 @@ type ContextSettings = z.infer<typeof contextSettingsSchema>;
 
 const personalizedAssistantSchema = z.object({
   question: z.string().min(3).max(1200),
-  history: z.array(z.object({ role: z.enum(['user', 'assistant']), content: z.string().min(1).max(4000) })).max(10).optional(),
+  history: z
+    .array(z.object({ role: z.enum(['user', 'assistant']), content: z.string().min(1).max(4000) }))
+    .max(10)
+    .optional(),
   settings: contextSettingsSchema,
   publicContext: z.object({
     capturedAt: z.string().max(64),
     selectedSymbol: z.string().min(1).max(20),
     selectedRange: z.string().min(1).max(8),
     selectedCountry: z.enum(['us', 'india']),
-    quotes: z.array(z.object({ symbol: z.string(), price: z.number(), changePercent: z.number().nullable(), freshness: z.string(), providerName: z.string() })).max(8),
-    marketHistory: z.object({
-      symbol: z.string(),
-      range: z.string(),
-      pointCount: z.number(),
-      startDate: z.string().nullable(),
-      endDate: z.string().nullable(),
-      startPrice: z.number().nullable(),
-      latestPrice: z.number().nullable(),
-      high: z.number().nullable(),
-      low: z.number().nullable(),
-      returnPercent: z.number().nullable(),
-    }).nullable().optional(),
-    economicIndicators: z.array(z.object({ label: z.string(), value: z.number().nullable(), unit: z.string(), date: z.string().nullable(), sourceName: z.string(), status: z.string() })).max(30),
-    providerHealth: z.object({
-      connected: z.number(),
-      total: z.number(),
-      connectedProviders: z.array(z.string()).max(30),
-      unavailableProviders: z.array(z.string()).max(30),
-    }).optional(),
+    quotes: z
+      .array(z.object({ symbol: z.string(), price: z.number(), changePercent: z.number().nullable(), freshness: z.string(), providerName: z.string() }))
+      .max(8),
+    marketHistory: z
+      .object({
+        symbol: z.string(),
+        range: z.string(),
+        pointCount: z.number(),
+        startDate: z.string().nullable(),
+        endDate: z.string().nullable(),
+        startPrice: z.number().nullable(),
+        latestPrice: z.number().nullable(),
+        high: z.number().nullable(),
+        low: z.number().nullable(),
+        returnPercent: z.number().nullable(),
+      })
+      .nullable()
+      .optional(),
+    economicIndicators: z
+      .array(
+        z.object({
+          label: z.string(),
+          value: z.number().nullable(),
+          unit: z.string(),
+          date: z.string().nullable(),
+          sourceName: z.string(),
+          status: z.string(),
+        }),
+      )
+      .max(30),
+    providerHealth: z
+      .object({
+        connected: z.number(),
+        total: z.number(),
+        connectedProviders: z.array(z.string()).max(30),
+        unavailableProviders: z.array(z.string()).max(30),
+      })
+      .optional(),
     latestEvaluation: z.any().nullable().optional(),
   }),
 });
@@ -80,7 +97,12 @@ type VerifiedUser = { id: string; email?: string };
 
 function supabaseConfig() {
   const url = (process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || DEFAULT_SUPABASE_URL).replace(/\/$/, '');
-  const anonKey = process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY || DEFAULT_SUPABASE_PUBLISHABLE_KEY;
+  const anonKey =
+    process.env.SUPABASE_ANON_KEY ||
+    process.env.SUPABASE_PUBLISHABLE_KEY ||
+    process.env.VITE_SUPABASE_ANON_KEY ||
+    process.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
+    DEFAULT_SUPABASE_PUBLISHABLE_KEY;
   const serviceRole = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
   return { url, anonKey, serviceRole };
 }
@@ -111,10 +133,18 @@ async function fetchWorkspace(token: string): Promise<Record<string, string | nu
 }
 
 function parsePayload(workspace: Record<string, string | null>, key: string): any | null {
-  try { return workspace[key] ? JSON.parse(workspace[key] as string) : null; } catch { return null; }
+  try {
+    return workspace[key] ? JSON.parse(workspace[key] as string) : null;
+  } catch {
+    return null;
+  }
 }
 
-function enabled(settings: ContextSettings, granular: keyof Pick<ContextSettings, 'income' | 'expenses' | 'budgets' | 'emis' | 'goals'>, legacy: 'personalFinance' | 'budgetsAndGoals'): boolean {
+function enabled(
+  settings: ContextSettings,
+  granular: keyof Pick<ContextSettings, 'income' | 'expenses' | 'budgets' | 'emis' | 'goals'>,
+  legacy: 'personalFinance' | 'budgetsAndGoals',
+): boolean {
   if (settings[granular] === true) return true;
   if (settings[granular] === false) return false;
   return settings[legacy] === true;
@@ -130,31 +160,73 @@ function buildPersonalContext(workspace: Record<string, string | null>, settings
 
   if (incomeEnabled) {
     const income = parsePayload(workspace, 'artha_income_sources_v1');
-    const sources = Array.isArray(income?.sources) ? income.sources.slice(0, 80).map((item: any) => ({ type: item.type, amount: item.amount, currency: item.currency, frequency: item.frequency, description: item.description, startDate: item.startDate, endDate: item.endDate ?? null })) : [];
+    const sources = Array.isArray(income?.sources)
+      ? income.sources.slice(0, 80).map((item: any) => ({
+          type: item.type,
+          amount: item.amount,
+          currency: item.currency,
+          frequency: item.frequency,
+          description: item.description,
+          startDate: item.startDate,
+          endDate: item.endDate ?? null,
+        }))
+      : [];
     context.income = sources;
     if (sources.length) references.push(`Income: ${sources.length} recorded source${sources.length === 1 ? '' : 's'}`);
   }
 
   if (expensesEnabled) {
     const expenses = parsePayload(workspace, 'artha_expenses_v1');
-    const records = Array.isArray(expenses?.records) ? expenses.records.slice(-150).map((item: any) => ({ amount: item.amount, category: item.category, date: item.date, merchant: item.merchant, paymentMethod: item.paymentMethod, recurring: item.recurring })) : [];
+    const records = Array.isArray(expenses?.records)
+      ? expenses.records.slice(-150).map((item: any) => ({
+          amount: item.amount,
+          category: item.category,
+          date: item.date,
+          merchant: item.merchant,
+          paymentMethod: item.paymentMethod,
+          recurring: item.recurring,
+        }))
+      : [];
     context.expenses = records;
     if (records.length) {
-      const dates = records.map((item: any) => item.date).filter(Boolean).sort();
+      const dates = records
+        .map((item: any) => item.date)
+        .filter(Boolean)
+        .sort();
       references.push(`Expenses: ${dates[0] || 'date unavailable'}–${dates.at(-1) || 'date unavailable'}; ${records.length} records`);
     }
   }
 
   if (budgetsEnabled) {
     const budgets = parsePayload(workspace, 'artha_budgets_v1');
-    const items = Array.isArray(budgets?.budgets) ? budgets.budgets.slice(-24).map((budget: any) => ({ name: budget.name, month: budget.month, savingsTarget: budget.savingsTarget, notes: budget.notes, categories: budget.categories })) : [];
+    const items = Array.isArray(budgets?.budgets)
+      ? budgets.budgets.slice(-24).map((budget: any) => ({
+          name: budget.name,
+          month: budget.month,
+          savingsTarget: budget.savingsTarget,
+          notes: budget.notes,
+          categories: budget.categories,
+        }))
+      : [];
     context.budgets = items;
     if (items.length) references.push(`Budgets: ${items.length} saved plan${items.length === 1 ? '' : 's'}`);
   }
 
   if (emisEnabled) {
     const emis = parsePayload(workspace, 'artha_emi_records_v1');
-    const items = Array.isArray(emis?.records) ? emis.records.slice(0, 60).map((item: any) => ({ name: item.name, lender: item.lender, loanType: item.loanType, status: item.status, emiAmount: item.emiAmount, outstandingBalance: item.outstandingBalance, annualInterestRate: item.annualInterestRate, nextDueDate: item.nextDueDate, remainingInstallments: item.remainingInstallments })) : [];
+    const items = Array.isArray(emis?.records)
+      ? emis.records.slice(0, 60).map((item: any) => ({
+          name: item.name,
+          lender: item.lender,
+          loanType: item.loanType,
+          status: item.status,
+          emiAmount: item.emiAmount,
+          outstandingBalance: item.outstandingBalance,
+          annualInterestRate: item.annualInterestRate,
+          nextDueDate: item.nextDueDate,
+          remainingInstallments: item.remainingInstallments,
+        }))
+      : [];
     context.emis = items;
     if (items.length) references.push(`EMIs: ${items.length} recorded commitment${items.length === 1 ? '' : 's'}`);
   }
@@ -162,15 +234,29 @@ function buildPersonalContext(workspace: Record<string, string | null>, settings
   if (settings.paperPortfolio) {
     const portfolio = parsePayload(workspace, 'artha_paper_portfolio_v1');
     if (portfolio) {
-      context.paperPortfolio = { cashBalance: portfolio.cashBalance, initialBalance: portfolio.initialBalance, positions: Array.isArray(portfolio.positions) ? portfolio.positions : [], trades: Array.isArray(portfolio.trades) ? portfolio.trades.slice(0, 50) : [] };
-      references.push(`Paper portfolio: ${Array.isArray(portfolio.positions) ? portfolio.positions.length : 0} positions; ${Array.isArray(portfolio.trades) ? portfolio.trades.length : 0} trades`);
+      context.paperPortfolio = {
+        cashBalance: portfolio.cashBalance,
+        initialBalance: portfolio.initialBalance,
+        positions: Array.isArray(portfolio.positions) ? portfolio.positions : [],
+        trades: Array.isArray(portfolio.trades) ? portfolio.trades.slice(0, 50) : [],
+      };
+      references.push(
+        `Paper portfolio: ${Array.isArray(portfolio.positions) ? portfolio.positions.length : 0} positions; ${Array.isArray(portfolio.trades) ? portfolio.trades.length : 0} trades`,
+      );
     }
   }
 
   if (settings.learningProgress) {
     const progress = parsePayload(workspace, 'artha_learning_progress_v1');
     if (progress) {
-      context.learningProgress = { completedLessonIds: progress.completedLessonIds ?? [], quizScores: progress.quizScores ?? {}, bookmarkedLessonIds: progress.bookmarkedLessonIds ?? [], lastActiveLessonId: progress.lastActiveLessonId ?? null, streakDays: progress.streakDays ?? 0, lastActiveDate: progress.lastActiveDate ?? null };
+      context.learningProgress = {
+        completedLessonIds: progress.completedLessonIds ?? [],
+        quizScores: progress.quizScores ?? {},
+        bookmarkedLessonIds: progress.bookmarkedLessonIds ?? [],
+        lastActiveLessonId: progress.lastActiveLessonId ?? null,
+        streakDays: progress.streakDays ?? 0,
+        lastActiveDate: progress.lastActiveDate ?? null,
+      };
       references.push(`Learning: ${Array.isArray(progress.completedLessonIds) ? progress.completedLessonIds.length : 0} completed lessons`);
     }
   }
@@ -232,8 +318,12 @@ function activeEmis(workspace: Record<string, string | null>) {
   };
 }
 
-function roundMoney(value: Decimal): number { return value.toDecimalPlaces(2).toNumber(); }
-function roundPercent(value: Decimal | null): number | null { return value ? value.toDecimalPlaces(2).toNumber() : null; }
+function roundMoney(value: Decimal): number {
+  return value.toDecimalPlaces(2).toNumber();
+}
+function roundPercent(value: Decimal | null): number | null {
+  return value ? value.toDecimalPlaces(2).toNumber() : null;
+}
 
 personalAccountRouter.post('/personal/assistant', async (req: Request, res: Response) => {
   try {
@@ -245,8 +335,13 @@ personalAccountRouter.post('/personal/assistant', async (req: Request, res: Resp
     const safety = checkPromptSafety(parsed.data.question);
     if (!safety.safe) return res.status(400).json({ error: safety.reason, safety });
 
-    const directAdvicePattern = /\b(should i|would you|do you recommend|tell me (?:whether|if) to)\b.{0,80}\b(buy|sell|hold|invest)\b|\b(target price|trade signal|guaranteed return)\b/i;
-    if (directAdvicePattern.test(parsed.data.question)) return res.status(400).json({ error: 'ArthaMind can explain your recorded data and educational trade-offs, but cannot provide personalized buy/sell/hold instructions, target prices, or guaranteed outcomes.' });
+    const directAdvicePattern =
+      /\b(should i|would you|do you recommend|tell me (?:whether|if) to)\b.{0,80}\b(buy|sell|hold|invest)\b|\b(target price|trade signal|guaranteed return)\b/i;
+    if (directAdvicePattern.test(parsed.data.question))
+      return res.status(400).json({
+        error:
+          'ArthaMind can explain your recorded data and educational trade-offs, but cannot provide personalized buy/sell/hold instructions, target prices, or guaranteed outcomes.',
+      });
 
     const workspace = await fetchWorkspace(token);
     const { context: personalContext, references } = buildPersonalContext(workspace, parsed.data.settings);
@@ -264,11 +359,13 @@ personalAccountRouter.post('/personal/assistant', async (req: Request, res: Resp
       ? createFallbackStructuredFinancialAnswer(parsed.data.question, fallback)
       : await callGroqStructuredFinancialAnswer(systemPrompt, userPrompt, { history: parsed.data.history, fallbackQuestion: parsed.data.question });
     const answer = serializeStructuredFinancialAnswer(structuredAnswer);
-    const sourceLabels = Array.from(new Set([
-      ...publicContext.quotes.map((quote) => quote.providerName),
-      ...publicContext.economicIndicators.map((indicator) => indicator.sourceName),
-      ...(personalDataUsed ? ['My authorized Artha Bench workspace'] : []),
-    ]));
+    const sourceLabels = Array.from(
+      new Set([
+        ...publicContext.quotes.map((quote) => quote.providerName),
+        ...publicContext.economicIndicators.map((indicator) => indicator.sourceName),
+        ...(personalDataUsed ? ['My authorized Artha Bench workspace'] : []),
+      ]),
+    );
 
     return res.json({
       answer,
@@ -277,7 +374,12 @@ personalAccountRouter.post('/personal/assistant', async (req: Request, res: Resp
       model: demoMode ? null : getGroqModels().tutorModel,
       groundedAt: publicContext.capturedAt,
       sourceLabels,
-      suggestedQuestions: ['Where did I spend the most in my recorded expenses?', 'Which saved budget category is closest to its limit?', 'Summarize my recorded income and expenses.', 'How would a change in one monthly commitment affect my recorded cash flow?'],
+      suggestedQuestions: [
+        'Where did I spend the most in my recorded expenses?',
+        'Which saved budget category is closest to its limit?',
+        'Summarize my recorded income and expenses.',
+        'How would a change in one monthly commitment affect my recorded cash flow?',
+      ],
       disclaimer: 'Educational analysis only — not investment, tax, legal, or financial advice.',
       personalDataUsed,
       personalContextReferences: references,
@@ -374,7 +476,10 @@ personalAccountRouter.post('/personal/decision-replay', async (req: Request, res
       const prompt = `Explain this private Decision Replay without changing its arithmetic. Separate recorded baseline facts from scenario assumptions. Do not give investment, tax, legal, lending-approval, refinancing, or guaranteed-outcome advice. State data completeness as record coverage, not accuracy. Authenticated user id: ${user.id}. Deterministic replay: ${JSON.stringify(replay)}`;
       const demoMode = !process.env.GROQ_API_KEY?.trim();
       structuredAnswer = demoMode
-        ? createFallbackStructuredFinancialAnswer('Decision Replay', 'The deterministic replay is available above, but the live AI explanation provider is not configured. No interpretation has been invented.')
+        ? createFallbackStructuredFinancialAnswer(
+            'Decision Replay',
+            'The deterministic replay is available above, but the live AI explanation provider is not configured. No interpretation has been invented.',
+          )
         : await callGroqStructuredFinancialAnswer(
             `You are ArthaMind Decision Replay, a private counterfactual financial-education assistant. Use the supplied deterministic output exactly. ${buildStructuredFinancialAnswerInstructions({ audience: 'dashboard', language: 'English', level: 'beginner', detail: 'detailed', hasVerifiedCurrentData: true })}`,
             prompt,
@@ -387,7 +492,8 @@ personalAccountRouter.post('/personal/decision-replay', async (req: Request, res
       replay,
       structuredAnswer,
       answer,
-      disclaimer: 'Counterfactual educational analysis only. Decision Replay does not modify your records, predict markets, approve credit, or provide financial advice.',
+      disclaimer:
+        'Counterfactual educational analysis only. Decision Replay does not modify your records, predict markets, approve credit, or provide financial advice.',
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Decision Replay failed.';

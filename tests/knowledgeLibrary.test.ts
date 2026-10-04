@@ -3,7 +3,10 @@ import { chunkText, rankPassages, referenceBlock } from '../src/services/knowled
 
 describe('tutor knowledge library', () => {
   it('retrieves the right formula-book entry for common questions', () => {
-    const top = (q: string) => { const h = rankPassages(q, [], 1)[0]; return h && h.kind === 'formula' ? h.entry.id : null; };
+    const top = (q: string) => {
+      const h = rankPassages(q, [], 1)[0];
+      return h && h.kind === 'formula' ? h.entry.id : null;
+    };
     expect(top('How is EMI calculated for a home loan?')).toBe('emi');
     expect(top('What is CAGR?')).toBe('cagr');
     expect(top('How much SIP do I need for 1 crore target corpus?')).toBe('sip-target');
@@ -14,7 +17,15 @@ describe('tutor knowledge library', () => {
   });
 
   it('ranks a passage from the learner’s own document', () => {
-    const docs = [{ id: '1', name: 'Bonds notes.pdf', size: 1, addedAt: '', chunks: ['Duration measures how sensitive a bond price is to changes in interest rates. Modified duration approximates the percentage price change.'] }];
+    const docs = [
+      {
+        id: '1',
+        name: 'Bonds notes.pdf',
+        size: 1,
+        addedAt: '',
+        chunks: ['Duration measures how sensitive a bond price is to changes in interest rates. Modified duration approximates the percentage price change.'],
+      },
+    ];
     const hits = rankPassages('what is modified duration of a bond', docs, 3);
     expect(hits[0]).toMatchObject({ kind: 'doc', docName: 'Bonds notes.pdf' });
   });

@@ -7,19 +7,41 @@ function yahooChart(symbol: string, closes: number[], stepSeconds = 3600) {
   const timestamp = closes.map((_, i) => start + i * stepSeconds);
   return {
     chart: {
-      result: [{
-        meta: { currency: 'INR', symbol, regularMarketTime: timestamp.at(-1), regularMarketPrice: closes.at(-1), chartPreviousClose: closes[0], previousClose: closes[0], exchangeDataDelayedBy: 0, currentTradingPeriod: { regular: { start: 0, end: 1 } } },
-        timestamp,
-        indicators: { quote: [{ open: closes.map((c) => c - 1), high: closes.map((c) => c + 2), low: closes.map((c) => c - 3), close: closes, volume: closes.map(() => 10) }] },
-      }],
+      result: [
+        {
+          meta: {
+            currency: 'INR',
+            symbol,
+            regularMarketTime: timestamp.at(-1),
+            regularMarketPrice: closes.at(-1),
+            chartPreviousClose: closes[0],
+            previousClose: closes[0],
+            exchangeDataDelayedBy: 0,
+            currentTradingPeriod: { regular: { start: 0, end: 1 } },
+          },
+          timestamp,
+          indicators: {
+            quote: [
+              { open: closes.map((c) => c - 1), high: closes.map((c) => c + 2), low: closes.map((c) => c - 3), close: closes, volume: closes.map(() => 10) },
+            ],
+          },
+        },
+      ],
       error: null,
     },
   };
 }
 
 describe('market terminal data layer', () => {
-  beforeEach(() => { resetMarketTerminalCachesForTests(); vi.stubEnv('MARKET_DATA_PROVIDER', 'yahoo'); });
-  afterEach(() => { vi.unstubAllGlobals(); vi.unstubAllEnvs(); vi.useRealTimers(); });
+  beforeEach(() => {
+    resetMarketTerminalCachesForTests();
+    vi.stubEnv('MARKET_DATA_PROVIDER', 'yahoo');
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.unstubAllEnvs();
+    vi.useRealTimers();
+  });
 
   it('aggregates hourly bars into 4h candles with correct OHLCV', () => {
     const base = 4 * 3600 * 1000; // aligned to a 4h boundary
@@ -30,7 +52,17 @@ describe('market terminal data layer', () => {
   });
 
   it('maps NIFTY 50 to ^NSEI candles from the Yahoo provider and aggregates 4h', async () => {
-    const fetchMock = vi.fn(async (url: string | URL) => new Response(JSON.stringify(yahooChart('^NSEI', Array.from({ length: 12 }, (_, i) => 23000 + i * 10)))));
+    const fetchMock = vi.fn(
+      async (url: string | URL) =>
+        new Response(
+          JSON.stringify(
+            yahooChart(
+              '^NSEI',
+              Array.from({ length: 12 }, (_, i) => 23000 + i * 10),
+            ),
+          ),
+        ),
+    );
     vi.stubGlobal('fetch', fetchMock);
     const result = await getTerminalCandles('nifty50', '4h');
     const requested = new URL(String(fetchMock.mock.calls[0][0]));
@@ -45,21 +77,38 @@ describe('market terminal data layer', () => {
   it('serves the last good candles, flagged stale, when the provider fails after the cache expires', async () => {
     vi.useFakeTimers({ toFake: ['Date'] });
     vi.setSystemTime(new Date('2026-09-22T06:00:00Z'));
-    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify(yahooChart('INR=X', [95.5, 95.6, 95.7])))));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(JSON.stringify(yahooChart('INR=X', [95.5, 95.6, 95.7])))),
+    );
     await getTerminalCandles('usdinr', '15m');
     vi.setSystemTime(new Date('2026-09-22T06:05:00Z'));
-    vi.stubGlobal('fetch', vi.fn(async () => new Response('rate limited', { status: 429 })));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response('rate limited', { status: 429 })),
+    );
     const again = await getTerminalCandles('usdinr', '15m');
     expect(again.stale).toBe(true);
     expect(again.candles.at(-1)?.close).toBe(95.7);
   });
 
   it('builds a four-card snapshot with sparklines and never invents prices when a feed fails', async () => {
-    vi.stubGlobal('fetch', vi.fn(async (url: string | URL) => {
-      const symbol = decodeURIComponent(new URL(String(url)).pathname.split('/').pop() || '');
-      if (symbol === 'GC=F') return new Response('down', { status: 503 });
-      return new Response(JSON.stringify(yahooChart(symbol, Array.from({ length: 20 }, (_, i) => 100 + i), 300)));
-    }));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string | URL) => {
+        const symbol = decodeURIComponent(new URL(String(url)).pathname.split('/').pop() || '');
+        if (symbol === 'GC=F') return new Response('down', { status: 503 });
+        return new Response(
+          JSON.stringify(
+            yahooChart(
+              symbol,
+              Array.from({ length: 20 }, (_, i) => 100 + i),
+              300,
+            ),
+          ),
+        );
+      }),
+    );
     const { items } = await getTerminalSnapshot();
     expect(items.map((item) => item.id)).toEqual(['nifty50', 'sensex', 'usdinr', 'gold']);
     expect(items[0]).toMatchObject({ status: 'ok', price: 119 });

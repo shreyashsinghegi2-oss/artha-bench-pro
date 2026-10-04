@@ -6,23 +6,11 @@
  */
 
 import { z } from 'zod';
-import {
-  CompanyIntelligence,
-  ConnectionStatus,
-  ProviderDiagnostic,
-} from '../../src/types';
+import { CompanyIntelligence, ConnectionStatus, ProviderDiagnostic } from '../../src/types';
 
 const DEFAULT_FINNHUB_BASE_URL = 'https://finnhub.io/api/v1';
 
-type FinnhubStatus = Extract<
-  ConnectionStatus,
-  | 'connected'
-  | 'not_configured'
-  | 'invalid_credentials'
-  | 'invalid_response'
-  | 'rate_limited'
-  | 'error'
->;
+type FinnhubStatus = Extract<ConnectionStatus, 'connected' | 'not_configured' | 'invalid_credentials' | 'invalid_response' | 'rate_limited' | 'error'>;
 
 const profileSchema = z
   .object({
@@ -104,10 +92,7 @@ function getConfiguration() {
 }
 
 function classifyError(response: Response, body: unknown): FinnhubStatus | null {
-  const message =
-    body && typeof body === 'object' && 'error' in body
-      ? String((body as { error?: unknown }).error || '')
-      : '';
+  const message = body && typeof body === 'object' && 'error' in body ? String((body as { error?: unknown }).error || '') : '';
   const normalized = message.toLowerCase();
 
   if (response.status === 401 || response.status === 403 || /token|api key|access denied/.test(normalized)) {
@@ -120,11 +105,7 @@ function classifyError(response: Response, body: unknown): FinnhubStatus | null 
   return null;
 }
 
-async function requestFinnhub<T>(
-  endpoint: string,
-  schema: z.ZodType<T>,
-  params: Record<string, string>,
-): Promise<ProviderResult<T>> {
+async function requestFinnhub<T>(endpoint: string, schema: z.ZodType<T>, params: Record<string, string>): Promise<ProviderResult<T>> {
   const { apiKey, baseUrl } = getConfiguration();
   if (!apiKey) {
     return {
@@ -185,9 +166,7 @@ function metricNumber(metrics: Record<string, unknown>, ...keys: string[]) {
   return null;
 }
 
-export async function fetchFinnhubCompanyIntelligence(
-  symbol: string,
-): Promise<CompanyIntelligence> {
+export async function fetchFinnhubCompanyIntelligence(symbol: string): Promise<CompanyIntelligence> {
   const normalizedSymbol = safeSymbol(symbol);
   const { apiKey } = getConfiguration();
   if (!apiKey) {
@@ -204,27 +183,24 @@ export async function fetchFinnhubCompanyIntelligence(
     };
   }
 
-  const [profileResult, metricsResult, earningsResult, recommendationResult] =
-    await Promise.all([
-      requestFinnhub('stock/profile2', profileSchema, { symbol: normalizedSymbol }),
-      requestFinnhub('stock/metric', metricsSchema, {
-        symbol: normalizedSymbol,
-        metric: 'all',
-      }),
-      requestFinnhub('stock/earnings', earningsSchema, {
-        symbol: normalizedSymbol,
-        limit: '4',
-      }),
-      requestFinnhub('stock/recommendation', recommendationSchema, {
-        symbol: normalizedSymbol,
-      }),
-    ]);
+  const [profileResult, metricsResult, earningsResult, recommendationResult] = await Promise.all([
+    requestFinnhub('stock/profile2', profileSchema, { symbol: normalizedSymbol }),
+    requestFinnhub('stock/metric', metricsSchema, {
+      symbol: normalizedSymbol,
+      metric: 'all',
+    }),
+    requestFinnhub('stock/earnings', earningsSchema, {
+      symbol: normalizedSymbol,
+      limit: '4',
+    }),
+    requestFinnhub('stock/recommendation', recommendationSchema, {
+      symbol: normalizedSymbol,
+    }),
+  ]);
 
   const results = [profileResult, metricsResult, earningsResult, recommendationResult];
   const connectedCount = results.filter((result) => result.status === 'connected').length;
-  const blockingStatus = results.find(
-    (result) => result.status === 'invalid_credentials' || result.status === 'rate_limited',
-  );
+  const blockingStatus = results.find((result) => result.status === 'invalid_credentials' || result.status === 'rate_limited');
   const profile = profileResult.data;
   const rawMetrics = metricsResult.data?.metric || {};
 
@@ -256,11 +232,7 @@ export async function fetchFinnhubCompanyIntelligence(
         beta: metricNumber(rawMetrics, 'beta'),
         week52High: metricNumber(rawMetrics, '52WeekHigh'),
         week52Low: metricNumber(rawMetrics, '52WeekLow'),
-        dividendYield: metricNumber(
-          rawMetrics,
-          'dividendYieldIndicatedAnnual',
-          'dividendYield5Y',
-        ),
+        dividendYield: metricNumber(rawMetrics, 'dividendYieldIndicatedAnnual', 'dividendYield5Y'),
         epsGrowth3Y: metricNumber(rawMetrics, 'epsGrowth3Y'),
         revenueGrowth3Y: metricNumber(rawMetrics, 'revenueGrowth3Y'),
       }
@@ -268,9 +240,7 @@ export async function fetchFinnhubCompanyIntelligence(
 
   return {
     symbol: normalizedSymbol,
-    status:
-      blockingStatus?.status ||
-      (connectedCount > 0 ? 'connected' : results[0]?.status || 'error'),
+    status: blockingStatus?.status || (connectedCount > 0 ? 'connected' : results[0]?.status || 'error'),
     providerName: 'Finnhub',
     retrievedAt: new Date().toISOString(),
     message:

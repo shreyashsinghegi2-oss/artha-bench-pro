@@ -33,36 +33,22 @@ const stateStyles: Record<FeedState, string> = {
 };
 
 function formatValue(quote: NormalizedMarketQuote, showCurrency = false) {
-  const currencyPrefix = showCurrency
-    ? quote.currency === 'INR'
-      ? '₹'
-      : quote.currency === 'USD'
-        ? '$'
-        : `${quote.currency} `
-    : '';
+  const currencyPrefix = showCurrency ? (quote.currency === 'INR' ? '₹' : quote.currency === 'USD' ? '$' : `${quote.currency} `) : '';
   return `${currencyPrefix}${quote.price.toLocaleString('en-IN', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })}`;
 }
 
-export const MarketStrip: React.FC<MarketStripProps> = ({
-  instruments,
-  quotes,
-  loading,
-}) => {
-  const quoteBySymbol = new Map<string, NormalizedMarketQuote>(
-    quotes.map((quote) => [quote.symbol, quote]),
-  );
+export const MarketStrip: React.FC<MarketStripProps> = ({ instruments, quotes, loading }) => {
+  const quoteBySymbol = new Map<string, NormalizedMarketQuote>(quotes.map((quote) => [quote.symbol, quote]));
 
   return (
     <section className="overflow-hidden rounded-2xl border border-line bg-surface shadow-sm" aria-label="Market snapshot">
       <div className="flex items-center justify-between gap-4 border-b border-line px-4 py-3 sm:px-5">
         <div>
           <h2 className="text-sm font-semibold text-ink">Market snapshot</h2>
-          <p className="mt-0.5 text-[11px] text-secondary">
-            Provider-labelled India indices, currency, and gold reference
-          </p>
+          <p className="mt-0.5 text-[11px] text-secondary">Provider-labelled India indices, currency, and gold reference</p>
         </div>
         <span className="shrink-0 rounded-full border border-line bg-subtle px-2.5 py-1 text-[10px] font-semibold text-secondary">
           Feed state shown per instrument
@@ -92,7 +78,10 @@ export const MarketStrip: React.FC<MarketStripProps> = ({
               <article key={instrument.symbol} className="min-h-28 px-4 py-3.5">
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <p className="flex items-center gap-1.5 text-xs font-semibold text-ink"><CompanyLogo symbol={instrument.label} size={18} className="rounded-md border border-line" />{instrument.label}</p>
+                    <p className="flex items-center gap-1.5 text-xs font-semibold text-ink">
+                      <CompanyLogo symbol={instrument.label} size={18} className="rounded-md border border-line" />
+                      {instrument.label}
+                    </p>
                     <p className="mt-0.5 text-[10px] text-secondary">{instrument.symbol}</p>
                   </div>
                   <span className={`inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[9px] font-bold ${stateStyles[feedState]}`}>
@@ -110,11 +99,10 @@ export const MarketStrip: React.FC<MarketStripProps> = ({
                 </div>
 
                 <div className="mt-3 flex items-baseline justify-between gap-2">
-                  <p className="text-base font-bold tabular-nums text-ink">
-                    {formatValue(quote, instrument.showCurrency)}
-                  </p>
+                  <p className="text-base font-bold tabular-nums text-ink">{formatValue(quote, instrument.showCurrency)}</p>
                   <p className={`text-[11px] font-semibold tabular-nums ${isPositive ? 'text-success' : 'text-danger'}`}>
-                    {isPositive ? '+' : ''}{changePercent.toFixed(2)}%
+                    {isPositive ? '+' : ''}
+                    {changePercent.toFixed(2)}%
                   </p>
                 </div>
               </article>

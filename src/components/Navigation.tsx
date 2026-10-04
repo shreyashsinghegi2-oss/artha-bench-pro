@@ -1,8 +1,26 @@
 import React from 'react';
-import { PieChart,
-  BarChart3, BookOpen, BrainCircuit, BriefcaseBusiness, Calculator,
-  FlaskConical, GraduationCap, Home, Landmark, LineChart, Newspaper, Settings,
-  ShieldCheck, Sparkles, WalletCards, Zap, LayoutDashboard, Coins, HeartPulse, CalendarClock,
+import {
+  PieChart,
+  BarChart3,
+  BookOpen,
+  BrainCircuit,
+  BriefcaseBusiness,
+  Calculator,
+  FlaskConical,
+  GraduationCap,
+  Home,
+  Landmark,
+  LineChart,
+  Newspaper,
+  Settings,
+  ShieldCheck,
+  Sparkles,
+  WalletCards,
+  Zap,
+  LayoutDashboard,
+  Coins,
+  HeartPulse,
+  CalendarClock,
 } from 'lucide-react';
 import { AppNavigationDestination } from '../navigationTypes';
 
@@ -60,9 +78,7 @@ const LAB_ITEMS: NavigationItem[] = [
   { id: 'methodology', label: 'Methodology', icon: ShieldCheck },
 ];
 
-const SYSTEM_ITEMS: NavigationItem[] = [
-  { id: 'settings', label: 'Settings', icon: Settings },
-];
+const SYSTEM_ITEMS: NavigationItem[] = [{ id: 'settings', label: 'Settings', icon: Settings }];
 
 export const NAVIGATION_ITEMS = [...OVERVIEW_ITEMS, ...PLAN_ITEMS, ...MONEY_ITEMS, ...MARKET_ITEMS, ...LEARN_ITEMS, ...LAB_ITEMS, ...SYSTEM_ITEMS];
 

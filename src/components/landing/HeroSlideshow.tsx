@@ -24,8 +24,10 @@ export const HeroSlideshow: React.FC = () => {
   useEffect(() => {
     const idle = (window as unknown as { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number }).requestIdleCallback;
     const start = () => setLoadRest(true);
-    if (document.readyState === 'complete') { if (idle) idle(start, { timeout: 2500 }); else window.setTimeout(start, 1200); }
-    else window.addEventListener('load', () => (idle ? idle(start, { timeout: 2500 }) : window.setTimeout(start, 1200)), { once: true });
+    if (document.readyState === 'complete') {
+      if (idle) idle(start, { timeout: 2500 });
+      else window.setTimeout(start, 1200);
+    } else window.addEventListener('load', () => (idle ? idle(start, { timeout: 2500 }) : window.setTimeout(start, 1200)), { once: true });
   }, []);
   useEffect(() => {
     const el = ref.current;
@@ -36,15 +38,34 @@ export const HeroSlideshow: React.FC = () => {
   }, []);
   useEffect(() => {
     if (reduced || !loadRest || !visible) return;
-    const t = window.setInterval(() => { if (document.visibilityState === 'visible') setActive((i) => { setPrev(i); return (i + 1) % SLIDES.length; }); }, HOLD_MS);
+    const t = window.setInterval(() => {
+      if (document.visibilityState === 'visible')
+        setActive((i) => {
+          setPrev(i);
+          return (i + 1) % SLIDES.length;
+        });
+    }, HOLD_MS);
     return () => window.clearInterval(t);
   }, [reduced, loadRest, visible]);
 
-  return <div ref={ref} className={`hs ${visible ? '' : 'hs-paused'}`} aria-hidden="true">
-    {SLIDES.map((s, i) => (i === 0 || loadRest) && <picture key={s.src} className={`hs-slide ${s.move} ${i === active ? 'on' : i === prev ? 'out' : ''}`}>
-      <source media="(max-width: 900px)" srcSet={`${s.src}-m.webp`} type="image/webp"/>
-      <img src={`${s.src}.webp`} alt="" style={{ objectPosition: s.pos }} decoding="async" {...(i === 0 ? { fetchPriority: 'high' as const } : { loading: 'lazy' as const })}/>
-    </picture>)}
-    <div className="hs-shade"/>
-  </div>;
+  return (
+    <div ref={ref} className={`hs ${visible ? '' : 'hs-paused'}`} aria-hidden="true">
+      {SLIDES.map(
+        (s, i) =>
+          (i === 0 || loadRest) && (
+            <picture key={s.src} className={`hs-slide ${s.move} ${i === active ? 'on' : i === prev ? 'out' : ''}`}>
+              <source media="(max-width: 900px)" srcSet={`${s.src}-m.webp`} type="image/webp" />
+              <img
+                src={`${s.src}.webp`}
+                alt=""
+                style={{ objectPosition: s.pos }}
+                decoding="async"
+                {...(i === 0 ? { fetchPriority: 'high' as const } : { loading: 'lazy' as const })}
+              />
+            </picture>
+          ),
+      )}
+      <div className="hs-shade" />
+    </div>
+  );
 };

@@ -49,7 +49,10 @@ export function installTilt(root: HTMLElement, { selector, maxWidth = 560, maxDe
       frame = 0;
       if (!last) return;
       const card = pick(last.target);
-      if (card !== active) { reset(active); active = card; }
+      if (card !== active) {
+        reset(active);
+        active = card;
+      }
       if (!card) return;
       const box = card.getBoundingClientRect();
       const px = (last.clientX - box.left) / box.width - 0.5;
@@ -61,8 +64,14 @@ export function installTilt(root: HTMLElement, { selector, maxWidth = 560, maxDe
       card.style.setProperty('--gx', `${((px + 0.5) * 100).toFixed(1)}%`);
       card.style.setProperty('--gy', `${((py + 0.5) * 100).toFixed(1)}%`);
     };
-    const move = (event: PointerEvent) => { last = event; if (!frame) frame = requestAnimationFrame(apply); };
-    const leave = () => { reset(active); active = null; };
+    const move = (event: PointerEvent) => {
+      last = event;
+      if (!frame) frame = requestAnimationFrame(apply);
+    };
+    const leave = () => {
+      reset(active);
+      active = null;
+    };
     root.addEventListener('pointermove', move, { passive: true });
     root.addEventListener('pointerleave', leave);
     cleanups.push(() => {
@@ -75,13 +84,16 @@ export function installTilt(root: HTMLElement, { selector, maxWidth = 560, maxDe
 
   if (revealSelector && !reduced && typeof IntersectionObserver !== 'undefined') {
     const seen = new WeakSet<Element>();
-    const observer = new IntersectionObserver((entries) => {
-      for (const entry of entries) {
-        if (!entry.isIntersecting) continue;
-        entry.target.classList.add('sr-in');
-        observer.unobserve(entry.target);
-      }
-    }, { rootMargin: '0px 0px -8% 0px', threshold: 0.08 });
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          entry.target.classList.add('sr-in');
+          observer.unobserve(entry.target);
+        }
+      },
+      { rootMargin: '0px 0px -8% 0px', threshold: 0.08 },
+    );
     const scan = () => {
       let count = 0;
       root.querySelectorAll<HTMLElement>(revealSelector).forEach((el) => {
@@ -96,9 +108,19 @@ export function installTilt(root: HTMLElement, { selector, maxWidth = 560, maxDe
     };
     scan();
     let pending = 0;
-    const mutations = new MutationObserver(() => { if (!pending) pending = window.setTimeout(() => { pending = 0; scan(); }, 150); });
+    const mutations = new MutationObserver(() => {
+      if (!pending)
+        pending = window.setTimeout(() => {
+          pending = 0;
+          scan();
+        }, 150);
+    });
     mutations.observe(root, { childList: true, subtree: true });
-    cleanups.push(() => { observer.disconnect(); mutations.disconnect(); window.clearTimeout(pending); });
+    cleanups.push(() => {
+      observer.disconnect();
+      mutations.disconnect();
+      window.clearTimeout(pending);
+    });
   }
 
   return () => cleanups.forEach((cleanup) => cleanup());

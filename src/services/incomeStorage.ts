@@ -3,14 +3,7 @@ import { IncomeTaxDetails } from '../types/taxTypes';
 
 export const INCOME_STORAGE_KEY = 'artha_income_sources_v1';
 
-export const INCOME_TYPES = [
-  'Salary',
-  'Freelance',
-  'Rental',
-  'Business',
-  'Investment Returns',
-  'Other',
-] as const;
+export const INCOME_TYPES = ['Salary', 'Freelance', 'Rental', 'Business', 'Investment Returns', 'Other'] as const;
 
 export const INCOME_FREQUENCIES = ['Monthly', 'Quarterly', 'Annually', 'One-time'] as const;
 export const INCOME_TAX_STATUSES = ['Pre-tax', 'Post-tax', 'Tax-free'] as const;
@@ -113,10 +106,7 @@ function isInYear(isoDate: string, year: number): boolean {
   return isoDate.startsWith(`${year}-`);
 }
 
-export function summarizeIncomeByCurrency(
-  sources: IncomeSource[],
-  asOf = new Date(),
-): CurrencyIncomeSummary[] {
+export function summarizeIncomeByCurrency(sources: IncomeSource[], asOf = new Date()): CurrencyIncomeSummary[] {
   const summaries = new Map<string, CurrencyIncomeSummary>();
 
   for (const source of sources) {

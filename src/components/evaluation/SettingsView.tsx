@@ -6,9 +6,69 @@ export const SettingsView: React.FC = () => {
   const auth = useAuth();
   const [status, setStatus] = useState<string | null>(null);
   const restart = async () => {
-    if (!auth.user) { auth.openAuth('login'); return; }
+    if (!auth.user) {
+      auth.openAuth('login');
+      return;
+    }
     await auth.saveProfile({ onboarding_completed: false });
     setStatus('Onboarding restarted. Choose your goal and privacy settings in the onboarding panel.');
   };
-  return <div className="mx-auto max-w-7xl space-y-6 px-4 py-8"><section className="rounded-3xl border border-line bg-surface p-6 shadow-sm sm:p-8"><div className="flex items-center gap-3"><div className="rounded-2xl border border-interactive/30 bg-interactive-soft p-3 text-interactive"><Settings className="h-6 w-6" /></div><div><h1 className="text-2xl font-black text-ink">Platform Settings & Configuration</h1><p className="text-xs text-secondary">Server security information and user-controlled product preferences.</p></div></div>{status && <div className="mt-4 rounded-xl border border-success-fill/25 bg-success-soft p-3 text-xs text-success">{status}</div>}<div className="mt-6 grid gap-4 lg:grid-cols-2"><div className="rounded-2xl border border-line bg-canvas p-5"><h2 className="text-sm font-black text-ink">Server Secret Management</h2><p className="mt-2 text-xs leading-5 text-secondary">Private provider keys are loaded from server environment variables and are not intentionally exposed to browser code.</p><div className="mt-3 inline-flex items-center gap-2 rounded-lg border border-success-fill/30 bg-success-soft px-3 py-1.5 text-xs font-bold text-success"><ShieldCheck className="h-4 w-4" />Server proxy pattern</div></div><div className="rounded-2xl border border-line bg-canvas p-5"><h2 className="text-sm font-black text-ink">First-time experience</h2><p className="mt-2 text-xs leading-5 text-secondary">Restart the short goal/privacy onboarding without deleting any finance records.</p><button type="button" onClick={() => void restart()} className="mt-3 inline-flex items-center gap-2 rounded-xl border border-line bg-surface px-4 py-2.5 text-xs font-black text-ink"><RotateCcw className="h-4 w-4" />Restart onboarding</button></div></div></section><section className="rounded-3xl border border-line bg-surface p-6"><h2 className="text-sm font-black text-ink">Product information</h2><div className="mt-3 flex flex-wrap gap-2">{[['Trust Centre','/trust'],['About','/about'],['Methodology','/methodology'],['Roadmap','/roadmap'],['Support','/support'],['Changelog','/changelog'],['Early access','/access']].map(([label,url]) => <a key={url} href={url} className="rounded-xl border border-line bg-canvas px-3 py-2 text-xs font-bold text-interactive">{label}</a>)}</div></section></div>;
+  return (
+    <div className="mx-auto max-w-7xl space-y-6 px-4 py-8">
+      <section className="rounded-3xl border border-line bg-surface p-6 shadow-sm sm:p-8">
+        <div className="flex items-center gap-3">
+          <div className="rounded-2xl border border-interactive/30 bg-interactive-soft p-3 text-interactive">
+            <Settings className="h-6 w-6" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-black text-ink">Platform Settings & Configuration</h1>
+            <p className="text-xs text-secondary">Server security information and user-controlled product preferences.</p>
+          </div>
+        </div>
+        {status && <div className="mt-4 rounded-xl border border-success-fill/25 bg-success-soft p-3 text-xs text-success">{status}</div>}
+        <div className="mt-6 grid gap-4 lg:grid-cols-2">
+          <div className="rounded-2xl border border-line bg-canvas p-5">
+            <h2 className="text-sm font-black text-ink">Server Secret Management</h2>
+            <p className="mt-2 text-xs leading-5 text-secondary">
+              Private provider keys are loaded from server environment variables and are not intentionally exposed to browser code.
+            </p>
+            <div className="mt-3 inline-flex items-center gap-2 rounded-lg border border-success-fill/30 bg-success-soft px-3 py-1.5 text-xs font-bold text-success">
+              <ShieldCheck className="h-4 w-4" />
+              Server proxy pattern
+            </div>
+          </div>
+          <div className="rounded-2xl border border-line bg-canvas p-5">
+            <h2 className="text-sm font-black text-ink">First-time experience</h2>
+            <p className="mt-2 text-xs leading-5 text-secondary">Restart the short goal/privacy onboarding without deleting any finance records.</p>
+            <button
+              type="button"
+              onClick={() => void restart()}
+              className="mt-3 inline-flex items-center gap-2 rounded-xl border border-line bg-surface px-4 py-2.5 text-xs font-black text-ink"
+            >
+              <RotateCcw className="h-4 w-4" />
+              Restart onboarding
+            </button>
+          </div>
+        </div>
+      </section>
+      <section className="rounded-3xl border border-line bg-surface p-6">
+        <h2 className="text-sm font-black text-ink">Product information</h2>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {[
+            ['Trust Centre', '/trust'],
+            ['About', '/about'],
+            ['Methodology', '/methodology'],
+            ['Roadmap', '/roadmap'],
+            ['Support', '/support'],
+            ['Changelog', '/changelog'],
+            ['Early access', '/access'],
+          ].map(([label, url]) => (
+            <a key={url} href={url} className="rounded-xl border border-line bg-canvas px-3 py-2 text-xs font-bold text-interactive">
+              {label}
+            </a>
+          ))}
+        </div>
+      </section>
+    </div>
+  );
 };

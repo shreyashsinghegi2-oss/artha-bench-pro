@@ -67,10 +67,9 @@ const publicPaths: Record<PublicPageId, string> = {
   access: '/access',
 };
 
-const pathToWorkspace = new Map<string, AppNavigationDestination>([
-  ...Object.entries(financePaths),
-  ...Object.entries(workspacePaths),
-].map(([destination, path]) => [path as string, destination as AppNavigationDestination]));
+const pathToWorkspace = new Map<string, AppNavigationDestination>(
+  [...Object.entries(financePaths), ...Object.entries(workspacePaths)].map(([destination, path]) => [path as string, destination as AppNavigationDestination]),
+);
 const pathToPublic = new Map<string, PublicPageId>(Object.entries(publicPaths).map(([page, path]) => [path, page as PublicPageId]));
 
 export const PRIVATE_FINANCE_DESTINATIONS = new Set<AppNavigationDestination>([

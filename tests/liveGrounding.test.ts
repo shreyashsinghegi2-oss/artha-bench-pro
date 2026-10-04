@@ -2,7 +2,10 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { detectInstruments, extractQuestion, shouldSearchWeb, webSearch } from '../server/liveGrounding';
 
 describe('live grounding', () => {
-  afterEach(() => { vi.unstubAllGlobals(); vi.unstubAllEnvs(); });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.unstubAllEnvs();
+  });
 
   it('finds the instruments a question is about', () => {
     expect(detectInstruments('How did Nifty and gold do today?').map((i) => i.symbol)).toEqual(['^NSEI', 'GC=F']);
@@ -29,7 +32,8 @@ describe('live grounding', () => {
   it('uses a keyed provider when configured and falls back to keyless sources otherwise', async () => {
     vi.stubEnv('TAVILY_API_KEY', 'test-key');
     const fetchMock = vi.fn(async (url: string) => {
-      if (String(url).includes('tavily')) return new Response(JSON.stringify({ results: [{ title: 'RBI policy', url: 'https://rbi.org.in', content: 'Repo rate unchanged' }] }), { status: 200 });
+      if (String(url).includes('tavily'))
+        return new Response(JSON.stringify({ results: [{ title: 'RBI policy', url: 'https://rbi.org.in', content: 'Repo rate unchanged' }] }), { status: 200 });
       throw new Error('unexpected');
     });
     vi.stubGlobal('fetch', fetchMock);
@@ -42,14 +46,18 @@ describe('live grounding', () => {
       <item><title>RBI keeps repo rate at 5.5% - Business Standard</title><link>https://example.com/new</link><pubDate>Wed, 01 Oct 2026 06:00:00 GMT</pubDate><source url="https://bs.com">Business Standard</source></item>
       <item><title>Repo rate explained - Mint</title><link>https://example.com/old</link><pubDate>Mon, 02 Jun 2025 06:00:00 GMT</pubDate><source url="https://mint.com">Mint</source></item>
     </channel></rss>`;
-    const keylessFetch = vi.fn(async (url: string) => String(url).includes('news.google.com')
-      ? new Response(rss, { status: 200 })
-      : new Response(JSON.stringify({ AbstractText: '' }), { status: 200 }));
+    const keylessFetch = vi.fn(async (url: string) =>
+      String(url).includes('news.google.com') ? new Response(rss, { status: 200 }) : new Response(JSON.stringify({ AbstractText: '' }), { status: 200 }),
+    );
     vi.stubGlobal('fetch', keylessFetch);
     const keyless = await webSearch('please tell me the latest repo rate?');
     expect(keyless.provider).toMatch(/Google News/);
     expect(String(keylessFetch.mock.calls[0][0])).toContain('q=the%20latest%20repo%20rate');
-    expect(keyless.results[0]).toMatchObject({ title: 'RBI keeps repo rate at 5.5%', url: 'https://example.com/new', source: 'Google News · Business Standard' });
+    expect(keyless.results[0]).toMatchObject({
+      title: 'RBI keeps repo rate at 5.5%',
+      url: 'https://example.com/new',
+      source: 'Google News · Business Standard',
+    });
     expect(keyless.results[0].snippet).toContain('published');
     expect(keyless.results.some((r) => /wikipedia/i.test(r.source))).toBe(false);
   });
@@ -59,13 +67,35 @@ describe('live context assembly', () => {
   it('combines quotes, news and web results with their sources and times', async () => {
     vi.resetModules();
     vi.doMock('../server/marketDataService', () => ({
-      getMarketQuote: async (symbol: string) => ({ quote: { symbol, name: symbol, price: symbol === 'GC=F' ? 2386.4 : 24871.5, changePercent: 0.54, currency: symbol === 'GC=F' ? 'USD' : 'INR', freshness: 'delayed', providerName: 'Yahoo Finance', providerTimestamp: '2026-09-24T09:30:00Z', retrievedAt: '2026-09-24T09:31:00Z' } }),
+      getMarketQuote: async (symbol: string) => ({
+        quote: {
+          symbol,
+          name: symbol,
+          price: symbol === 'GC=F' ? 2386.4 : 24871.5,
+          changePercent: 0.54,
+          currency: symbol === 'GC=F' ? 'USD' : 'INR',
+          freshness: 'delayed',
+          providerName: 'Yahoo Finance',
+          providerTimestamp: '2026-09-24T09:30:00Z',
+          retrievedAt: '2026-09-24T09:31:00Z',
+        },
+      }),
     }));
     vi.doMock('../server/businessNewsService', () => ({
-      getBusinessNews: async () => ({ items: [{ title: 'Gold rises as dollar eases', sourceName: 'Reuters', sourceUrl: 'https://example.com/n', publishedAt: '2026-09-24T08:00:00Z' }] }),
+      getBusinessNews: async () => ({
+        items: [{ title: 'Gold rises as dollar eases', sourceName: 'Reuters', sourceUrl: 'https://example.com/n', publishedAt: '2026-09-24T08:00:00Z' }],
+      }),
     }));
     vi.stubEnv('TAVILY_API_KEY', 'k');
-    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ results: [{ title: 'Gold price today', url: 'https://example.com/g', content: 'Gold traded near $2,386' }] }), { status: 200 })));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        async () =>
+          new Response(JSON.stringify({ results: [{ title: 'Gold price today', url: 'https://example.com/g', content: 'Gold traded near $2,386' }] }), {
+            status: 200,
+          }),
+      ),
+    );
     const { gatherLiveContext } = await import('../server/liveGrounding');
     const { text, sources } = await gatherLiveContext('Why did gold rise today?', 'auto');
     expect(text).toMatch(/LIVE CONTEXT retrieved/);
@@ -84,7 +114,11 @@ describe('live context assembly', () => {
 
   it('refuses to state prices it could not retrieve', async () => {
     vi.resetModules();
-    vi.doMock('../server/marketDataService', () => ({ getMarketQuote: async () => { throw new Error('down'); } }));
+    vi.doMock('../server/marketDataService', () => ({
+      getMarketQuote: async () => {
+        throw new Error('down');
+      },
+    }));
     vi.doMock('../server/businessNewsService', () => ({ getBusinessNews: async () => ({ items: [] }) }));
     const { gatherLiveContext } = await import('../server/liveGrounding');
     const { text } = await gatherLiveContext('Sensex level?', 'off');

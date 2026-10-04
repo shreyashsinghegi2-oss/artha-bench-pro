@@ -3,12 +3,7 @@ import Decimal from 'decimal.js';
 import { calculateCompoundInterest } from '../server/financeEngine';
 import { calculateScenarioLocally } from '../src/services/scenarioCalculator';
 import { FY2026_27_RULES } from '../src/config/taxRules/india/FY2026_27';
-import {
-  calculateCapitalGains,
-  calculateIncomeFromHouseProperty,
-  calculateSurcharge,
-  monthsBetween,
-} from '../src/services/indiaTaxEngine';
+import { calculateCapitalGains, calculateIncomeFromHouseProperty, calculateSurcharge, monthsBetween } from '../src/services/indiaTaxEngine';
 import { IncomeSource } from '../src/services/incomeStorage';
 import { buildEmiSchedule, EmiRecord } from '../src/services/emiStorage';
 import { calculateRepaymentScenario } from '../src/services/emiCentre';
@@ -18,18 +13,43 @@ import type { NormalizedMarketQuote } from '../src/types';
 
 function income(overrides: Partial<IncomeSource> = {}): IncomeSource {
   return {
-    id: 'income-1', type: 'Investment Returns', amount: 0, currency: 'INR', frequency: 'One-time',
-    description: 'Test', taxStatus: 'Pre-tax', startDate: '2026-04-01', tags: [],
-    createdAt: '2026-04-01T00:00:00.000Z', updatedAt: '2026-04-01T00:00:00.000Z', ...overrides,
+    id: 'income-1',
+    type: 'Investment Returns',
+    amount: 0,
+    currency: 'INR',
+    frequency: 'One-time',
+    description: 'Test',
+    taxStatus: 'Pre-tax',
+    startDate: '2026-04-01',
+    tags: [],
+    createdAt: '2026-04-01T00:00:00.000Z',
+    updatedAt: '2026-04-01T00:00:00.000Z',
+    ...overrides,
   };
 }
 
 function emi(overrides: Partial<EmiRecord> = {}): EmiRecord {
   return {
-    id: 'emi-1', name: 'Home loan', lender: 'Bank', loanType: 'Home loan', originalLoanAmount: 100_000,
-    outstandingBalance: 100_000, annualInterestRate: 12, emiAmount: 10_000, startDate: '2025-01-31',
-    nextDueDate: '2026-01-31', tenureMonths: 24, remainingInstallments: 12, paymentFrequency: 'monthly',
-    notes: '', status: 'active', typeDetails: {}, payments: [], createdAt: '2025-01-01', updatedAt: '2025-01-01', ...overrides,
+    id: 'emi-1',
+    name: 'Home loan',
+    lender: 'Bank',
+    loanType: 'Home loan',
+    originalLoanAmount: 100_000,
+    outstandingBalance: 100_000,
+    annualInterestRate: 12,
+    emiAmount: 10_000,
+    startDate: '2025-01-31',
+    nextDueDate: '2026-01-31',
+    tenureMonths: 24,
+    remainingInstallments: 12,
+    paymentFrequency: 'monthly',
+    notes: '',
+    status: 'active',
+    typeDetails: {},
+    payments: [],
+    createdAt: '2025-01-01',
+    updatedAt: '2025-01-01',
+    ...overrides,
   } as EmiRecord;
 }
 
@@ -38,7 +58,13 @@ describe('compound interest with contributions', () => {
     const server = calculateCompoundInterest(10_000, 0, 1.5, 1_000, 12);
     expect(server.totalContributions).toBe(28_000);
     expect(server.finalBalance).toBe(28_000);
-    const local = calculateScenarioLocally('compound', { principal: 10_000, annualRatePercent: 8, years: 2.5, monthlyContribution: 500, compoundingFrequencyPerYear: 4 });
+    const local = calculateScenarioLocally('compound', {
+      principal: 10_000,
+      annualRatePercent: 8,
+      years: 2.5,
+      monthlyContribution: 500,
+      compoundingFrequencyPerYear: 4,
+    });
     const remote = calculateCompoundInterest(10_000, 8, 2.5, 500, 4);
     expect(local.finalBalance).toBe(remote.finalBalance);
     expect(local.totalContributions).toBe(remote.totalContributions);
@@ -57,10 +83,11 @@ describe('India tax holding period and set-off rules', () => {
   });
 
   it('treats listed equity as long-term only when held for more than 12 months', () => {
-    const sale = (sellDate: string) => income({
-      amount: 300_000,
-      taxDetails: { investmentSubtype: 'listed-equity', quantity: 1, purchasePrice: 100_000, salePrice: 400_000, buyDate: '2024-01-15', sellDate },
-    });
+    const sale = (sellDate: string) =>
+      income({
+        amount: 300_000,
+        taxDetails: { investmentSubtype: 'listed-equity', quantity: 1, purchasePrice: 100_000, salePrice: 400_000, buyDate: '2024-01-15', sellDate },
+      });
     const nearlyAYear = calculateCapitalGains([sale('2025-01-10')], FY2026_27_RULES);
     expect(nearlyAYear.specialRateTax.toFixed(0)).toBe('60000'); // 20% STCG
     const exactlyAYear = calculateCapitalGains([sale('2025-01-15')], FY2026_27_RULES);
@@ -70,10 +97,18 @@ describe('India tax holding period and set-off rules', () => {
   });
 
   it('caps house-property loss set-off at ₹2,00,000 under the old regime', () => {
-    const result = calculateIncomeFromHouseProperty([income({
-      type: 'Rental', amount: 100_000, frequency: 'Annually',
-      taxDetails: { propertyUse: 'let-out', homeLoanInterest: 500_000, coOwnedPercent: 100 },
-    })], FY2026_27_RULES, 'old');
+    const result = calculateIncomeFromHouseProperty(
+      [
+        income({
+          type: 'Rental',
+          amount: 100_000,
+          frequency: 'Annually',
+          taxDetails: { propertyUse: 'let-out', homeLoanInterest: 500_000, coOwnedPercent: 100 },
+        }),
+      ],
+      FY2026_27_RULES,
+      'old',
+    );
     expect(result.taxable.toFixed(0)).toBe('-200000');
     expect(result.warnings.join(' ')).toContain('2,00,000');
   });
@@ -114,7 +149,12 @@ describe('EMI schedule', () => {
 describe('personal finance aggregation', () => {
   it('sums rupee amounts without floating-point drift', () => {
     const base = { merchant: 'x', category: 'Food', date: '2026-01-01' };
-    expect(totalExpenses([{ ...base, amount: 0.1 }, { ...base, amount: 0.2 }] as never)).toBe(0.3);
+    expect(
+      totalExpenses([
+        { ...base, amount: 0.1 },
+        { ...base, amount: 0.2 },
+      ] as never),
+    ).toBe(0.3);
   });
 
   it('uses the local calendar month', () => {

@@ -1,5 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { annualDepositFutureValue, cagr, emi, fdMaturity, hraExemption, npsAtSixty, nscMaturity, ppfMaturity, rdMaturity, ssyMaturity } from '../src/services/calculators';
+import {
+  annualDepositFutureValue,
+  cagr,
+  emi,
+  fdMaturity,
+  hraExemption,
+  npsAtSixty,
+  nscMaturity,
+  ppfMaturity,
+  rdMaturity,
+  ssyMaturity,
+} from '../src/services/calculators';
 
 describe('planning calculators', () => {
   it('FD: ₹1 lakh at 7% for a year, compounded quarterly', () => {
@@ -10,7 +21,7 @@ describe('planning calculators', () => {
   it('RD: sums each instalment compounded quarterly to maturity', () => {
     const value = rdMaturity(5_000, 0.07, 12);
     let expected = 0;
-    for (let k = 1; k <= 12; k += 1) expected += 5_000 * 1.0175 ** (4 * k / 12);
+    for (let k = 1; k <= 12; k += 1) expected += 5_000 * 1.0175 ** ((4 * k) / 12);
     expect(value).toBeCloseTo(expected, 2);
     expect(value).toBeGreaterThan(60_000);
     expect(value).toBeLessThan(63_000);

@@ -41,8 +41,7 @@ const candles: Candle[] = [
 
 const selectedSymbols = ['NIFTY 50', 'S&P 500', 'GOLD', 'BTC', 'RELIANCE'];
 
-const destinationForSymbol = (symbol: string): NavigationDestination =>
-  symbol === 'BTC' ? 'crypto' : 'markets';
+const destinationForSymbol = (symbol: string): NavigationDestination => (symbol === 'BTC' ? 'crypto' : 'markets');
 
 export const FinancialResearchWorkspace: React.FC<Props> = ({ onEnter }) => {
   const rootRef = useRef<HTMLDivElement | null>(null);
@@ -50,10 +49,7 @@ export const FinancialResearchWorkspace: React.FC<Props> = ({ onEnter }) => {
   const [activeIndex, setActiveIndex] = useState(-1);
   const [privacyTipOpen, setPrivacyTipOpen] = useState(false);
 
-  const watchlist = useMemo(
-    () => selectedSymbols.map((symbol) => illustrativeMarketData.find((item) => item.symbol === symbol)).filter(Boolean),
-    [],
-  );
+  const watchlist = useMemo(() => selectedSymbols.map((symbol) => illustrativeMarketData.find((item) => item.symbol === symbol)).filter(Boolean), []);
 
   useEffect(() => {
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -128,7 +124,8 @@ export const FinancialResearchWorkspace: React.FC<Props> = ({ onEnter }) => {
                         <div className="mt-0.5 hidden text-[8px] text-slate-400 lg:block">{item.label}</div>
                       </div>
                       <span className={`shrink-0 text-[9px] font-semibold ${item.direction === 'up' ? 'text-emerald-700' : 'text-rose-700'}`}>
-                        {item.change > 0 ? '+' : ''}{item.change.toFixed(2)}% {item.direction === 'up' ? '↑' : '↓'}
+                        {item.change > 0 ? '+' : ''}
+                        {item.change.toFixed(2)}% {item.direction === 'up' ? '↑' : '↓'}
                       </span>
                     </div>
                   </button>
@@ -160,11 +157,17 @@ export const FinancialResearchWorkspace: React.FC<Props> = ({ onEnter }) => {
               aria-labelledby="artha-research-chart-title artha-research-chart-desc"
             >
               <title id="artha-research-chart-title">Sample NIFTY candlestick research chart</title>
-              <desc id="artha-research-chart-desc">A non-live sample candlestick chart used to demonstrate the research workspace. Hover or focus the chart to reveal the inspection crosshair.</desc>
+              <desc id="artha-research-chart-desc">
+                A non-live sample candlestick chart used to demonstrate the research workspace. Hover or focus the chart to reveal the inspection crosshair.
+              </desc>
 
               <g className="artha-chart-grid" stroke="#E2E8F0" strokeWidth="1">
-                {[38, 78, 118, 158, 198].map((y) => <line key={`h-${y}`} x1="22" y1={y} x2="430" y2={y} />)}
-                {[70, 150, 230, 310, 390].map((x) => <line key={`v-${x}`} x1={x} y1="24" x2={x} y2="210" />)}
+                {[38, 78, 118, 158, 198].map((y) => (
+                  <line key={`h-${y}`} x1="22" y1={y} x2="430" y2={y} />
+                ))}
+                {[70, 150, 230, 310, 390].map((x) => (
+                  <line key={`v-${x}`} x1={x} y1="24" x2={x} y2="210" />
+                ))}
               </g>
 
               <g className="artha-candles">
@@ -185,26 +188,46 @@ export const FinancialResearchWorkspace: React.FC<Props> = ({ onEnter }) => {
               <circle className="artha-final-price-line" cx="414" cy="83" r="3" fill="#0F766E" />
 
               <g fill="#94A3B8" fontSize="9" fontFamily="inherit">
-                <text x="436" y="42">25,020</text>
-                <text x="436" y="82">24,960</text>
-                <text x="436" y="122">24,900</text>
-                <text x="436" y="162">24,840</text>
-                <text x="436" y="202">24,780</text>
-                <text x="26" y="231">09:30</text>
-                <text x="194" y="231">12:00</text>
-                <text x="372" y="231">15:15</text>
+                <text x="436" y="42">
+                  25,020
+                </text>
+                <text x="436" y="82">
+                  24,960
+                </text>
+                <text x="436" y="122">
+                  24,900
+                </text>
+                <text x="436" y="162">
+                  24,840
+                </text>
+                <text x="436" y="202">
+                  24,780
+                </text>
+                <text x="26" y="231">
+                  09:30
+                </text>
+                <text x="194" y="231">
+                  12:00
+                </text>
+                <text x="372" y="231">
+                  15:15
+                </text>
               </g>
 
               <g className="artha-crosshair">
                 <line x1="236" y1="24" x2="236" y2="210" stroke="#64748B" strokeWidth="1" strokeDasharray="3 4" opacity=".65" />
                 <g className="artha-crosshair-tooltip">
                   <rect x="244" y="38" width="105" height="30" rx="7" fill="#0F172A" />
-                  <text x="255" y="51" fill="#CBD5E1" fontSize="8">Sample value</text>
-                  <text x="255" y="62" fill="#FFFFFF" fontSize="9" fontWeight="700">24,912</text>
+                  <text x="255" y="51" fill="#CBD5E1" fontSize="8">
+                    Sample value
+                  </text>
+                  <text x="255" y="62" fill="#FFFFFF" fontSize="9" fontWeight="700">
+                    24,912
+                  </text>
                 </g>
               </g>
             </svg>
-            <p className="mt-2 text-[8px] leading-4 text-slate-400">Sample chart for product preview — not live market data.</p>
+            <p className="mt-2 text-[8px] leading-4 text-slate-400">Sample chart for product preview - not live market data.</p>
           </div>
 
           <aside className="p-4 sm:p-5" aria-label="Sample ArthaMind response panel">
@@ -217,9 +240,18 @@ export const FinancialResearchWorkspace: React.FC<Props> = ({ onEnter }) => {
             </p>
 
             <div className="mt-5 space-y-2.5 text-[9px] text-slate-600">
-              <div className="artha-answer-reveal flex items-center justify-between border-b border-slate-100 pb-2" style={{ animationDelay: '3.6s' }}><span>Market context</span><span className="font-semibold text-slate-800">Included</span></div>
-              <div className="artha-answer-reveal flex items-center justify-between border-b border-slate-100 pb-2" style={{ animationDelay: '3.82s' }}><span>Sources</span><span className="font-semibold text-slate-800">3 reviewed</span></div>
-              <div className="artha-answer-reveal flex items-center justify-between border-b border-slate-100 pb-2" style={{ animationDelay: '4.02s' }}><span>Verification</span><span className="font-semibold text-amber-700">Required</span></div>
+              <div className="artha-answer-reveal flex items-center justify-between border-b border-slate-100 pb-2" style={{ animationDelay: '3.6s' }}>
+                <span>Market context</span>
+                <span className="font-semibold text-slate-800">Included</span>
+              </div>
+              <div className="artha-answer-reveal flex items-center justify-between border-b border-slate-100 pb-2" style={{ animationDelay: '3.82s' }}>
+                <span>Sources</span>
+                <span className="font-semibold text-slate-800">3 reviewed</span>
+              </div>
+              <div className="artha-answer-reveal flex items-center justify-between border-b border-slate-100 pb-2" style={{ animationDelay: '4.02s' }}>
+                <span>Verification</span>
+                <span className="font-semibold text-amber-700">Required</span>
+              </div>
             </div>
 
             <button
@@ -234,7 +266,9 @@ export const FinancialResearchWorkspace: React.FC<Props> = ({ onEnter }) => {
         </div>
 
         <div className="artha-context-boundary relative flex flex-col gap-2 border-t border-slate-200 bg-slate-50 px-4 py-2.5 text-[9px] text-slate-600 sm:flex-row sm:items-center sm:justify-between sm:px-5">
-          <span><strong className="font-semibold text-slate-800">Public market context:</strong> active</span>
+          <span>
+            <strong className="font-semibold text-slate-800">Public market context:</strong> active
+          </span>
           <span className="flex items-center gap-1.5">
             <strong className="font-semibold text-slate-800">Personal context:</strong> off by default
             <span className="group relative inline-flex">

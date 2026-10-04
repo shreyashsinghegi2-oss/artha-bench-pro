@@ -6,7 +6,8 @@ import { sipFutureValue, sipForTarget } from './moneyCheck';
 
 /** Default small-savings and market assumptions. Government scheme rates are reset every quarter. */
 export const DEFAULT_RATES = { ppf: 0.071, ssy: 0.082, nsc: 0.077, fd: 0.07, equity: 0.12, annuity: 0.06 } as const;
-export const RATES_NOTE = 'Scheme rates are editable defaults (PPF 7.1%, SSY 8.2%, NSC 7.7%). The government resets them every quarter, so check the current rate.';
+export const RATES_NOTE =
+  'Scheme rates are editable defaults (PPF 7.1%, SSY 8.2%, NSC 7.7%). The government resets them every quarter, so check the current rate.';
 
 const r2 = (value: number) => Math.round(value * 100) / 100;
 
@@ -54,7 +55,7 @@ export function emi(principal: number, annual: number, months: number): number {
   if (!Number.isFinite(principal) || !Number.isFinite(annual) || !Number.isFinite(months) || principal <= 0 || months <= 0) return 0;
   const m = annual / 12;
   if (m === 0) return r2(principal / months);
-  return r2(principal * m * (1 + m) ** months / ((1 + m) ** months - 1));
+  return r2((principal * m * (1 + m) ** months) / ((1 + m) ** months - 1));
 }
 
 /** Compound annual growth rate between two values. */
@@ -71,7 +72,11 @@ export function hraExemption(basicPlusDa: number, hraReceived: number, rentPaid:
   const rentLessTenPercent = Math.max(0, rentPaid - 0.1 * basicPlusDa);
   const salaryShare = (metro ? 0.5 : 0.4) * basicPlusDa;
   const exempt = Math.max(0, Math.min(hraReceived, rentLessTenPercent, salaryShare));
-  return { exempt: r2(exempt), taxable: r2(Math.max(0, hraReceived - exempt)), limits: { hraReceived, rentLessTenPercent: r2(rentLessTenPercent), salaryShare: r2(salaryShare) } };
+  return {
+    exempt: r2(exempt),
+    taxable: r2(Math.max(0, hraReceived - exempt)),
+    limits: { hraReceived, rentLessTenPercent: r2(rentLessTenPercent), salaryShare: r2(salaryShare) },
+  };
 }
 
 /**

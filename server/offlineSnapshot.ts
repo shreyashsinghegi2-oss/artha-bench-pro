@@ -7,7 +7,10 @@ const inr = (v: number) => `${v < 0 ? '−' : ''}₹${Math.abs(Math.round(v)).to
 
 /** Reads "12,00,000", "85000", "85k", "1.2 lakh", "1 cr" (with or without ₹). */
 export function readAmount(raw: string): number | null {
-  const m = raw.replace(/[₹,\s]/g, '').toLowerCase().match(/^(\d+(?:\.\d+)?)(k|l|lakh|lakhs|lac|cr|crore|crores)?$/);
+  const m = raw
+    .replace(/[₹,\s]/g, '')
+    .toLowerCase()
+    .match(/^(\d+(?:\.\d+)?)(k|l|lakh|lakhs|lac|cr|crore|crores)?$/);
   if (!m) return null;
   const unit = m[2];
   return Number(m[1]) * (unit === 'k' ? 1e3 : unit?.startsWith('l') ? 1e5 : unit?.startsWith('c') ? 1e7 : 1);
@@ -26,7 +29,10 @@ function find(prompt: string, words: string): { value: number; yearly: boolean }
   return { value, yearly: /\b(a|per|every|each)\s+(year|annum)|yearly|annual|p\.?a\.?|\/\s?yr|ctc|lpa|सालाना|साल/.test(tail) };
 }
 
-export interface OfflineSnapshot { lines: string[]; takeaways: string[] }
+export interface OfflineSnapshot {
+  lines: string[];
+  takeaways: string[];
+}
 
 export function offlineSnapshot(prompt: string): OfflineSnapshot | null {
   const income = find(prompt, 'earn|earning|salary|income|ctc|take[- ]home|make|सैलरी|वेतन|तनख्वाह|कमाई|आय|पगार');
@@ -46,7 +52,9 @@ export function offlineSnapshot(prompt: string): OfflineSnapshot | null {
   if (monthlySpend !== null) {
     const surplus = monthlyIncome - monthlySpend - monthlyEmi;
     const rate = surplus / monthlyIncome;
-    lines.push(`Monthly surplus: ${inr(monthlyIncome)} − ${inr(monthlySpend)} spending${monthlyEmi ? ` − ${inr(monthlyEmi)} EMI` : ''} = ${inr(surplus)} (savings rate ${(rate * 100).toFixed(1)}%, before tax).`);
+    lines.push(
+      `Monthly surplus: ${inr(monthlyIncome)} − ${inr(monthlySpend)} spending${monthlyEmi ? ` − ${inr(monthlyEmi)} EMI` : ''} = ${inr(surplus)} (savings rate ${(rate * 100).toFixed(1)}%, before tax).`,
+    );
     const buffer = (monthlySpend + monthlyEmi) * 6;
     lines.push(`Emergency fund target: 6 × ${inr(monthlySpend + monthlyEmi)} monthly outgo = ${inr(buffer)}.`);
     if (surplus > 0) {

@@ -15,12 +15,7 @@ export const ArthaBenchMark: React.FC<{ className?: string }> = ({ className = '
 );
 
 /** Workspace header brand: ArthaMind AI mark and name, with the Artha Bench Pro parent label. */
-export const ArthaBenchLogo: React.FC<ArthaBenchLogoProps> = ({
-  iconOnly = false,
-  className = '',
-  compact = false,
-  onDark = false,
-}) => (
+export const ArthaBenchLogo: React.FC<ArthaBenchLogoProps> = ({ iconOnly = false, className = '', compact = false, onDark = false }) => (
   <div className={`inline-flex items-center gap-2.5 ${className}`.trim()}>
     <ArthaBenchMark className={`${compact ? 'h-8 w-8' : 'h-10 w-10'} shrink-0 rounded-[10px] shadow-sm`} />
     {!iconOnly && (
@@ -28,11 +23,7 @@ export const ArthaBenchLogo: React.FC<ArthaBenchLogoProps> = ({
         <span className={`${compact ? 'text-sm' : 'text-base'} font-black tracking-tight ${onDark ? 'text-white' : 'text-ink'} whitespace-nowrap`}>
           ArthaMind <span style={{ color: BRAND.green }}>AI</span>
         </span>
-        {!compact && (
-          <p className="mt-1 hidden text-[10px] font-semibold tracking-wide text-secondary sm:block">
-            by Artha Bench Pro
-          </p>
-        )}
+        {!compact && <p className="mt-1 hidden text-[10px] font-semibold tracking-wide text-secondary sm:block">by Artha Bench Pro</p>}
       </div>
     )}
   </div>

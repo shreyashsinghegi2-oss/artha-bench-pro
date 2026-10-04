@@ -64,7 +64,12 @@ describe('email one-time codes', () => {
   });
 
   it('verifies a 6-digit code and returns the new session', async () => {
-    const calls = mockFetch({ access_token: jwt({ amr: [{ method: 'otp' }] }), refresh_token: 'r', expires_in: 3600, user: { id: 'u1', email: 'a@example.com' } });
+    const calls = mockFetch({
+      access_token: jwt({ amr: [{ method: 'otp' }] }),
+      refresh_token: 'r',
+      expires_in: 3600,
+      user: { id: 'u1', email: 'a@example.com' },
+    });
     const session = await verifyEmailOtp('a@example.com', ' 123 456 ', 'email');
     expect(calls[0].url).toMatch(/\/auth\/v1\/verify$/);
     expect(calls[0].body).toEqual({ type: 'email', email: 'a@example.com', token: '123456' });

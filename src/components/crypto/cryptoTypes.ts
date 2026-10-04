@@ -1,24 +1,10 @@
-export const CRYPTO_SYMBOLS = [
-  'BTCUSDT',
-  'ETHUSDT',
-  'BNBUSDT',
-  'SOLUSDT',
-  'XRPUSDT',
-  'ADAUSDT',
-  'DOGEUSDT',
-] as const;
+export const CRYPTO_SYMBOLS = ['BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'SOLUSDT', 'XRPUSDT', 'ADAUSDT', 'DOGEUSDT'] as const;
 
 export const CRYPTO_INTERVALS = ['1m', '5m', '15m', '1h', '4h', '1d'] as const;
 
 export type CryptoSymbol = (typeof CRYPTO_SYMBOLS)[number];
 export type CryptoInterval = (typeof CRYPTO_INTERVALS)[number];
-export type CryptoFeedStatus =
-  | 'connecting'
-  | 'cached'
-  | 'live'
-  | 'reconnecting'
-  | 'stale'
-  | 'unavailable';
+export type CryptoFeedStatus = 'connecting' | 'cached' | 'live' | 'reconnecting' | 'stale' | 'unavailable';
 
 export interface CryptoQuote {
   symbol: CryptoSymbol;

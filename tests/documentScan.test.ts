@@ -3,7 +3,11 @@ import { scanStatementCsv, scanText } from '../src/services/documentScan';
 
 describe('document scan', () => {
   it('reads a monthly payslip and annualises gross pay', () => {
-    const r = scanText(['ACME Technologies Pvt Ltd', 'Payslip for June 2026', 'Basic 60,000.00', 'Gross Earnings 1,25,000.00', 'Loan EMI 12,500', 'Net Pay 98,400.00'].join('\n'));
+    const r = scanText(
+      ['ACME Technologies Pvt Ltd', 'Payslip for June 2026', 'Basic 60,000.00', 'Gross Earnings 1,25,000.00', 'Loan EMI 12,500', 'Net Pay 98,400.00'].join(
+        '\n',
+      ),
+    );
     expect(r.kind).toBe('payslip');
     expect(r.suggestions.find((s) => s.field === 'annualSalary')?.value).toBe(1_500_000);
     expect(r.suggestions.find((s) => s.field === 'monthlyEmi')?.value).toBe(12_500);

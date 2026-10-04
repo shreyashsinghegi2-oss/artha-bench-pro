@@ -14,8 +14,5 @@ export const FY2026_27_RULES: IndiaTaxRuleConfig = {
     'https://www.incometaxindia.gov.in/w/section-19-206',
     'https://www.incometaxindia.gov.in/w/schedule_vda',
   ],
-  notes: [
-    'The Income-tax Act, 2025 applies from tax year 2026-27.',
-    ...FY2025_26_RULES.notes,
-  ],
+  notes: ['The Income-tax Act, 2025 applies from tax year 2026-27.', ...FY2025_26_RULES.notes],
 };

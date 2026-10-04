@@ -8,14 +8,17 @@ interface RateLimitRecord {
 const store = new Map<string, RateLimitRecord>();
 
 // Periodically clean up old records every 5 minutes
-const cleanupTimer = setInterval(() => {
-  const now = Date.now();
-  for (const [key, record] of store.entries()) {
-    if (now > record.resetTime) {
-      store.delete(key);
+const cleanupTimer = setInterval(
+  () => {
+    const now = Date.now();
+    for (const [key, record] of store.entries()) {
+      if (now > record.resetTime) {
+        store.delete(key);
+      }
     }
-  }
-}, 5 * 60 * 1000);
+  },
+  5 * 60 * 1000,
+);
 // Do not keep a process (tests, CLI builds) alive just for this housekeeping timer.
 cleanupTimer.unref?.();
 

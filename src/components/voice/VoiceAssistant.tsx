@@ -21,12 +21,30 @@ export const VoiceAssistant: React.FC = () => {
   const initial = voiceLanguageFor(site) ?? VOICE_LANGUAGES[0];
   const drag = useDraggable<HTMLButtonElement>('am-drag-voice-launch');
 
-  return <>
-    {!open && <button ref={drag.ref} style={drag.style} {...drag.handle} type="button" className={`va-launch ${drag.dragging ? 'is-dragging' : ''}`} onClick={() => setOpen(true)} aria-label="Ask by voice (drag to move)" title="Drag to move">
-      <span className="va-launch-dot"><Mic size={18}/></span><span className="va-launch-text">Ask by voice</span>
-    </button>}
-    {open && <Suspense fallback={<div className="va-panel va-loading">Opening voice assistant…</div>}>
-      <VoiceAssistantPanel initialLanguage={initial} onClose={() => setOpen(false)}/>
-    </Suspense>}
-  </>;
+  return (
+    <>
+      {!open && (
+        <button
+          ref={drag.ref}
+          style={drag.style}
+          {...drag.handle}
+          type="button"
+          className={`va-launch ${drag.dragging ? 'is-dragging' : ''}`}
+          onClick={() => setOpen(true)}
+          aria-label="Ask by voice (drag to move)"
+          title="Drag to move"
+        >
+          <span className="va-launch-dot">
+            <Mic size={18} />
+          </span>
+          <span className="va-launch-text">Ask by voice</span>
+        </button>
+      )}
+      {open && (
+        <Suspense fallback={<div className="va-panel va-loading">Opening voice assistant…</div>}>
+          <VoiceAssistantPanel initialLanguage={initial} onClose={() => setOpen(false)} />
+        </Suspense>
+      )}
+    </>
+  );
 };

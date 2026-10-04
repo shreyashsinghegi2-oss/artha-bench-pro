@@ -17,7 +17,7 @@ describe('Money Check maths', () => {
   it('matches a known SIP value: ₹10,000 a month for 10 years at 12% a year', () => {
     // Monthly rate from an effective 12% a year, invested at the start of each month.
     const m = 1.12 ** (1 / 12) - 1;
-    const expected = 10_000 * ((1 + m) ** 120 - 1) / m * (1 + m);
+    const expected = ((10_000 * ((1 + m) ** 120 - 1)) / m) * (1 + m);
     expect(sipFutureValue(10_000, 0.12, 120)).toBeCloseTo(expected, 6);
     expect(sipFutureValue(10_000, 0.12, 120)).toBeGreaterThan(22_00_000);
   });
@@ -31,7 +31,15 @@ describe('Money Check maths', () => {
 
 describe('Money Check report', () => {
   it('uses the tax engine: ₹12.75 lakh salary pays nil tax under the new regime', () => {
-    const report = buildMoneyCheck({ age: 30, annualSalary: 1_275_000, monthlyExpenses: 40_000, monthlyEmi: 0, liquidSavings: 0, investments: 0, dependants: 0 });
+    const report = buildMoneyCheck({
+      age: 30,
+      annualSalary: 1_275_000,
+      monthlyExpenses: 40_000,
+      monthlyEmi: 0,
+      liquidSavings: 0,
+      investments: 0,
+      dependants: 0,
+    });
     expect(report.tax.newRegimeTax).toBe(0);
     expect(report.tax.better).toBe('new');
     expect(report.tax.monthlyTakeHome).toBe(Math.round(1_275_000 / 12));
@@ -62,7 +70,15 @@ describe('Money Check report', () => {
   });
 
   it('needs no term cover without dependants or loans when assets cover the loan', () => {
-    const r = buildMoneyCheck({ age: 25, annualSalary: 900_000, monthlyExpenses: 25_000, monthlyEmi: 0, liquidSavings: 100_000, investments: 0, dependants: 0 });
+    const r = buildMoneyCheck({
+      age: 25,
+      annualSalary: 900_000,
+      monthlyExpenses: 25_000,
+      monthlyEmi: 0,
+      liquidSavings: 100_000,
+      investments: 0,
+      dependants: 0,
+    });
     expect(r.protection.termCoverNeeded).toBe(0);
   });
 });

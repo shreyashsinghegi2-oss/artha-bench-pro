@@ -25,10 +25,14 @@ const output = (value: Decimal) => value.toDecimalPlaces(0).toFixed(0);
 function annualAmount(source: IncomeSource): Decimal {
   const amount = money(source.amount);
   switch (source.frequency) {
-    case 'Monthly': return amount.times(12);
-    case 'Quarterly': return amount.times(4);
-    case 'Annually': return amount;
-    case 'One-time': return amount;
+    case 'Monthly':
+      return amount.times(12);
+    case 'Quarterly':
+      return amount.times(4);
+    case 'Annually':
+      return amount;
+    case 'One-time':
+      return amount;
   }
 }
 
@@ -64,9 +68,7 @@ function isHeldLongerThan(start: string | undefined, end: string | undefined, th
 }
 
 export function calculateGrossIncome(sources: IncomeSource[]): Decimal {
-  return sources
-    .filter((source) => source.currency.toUpperCase() === 'INR')
-    .reduce((total, source) => total.plus(annualAmount(source)), ZERO);
+  return sources.filter((source) => source.currency.toUpperCase() === 'INR').reduce((total, source) => total.plus(annualAmount(source)), ZERO);
 }
 
 export function calculateIncomeFromSalary(
@@ -76,12 +78,8 @@ export function calculateIncomeFromSalary(
 ): { gross: Decimal; taxable: Decimal; exemptions: Decimal; tds: Decimal } {
   const salarySources = sources.filter((source) => source.type === 'Salary' && source.currency.toUpperCase() === 'INR' && source.taxStatus !== 'Tax-free');
   const gross = salarySources.reduce((sum, source) => sum.plus(annualAmount(source)), ZERO);
-  const hraExemption = regime === 'old'
-    ? salarySources.reduce((sum, source) => sum.plus(money(source.taxDetails?.hraExemption)), ZERO)
-    : ZERO;
-  const professionalTax = regime === 'old'
-    ? salarySources.reduce((sum, source) => sum.plus(money(source.taxDetails?.professionalTax)), ZERO)
-    : ZERO;
+  const hraExemption = regime === 'old' ? salarySources.reduce((sum, source) => sum.plus(money(source.taxDetails?.hraExemption)), ZERO) : ZERO;
+  const professionalTax = regime === 'old' ? salarySources.reduce((sum, source) => sum.plus(money(source.taxDetails?.professionalTax)), ZERO) : ZERO;
   const standardDeduction = Decimal.min(gross, money(rules.standardDeduction[regime]));
   const tds = salarySources.reduce((sum, source) => sum.plus(money(source.taxDetails?.tdsDeducted)), ZERO);
   return {
@@ -124,28 +122,34 @@ export function calculateIncomeFromHouseProperty(
   return { taxable, tds, warnings };
 }
 
-export function calculateBusinessOrProfessionalIncome(
-  sources: IncomeSource[],
-): { taxable: Decimal; tds: Decimal; tcs: Decimal; advanceTax: Decimal; warnings: string[] } {
+export function calculateBusinessOrProfessionalIncome(sources: IncomeSource[]): {
+  taxable: Decimal;
+  tds: Decimal;
+  tcs: Decimal;
+  advanceTax: Decimal;
+  warnings: string[];
+} {
   let taxable = ZERO;
   let tds = ZERO;
   let tcs = ZERO;
   let advanceTax = ZERO;
   const warnings: string[] = [];
-  for (const source of sources.filter((item) => ['Freelance', 'Business'].includes(item.type) && item.currency.toUpperCase() === 'INR' && item.taxStatus !== 'Tax-free')) {
+  for (const source of sources.filter(
+    (item) => ['Freelance', 'Business'].includes(item.type) && item.currency.toUpperCase() === 'INR' && item.taxStatus !== 'Tax-free',
+  )) {
     const details = source.taxDetails;
-    const gross = source.type === 'Business'
-      ? money(details?.revenue || annualAmount(source))
-      : money(details?.grossReceipts || annualAmount(source));
-    const expenses = source.type === 'Business'
-      ? money(details?.costOfGoods).plus(money(details?.operatingExpenses)).plus(money(details?.depreciation))
-      : money(details?.businessExpenses);
+    const gross = source.type === 'Business' ? money(details?.revenue || annualAmount(source)) : money(details?.grossReceipts || annualAmount(source));
+    const expenses =
+      source.type === 'Business'
+        ? money(details?.costOfGoods).plus(money(details?.operatingExpenses)).plus(money(details?.depreciation))
+        : money(details?.businessExpenses);
     taxable = taxable.plus(gross.minus(expenses));
     tds = tds.plus(money(details?.tdsDeducted));
     tcs = tcs.plus(money(details?.tcsCollected));
     advanceTax = advanceTax.plus(money(details?.advanceTaxPaid));
     if (details?.presumptiveEligible) warnings.push('Presumptive-tax eligibility is recorded but not automatically applied; verify conditions with a CA.');
-    if (details?.gstTreatment === 'included' || money(details?.gstCollected).gt(0)) warnings.push('GST is shown separately and is not deducted automatically from income-tax gross receipts.');
+    if (details?.gstTreatment === 'included' || money(details?.gstCollected).gt(0))
+      warnings.push('GST is shown separately and is not deducted automatically from income-tax gross receipts.');
   }
   return { taxable, tds, tcs, advanceTax, warnings };
 }
@@ -205,11 +209,8 @@ export function calculateCapitalGains(
   }
 
   const taxableLtcg = nonNegative(listedEquityLtcg.minus(rules.capitalGains.listedEquityLtcgExemption));
-  const equityGainsTax = listedEquityStcg.times(rules.capitalGains.listedEquityStcgRate)
-    .plus(taxableLtcg.times(rules.capitalGains.listedEquityLtcgRate));
-  const specialRateTax = equityGainsTax
-    .plus(vdaGain.times(rules.capitalGains.vdaRate))
-    .plus(otherSpecialTax);
+  const equityGainsTax = listedEquityStcg.times(rules.capitalGains.listedEquityStcgRate).plus(taxableLtcg.times(rules.capitalGains.listedEquityLtcgRate));
+  const specialRateTax = equityGainsTax.plus(vdaGain.times(rules.capitalGains.vdaRate)).plus(otherSpecialTax);
   return { normalRateGain, totalGain, specialRateTax, equityGainsTax, warnings };
 }
 
@@ -220,11 +221,13 @@ export function calculateIncomeFromOtherSources(sources: IncomeSource[]): { taxa
   const warnings: string[] = [];
   for (const source of sources.filter((item) => ['Other', 'Investment Returns'].includes(item.type) && item.currency.toUpperCase() === 'INR')) {
     const details = source.taxDetails;
-    const investmentInterest = source.type === 'Investment Returns' && ['fixed-deposit', 'savings-interest', 'dividend', 'bonds'].includes(details?.investmentSubtype ?? '');
+    const investmentInterest =
+      source.type === 'Investment Returns' && ['fixed-deposit', 'savings-interest', 'dividend', 'bonds'].includes(details?.investmentSubtype ?? '');
     if (source.type === 'Investment Returns' && !investmentInterest) continue;
     const value = annualAmount(source);
     if (source.taxStatus === 'Tax-free' || details?.taxability === 'exempt') exempt = exempt.plus(value);
-    else if (details?.taxability === 'special' && money(details.specialRatePercent).gt(0)) specialRateTax = specialRateTax.plus(value.times(money(details.specialRatePercent).div(100)));
+    else if (details?.taxability === 'special' && money(details.specialRatePercent).gt(0))
+      specialRateTax = specialRateTax.plus(value.times(money(details.specialRatePercent).div(100)));
     else if (details?.taxability === 'review' || details?.taxability === 'partly-taxable') {
       warnings.push(`${source.description} needs taxability review and is conservatively included at slab rate.`);
       taxable = taxable.plus(value);
@@ -291,7 +294,9 @@ export function calculateSlabTax(taxableIncome: Decimal, slabs: TaxSlab[]): Deci
   return tax;
 }
 
-export function calculateSpecialRateTax(value: Decimal): Decimal { return nonNegative(value); }
+export function calculateSpecialRateTax(value: Decimal): Decimal {
+  return nonNegative(value);
+}
 
 export function calculateSurcharge(
   totalIncome: Decimal,
@@ -379,7 +384,9 @@ function calculateForRegime(
   const tdsCredit = manualTds.plus(embeddedTds);
   const tcsCredit = manualTcs.plus(business.tcs);
   const advanceTaxPaid = calculateAdvanceTaxPaid(credits).plus(business.advanceTax);
-  const selfAssessmentTaxPaid = credits.filter((credit) => credit.confirmed && credit.type === 'self-assessment').reduce((sum, credit) => sum.plus(money(credit.amount)), ZERO);
+  const selfAssessmentTaxPaid = credits
+    .filter((credit) => credit.confirmed && credit.type === 'self-assessment')
+    .reduce((sum, credit) => sum.plus(money(credit.amount)), ZERO);
   const totalCredits = tdsCredit.plus(tcsCredit).plus(advanceTaxPaid).plus(selfAssessmentTaxPaid);
   const finalTax = calculateFinalEstimatedTax(totalTaxLiability, totalCredits);
   const grossIncome = calculateGrossIncome(sources);
@@ -387,7 +394,8 @@ function calculateForRegime(
 
   warnings.push(...house.warnings, ...business.warnings, ...capital.warnings, ...other.warnings, ...deduction.warnings);
   if (!sources.length) warnings.push('Add at least one income source to calculate an estimate.');
-  if (sources.some((source) => source.currency.toUpperCase() !== 'INR')) warnings.push('Non-INR sources are excluded until an evidenced FX conversion is available.');
+  if (sources.some((source) => source.currency.toUpperCase() !== 'INR'))
+    warnings.push('Non-INR sources are excluded until an evidenced FX conversion is available.');
   if (!profile.panAvailable) warnings.push('PAN is marked unavailable; higher withholding or other consequences may apply.');
   if (profile.taxpayerType === 'other') warnings.push('Taxpayer type “Other” may follow different rules; this estimate is not filing-ready.');
   if (profile.residentialStatus !== 'resident') warnings.push('RNOR/non-resident scope and foreign-income rules require professional review.');

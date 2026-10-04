@@ -18,7 +18,15 @@ describe('money planner', () => {
   });
 
   it('prepays loans at or above 9% before investing, and reports interest saved', () => {
-    const r = planLumpSum({ amount: 400_000, horizonYears: 5, risk: 'high', liquidSavings: 1e9, monthlyExpenses: 10_000, costliestLoanRate: 14, costliestLoanOutstanding: 150_000 });
+    const r = planLumpSum({
+      amount: 400_000,
+      horizonYears: 5,
+      risk: 'high',
+      liquidSavings: 1e9,
+      monthlyExpenses: 10_000,
+      costliestLoanRate: 14,
+      costliestLoanOutstanding: 150_000,
+    });
     expect(r.buckets[0]).toMatchObject({ key: 'debt-prepay', amount: 150_000 });
     expect(r.interestSavedPerYear).toBe(21_000); // 14% of 1.5 L
   });

@@ -11,7 +11,13 @@ describe('hero sample snapshot', () => {
       emergency: { months: r.emergency.months },
       freedom: { freedomAge: r.freedom.freedomAge },
       health: { score: r.health.score, status: r.health.status },
-      tax: { better: r.tax.better, monthlyTakeHome: r.tax.monthlyTakeHome, newRegimeTax: r.tax.newRegimeTax, oldRegimeTax: r.tax.oldRegimeTax, saving: r.tax.saving },
+      tax: {
+        better: r.tax.better,
+        monthlyTakeHome: r.tax.monthlyTakeHome,
+        newRegimeTax: r.tax.newRegimeTax,
+        oldRegimeTax: r.tax.oldRegimeTax,
+        saving: r.tax.saving,
+      },
     });
   });
 });

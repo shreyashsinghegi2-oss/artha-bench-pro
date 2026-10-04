@@ -13,7 +13,7 @@ describe('formula book: textbook values', () => {
     close(F.cagr(1, 2, 6), 0.122462, 1e-6);
     close(F.doublingYearsExact(0.08), 9.0065, 1e-4);
     close(F.realReturn(0.1, 0.06), 0.037736, 1e-6);
-    close(F.futureCost(1_000_000, 0.06, 10), 1_790_847.70);
+    close(F.futureCost(1_000_000, 0.06, 10), 1_790_847.7);
     close(F.presentValue(1_000_000, 0.08, 10), 463_193.49);
     close(F.annuityPv(10_000, 0.08, 10), 67_100.81);
   });
@@ -28,7 +28,7 @@ describe('formula book: textbook values', () => {
 
   it('valuation and risk', () => {
     close(F.npv(0.1, [-100_000, 40_000, 40_000, 40_000]), -525.92);
-    close(F.irr([-100_000, 40_000, 40_000, 40_000]), 0.097010, 1e-5);
+    close(F.irr([-100_000, 40_000, 40_000, 40_000]), 0.09701, 1e-5);
     // NPV at the IRR is zero.
     close(F.npv(F.irr([-100_000, 40_000, 40_000, 40_000]), [-100_000, 40_000, 40_000, 40_000]), 0, 0.001);
     close(F.bondPrice(1000, 0.08, 0.07, 3), 1026.24);
@@ -57,7 +57,17 @@ describe('formula book agrees with the app’s calculators and tax engine', () =
   });
 
   it('matches the tax engine for a ₹15 L salary in both regimes', () => {
-    const r = buildMoneyCheck({ age: 30, annualSalary: 1_500_000, monthlyExpenses: 50_000, monthlyEmi: 0, liquidSavings: 0, investments: 0, dependants: 0, section80C: 150_000, section80D: 25_000 });
+    const r = buildMoneyCheck({
+      age: 30,
+      annualSalary: 1_500_000,
+      monthlyExpenses: 50_000,
+      monthlyEmi: 0,
+      liquidSavings: 0,
+      investments: 0,
+      dependants: 0,
+      section80C: 150_000,
+      section80D: 25_000,
+    });
     close(r.tax.newRegimeTax, F.slabTax(1_500_000 - 75_000, NEW_REGIME_SLABS) * 1.04, 1);
     close(r.tax.oldRegimeTax, F.slabTax(1_500_000 - 50_000 - 150_000 - 25_000, OLD_REGIME_SLABS) * 1.04, 1);
   });

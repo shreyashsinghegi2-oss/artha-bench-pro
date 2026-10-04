@@ -39,12 +39,14 @@ function formatDateTime(timestamp: number, timeZone: string) {
     minute: '2-digit',
     second: '2-digit',
     hour12: false,
-  }).format(new Date(timestamp)).replace(',', '');
+  })
+    .format(new Date(timestamp))
+    .replace(',', '');
 }
 
 function candleChange(candle: CryptoCandle) {
   const absolute = candle.close - candle.open;
-  return { absolute, percent: candle.open === 0 ? 0 : absolute / candle.open * 100 };
+  return { absolute, percent: candle.open === 0 ? 0 : (absolute / candle.open) * 100 };
 }
 
 function sectionStyle(title: string, direction: 'up' | 'down' | 'flat') {
@@ -93,16 +95,33 @@ const StructuredCryptoAnswer: React.FC<{ text: string; direction: 'up' | 'down' 
                 return <ScenarioLine key={`${value}-${index}`} line={value} />;
               }
               if (value.startsWith('|') && value.endsWith('|')) {
-                const cells = value.slice(1, -1).split('|').map((cell) => cell.trim());
+                const cells = value
+                  .slice(1, -1)
+                  .split('|')
+                  .map((cell) => cell.trim());
                 return (
-                  <div key={`${value}-${index}`} className="grid grid-cols-[minmax(90px,.8fr)_minmax(0,1.2fr)] gap-2 border-b border-line/70 py-1.5 font-mono text-xs tabular-nums">
-                    {cells.map((cell, cellIndex) => <span key={`${cell}-${cellIndex}`} className={cellIndex ? 'break-words text-right font-semibold text-ink' : 'font-bold text-secondary'}>{cell.replace(/\*\*/g, '')}</span>)}
+                  <div
+                    key={`${value}-${index}`}
+                    className="grid grid-cols-[minmax(90px,.8fr)_minmax(0,1.2fr)] gap-2 border-b border-line/70 py-1.5 font-mono text-xs tabular-nums"
+                  >
+                    {cells.map((cell, cellIndex) => (
+                      <span key={`${cell}-${cellIndex}`} className={cellIndex ? 'break-words text-right font-semibold text-ink' : 'font-bold text-secondary'}>
+                        {cell.replace(/\*\*/g, '')}
+                      </span>
+                    ))}
                   </div>
                 );
               }
-              return value.startsWith('- ')
-                ? <p key={`${value}-${index}`} className="flex gap-2"><span className={`font-black ${style.heading}`} aria-hidden="true">•</span><span>{value.slice(2).replace(/\*\*/g, '')}</span></p>
-                : <p key={`${value}-${index}`}>{value.replace(/\*\*/g, '')}</p>;
+              return value.startsWith('- ') ? (
+                <p key={`${value}-${index}`} className="flex gap-2">
+                  <span className={`font-black ${style.heading}`} aria-hidden="true">
+                    •
+                  </span>
+                  <span>{value.slice(2).replace(/\*\*/g, '')}</span>
+                </p>
+              ) : (
+                <p key={`${value}-${index}`}>{value.replace(/\*\*/g, '')}</p>
+              );
             })}
           </div>
         </section>
@@ -124,14 +143,14 @@ export const CryptoAssistant: React.FC<CryptoAssistantProps> = ({ candle, symbol
   const [pendingAction, setPendingAction] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [question, setQuestion] = useState('');
-  const direction = candle ? candle.close > candle.open ? 'up' : candle.close < candle.open ? 'down' : 'flat' : 'flat';
+  const direction = candle ? (candle.close > candle.open ? 'up' : candle.close < candle.open ? 'down' : 'flat') : 'flat';
   const context = useMemo(() => {
     if (!candle) return null;
     const change = candleChange(candle);
     return {
       symbol,
       interval,
-      candleStatus: candle.closeTime > Date.now() ? 'Forming' as const : 'Closed' as const,
+      candleStatus: candle.closeTime > Date.now() ? ('Forming' as const) : ('Closed' as const),
       timeUtc: formatDateTime(candle.openTime, 'UTC'),
       timeIst: formatDateTime(candle.openTime, 'Asia/Kolkata'),
       open: candle.open,
@@ -166,28 +185,100 @@ export const CryptoAssistant: React.FC<CryptoAssistantProps> = ({ candle, symbol
   return (
     <section className="rounded-3xl border border-line bg-surface p-4 shadow-sm">
       <div className="flex items-start gap-3">
-        <AssistantLogo size={38}/>
-        <div><h2 className="text-base font-black text-ink">ArthaMind Crypto Intelligence</h2><p className="mt-1 text-xs leading-5 text-secondary">Color-coded Artha AI research guidance grounded in the selected Binance candle.</p></div>
+        <AssistantLogo size={38} />
+        <div>
+          <h2 className="text-base font-black text-ink">ArthaMind Crypto Intelligence</h2>
+          <p className="mt-1 text-xs leading-5 text-secondary">Color-coded Artha AI research guidance grounded in the selected Binance candle.</p>
+        </div>
       </div>
       <div className="mt-3 max-h-[480px] overflow-y-auto rounded-2xl border border-line bg-canvas p-3">
-        {pendingAction ? <ThinkingSteps active compact/>
-          : error ? <p className="rounded-xl border border-danger/25 bg-danger/5 p-3 text-xs leading-5 text-danger">{error}</p>
-            : answer ? <><Bot className="mb-2 h-4 w-4 text-interactive" /><StructuredCryptoAnswer text={answer} direction={direction} /><ListenBar compact text={answer}/></>
-              : <p className="text-xs leading-5 text-secondary">{candle ? 'Choose an action for a structured explanation, purchase/avoid checklist, comparison framework, or conditional scenarios.' : 'Candle context is unavailable. Select a market and wait for verified candle data.'}</p>}
+        {pendingAction ? (
+          <ThinkingSteps active compact />
+        ) : error ? (
+          <p className="rounded-xl border border-danger/25 bg-danger/5 p-3 text-xs leading-5 text-danger">{error}</p>
+        ) : answer ? (
+          <>
+            <Bot className="mb-2 h-4 w-4 text-interactive" />
+            <StructuredCryptoAnswer text={answer} direction={direction} />
+            <ListenBar compact text={answer} />
+          </>
+        ) : (
+          <p className="text-xs leading-5 text-secondary">
+            {candle
+              ? 'Choose an action for a structured explanation, purchase/avoid checklist, comparison framework, or conditional scenarios.'
+              : 'Candle context is unavailable. Select a market and wait for verified candle data.'}
+          </p>
+        )}
       </div>
-      <form className="mt-3 flex items-center gap-2" onSubmit={(e) => { e.preventDefault(); const q = question.trim(); if (q.length >= 3) { setQuestion(''); void submitAction(q); } }}>
-        <input value={question} onChange={(e) => setQuestion(e.target.value)} maxLength={500} disabled={!context || Boolean(pendingAction)}
+      <form
+        className="mt-3 flex items-center gap-2"
+        onSubmit={(e) => {
+          e.preventDefault();
+          const q = question.trim();
+          if (q.length >= 3) {
+            setQuestion('');
+            void submitAction(q);
+          }
+        }}
+      >
+        <input
+          value={question}
+          onChange={(e) => setQuestion(e.target.value)}
+          maxLength={500}
+          disabled={!context || Boolean(pendingAction)}
           placeholder={context ? `Ask anything about ${symbol}: trend, risk, news, should I research it…` : 'Waiting for live candle data…'}
-          aria-label="Ask the crypto assistant" className="min-w-0 flex-1 rounded-xl border border-line-strong bg-canvas px-3.5 py-2.5 text-sm text-ink outline-none focus:border-interactive focus:ring-2 focus:ring-interactive/15"/>
-        <MicButton onText={setQuestion} onFinal={(t) => { if (t.trim().length >= 3) { setQuestion(''); void submitAction(t.trim()); } }} disabled={!context || Boolean(pendingAction)}/>
-        <button type="submit" disabled={!context || Boolean(pendingAction) || question.trim().length < 3} className="inline-flex items-center gap-1.5 rounded-xl bg-brand px-4 py-2.5 text-sm font-black text-white disabled:opacity-40"><Send className="h-4 w-4"/> Ask</button>
+          aria-label="Ask the crypto assistant"
+          className="min-w-0 flex-1 rounded-xl border border-line-strong bg-canvas px-3.5 py-2.5 text-sm text-ink outline-none focus:border-interactive focus:ring-2 focus:ring-interactive/15"
+        />
+        <MicButton
+          onText={setQuestion}
+          onFinal={(t) => {
+            if (t.trim().length >= 3) {
+              setQuestion('');
+              void submitAction(t.trim());
+            }
+          }}
+          disabled={!context || Boolean(pendingAction)}
+        />
+        <button
+          type="submit"
+          disabled={!context || Boolean(pendingAction) || question.trim().length < 3}
+          className="inline-flex items-center gap-1.5 rounded-xl bg-brand px-4 py-2.5 text-sm font-black text-white disabled:opacity-40"
+        >
+          <Send className="h-4 w-4" /> Ask
+        </button>
       </form>
       <div className="mt-3 flex flex-wrap items-center gap-2">
-        <WebSearchToggle compact/>
-        {ASSISTANT_ACTIONS.map((action) => <button key={action} type="button" disabled={!context || Boolean(pendingAction)} onClick={() => void submitAction(action)} className="rounded-full border border-line bg-subtle px-3 py-1.5 text-xs font-bold text-secondary hover:text-interactive disabled:opacity-40">{pendingAction === action ? 'Loading…' : action}</button>)}
+        <WebSearchToggle compact />
+        {ASSISTANT_ACTIONS.map((action) => (
+          <button
+            key={action}
+            type="button"
+            disabled={!context || Boolean(pendingAction)}
+            onClick={() => void submitAction(action)}
+            className="rounded-full border border-line bg-subtle px-3 py-1.5 text-xs font-bold text-secondary hover:text-interactive disabled:opacity-40"
+          >
+            {pendingAction === action ? 'Loading…' : action}
+          </button>
+        ))}
       </div>
-      {answer ? <div className="mt-3 flex gap-3"><button type="button" onClick={() => void navigator.clipboard.writeText(answer)} className="inline-flex items-center gap-1 text-xs font-bold text-interactive"><Clipboard className="h-3.5 w-3.5" /> Copy response</button><button type="button" onClick={() => setAnswer('')} className="inline-flex items-center gap-1 text-xs font-bold text-secondary"><Trash2 className="h-3.5 w-3.5" /> Clear response</button></div> : null}
-      <p className="mt-3 border-t border-line pt-3 text-xs leading-5 text-secondary">Educational research guidance only — not personalized investment advice. The assistant will not issue a direct buy/sell order or promise returns.</p>
+      {answer ? (
+        <div className="mt-3 flex gap-3">
+          <button
+            type="button"
+            onClick={() => void navigator.clipboard.writeText(answer)}
+            className="inline-flex items-center gap-1 text-xs font-bold text-interactive"
+          >
+            <Clipboard className="h-3.5 w-3.5" /> Copy response
+          </button>
+          <button type="button" onClick={() => setAnswer('')} className="inline-flex items-center gap-1 text-xs font-bold text-secondary">
+            <Trash2 className="h-3.5 w-3.5" /> Clear response
+          </button>
+        </div>
+      ) : null}
+      <p className="mt-3 border-t border-line pt-3 text-xs leading-5 text-secondary">
+        Educational research guidance only - not personalized investment advice. The assistant will not issue a direct buy/sell order or promise returns.
+      </p>
     </section>
   );
 };

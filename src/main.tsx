@@ -19,4 +19,12 @@ if (typeof window !== 'undefined') {
   installAiFetchResilience();
 }
 
-createRoot(document.getElementById('root')!).render(<StrictMode><AuthProvider><App /><LazyVoiceAssistant /><ForceFullscreen /></AuthProvider></StrictMode>);
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
+    <AuthProvider>
+      <App />
+      <LazyVoiceAssistant />
+      <ForceFullscreen />
+    </AuthProvider>
+  </StrictMode>,
+);

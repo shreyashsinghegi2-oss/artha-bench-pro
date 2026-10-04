@@ -1,15 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  BookOpen,
-  Bookmark,
-  CheckCircle2,
-  Sparkles,
-  HelpCircle,
-  Globe2,
-  SlidersHorizontal,
-  RefreshCw,
-  FileText,
-} from 'lucide-react';
+import { BookOpen, Bookmark, CheckCircle2, Sparkles, HelpCircle, Globe2, SlidersHorizontal, RefreshCw, FileText } from 'lucide-react';
 import { Lesson, LearnerLevel, LearningLanguage, LearningMode } from '../../types';
 import { generateLessonAI } from '../../services/learningApi';
 import { SafetyBanner } from '../SafetyBanner';
@@ -87,9 +77,7 @@ export const LessonViewer: React.FC<LessonViewerProps> = ({
       {/* Lesson Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-line pb-4">
         <div>
-          <span className="text-xs font-bold text-success uppercase tracking-wider">
-            Lesson Objective
-          </span>
+          <span className="text-xs font-bold text-success uppercase tracking-wider">Lesson Objective</span>
           <h2 className="text-xl font-bold text-ink mt-0.5">{lesson.title}</h2>
           <p className="text-xs text-secondary mt-1">{lesson.objective}</p>
         </div>
@@ -98,9 +86,7 @@ export const LessonViewer: React.FC<LessonViewerProps> = ({
           <button
             onClick={() => onToggleBookmark(lesson.id)}
             className={`p-2 rounded-xl border transition-all focus:outline-none focus:ring-2 focus:ring-interactive ${
-              isBookmarked
-                ? 'bg-warning-soft/80 border-warning-fill/80 text-warning'
-                : 'bg-hover border-line-strong text-secondary hover:text-ink'
+              isBookmarked ? 'bg-warning-soft/80 border-warning-fill/80 text-warning' : 'bg-hover border-line-strong text-secondary hover:text-ink'
             }`}
             title="Bookmark Lesson"
           >
@@ -186,10 +172,7 @@ export const LessonViewer: React.FC<LessonViewerProps> = ({
           {/* Key Concepts Pills */}
           <div className="flex flex-wrap gap-2">
             {lessonContent.keyConcepts?.map((concept: string, idx: number) => (
-              <span
-                key={idx}
-                className="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-success-soft/60 text-success border border-success-fill/60"
-              >
+              <span key={idx} className="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-success-soft/60 text-success border border-success-fill/60">
                 #{concept}
               </span>
             ))}
@@ -197,10 +180,7 @@ export const LessonViewer: React.FC<LessonViewerProps> = ({
 
           {/* Structured AI Explanation */}
           {lessonContent.structuredAnswer ? (
-            <StructuredFinancialAnswerView
-              answer={lessonContent.structuredAnswer}
-              disclaimer={lessonContent.educationalDisclaimer}
-            />
+            <StructuredFinancialAnswerView answer={lessonContent.structuredAnswer} disclaimer={lessonContent.educationalDisclaimer} />
           ) : (
             <div className="bg-surface border border-line rounded-2xl p-5 text-sm text-secondary leading-relaxed whitespace-pre-line shadow-sm">
               {lessonContent.directExplanation}
@@ -224,37 +204,32 @@ export const LessonViewer: React.FC<LessonViewerProps> = ({
               <HelpCircle className="w-4 h-4 text-interactive" />
               <span>Knowledge Check</span>
             </h4>
-            <p className="text-xs font-medium text-ink">
-              {lessonContent.knowledgeCheck?.question || lesson.knowledgeCheck.question}
-            </p>
+            <p className="text-xs font-medium text-ink">{lessonContent.knowledgeCheck?.question || lesson.knowledgeCheck.question}</p>
 
             <div className="space-y-2">
-              {(lessonContent.knowledgeCheck?.options || lesson.knowledgeCheck.options).map(
-                (opt: string, optIdx: number) => {
-                  const isSelected = selectedOption === optIdx;
-                  const correctIdx =
-                    lessonContent.knowledgeCheck?.correctIndex ?? lesson.knowledgeCheck.correctIndex;
-                  const isCorrect = optIdx === correctIdx;
+              {(lessonContent.knowledgeCheck?.options || lesson.knowledgeCheck.options).map((opt: string, optIdx: number) => {
+                const isSelected = selectedOption === optIdx;
+                const correctIdx = lessonContent.knowledgeCheck?.correctIndex ?? lesson.knowledgeCheck.correctIndex;
+                const isCorrect = optIdx === correctIdx;
 
-                  let optionStyle = 'bg-subtle border-line text-secondary';
-                  if (hasSubmittedQuiz) {
-                    if (isCorrect) optionStyle = 'bg-success-soft/80 border-success-fill text-success';
-                    else if (isSelected) optionStyle = 'bg-danger-soft/80 border-danger text-danger';
-                  } else if (isSelected) {
-                    optionStyle = 'bg-hover border-line-strong text-ink';
-                  }
-
-                  return (
-                    <button
-                      key={optIdx}
-                      onClick={() => !hasSubmittedQuiz && setSelectedOption(optIdx)}
-                      className={`w-full text-left p-2.5 rounded-lg text-xs border transition-all ${optionStyle}`}
-                    >
-                      {optIdx + 1}. {opt}
-                    </button>
-                  );
+                let optionStyle = 'bg-subtle border-line text-secondary';
+                if (hasSubmittedQuiz) {
+                  if (isCorrect) optionStyle = 'bg-success-soft/80 border-success-fill text-success';
+                  else if (isSelected) optionStyle = 'bg-danger-soft/80 border-danger text-danger';
+                } else if (isSelected) {
+                  optionStyle = 'bg-hover border-line-strong text-ink';
                 }
-              )}
+
+                return (
+                  <button
+                    key={optIdx}
+                    onClick={() => !hasSubmittedQuiz && setSelectedOption(optIdx)}
+                    className={`w-full text-left p-2.5 rounded-lg text-xs border transition-all ${optionStyle}`}
+                  >
+                    {optIdx + 1}. {opt}
+                  </button>
+                );
+              })}
             </div>
 
             {!hasSubmittedQuiz ? (

@@ -135,9 +135,10 @@ export function buildCfoHealthReport(inputs: CfoInputs): CfoHealthReport {
     const monthly = surplus > 0 ? Math.min(surplus, emergencyGap / 12) : 0;
     actions.push({
       title: 'Build a 6-month emergency fund',
-      detail: monthly > 0
-        ? `Gap of ${formatInr(emergencyGap)}. Setting aside ${formatInr(monthly)} a month in a liquid fund or sweep FD closes it in about ${Math.ceil(emergencyGap / monthly)} months.`
-        : `Gap of ${formatInr(emergencyGap)}. Free up monthly surplus first, then park it in a liquid fund or sweep FD.`,
+      detail:
+        monthly > 0
+          ? `Gap of ${formatInr(emergencyGap)}. Setting aside ${formatInr(monthly)} a month in a liquid fund or sweep FD closes it in about ${Math.ceil(emergencyGap / monthly)} months.`
+          : `Gap of ${formatInr(emergencyGap)}. Free up monthly surplus first, then park it in a liquid fund or sweep FD.`,
       amount: rupees(emergencyGap),
       horizon: 'This month',
     });
@@ -170,9 +171,10 @@ export function buildCfoHealthReport(inputs: CfoInputs): CfoHealthReport {
   }
 
   const status = statusFromScore(score);
-  const summary = surplus >= 0
-    ? `You keep ${formatInr(surplus)} a month (${(savingsRate * 100).toFixed(1)}% of take-home). EMIs use ${(emiLoad * 100).toFixed(1)}% of income and your savings cover ${Number.isFinite(runway) ? `${runway.toFixed(1)} months` : 'all'} of outgoings.`
-    : `You are running a monthly deficit of ${formatInr(-surplus)}. EMIs use ${(emiLoad * 100).toFixed(1)}% of income and savings cover ${Number.isFinite(runway) ? `${runway.toFixed(1)} months` : 'all'} of outgoings.`;
+  const summary =
+    surplus >= 0
+      ? `You keep ${formatInr(surplus)} a month (${(savingsRate * 100).toFixed(1)}% of take-home). EMIs use ${(emiLoad * 100).toFixed(1)}% of income and your savings cover ${Number.isFinite(runway) ? `${runway.toFixed(1)} months` : 'all'} of outgoings.`
+      : `You are running a monthly deficit of ${formatInr(-surplus)}. EMIs use ${(emiLoad * 100).toFixed(1)}% of income and savings cover ${Number.isFinite(runway) ? `${runway.toFixed(1)} months` : 'all'} of outgoings.`;
 
   return { score, status, surplus, metrics, actions: actions.slice(0, 4), summary };
 }
@@ -190,8 +192,17 @@ export function cfoReviewPrompt(inputs: CfoInputs, report: CfoHealthReport): str
 }
 
 export interface CfoPlanProfile {
-  name: string; age: string; work: string; monthlyIncome: number; monthlyExpenses: number; monthlyEmi: number;
-  savings: number; dependents: string; insurance: string; goal: string; goalYears: string;
+  name: string;
+  age: string;
+  work: string;
+  monthlyIncome: number;
+  monthlyExpenses: number;
+  monthlyEmi: number;
+  savings: number;
+  dependents: string;
+  insurance: string;
+  goal: string;
+  goalYears: string;
 }
 
 /** Prompt for a complete personal CFO plan, grounded in the intake answers and verified calculations. */

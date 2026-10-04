@@ -38,7 +38,7 @@ function normalizeFreshness(value?: string): TaxMarketQuote['freshness'] {
 async function requestQuote(symbol: string, assetType = 'equity'): Promise<TaxMarketQuote> {
   const response = await fetch(`/api/markets/quote?symbol=${encodeURIComponent(symbol)}&assetType=${encodeURIComponent(assetType)}`);
   if (!response.ok) throw new Error('Market data unavailable');
-  const body = await response.json() as MarketQuoteResponse;
+  const body = (await response.json()) as MarketQuoteResponse;
   const quote = body.quote;
   const freshness = normalizeFreshness(quote?.freshness);
   if (!quote || typeof quote.price !== 'number' || !Number.isFinite(quote.price) || quote.price <= 0 || freshness === 'unavailable') {
@@ -59,7 +59,7 @@ export const arthaMarketDataProvider: MarketDataProvider = {
   async getHistoricalPrice(symbol, date) {
     const response = await fetch(`/api/markets/history?symbol=${encodeURIComponent(symbol)}&range=1y`);
     if (!response.ok) throw new Error('Historical price unavailable');
-    const body = await response.json() as { points?: Array<{ date?: string; price?: number; close?: number }> };
+    const body = (await response.json()) as { points?: Array<{ date?: string; price?: number; close?: number }> };
     const target = body.points?.find((point) => point.date?.slice(0, 10) === date);
     const price = target?.price ?? target?.close;
     if (typeof price !== 'number' || !Number.isFinite(price)) throw new Error('Historical price unavailable for selected date');

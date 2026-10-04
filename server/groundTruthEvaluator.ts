@@ -4,13 +4,7 @@
  * Never allows an LLM to grade its own math.
  */
 
-import {
-  calculateCompoundInterest,
-  calculateCAGR,
-  calculateQuickRatio,
-  calculateBreakEven,
-  calculateDTI,
-} from './financeEngine';
+import { calculateCompoundInterest, calculateCAGR, calculateQuickRatio, calculateBreakEven, calculateDTI } from './financeEngine';
 import { DEFAULT_TOLERANCE_PERCENT } from './scoringConfig';
 
 export interface GroundTruthEvaluationResult {
@@ -53,7 +47,7 @@ export function evaluateGroundTruth(
     inputs?: any;
     expectedAnswer?: number;
     tolerancePercent?: number;
-  }
+  },
 ): GroundTruthEvaluationResult {
   const tolerance = scenarioContext?.tolerancePercent ?? DEFAULT_TOLERANCE_PERCENT;
 

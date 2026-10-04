@@ -4,8 +4,7 @@ export const LEARNING_TRACKS: LearningTrack[] = [
   {
     id: 'personal-finance',
     title: 'Personal Finance Foundations',
-    description:
-      'Master essential money management, budgeting, debt paydown, taxation basics, emergency planning, and wealth-building fundamentals.',
+    description: 'Master essential money management, budgeting, debt paydown, taxation basics, emergency planning, and wealth-building fundamentals.',
     iconName: 'Wallet',
     colorToken: 'emerald',
     riskLabel: 'Low Risk',
@@ -124,8 +123,7 @@ export const LEARNING_TRACKS: LearningTrack[] = [
   {
     id: 'stock-market',
     title: 'Stock Market Foundations',
-    description:
-      'Learn how equity markets work, share valuations, fundamental analysis, indices, ETFs, order types, and long-term portfolio diversification.',
+    description: 'Learn how equity markets work, share valuations, fundamental analysis, indices, ETFs, order types, and long-term portfolio diversification.',
     iconName: 'TrendingUp',
     colorToken: 'blue',
     riskLabel: 'Moderate Risk',
@@ -270,9 +268,7 @@ export const LEARNING_TRACKS: LearningTrack[] = [
               correctIndex: 1,
               explanation: 'Short-term trading carries substantial tail risk, execution slippage, friction costs, and behavioral stress.',
             },
-            riskAndLimitationNotes: [
-              'CRITICAL SAFETY WARNING: Educational material only. Never trade with money you cannot afford to lose.',
-            ],
+            riskAndLimitationNotes: ['CRITICAL SAFETY WARNING: Educational material only. Never trade with money you cannot afford to lose.'],
             estimatedMinutes: 20,
             prerequisites: [],
           },
@@ -548,8 +544,7 @@ export const LEARNING_TRACKS: LearningTrack[] = [
   {
     id: 'earning-skills',
     title: 'Earning Skills and Freelancing',
-    description:
-      'Ethical freelancing, digital service packaging, proposals, pricing, scope management, client communication, and digital income roadmaps.',
+    description: 'Ethical freelancing, digital service packaging, proposals, pricing, scope management, client communication, and digital income roadmaps.',
     iconName: 'DollarSign',
     colorToken: 'teal',
     riskLabel: 'Career / Skill',

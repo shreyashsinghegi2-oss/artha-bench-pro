@@ -55,22 +55,16 @@ export interface QuickRatioResult {
 /**
  * Calculates Quick Ratio (Acid-Test Ratio).
  */
-export function calculateQuickRatio(
-  cash: number,
-  marketableSecurities: number,
-  receivables: number,
-  currentLiabilities: number
-): QuickRatioResult {
+export function calculateQuickRatio(cash: number, marketableSecurities: number, receivables: number, currentLiabilities: number): QuickRatioResult {
   if (![cash, marketableSecurities, receivables, currentLiabilities].every(Number.isFinite)) {
-  throw new Error('Quick-ratio inputs must be finite numbers.');
-}
-if (cash < 0 || marketableSecurities < 0 || receivables < 0) {
-  throw new Error('Quick assets cannot be negative.');
-}
-if (currentLiabilities <= 0) {
-  throw new Error('Current liabilities must be greater than zero.');
-}
-
+    throw new Error('Quick-ratio inputs must be finite numbers.');
+  }
+  if (cash < 0 || marketableSecurities < 0 || receivables < 0) {
+    throw new Error('Quick assets cannot be negative.');
+  }
+  if (currentLiabilities <= 0) {
+    throw new Error('Current liabilities must be greater than zero.');
+  }
 
   const dCash = new Decimal(cash);
   const dSecurities = new Decimal(marketableSecurities);
@@ -105,18 +99,17 @@ export function calculateCompoundInterest(
   annualRatePercent: number,
   years: number,
   monthlyContribution = 0,
-  compoundingFrequencyPerYear = 12
+  compoundingFrequencyPerYear = 12,
 ): CompoundInterestResult {
   if (![principal, annualRatePercent, years, monthlyContribution, compoundingFrequencyPerYear].every(Number.isFinite)) {
-  throw new Error('Compound-interest inputs must be finite numbers.');
-}
-if (principal < 0 || annualRatePercent < 0 || years <= 0 || monthlyContribution < 0 || compoundingFrequencyPerYear <= 0) {
-  throw new Error('Invalid input parameters for compound interest calculation.');
-}
-if (!Number.isInteger(compoundingFrequencyPerYear) || compoundingFrequencyPerYear > 365) {
-  throw new Error('Compounding frequency must be a whole number between 1 and 365.');
-}
-
+    throw new Error('Compound-interest inputs must be finite numbers.');
+  }
+  if (principal < 0 || annualRatePercent < 0 || years <= 0 || monthlyContribution < 0 || compoundingFrequencyPerYear <= 0) {
+    throw new Error('Invalid input parameters for compound interest calculation.');
+  }
+  if (!Number.isInteger(compoundingFrequencyPerYear) || compoundingFrequencyPerYear > 365) {
+    throw new Error('Compounding frequency must be a whole number between 1 and 365.');
+  }
 
   const P = new Decimal(principal);
   const r = new Decimal(annualRatePercent).div(100);
@@ -169,18 +162,13 @@ if (!Number.isInteger(compoundingFrequencyPerYear) || compoundingFrequencyPerYea
  * Calculates Compound Annual Growth Rate (CAGR).
  * CAGR = (Final Value / Initial Value)^(1 / Years) - 1
  */
-export function calculateCAGR(
-  initialValue: number,
-  finalValue: number,
-  years: number
-): CAGRResult {
+export function calculateCAGR(initialValue: number, finalValue: number, years: number): CAGRResult {
   if (![initialValue, finalValue, years].every(Number.isFinite)) {
-  throw new Error('CAGR inputs must be finite numbers.');
-}
-if (initialValue <= 0 || finalValue <= 0 || years <= 0) {
-  throw new Error('Initial value, final value, and years must be greater than zero.');
-}
-
+    throw new Error('CAGR inputs must be finite numbers.');
+  }
+  if (initialValue <= 0 || finalValue <= 0 || years <= 0) {
+    throw new Error('Initial value, final value, and years must be greater than zero.');
+  }
 
   const initDec = new Decimal(initialValue);
   const finalDec = new Decimal(finalValue);
@@ -202,17 +190,13 @@ if (initialValue <= 0 || finalValue <= 0 || years <= 0) {
 /**
  * Calculates Break-Even Volume and Revenue.
  */
-export function calculateBreakEven(
-  fixedCosts: number,
-  pricePerUnit: number,
-  variableCostPerUnit: number
-): BreakEvenResult {
+export function calculateBreakEven(fixedCosts: number, pricePerUnit: number, variableCostPerUnit: number): BreakEvenResult {
   if (![fixedCosts, pricePerUnit, variableCostPerUnit].every(Number.isFinite)) {
-  throw new Error('Break-even inputs must be finite numbers.');
-}
-if (fixedCosts < 0 || pricePerUnit <= 0 || variableCostPerUnit < 0) {
-  throw new Error('Fixed costs and variable costs cannot be negative, and price per unit must be greater than zero.');
-}
+    throw new Error('Break-even inputs must be finite numbers.');
+  }
+  if (fixedCosts < 0 || pricePerUnit <= 0 || variableCostPerUnit < 0) {
+    throw new Error('Fixed costs and variable costs cannot be negative, and price per unit must be greater than zero.');
+  }
 
   const fc = new Decimal(fixedCosts);
   const p = new Decimal(pricePerUnit);
@@ -239,17 +223,13 @@ if (fixedCosts < 0 || pricePerUnit <= 0 || variableCostPerUnit < 0) {
 /**
  * Calculates Debt-to-Income (DTI) ratio and risk tier.
  */
-export function calculateDTI(
-  monthlyGrossIncome: number,
-  monthlyDebtPayments: number
-): DTIResult {
+export function calculateDTI(monthlyGrossIncome: number, monthlyDebtPayments: number): DTIResult {
   if (![monthlyGrossIncome, monthlyDebtPayments].every(Number.isFinite)) {
-  throw new Error('DTI inputs must be finite numbers.');
-}
-if (monthlyGrossIncome <= 0 || monthlyDebtPayments < 0) {
-  throw new Error('Monthly gross income must be greater than zero and monthly debt payments cannot be negative.');
-}
-
+    throw new Error('DTI inputs must be finite numbers.');
+  }
+  if (monthlyGrossIncome <= 0 || monthlyDebtPayments < 0) {
+    throw new Error('Monthly gross income must be greater than zero and monthly debt payments cannot be negative.');
+  }
 
   const inc = new Decimal(monthlyGrossIncome);
   const debt = new Decimal(monthlyDebtPayments);

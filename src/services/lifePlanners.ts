@@ -36,28 +36,49 @@ export function corpusForIncome(firstYear: number, years: number, postReturn: nu
   if (firstYear <= 0 || years <= 0) return 0;
   if (Math.abs(postReturn - inflation) < 1e-9) return firstYear * years;
   const q = (1 + inflation) / (1 + postReturn);
-  return firstYear * (1 - q ** years) / (1 - q) ;
+  return (firstYear * (1 - q ** years)) / (1 - q);
 }
 
 // ---------------- Retirement ----------------
 
 export interface RetirementInputs {
-  age: number; retireAge: number; lifeExpectancy: number;
-  monthlyExpensesToday: number; inflation: number;
-  preReturn: number; postReturn: number;
-  currentSavings: number; monthlySip: number; stepUp: number;
+  age: number;
+  retireAge: number;
+  lifeExpectancy: number;
+  monthlyExpensesToday: number;
+  inflation: number;
+  preReturn: number;
+  postReturn: number;
+  currentSavings: number;
+  monthlySip: number;
+  stepUp: number;
   /** Pension, rent or other income at retirement, in today's rupees a month (grows with inflation). */
   otherIncomeToday: number;
 }
 export const RETIREMENT_DEFAULTS: RetirementInputs = {
-  age: 30, retireAge: 60, lifeExpectancy: 85, monthlyExpensesToday: 50_000, inflation: 0.06,
-  preReturn: 0.11, postReturn: 0.07, currentSavings: 5_00_000, monthlySip: 10_000, stepUp: 0.1, otherIncomeToday: 0,
+  age: 30,
+  retireAge: 60,
+  lifeExpectancy: 85,
+  monthlyExpensesToday: 50_000,
+  inflation: 0.06,
+  preReturn: 0.11,
+  postReturn: 0.07,
+  currentSavings: 5_00_000,
+  monthlySip: 10_000,
+  stepUp: 0.1,
+  otherIncomeToday: 0,
 };
 export interface RetirementPlan {
-  yearsToRetire: number; yearsInRetirement: number;
-  monthlyExpenseAtRetirement: number; corpusNeeded: number;
-  projectedCorpus: number; gap: number; onTrackPct: number;
-  extraSipNeeded: number; totalSipNeeded: number; lumpSumTodayForGap: number;
+  yearsToRetire: number;
+  yearsInRetirement: number;
+  monthlyExpenseAtRetirement: number;
+  corpusNeeded: number;
+  projectedCorpus: number;
+  gap: number;
+  onTrackPct: number;
+  extraSipNeeded: number;
+  totalSipNeeded: number;
+  lumpSumTodayForGap: number;
   moneyLastsToAge: number | null;
   series: Array<{ age: number; balance: number; phase: 'save' | 'spend' }>;
 }
@@ -85,41 +106,154 @@ export function planRetirement(i: RetirementInputs): RetirementPlan {
     } else {
       const withdrawal = netMonthlyToday * 12 * (1 + i.inflation) ** y;
       balance = (balance - withdrawal) * (1 + i.postReturn);
-      if (balance < 0 && moneyLastsToAge === null) { moneyLastsToAge = age; balance = 0; }
+      if (balance < 0 && moneyLastsToAge === null) {
+        moneyLastsToAge = age;
+        balance = 0;
+      }
     }
   }
   return {
-    yearsToRetire, yearsInRetirement,
+    yearsToRetire,
+    yearsInRetirement,
     monthlyExpenseAtRetirement: round(monthlyExpenseAtRetirement),
-    corpusNeeded: round(corpusNeeded), projectedCorpus: round(projectedCorpus), gap: round(gap),
+    corpusNeeded: round(corpusNeeded),
+    projectedCorpus: round(projectedCorpus),
+    gap: round(gap),
     onTrackPct: corpusNeeded > 0 ? Math.min(1, projectedCorpus / corpusNeeded) : 1,
-    extraSipNeeded: round(extraSipNeeded), totalSipNeeded: round(i.monthlySip + extraSipNeeded),
+    extraSipNeeded: round(extraSipNeeded),
+    totalSipNeeded: round(i.monthlySip + extraSipNeeded),
     lumpSumTodayForGap: round(gap / (1 + i.preReturn) ** yearsToRetire),
-    moneyLastsToAge, series,
+    moneyLastsToAge,
+    series,
   };
 }
 
 // ---------------- Child education ----------------
 
-export interface CoursePreset { id: string; label: string; level: 'Bachelors' | 'Masters' | 'Professional'; where: 'India' | 'Abroad'; costToday: number; years: number; startAge: number; inflation: number; note: string }
+export interface CoursePreset {
+  id: string;
+  label: string;
+  level: 'Bachelors' | 'Masters' | 'Professional';
+  where: 'India' | 'Abroad';
+  costToday: number;
+  years: number;
+  startAge: number;
+  inflation: number;
+  note: string;
+}
 
 /**
  * Indicative total cost today (tuition + living for the whole course), for planning only. Fees vary
  * widely by institution; users should replace these with the actual figure for their target college.
  */
 export const COURSE_PRESETS: CoursePreset[] = [
-  { id: 'btech-india', label: 'Engineering (B.Tech), India', level: 'Bachelors', where: 'India', costToday: 15_00_000, years: 4, startAge: 18, inflation: 0.1, note: 'Private or top public college, 4 years with hostel' },
-  { id: 'mbbs-india', label: 'Medicine (MBBS), private college, India', level: 'Professional', where: 'India', costToday: 75_00_000, years: 5.5, startAge: 18, inflation: 0.1, note: 'Private medical college fees vary a lot by state' },
-  { id: 'ba-bcom-india', label: 'B.Com / BA / BSc, India', level: 'Bachelors', where: 'India', costToday: 5_00_000, years: 3, startAge: 18, inflation: 0.1, note: 'Good city college with living costs' },
-  { id: 'ug-us', label: 'Bachelors in the USA', level: 'Bachelors', where: 'Abroad', costToday: 1_80_00_000, years: 4, startAge: 18, inflation: 0.08, note: 'Tuition plus living; includes rupee depreciation in the inflation rate' },
-  { id: 'mba-india', label: 'MBA, top Indian B-school', level: 'Masters', where: 'India', costToday: 25_00_000, years: 2, startAge: 22, inflation: 0.1, note: 'Top-tier institute, 2 years' },
-  { id: 'ms-us', label: 'Masters (MS) in the USA', level: 'Masters', where: 'Abroad', costToday: 75_00_000, years: 2, startAge: 22, inflation: 0.08, note: 'Tuition plus living for 2 years' },
-  { id: 'masters-uk', label: 'Masters in the UK', level: 'Masters', where: 'Abroad', costToday: 45_00_000, years: 1, startAge: 22, inflation: 0.08, note: 'One-year taught masters with living costs' },
-  { id: 'masters-ca-au', label: 'Masters in Canada or Australia', level: 'Masters', where: 'Abroad', costToday: 50_00_000, years: 2, startAge: 22, inflation: 0.08, note: 'Tuition plus living for 2 years' },
+  {
+    id: 'btech-india',
+    label: 'Engineering (B.Tech), India',
+    level: 'Bachelors',
+    where: 'India',
+    costToday: 15_00_000,
+    years: 4,
+    startAge: 18,
+    inflation: 0.1,
+    note: 'Private or top public college, 4 years with hostel',
+  },
+  {
+    id: 'mbbs-india',
+    label: 'Medicine (MBBS), private college, India',
+    level: 'Professional',
+    where: 'India',
+    costToday: 75_00_000,
+    years: 5.5,
+    startAge: 18,
+    inflation: 0.1,
+    note: 'Private medical college fees vary a lot by state',
+  },
+  {
+    id: 'ba-bcom-india',
+    label: 'B.Com / BA / BSc, India',
+    level: 'Bachelors',
+    where: 'India',
+    costToday: 5_00_000,
+    years: 3,
+    startAge: 18,
+    inflation: 0.1,
+    note: 'Good city college with living costs',
+  },
+  {
+    id: 'ug-us',
+    label: 'Bachelors in the USA',
+    level: 'Bachelors',
+    where: 'Abroad',
+    costToday: 1_80_00_000,
+    years: 4,
+    startAge: 18,
+    inflation: 0.08,
+    note: 'Tuition plus living; includes rupee depreciation in the inflation rate',
+  },
+  {
+    id: 'mba-india',
+    label: 'MBA, top Indian B-school',
+    level: 'Masters',
+    where: 'India',
+    costToday: 25_00_000,
+    years: 2,
+    startAge: 22,
+    inflation: 0.1,
+    note: 'Top-tier institute, 2 years',
+  },
+  {
+    id: 'ms-us',
+    label: 'Masters (MS) in the USA',
+    level: 'Masters',
+    where: 'Abroad',
+    costToday: 75_00_000,
+    years: 2,
+    startAge: 22,
+    inflation: 0.08,
+    note: 'Tuition plus living for 2 years',
+  },
+  {
+    id: 'masters-uk',
+    label: 'Masters in the UK',
+    level: 'Masters',
+    where: 'Abroad',
+    costToday: 45_00_000,
+    years: 1,
+    startAge: 22,
+    inflation: 0.08,
+    note: 'One-year taught masters with living costs',
+  },
+  {
+    id: 'masters-ca-au',
+    label: 'Masters in Canada or Australia',
+    level: 'Masters',
+    where: 'Abroad',
+    costToday: 50_00_000,
+    years: 2,
+    startAge: 22,
+    inflation: 0.08,
+    note: 'Tuition plus living for 2 years',
+  },
 ];
 
-export interface EducationGoal { id: string; label: string; costToday: number; startAge: number; inflation: number; savedSoFar: number }
-export interface EducationGoalPlan extends EducationGoal { years: number; futureCost: number; savingsGrowTo: number; gap: number; monthlySip: number; lumpSumToday: number; sipIfDelayed3y: number | null }
+export interface EducationGoal {
+  id: string;
+  label: string;
+  costToday: number;
+  startAge: number;
+  inflation: number;
+  savedSoFar: number;
+}
+export interface EducationGoalPlan extends EducationGoal {
+  years: number;
+  futureCost: number;
+  savingsGrowTo: number;
+  gap: number;
+  monthlySip: number;
+  lumpSumToday: number;
+  sipIfDelayed3y: number | null;
+}
 
 export function planEducationGoal(goal: EducationGoal, childAge: number, annualReturn: number, stepUp = 0): EducationGoalPlan {
   const years = Math.max(0, goal.startAge - childAge);
@@ -127,57 +261,113 @@ export function planEducationGoal(goal: EducationGoal, childAge: number, annualR
   const savingsGrowTo = goal.savedSoFar * (1 + annualReturn) ** years;
   const gap = Math.max(0, futureCost - savingsGrowTo);
   return {
-    ...goal, years,
-    futureCost: round(futureCost), savingsGrowTo: round(savingsGrowTo), gap: round(gap),
+    ...goal,
+    years,
+    futureCost: round(futureCost),
+    savingsGrowTo: round(savingsGrowTo),
+    gap: round(gap),
     monthlySip: round(sipNeededFor(gap, annualReturn, years, stepUp)),
     lumpSumToday: round(gap / (1 + annualReturn) ** years),
-    sipIfDelayed3y: years > 3 ? round(sipNeededFor(Math.max(0, futureCost - goal.savedSoFar * (1 + annualReturn) ** years), annualReturn, years - 3, stepUp)) : null,
+    sipIfDelayed3y:
+      years > 3 ? round(sipNeededFor(Math.max(0, futureCost - goal.savedSoFar * (1 + annualReturn) ** years), annualReturn, years - 3, stepUp)) : null,
   };
 }
 
 // ---------------- Job switch ----------------
 
 export interface JobSwitchInputs {
-  currentCtc: number; offeredCtc: number;
+  currentCtc: number;
+  offeredCtc: number;
   /** Basic pay as a share of CTC (drives PF and gratuity). */
   basicShare: number;
-  currentVariableShare: number; offeredVariableShare: number;
-  joiningBonus: number; relocationCost: number; noticeBuyout: number;
+  currentVariableShare: number;
+  offeredVariableShare: number;
+  joiningBonus: number;
+  relocationCost: number;
+  noticeBuyout: number;
   gapMonths: number;
-  currentMonthlyExpenses: number; newCityMonthlyExpenses: number;
+  currentMonthlyExpenses: number;
+  newCityMonthlyExpenses: number;
   yearsAtCurrentJob: number;
 }
 export const JOB_SWITCH_DEFAULTS: JobSwitchInputs = {
-  currentCtc: 12_00_000, offeredCtc: 16_00_000, basicShare: 0.4, currentVariableShare: 0.1, offeredVariableShare: 0.1,
-  joiningBonus: 0, relocationCost: 50_000, noticeBuyout: 0, gapMonths: 0,
-  currentMonthlyExpenses: 45_000, newCityMonthlyExpenses: 45_000, yearsAtCurrentJob: 2,
+  currentCtc: 12_00_000,
+  offeredCtc: 16_00_000,
+  basicShare: 0.4,
+  currentVariableShare: 0.1,
+  offeredVariableShare: 0.1,
+  joiningBonus: 0,
+  relocationCost: 50_000,
+  noticeBuyout: 0,
+  gapMonths: 0,
+  currentMonthlyExpenses: 45_000,
+  newCityMonthlyExpenses: 45_000,
+  yearsAtCurrentJob: 2,
 };
 
 function annualTax(taxableSalary: number): number {
   if (taxableSalary <= 0) return 0;
   const now = new Date().toISOString();
-  const salary: IncomeSource = { id: 'js', type: 'Salary', amount: taxableSalary / 12, currency: 'INR', frequency: 'Monthly', description: 'Salary', taxStatus: 'Pre-tax', startDate: now.slice(0, 10), tags: [], createdAt: now, updatedAt: now } as IncomeSource;
+  const salary: IncomeSource = {
+    id: 'js',
+    type: 'Salary',
+    amount: taxableSalary / 12,
+    currency: 'INR',
+    frequency: 'Monthly',
+    description: 'Salary',
+    taxStatus: 'Pre-tax',
+    startDate: now.slice(0, 10),
+    tags: [],
+    createdAt: now,
+    updatedAt: now,
+  } as IncomeSource;
   const c = compareTaxRegimes([salary], { ...createDefaultTaxProfile(), taxRegime: 'compare' }, [], []);
   return Math.min(Number(c.old.totalTaxLiability), Number(c.new.totalTaxLiability));
 }
 
-export interface SalaryBreakup { ctc: number; employerPf: number; employeePf: number; tax: number; professionalTax: number; annualTakeHome: number; monthlyTakeHome: number; monthlyFixedTakeHome: number }
+export interface SalaryBreakup {
+  ctc: number;
+  employerPf: number;
+  employeePf: number;
+  tax: number;
+  professionalTax: number;
+  annualTakeHome: number;
+  monthlyTakeHome: number;
+  monthlyFixedTakeHome: number;
+}
 /** CTC to take-home: PF on basic (12% each side), professional tax ₹2,400, income tax (lower regime). */
 export function salaryBreakup(ctc: number, basicShare: number, variableShare: number): SalaryBreakup {
   const basic = ctc * basicShare;
-  const employerPf = basic * 0.12, employeePf = basic * 0.12;
+  const employerPf = basic * 0.12,
+    employeePf = basic * 0.12;
   const gross = ctc - employerPf;
   const tax = annualTax(gross);
   const professionalTax = ctc > 0 ? 2_400 : 0;
   const annualTakeHome = gross - employeePf - tax - professionalTax;
   const variableNet = gross > 0 ? ctc * variableShare * (annualTakeHome / gross) : 0;
-  return { ctc, employerPf: round(employerPf), employeePf: round(employeePf), tax: round(tax), professionalTax, annualTakeHome: round(annualTakeHome), monthlyTakeHome: round(annualTakeHome / 12), monthlyFixedTakeHome: round((annualTakeHome - variableNet) / 12) };
+  return {
+    ctc,
+    employerPf: round(employerPf),
+    employeePf: round(employeePf),
+    tax: round(tax),
+    professionalTax,
+    annualTakeHome: round(annualTakeHome),
+    monthlyTakeHome: round(annualTakeHome / 12),
+    monthlyFixedTakeHome: round((annualTakeHome - variableNet) / 12),
+  };
 }
 
 export interface JobSwitchPlan {
-  current: SalaryBreakup; offered: SalaryBreakup;
-  hikePct: number; takeHomeGainMonthly: number; costOfLivingChangeMonthly: number; netMonthlyGain: number;
-  switchingCosts: number; gratuityForgone: number; firstYearNetGain: number; breakEvenMonths: number | null;
+  current: SalaryBreakup;
+  offered: SalaryBreakup;
+  hikePct: number;
+  takeHomeGainMonthly: number;
+  costOfLivingChangeMonthly: number;
+  netMonthlyGain: number;
+  switchingCosts: number;
+  gratuityForgone: number;
+  firstYearNetGain: number;
+  breakEvenMonths: number | null;
   verdict: 'strong' | 'fair' | 'weak' | 'loss';
 }
 
@@ -197,5 +387,17 @@ export function planJobSwitch(i: JobSwitchInputs): JobSwitchPlan {
   const hikePct = i.currentCtc > 0 ? i.offeredCtc / i.currentCtc - 1 : 0;
   const realHike = current.monthlyTakeHome > 0 ? netMonthlyGain / current.monthlyTakeHome : 0;
   const verdict = netMonthlyGain <= 0 ? 'loss' : realHike >= 0.2 ? 'strong' : realHike >= 0.08 ? 'fair' : 'weak';
-  return { current, offered, hikePct, takeHomeGainMonthly: round(takeHomeGainMonthly), costOfLivingChangeMonthly: round(costOfLivingChangeMonthly), netMonthlyGain: round(netMonthlyGain), switchingCosts, gratuityForgone, firstYearNetGain, breakEvenMonths, verdict };
+  return {
+    current,
+    offered,
+    hikePct,
+    takeHomeGainMonthly: round(takeHomeGainMonthly),
+    costOfLivingChangeMonthly: round(costOfLivingChangeMonthly),
+    netMonthlyGain: round(netMonthlyGain),
+    switchingCosts,
+    gratuityForgone,
+    firstYearNetGain,
+    breakEvenMonths,
+    verdict,
+  };
 }

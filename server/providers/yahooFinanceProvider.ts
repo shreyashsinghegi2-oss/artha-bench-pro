@@ -13,46 +13,74 @@ import type { MarketQuoteProviderResult } from './marketDataProvider';
 
 const DEFAULT_YAHOO_CHART_URL = 'https://query1.finance.yahoo.com/v8/finance/chart';
 
-const yahooChartResponseSchema = z.object({
-  chart: z.object({
-    result: z.array(z.object({
-      meta: z.object({
-        currency: z.string().optional(),
-        symbol: z.string().optional(),
-        exchangeName: z.string().optional(),
-        fullExchangeName: z.string().optional(),
-        instrumentType: z.string().optional(),
-        regularMarketTime: z.number().nullable().optional(),
-        regularMarketPrice: z.number().nullable().optional(),
-        regularMarketDayHigh: z.number().nullable().optional(),
-        regularMarketDayLow: z.number().nullable().optional(),
-        regularMarketVolume: z.number().nullable().optional(),
-        chartPreviousClose: z.number().nullable().optional(),
-        previousClose: z.number().nullable().optional(),
-        exchangeDataDelayedBy: z.number().nullable().optional(),
-        longName: z.string().optional(),
-        shortName: z.string().optional(),
-        currentTradingPeriod: z.object({
-          regular: z.object({
-            start: z.number().optional(),
-            end: z.number().optional(),
-          }).passthrough().optional(),
-        }).passthrough().optional(),
-      }).passthrough(),
-      timestamp: z.array(z.number()).optional().default([]),
-      indicators: z.object({
-        quote: z.array(z.object({
-          open: z.array(z.number().nullable()).optional().default([]),
-          high: z.array(z.number().nullable()).optional().default([]),
-          low: z.array(z.number().nullable()).optional().default([]),
-          close: z.array(z.number().nullable()).optional().default([]),
-          volume: z.array(z.number().nullable()).optional().default([]),
-        }).passthrough()).optional().default([]),
-      }).passthrough(),
-    }).passthrough()).nullable().optional(),
-    error: z.unknown().nullable().optional(),
-  }).passthrough(),
-}).passthrough();
+const yahooChartResponseSchema = z
+  .object({
+    chart: z
+      .object({
+        result: z
+          .array(
+            z
+              .object({
+                meta: z
+                  .object({
+                    currency: z.string().optional(),
+                    symbol: z.string().optional(),
+                    exchangeName: z.string().optional(),
+                    fullExchangeName: z.string().optional(),
+                    instrumentType: z.string().optional(),
+                    regularMarketTime: z.number().nullable().optional(),
+                    regularMarketPrice: z.number().nullable().optional(),
+                    regularMarketDayHigh: z.number().nullable().optional(),
+                    regularMarketDayLow: z.number().nullable().optional(),
+                    regularMarketVolume: z.number().nullable().optional(),
+                    chartPreviousClose: z.number().nullable().optional(),
+                    previousClose: z.number().nullable().optional(),
+                    exchangeDataDelayedBy: z.number().nullable().optional(),
+                    longName: z.string().optional(),
+                    shortName: z.string().optional(),
+                    currentTradingPeriod: z
+                      .object({
+                        regular: z
+                          .object({
+                            start: z.number().optional(),
+                            end: z.number().optional(),
+                          })
+                          .passthrough()
+                          .optional(),
+                      })
+                      .passthrough()
+                      .optional(),
+                  })
+                  .passthrough(),
+                timestamp: z.array(z.number()).optional().default([]),
+                indicators: z
+                  .object({
+                    quote: z
+                      .array(
+                        z
+                          .object({
+                            open: z.array(z.number().nullable()).optional().default([]),
+                            high: z.array(z.number().nullable()).optional().default([]),
+                            low: z.array(z.number().nullable()).optional().default([]),
+                            close: z.array(z.number().nullable()).optional().default([]),
+                            volume: z.array(z.number().nullable()).optional().default([]),
+                          })
+                          .passthrough(),
+                      )
+                      .optional()
+                      .default([]),
+                  })
+                  .passthrough(),
+              })
+              .passthrough(),
+          )
+          .nullable()
+          .optional(),
+        error: z.unknown().nullable().optional(),
+      })
+      .passthrough(),
+  })
+  .passthrough();
 
 const YAHOO_SYMBOL_ALIASES: Record<string, NormalizedYahooSymbol> = {
   'NIFTY:NSE': { providerSymbol: '^NSEI', displaySymbol: 'NIFTY:NSE', exchange: 'NSE' },
@@ -149,10 +177,7 @@ function valueAt(values: Array<number | null>, index: number) {
   return toFiniteNumber(values[index]);
 }
 
-function fallbackQuote(
-  symbol: NormalizedYahooSymbol,
-  assetType: string,
-): NormalizedMarketQuote {
+function fallbackQuote(symbol: NormalizedYahooSymbol, assetType: string): NormalizedMarketQuote {
   const fixture = DEMO_MARKET_QUOTES.find((quote) => quote.symbol === symbol.displaySymbol);
   if (fixture) return { ...fixture, retrievedAt: new Date().toISOString() };
 
@@ -180,15 +205,15 @@ function fallbackQuote(
 
 function resolveFreshness(
   meta: z.infer<typeof yahooChartResponseSchema>['chart']['result'] extends Array<infer T> | null | undefined
-    ? T extends { meta: infer M } ? M : never
+    ? T extends { meta: infer M }
+      ? M
+      : never
     : never,
   providerTimestampSeconds: number | null,
 ): NormalizedMarketQuote['freshness'] {
   const nowSeconds = Math.floor(Date.now() / 1000);
   const regular = meta.currentTradingPeriod?.regular;
-  const isRegularSession = Boolean(
-    regular?.start && regular?.end && nowSeconds >= regular.start && nowSeconds <= regular.end,
-  );
+  const isRegularSession = Boolean(regular?.start && regular?.end && nowSeconds >= regular.start && nowSeconds <= regular.end);
 
   if (!isRegularSession) return 'end_of_day';
   if (!providerTimestampSeconds) return 'stale';
@@ -207,10 +232,7 @@ function providerErrorStatus(httpStatus: number): MarketQuoteProviderResult['sta
   return 'error';
 }
 
-export async function fetchYahooFinanceQuote(
-  symbol: string,
-  assetType = 'equity',
-): Promise<MarketQuoteProviderResult> {
+export async function fetchYahooFinanceQuote(symbol: string, assetType = 'equity'): Promise<MarketQuoteProviderResult> {
   const normalizedSymbol = normalizeYahooFinanceSymbol(symbol);
   const fallback = fallbackQuote(normalizedSymbol, assetType);
 
@@ -225,9 +247,10 @@ export async function fetchYahooFinanceQuote(
       return {
         quote: fallback,
         status,
-        message: status === 'rate_limited'
-          ? 'Yahoo Finance rate limit reached. Displaying a labelled demo quote.'
-          : `Yahoo Finance request failed with HTTP ${response.status}.`,
+        message:
+          status === 'rate_limited'
+            ? 'Yahoo Finance rate limit reached. Displaying a labelled demo quote.'
+            : `Yahoo Finance request failed with HTTP ${response.status}.`,
       };
     }
 
@@ -261,32 +284,18 @@ export async function fetchYahooFinanceQuote(
       };
     }
 
-    const providerTimestampSeconds =
-      (latestIndex >= 0 ? result.timestamp[latestIndex] : null) ??
-      toFiniteNumber(result.meta.regularMarketTime);
-    const previousClose =
-      toFiniteNumber(result.meta.previousClose) ??
-      toFiniteNumber(result.meta.chartPreviousClose);
+    const providerTimestampSeconds = (latestIndex >= 0 ? result.timestamp[latestIndex] : null) ?? toFiniteNumber(result.meta.regularMarketTime);
+    const previousClose = toFiniteNumber(result.meta.previousClose) ?? toFiniteNumber(result.meta.chartPreviousClose);
     const change = previousClose === null ? null : price - previousClose;
-    const changePercent = previousClose && change !== null
-      ? (change / previousClose) * 100
-      : null;
+    const changePercent = previousClose && change !== null ? (change / previousClose) * 100 : null;
     const freshness = resolveFreshness(result.meta, providerTimestampSeconds);
 
     return {
       quote: {
         symbol: normalizedSymbol.displaySymbol,
-        name:
-          result.meta.longName ||
-          result.meta.shortName ||
-          result.meta.symbol ||
-          normalizedSymbol.displaySymbol,
+        name: result.meta.longName || result.meta.shortName || result.meta.symbol || normalizedSymbol.displaySymbol,
         assetType: result.meta.instrumentType?.toLowerCase() || assetType,
-        exchange:
-          normalizedSymbol.exchange ||
-          result.meta.fullExchangeName ||
-          result.meta.exchangeName ||
-          null,
+        exchange: normalizedSymbol.exchange || result.meta.fullExchangeName || result.meta.exchangeName || null,
         currency: result.meta.currency || (normalizedSymbol.exchange === 'NSE' || normalizedSymbol.exchange === 'BSE' ? 'INR' : 'USD'),
         price,
         open: firstFinite(series.open),
@@ -296,9 +305,7 @@ export async function fetchYahooFinanceQuote(
         change: change ?? 0,
         changePercent: changePercent ?? 0,
         volume: toFiniteNumber(result.meta.regularMarketVolume) ?? (latestIndex >= 0 ? valueAt(series.volume, latestIndex) : null),
-        providerTimestamp: providerTimestampSeconds
-          ? new Date(providerTimestampSeconds * 1000).toISOString()
-          : null,
+        providerTimestamp: providerTimestampSeconds ? new Date(providerTimestampSeconds * 1000).toISOString() : null,
         retrievedAt: new Date().toISOString(),
         freshness,
         providerName: 'Yahoo Finance (Experimental)',
@@ -357,15 +364,17 @@ export async function fetchYahooFinanceChart(symbol: string, range: string, inte
     const high = valueAt(series.high, index);
     const low = valueAt(series.low, index);
     const volume = valueAt(series.volume, index);
-    return [{
-      date: new Date(timestamp * 1000).toISOString(),
-      price: close,
-      ...(open === null ? {} : { open }),
-      ...(high === null ? {} : { high }),
-      ...(low === null ? {} : { low }),
-      close,
-      ...(volume === null ? {} : { volume }),
-    }];
+    return [
+      {
+        date: new Date(timestamp * 1000).toISOString(),
+        price: close,
+        ...(open === null ? {} : { open }),
+        ...(high === null ? {} : { high }),
+        ...(low === null ? {} : { low }),
+        close,
+        ...(volume === null ? {} : { volume }),
+      },
+    ];
   });
   const marketTime = toFiniteNumber(result.meta.regularMarketTime);
   return {
@@ -375,10 +384,7 @@ export async function fetchYahooFinanceChart(symbol: string, range: string, inte
   };
 }
 
-export async function fetchYahooFinanceHistory(
-  symbol: string,
-  range = '1m',
-): Promise<MarketHistoryPoint[]> {
+export async function fetchYahooFinanceHistory(symbol: string, range = '1m'): Promise<MarketHistoryPoint[]> {
   try {
     const configuration = historyConfiguration(range);
     return (await fetchYahooFinanceChart(symbol, configuration.range, configuration.interval)).points;

@@ -46,16 +46,22 @@ export const CryptoAssetSelector: React.FC<Props> = ({
   const [indicators, setIndicators] = React.useState(false);
   const [open, setOpen] = React.useState(false);
   const [query, setQuery] = React.useState('');
-  const filtered = CRYPTO_SYMBOLS.filter((item) =>
-    ASSET_NAMES[item].toLowerCase().includes(query.toLowerCase()) || item.toLowerCase().includes(query.toLowerCase())
+  const filtered = CRYPTO_SYMBOLS.filter(
+    (item) => ASSET_NAMES[item].toLowerCase().includes(query.toLowerCase()) || item.toLowerCase().includes(query.toLowerCase()),
   );
 
   return (
     <div className="crypto-toolbar" aria-label="Crypto chart controls">
       <div className="crypto-asset-combobox">
         <button type="button" className="crypto-asset-trigger" aria-haspopup="listbox" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
-          <span className="crypto-coin-mark" aria-hidden="true">₿</span>
-          <CompanyLogo symbol={symbol} size={24}/><span className="crypto-asset-copy"><strong>{cryptoDisplayName(symbol)}</strong><small>{symbol}</small></span>
+          <span className="crypto-coin-mark" aria-hidden="true">
+            ₿
+          </span>
+          <CompanyLogo symbol={symbol} size={24} />
+          <span className="crypto-asset-copy">
+            <strong>{cryptoDisplayName(symbol)}</strong>
+            <small>{symbol}</small>
+          </span>
           <ChevronDown className="crypto-chevron" size={15} aria-hidden="true" />
         </button>
         {open && (
@@ -65,8 +71,20 @@ export const CryptoAssetSelector: React.FC<Props> = ({
               <input autoFocus value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search asset" aria-label="Search crypto asset" />
             </div>
             {filtered.map((item) => (
-              <button key={item} type="button" role="option" aria-selected={symbol === item} onClick={() => { onSymbolChange(item); setOpen(false); setQuery(''); }} className="crypto-asset-option">
-                <span>{ASSET_NAMES[item]}</span><small>{item}</small>
+              <button
+                key={item}
+                type="button"
+                role="option"
+                aria-selected={symbol === item}
+                onClick={() => {
+                  onSymbolChange(item);
+                  setOpen(false);
+                  setQuery('');
+                }}
+                className="crypto-asset-option"
+              >
+                <span>{ASSET_NAMES[item]}</span>
+                <small>{item}</small>
               </button>
             ))}
           </div>
@@ -75,16 +93,42 @@ export const CryptoAssetSelector: React.FC<Props> = ({
       <div className="crypto-toolbar-divider" aria-hidden="true" />
       <div className="crypto-timeframes" role="tablist" aria-label="Crypto chart timeframe">
         {CRYPTO_INTERVALS.map((item) => (
-          <button key={item} type="button" role="tab" aria-selected={interval === item} onClick={() => onIntervalChange(item)}
-            className={`crypto-timeframe ${interval === item ? 'is-active' : ''}`} aria-label={`${INTERVAL_LABELS[item]} timeframe`}>
+          <button
+            key={item}
+            type="button"
+            role="tab"
+            aria-selected={interval === item}
+            onClick={() => onIntervalChange(item)}
+            className={`crypto-timeframe ${interval === item ? 'is-active' : ''}`}
+            aria-label={`${INTERVAL_LABELS[item]} timeframe`}
+          >
             {INTERVAL_LABELS[item]}
           </button>
         ))}
       </div>
       <div className="crypto-toolbar-divider" aria-hidden="true" />
-      <button type="button" onClick={() => { const next=!indicators; setIndicators(next); onIndicatorsChange?.(next); }} className={`crypto-tool-button ${indicators ? "is-active" : ""}`} aria-label="Chart indicators" aria-pressed={indicators} title="Indicators"><SlidersHorizontal size={15}/><span>Indicators</span></button>
-      <button type="button" className="crypto-tool-button" aria-label="Chart type: Candles" title="Candles"><CandlestickChart size={15}/><span>Candles</span></button>
-      <button type="button" onClick={onReset} disabled={resetDisabled} className="crypto-icon-button" aria-label="Reset chart view" title="Reset view"><RotateCcw size={16}/></button>
+      <button
+        type="button"
+        onClick={() => {
+          const next = !indicators;
+          setIndicators(next);
+          onIndicatorsChange?.(next);
+        }}
+        className={`crypto-tool-button ${indicators ? 'is-active' : ''}`}
+        aria-label="Chart indicators"
+        aria-pressed={indicators}
+        title="Indicators"
+      >
+        <SlidersHorizontal size={15} />
+        <span>Indicators</span>
+      </button>
+      <button type="button" className="crypto-tool-button" aria-label="Chart type: Candles" title="Candles">
+        <CandlestickChart size={15} />
+        <span>Candles</span>
+      </button>
+      <button type="button" onClick={onReset} disabled={resetDisabled} className="crypto-icon-button" aria-label="Reset chart view" title="Reset view">
+        <RotateCcw size={16} />
+      </button>
     </div>
   );
 };

@@ -55,18 +55,26 @@ describe('Fish Audio TTS', () => {
   it('rejects errors, JSON replies and empty clips', async () => {
     vi.stubEnv('FISH_AUDIO_API_KEY', 'k');
     await expect(fishTts('Hi', 1, (async () => new Response('{}', { status: 402 })) as typeof fetch)).rejects.toThrow(/402/);
-    await expect(fishTts('Hi', 1, (async () => new Response('{"error":"x"}', { headers: { 'content-type': 'application/json' } })) as typeof fetch)).rejects.toThrow(/did not return audio/);
-    await expect(fishTts('Hi', 1, (async () => new Response(new Uint8Array(10), { headers: { 'content-type': 'audio/mpeg' } })) as typeof fetch)).rejects.toThrow(/empty/);
+    await expect(
+      fishTts('Hi', 1, (async () => new Response('{"error":"x"}', { headers: { 'content-type': 'application/json' } })) as typeof fetch),
+    ).rejects.toThrow(/did not return audio/);
+    await expect(
+      fishTts('Hi', 1, (async () => new Response(new Uint8Array(10), { headers: { 'content-type': 'audio/mpeg' } })) as typeof fetch),
+    ).rejects.toThrow(/empty/);
   });
 
   it('synthesize uses Fish Audio first and falls back to Google speech if it fails', async () => {
     vi.stubEnv('FISH_AUDIO_API_KEY', 'k');
     vi.stubEnv('GOOGLE_TTS_API_KEY', '');
     vi.spyOn(console, 'warn').mockImplementation(() => undefined);
-    vi.stubGlobal('fetch', async (u: string | URL | Request) => (String(u).includes('fish.audio') ? new Response(MP3, { headers: { 'content-type': 'audio/mpeg' } }) : new Response('no', { status: 500 })));
+    vi.stubGlobal('fetch', async (u: string | URL | Request) =>
+      String(u).includes('fish.audio') ? new Response(MP3, { headers: { 'content-type': 'audio/mpeg' } }) : new Response('no', { status: 500 }),
+    );
     expect((await synthesize('Your plan is on track.', 'en')).provider).toBe('Fish Audio');
 
-    vi.stubGlobal('fetch', async (u: string | URL | Request) => (String(u).includes('fish.audio') ? new Response('{}', { status: 402 }) : new Response(MP3, { headers: { 'content-type': 'audio/mpeg' } })));
+    vi.stubGlobal('fetch', async (u: string | URL | Request) =>
+      String(u).includes('fish.audio') ? new Response('{}', { status: 402 }) : new Response(MP3, { headers: { 'content-type': 'audio/mpeg' } }),
+    );
     expect((await synthesize('Your plan is on track.', 'en')).provider).toBe('Google Translate speech');
   });
 

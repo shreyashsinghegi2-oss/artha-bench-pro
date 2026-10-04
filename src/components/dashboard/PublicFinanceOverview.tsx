@@ -1,16 +1,5 @@
 import React from 'react';
-import {
-  ArrowRight,
-  CalendarClock,
-  FileBarChart2,
-  GraduationCap,
-  Landmark,
-  LineChart,
-  LockKeyhole,
-  ReceiptText,
-  ShieldCheck,
-  WalletCards,
-} from 'lucide-react';
+import { ArrowRight, CalendarClock, FileBarChart2, GraduationCap, Landmark, LineChart, LockKeyhole, ReceiptText, ShieldCheck, WalletCards } from 'lucide-react';
 import { AppNavigationDestination } from '../../navigationTypes';
 
 type Props = {
@@ -92,9 +81,15 @@ export const PublicFinanceOverview: React.FC<Props> = ({ onSignIn, onNavigate })
             <ShieldCheck className="h-4 w-4 text-success" /> Public vs private
           </div>
           <div className="mt-4 space-y-3 text-[11px] leading-5 text-secondary">
-            <p><strong className="text-ink">Open without an account:</strong> market research, crypto, learning and AI reliability tools.</p>
-            <p><strong className="text-ink">Sign-in required:</strong> income, expenses, budgets, EMIs, personal reports and private AI context.</p>
-            <p className="rounded-xl border border-success-fill/20 bg-success-soft p-3 text-success">Personal records are isolated to your authenticated account and are not mixed with public market data.</p>
+            <p>
+              <strong className="text-ink">Open without an account:</strong> market research, crypto, learning and AI reliability tools.
+            </p>
+            <p>
+              <strong className="text-ink">Sign-in required:</strong> income, expenses, budgets, EMIs, personal reports and private AI context.
+            </p>
+            <p className="rounded-xl border border-success-fill/20 bg-success-soft p-3 text-success">
+              Personal records are isolated to your authenticated account and are not mixed with public market data.
+            </p>
           </div>
         </aside>
       </div>
@@ -104,7 +99,9 @@ export const PublicFinanceOverview: React.FC<Props> = ({ onSignIn, onNavigate })
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <div className="text-[10px] font-black uppercase tracking-[0.15em] text-interactive">What the workspace helps you do</div>
-          <h2 id="finance-capabilities-title" className="mt-1 text-2xl font-black tracking-tight text-ink">Start with your records, not sample data.</h2>
+          <h2 id="finance-capabilities-title" className="mt-1 text-2xl font-black tracking-tight text-ink">
+            Start with your records, not sample data.
+          </h2>
         </div>
         <button type="button" onClick={onSignIn} className="inline-flex items-center gap-1.5 text-xs font-black text-interactive hover:underline">
           Create a private workspace <ArrowRight className="h-3.5 w-3.5" />
@@ -126,9 +123,15 @@ export const PublicFinanceOverview: React.FC<Props> = ({ onSignIn, onNavigate })
     <section className="flex flex-col gap-4 rounded-2xl border border-line bg-surface p-5 sm:flex-row sm:items-center sm:justify-between">
       <div>
         <div className="text-sm font-black text-ink">Ready when you are.</div>
-        <p className="mt-1 text-xs leading-5 text-secondary">Sign in only when you want to save or view private financial records. Public research stays available without an account.</p>
+        <p className="mt-1 text-xs leading-5 text-secondary">
+          Sign in only when you want to save or view private financial records. Public research stays available without an account.
+        </p>
       </div>
-      <button type="button" onClick={onSignIn} className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-brand px-4 py-2.5 text-xs font-black text-white hover:bg-brand-hover">
+      <button
+        type="button"
+        onClick={onSignIn}
+        className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-brand px-4 py-2.5 text-xs font-black text-white hover:bg-brand-hover"
+      >
         Sign in securely <ArrowRight className="h-3.5 w-3.5" />
       </button>
     </section>

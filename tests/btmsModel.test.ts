@@ -43,8 +43,9 @@ describe('BTMS web model', () => {
   it('matches the Python design sweep', () => {
     const results = JSON.parse(readFileSync('apps/btms-lab/results.json', 'utf8'));
     const prm = paramsFromConstants(model.constants);
-    const row = results.design_grid.find((g: { duration_s: number; ambient_c: number; melt_centre_c: number }) =>
-      g.duration_s === 1200 && g.ambient_c === 27 && g.melt_centre_c === 44);
+    const row = results.design_grid.find(
+      (g: { duration_s: number; ambient_c: number; melt_centre_c: number }) => g.duration_s === 1200 && g.ambient_c === 27 && g.melt_centre_c === 44,
+    );
     const temps = simulateCell(prm, hypotheticalPcm(model.pcm_table.om42, 44, 250), 'natural', 2, { durationS: 1200, tAmb: 27 });
     expect(Math.max(...temps)).toBeCloseTo(row.peak_temp_c, 2);
   });

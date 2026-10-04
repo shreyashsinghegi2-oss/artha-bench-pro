@@ -65,9 +65,7 @@ function latestFinite(values?: Array<number | null>) {
 }
 
 function isoFromSeconds(seconds?: number) {
-  return typeof seconds === 'number' && Number.isFinite(seconds)
-    ? new Date(seconds * 1000).toISOString()
-    : null;
+  return typeof seconds === 'number' && Number.isFinite(seconds) ? new Date(seconds * 1000).toISOString() : null;
 }
 
 function freshnessFor(meta: YahooChartMeta): NormalizedMarketQuote['freshness'] {
@@ -84,7 +82,7 @@ async function requestChart(symbol: string, range: string, interval: string): Pr
     signal: AbortSignal.timeout(12_000),
   });
   if (!response.ok) throw new Error(`Yahoo reference proxy returned HTTP ${response.status}.`);
-  const raw = await response.json().catch(() => null) as YahooChartResponse | null;
+  const raw = (await response.json().catch(() => null)) as YahooChartResponse | null;
   const result = raw?.chart?.result?.[0];
   if (!result || raw?.chart?.error) throw new Error('Yahoo reference proxy returned no usable chart result.');
   return result;
@@ -145,14 +143,16 @@ export async function fetchFreeYahooHistory(symbol: string, range = '1m'): Promi
     const high = finite(series.high?.[index]);
     const low = finite(series.low?.[index]);
     const volume = finite(series.volume?.[index]);
-    return [{
-      date: new Date(timestamp * 1000).toISOString(),
-      price: close,
-      ...(open === null ? {} : { open }),
-      ...(high === null ? {} : { high }),
-      ...(low === null ? {} : { low }),
-      close,
-      ...(volume === null ? {} : { volume }),
-    }];
+    return [
+      {
+        date: new Date(timestamp * 1000).toISOString(),
+        price: close,
+        ...(open === null ? {} : { open }),
+        ...(high === null ? {} : { high }),
+        ...(low === null ? {} : { low }),
+        close,
+        ...(volume === null ? {} : { volume }),
+      },
+    ];
   });
 }

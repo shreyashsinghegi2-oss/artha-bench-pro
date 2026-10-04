@@ -1,6 +1,7 @@
 import { NavigationDestination } from './types';
 
-export type AppNavigationDestination = NavigationDestination
+export type AppNavigationDestination =
+  | NavigationDestination
   | 'finance-reports'
   | 'emi-manager'
   | 'financial-health'

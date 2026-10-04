@@ -53,13 +53,7 @@ export const structuredFinancialAnswerSchema = z
     example: z
       .object({
         title: z.string().min(1).max(160),
-        dataStatus: z.enum([
-          'live',
-          'latest_available',
-          'delayed',
-          'illustrative',
-          'not_applicable',
-        ]),
+        dataStatus: z.enum(['live', 'latest_available', 'delayed', 'illustrative', 'not_applicable']),
         dataAsOf: z.string().max(100),
         inputs: z.array(z.string().min(1).max(300)).max(10),
         calculation: z.array(z.string().min(1).max(500)).max(10),
@@ -146,17 +140,7 @@ export const STRUCTURED_FINANCIAL_ANSWER_JSON_SCHEMA = {
       },
     },
   },
-  required: [
-    'title',
-    'directAnswer',
-    'steps',
-    'formula',
-    'example',
-    'interpretation',
-    'risks',
-    'keyTakeaways',
-    'sources',
-  ],
+  required: ['title', 'directAnswer', 'steps', 'formula', 'example', 'interpretation', 'risks', 'keyTakeaways', 'sources'],
 } as const;
 
 export function buildStructuredFinancialAnswerInstructions(options: {
@@ -225,9 +209,7 @@ function cleanPlainText(value: string) {
     .trim();
 }
 
-export function sanitizeStructuredFinancialAnswer(
-  answer: StructuredFinancialAnswer,
-): StructuredFinancialAnswer {
+export function sanitizeStructuredFinancialAnswer(answer: StructuredFinancialAnswer): StructuredFinancialAnswer {
   return {
     title: cleanPlainText(answer.title),
     directAnswer: cleanPlainText(answer.directAnswer),
@@ -263,9 +245,7 @@ export function sanitizeStructuredFinancialAnswer(
 }
 
 function firstUsefulParagraph(rawText: string) {
-  const jsonDirectAnswer = rawText.match(
-    /"directAnswer"\s*:\s*"((?:\\.|[^"\\])*)"/s,
-  );
+  const jsonDirectAnswer = rawText.match(/"directAnswer"\s*:\s*"((?:\\.|[^"\\])*)"/s);
   if (jsonDirectAnswer) {
     try {
       return cleanPlainText(JSON.parse(`"${jsonDirectAnswer[1]}"`)).slice(0, 2200);
@@ -285,7 +265,6 @@ function firstUsefulParagraph(rawText: string) {
   return (paragraph || cleaned || 'A structured financial explanation is available.').slice(0, 2200);
 }
 
-
 function oneSentenceDirectAnswer(rawText: string) {
   const text = firstUsefulParagraph(rawText).replace(/\s+/g, ' ').trim();
   const sentence = text.match(/^(.+?[.!?])(?:\s|$)/)?.[1] || text;
@@ -293,10 +272,7 @@ function oneSentenceDirectAnswer(rawText: string) {
   return `${normalized || 'A structured financial explanation is available'}.`.slice(0, 2200);
 }
 
-export function createFallbackStructuredFinancialAnswer(
-  question: string,
-  rawText: string,
-): StructuredFinancialAnswer {
+export function createFallbackStructuredFinancialAnswer(question: string, rawText: string): StructuredFinancialAnswer {
   const normalizedQuestion = question.toLowerCase();
   const isCompoundInterest = /compound|future value/.test(normalizedQuestion);
   const isLoan = /\bemi\b|loan|mortgage/.test(normalizedQuestion);
@@ -304,9 +280,7 @@ export function createFallbackStructuredFinancialAnswer(
   const isRatio = /valuation|p\/?e\b|price[- ]to[- ](earnings|book|sales)|current ratio|quick ratio|return on equity|\broe\b|fundamental ratio/.test(
     normalizedQuestion,
   );
-  const isMarketReturn = /\b(range return|market return|price return|performance|market chart|dashboard signal|price change)\b/.test(
-    normalizedQuestion,
-  );
+  const isMarketReturn = /\b(range return|market return|price return|performance|market chart|dashboard signal|price change)\b/.test(normalizedQuestion);
 
   let expression = 'No calculation is required for this concept';
   let variables: StructuredFinancialAnswer['formula']['variables'] = [];
@@ -382,13 +356,9 @@ export function createFallbackStructuredFinancialAnswer(
         `Market price = ${price.toLocaleString(undefined, { maximumFractionDigits: 2 })}`,
         `Reported P/E = ${pe.toLocaleString(undefined, { maximumFractionDigits: 2 })}×`,
       ];
-      calculation = [
-        `Implied earnings per share = ${price.toFixed(2)} ÷ ${pe.toFixed(2)} = ${impliedEps.toFixed(2)}`,
-      ];
+      calculation = [`Implied earnings per share = ${price.toFixed(2)} ÷ ${pe.toFixed(2)} = ${impliedEps.toFixed(2)}`];
       result = `The reported P/E implies earnings per share of approximately ${impliedEps.toFixed(2)} for the ratio's measurement basis.`;
-      exampleDataStatus = /delayed|end_of_day|stale|demo/i.test(quoteFreshness)
-        ? 'delayed'
-        : 'latest_available';
+      exampleDataStatus = /delayed|end_of_day|stale|demo/i.test(quoteFreshness) ? 'delayed' : 'latest_available';
       dataAsOf = retrievedAt;
     }
 
@@ -397,9 +367,7 @@ export function createFallbackStructuredFinancialAnswer(
         {
           name: 'Finnhub company fundamentals',
           dataDate: retrievedAt,
-          freshness: quoteFreshness
-            ? `Company context with ${quoteFreshness.replaceAll('_', ' ')} quote`
-            : 'Latest company context supplied to the assistant',
+          freshness: quoteFreshness ? `Company context with ${quoteFreshness.replaceAll('_', ' ')} quote` : 'Latest company context supplied to the assistant',
         },
       ];
     }
@@ -414,19 +382,12 @@ export function createFallbackStructuredFinancialAnswer(
     const observedReturn = rawText.match(/range return is\s+(-?[\d.]+)%/i);
     const observedDates = rawText.match(/\(([^()]+)\s+to\s+([^()]+)\)/i);
     if (observedPrices) {
-      inputs = [
-        `Starting price = ${observedPrices[1]}`,
-        `Latest price = ${observedPrices[2]}`,
-      ];
-      calculation = [
-        `(${observedPrices[2]} − ${observedPrices[1]}) / ${observedPrices[1]} × 100`,
-      ];
+      inputs = [`Starting price = ${observedPrices[1]}`, `Latest price = ${observedPrices[2]}`];
+      calculation = [`(${observedPrices[2]} − ${observedPrices[1]}) / ${observedPrices[1]} × 100`];
       result = observedReturn
         ? `Measured range return = ${observedReturn[1]}%.`
         : 'Calculate the measured percentage change from the two displayed observations.';
-      exampleDataStatus = /\b(delayed|demo|stale|end-of-day)\b/i.test(rawText)
-        ? 'delayed'
-        : 'latest_available';
+      exampleDataStatus = /\b(delayed|demo|stale|end-of-day)\b/i.test(rawText) ? 'delayed' : 'latest_available';
       dataAsOf = observedDates?.[2]?.trim() || '';
       exampleTitle = 'Verified dashboard range calculation';
     }
@@ -478,21 +439,21 @@ export function serializeStructuredFinancialAnswer(answer: StructuredFinancialAn
     '',
     '## Step-by-step calculation or reasoning',
     ...answer.steps.map((step, index) => `${index + 1}. ${step.title}: ${step.explanation}`),
-    ...(answer.example.calculation.length
-      ? ['', 'Calculation details:', ...answer.example.calculation.map((item, index) => `${index + 1}. ${item}`)]
-      : []),
+    ...(answer.example.calculation.length ? ['', 'Calculation details:', ...answer.example.calculation.map((item, index) => `${index + 1}. ${item}`)] : []),
     '',
     '## Final result and interpretation',
     answer.example.result,
     ...answer.interpretation.map((item) => `- ${item}`),
-    ...(answer.keyTakeaways.length
-      ? ['', '## If needed', ...answer.keyTakeaways.map((item) => `- ${item}`)]
-      : []),
+    ...(answer.keyTakeaways.length ? ['', '## If needed', ...answer.keyTakeaways.map((item) => `- ${item}`)] : []),
     '',
     '## Limitations and verification',
     ...(answer.risks.length ? answer.risks.map((item) => `- ${item}`) : ['- No additional limitation was identified from the supplied context.']),
     ...(answer.sources.length
-      ? ['', 'Sources and freshness:', ...answer.sources.map((source) => `- ${source.name}${source.dataDate ? ` · ${source.dataDate}` : ''} · ${source.freshness}`)]
+      ? [
+          '',
+          'Sources and freshness:',
+          ...answer.sources.map((source) => `- ${source.name}${source.dataDate ? ` · ${source.dataDate}` : ''} · ${source.freshness}`),
+        ]
       : []),
   ];
   return lines.join('\n').trim();

@@ -30,13 +30,7 @@ import {
   upsertProfile,
   UserProfile,
 } from '../services/supabaseRest';
-import {
-  hydrateCloudWorkspace,
-  isCloudWorkspaceActiveFor,
-  restoreGuestWorkspace,
-  syncCloudWorkspace,
-  workspaceFingerprint,
-} from '../services/cloudWorkspace';
+import { hydrateCloudWorkspace, isCloudWorkspaceActiveFor, restoreGuestWorkspace, syncCloudWorkspace, workspaceFingerprint } from '../services/cloudWorkspace';
 
 export type AuthScreen = 'login' | 'signup' | 'verify' | 'otp' | 'forgot' | 'reset' | 'onboarding';
 
@@ -52,10 +46,18 @@ function clampEnv(raw: unknown, fallback: number, min: number, max: number): num
 }
 
 function markSignedIn(): void {
-  try { localStorage.setItem(SIGNED_IN_AT_KEY, String(Date.now())); } catch { /* storage blocked */ }
+  try {
+    localStorage.setItem(SIGNED_IN_AT_KEY, String(Date.now()));
+  } catch {
+    /* storage blocked */
+  }
 }
 
-interface PendingOtp { email: string; remember: boolean; type: EmailOtpType }
+interface PendingOtp {
+  email: string;
+  remember: boolean;
+  type: EmailOtpType;
+}
 
 interface AuthContextValue {
   configured: boolean;
@@ -142,7 +144,10 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
   }, []);
 
   useEffect(() => {
-    if (!configured) { setLoading(false); return; }
+    if (!configured) {
+      setLoading(false);
+      return;
+    }
     let cancelled = false;
     const bootstrap = async () => {
       setLoading(true);
@@ -166,7 +171,10 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
             markSignedIn();
             if (!isResetFlow) void signOutOtherSessions(nextSession.access_token);
             await establishSession(nextSession, true, isResetFlow);
-            if (isResetFlow) { setAuthScreen('reset'); setAuthOpen(true); }
+            if (isResetFlow) {
+              setAuthScreen('reset');
+              setAuthOpen(true);
+            }
           }
           return;
         }
@@ -187,8 +195,15 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
             if (cancelled) return;
             setSession((current) => (current ? { ...current, user } : current));
             persistSession({ ...activeSession, user }, stored.remember);
-            if (isResetFlow) { setAuthScreen('reset'); setAuthOpen(true); }
-            try { if (!localStorage.getItem(SIGNED_IN_AT_KEY)) markSignedIn(); } catch { /* storage blocked */ }
+            if (isResetFlow) {
+              setAuthScreen('reset');
+              setAuthOpen(true);
+            }
+            try {
+              if (!localStorage.getItem(SIGNED_IN_AT_KEY)) markSignedIn();
+            } catch {
+              /* storage blocked */
+            }
             return;
           }
         }
@@ -204,20 +219,32 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
           }
           return;
         }
-        try { if (!localStorage.getItem(SIGNED_IN_AT_KEY)) markSignedIn(); } catch { /* storage blocked */ }
+        try {
+          if (!localStorage.getItem(SIGNED_IN_AT_KEY)) markSignedIn();
+        } catch {
+          /* storage blocked */
+        }
         if (!cancelled) await establishSession(activeSession, stored.remember, isResetFlow);
-        if (!cancelled && isResetFlow) { setAuthScreen('reset'); setAuthOpen(true); }
+        if (!cancelled && isResetFlow) {
+          setAuthScreen('reset');
+          setAuthOpen(true);
+        }
       } catch (error) {
         console.warn('Authentication bootstrap failed:', error);
         persistSession(null);
         restoreGuestWorkspace();
-        if (!cancelled) { setSession(null); setProfile(null); }
+        if (!cancelled) {
+          setSession(null);
+          setProfile(null);
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
     };
     void bootstrap();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [configured, establishSession]);
 
   const syncNow = useCallback(async () => {
@@ -226,7 +253,9 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
     try {
       await syncCloudWorkspace(session.access_token, session.user.id);
       fingerprintRef.current = workspaceFingerprint();
-    } finally { setSyncing(false); }
+    } finally {
+      setSyncing(false);
+    }
   }, [session]);
 
   useEffect(() => {
@@ -234,9 +263,14 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
     const id = window.setInterval(() => {
       if (workspaceFingerprint() !== fingerprintRef.current) void syncNow();
     }, 7000);
-    const onVisibility = () => { if (document.visibilityState === 'hidden') void syncNow(); };
+    const onVisibility = () => {
+      if (document.visibilityState === 'hidden') void syncNow();
+    };
     document.addEventListener('visibilitychange', onVisibility);
-    return () => { clearInterval(id); document.removeEventListener('visibilitychange', onVisibility); };
+    return () => {
+      clearInterval(id);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
   }, [session, syncNow]);
 
   const openAuth = (screen: AuthScreen = 'login') => {
@@ -244,7 +278,10 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
     setAuthScreen(screen);
     setAuthOpen(true);
   };
-  const closeAuth = () => { setAuthOpen(false); setAuthMessage(null); };
+  const closeAuth = () => {
+    setAuthOpen(false);
+    setAuthMessage(null);
+  };
 
   const signIn = async (email: string, password: string, remember: boolean) => {
     if (!configured) throw new Error('Account sign-in is not configured on this deployment yet.');
@@ -265,9 +302,13 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
       if (/email not confirmed/i.test(message)) {
         try {
           await resendSignupConfirmation(normalizedEmail);
-          setAuthMessage('Your account exists, but the email address is not verified yet. We sent a fresh confirmation link. Open that email once, then return here to sign in.');
+          setAuthMessage(
+            'Your account exists, but the email address is not verified yet. We sent a fresh confirmation link. Open that email once, then return here to sign in.',
+          );
         } catch {
-          setAuthMessage('Your account exists, but the email address is not verified yet. Open the most recent Supabase confirmation email, verify the address, then return here to sign in.');
+          setAuthMessage(
+            'Your account exists, but the email address is not verified yet. Open the most recent Supabase confirmation email, verify the address, then return here to sign in.',
+          );
         }
         setAuthScreen('verify');
         setAuthOpen(true);
@@ -326,14 +367,31 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
         // The project auto-confirms emails, so prove ownership with a sign-in code before the account is used.
         await signOutLocal(created.session.access_token);
         await sendEmailOtp(normalizedEmail);
-        askForCode({ email: normalizedEmail, remember: true, type: 'email' }, `Account created. Enter the 6-digit code we sent to ${normalizedEmail} to verify your email.`);
+        askForCode(
+          { email: normalizedEmail, remember: true, type: 'email' },
+          `Account created. Enter the 6-digit code we sent to ${normalizedEmail} to verify your email.`,
+        );
       } else {
-        askForCode({ email: normalizedEmail, remember: true, type: 'signup' }, `Enter the 6-digit code we sent to ${normalizedEmail} to verify your email. If this email already has an account, sign in instead.`);
+        askForCode(
+          { email: normalizedEmail, remember: true, type: 'signup' },
+          `Enter the 6-digit code we sent to ${normalizedEmail} to verify your email. If this email already has an account, sign in instead.`,
+        );
       }
       return;
     }
-    const result = await signUpWithPassword({ email: input.email.trim(), password: input.password, fullName: input.fullName, country: input.country, financialDataConsent: input.financialDataConsent });
-    if (result.session) { markSignedIn(); void signOutOtherSessions(result.session.access_token); await establishSession(result.session, true); return; }
+    const result = await signUpWithPassword({
+      email: input.email.trim(),
+      password: input.password,
+      fullName: input.fullName,
+      country: input.country,
+      financialDataConsent: input.financialDataConsent,
+    });
+    if (result.session) {
+      markSignedIn();
+      void signOutOtherSessions(result.session.access_token);
+      await establishSession(result.session, true);
+      return;
+    }
     setAuthMessage('Account created. Check your email and verify it once, then return here to sign in.');
     setAuthScreen('verify');
     setAuthOpen(true);
@@ -364,7 +422,11 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
       await signOutRemote(session.access_token).catch(() => undefined);
     }
     if (reason) rememberLogoutReason(reason);
-    try { localStorage.removeItem(SIGNED_IN_AT_KEY); } catch { /* storage blocked */ }
+    try {
+      localStorage.removeItem(SIGNED_IN_AT_KEY);
+    } catch {
+      /* storage blocked */
+    }
     persistSession(null);
     restoreGuestWorkspace();
     setSession(null);
@@ -383,62 +445,140 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
       if (document.visibilityState !== 'visible') return;
       const result = await checkSession(session);
       if (stopped) return;
-      if (result.state === 'revoked') { void endSession('other-device'); return; }
+      if (result.state === 'revoked') {
+        void endSession('other-device');
+        return;
+      }
       if (result.state === 'valid' && result.session.access_token !== session.access_token) {
         persistSession(result.session, loadStoredSession().remember);
         setSession(result.session);
       }
     };
     const id = window.setInterval(() => void check(), 60_000);
-    const onVisible = () => { if (document.visibilityState === 'visible') void check(); };
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') void check();
+    };
     document.addEventListener('visibilitychange', onVisible);
-    return () => { stopped = true; window.clearInterval(id); document.removeEventListener('visibilitychange', onVisible); };
+    return () => {
+      stopped = true;
+      window.clearInterval(id);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
   }, [session]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto sign-out after IDLE_LOGOUT_MINUTES without activity in any tab (one-minute warning first), and
   // MAX_SESSION_HOURS after sign-in even when active.
   const [idleDeadline, setIdleDeadline] = useState<number | null>(null);
   useEffect(() => {
-    if (!session) { setIdleDeadline(null); return; }
-    const IDLE = IDLE_LOGOUT_MINUTES * 60_000, WARN = Math.min(60_000, IDLE / 2), KEY = 'arthamind-last-activity';
+    if (!session) {
+      setIdleDeadline(null);
+      return;
+    }
+    const IDLE = IDLE_LOGOUT_MINUTES * 60_000,
+      WARN = Math.min(60_000, IDLE / 2),
+      KEY = 'arthamind-last-activity';
     const MAX = MAX_SESSION_HOURS * 3_600_000;
     let lastWrite = 0;
-    const bump = () => { const now = Date.now(); if (now - lastWrite > 5000) { lastWrite = now; try { localStorage.setItem(KEY, String(now)); } catch { /* ignore */ } } };
+    const bump = () => {
+      const now = Date.now();
+      if (now - lastWrite > 5000) {
+        lastWrite = now;
+        try {
+          localStorage.setItem(KEY, String(now));
+        } catch {
+          /* ignore */
+        }
+      }
+    };
     bump();
     const events = ['pointerdown', 'keydown', 'scroll', 'touchstart', 'mousemove'] as const;
     events.forEach((e) => window.addEventListener(e, bump, { passive: true }));
     const id = window.setInterval(() => {
       let last = Date.now();
-      try { last = Number(localStorage.getItem(KEY)) || last; } catch { /* ignore */ }
+      try {
+        last = Number(localStorage.getItem(KEY)) || last;
+      } catch {
+        /* ignore */
+      }
       const idle = Date.now() - last;
       let signedInAt = 0;
-      try { signedInAt = Number(localStorage.getItem(SIGNED_IN_AT_KEY)) || 0; } catch { /* ignore */ }
-      if (signedInAt && Date.now() - signedInAt >= MAX) { window.clearInterval(id); void endSession('expired'); return; }
-      if (idle >= IDLE) { window.clearInterval(id); void endSession('idle'); }
-      else if (idle >= IDLE - WARN) setIdleDeadline((d) => d ?? last + IDLE);
+      try {
+        signedInAt = Number(localStorage.getItem(SIGNED_IN_AT_KEY)) || 0;
+      } catch {
+        /* ignore */
+      }
+      if (signedInAt && Date.now() - signedInAt >= MAX) {
+        window.clearInterval(id);
+        void endSession('expired');
+        return;
+      }
+      if (idle >= IDLE) {
+        window.clearInterval(id);
+        void endSession('idle');
+      } else if (idle >= IDLE - WARN) setIdleDeadline((d) => d ?? last + IDLE);
       else setIdleDeadline(null);
     }, 2000);
-    return () => { window.clearInterval(id); events.forEach((e) => window.removeEventListener(e, bump)); };
+    return () => {
+      window.clearInterval(id);
+      events.forEach((e) => window.removeEventListener(e, bump));
+    };
   }, [session]); // eslint-disable-line react-hooks/exhaustive-deps
-  const stayActive = () => { try { localStorage.setItem('arthamind-last-activity', String(Date.now())); } catch { /* ignore */ } setIdleDeadline(null); };
+  const stayActive = () => {
+    try {
+      localStorage.setItem('arthamind-last-activity', String(Date.now()));
+    } catch {
+      /* ignore */
+    }
+    setIdleDeadline(null);
+  };
 
-
-  const refreshProfile = async () => { if (session) setProfile(await getProfile(session.access_token)); };
+  const refreshProfile = async () => {
+    if (session) setProfile(await getProfile(session.access_token));
+  };
   const saveProfile = async (changes: Partial<UserProfile>) => {
     if (!session) throw new Error('Sign in to save profile preferences.');
     const saved = await upsertProfile(session.access_token, { ...(profile ?? defaultProfile(session.user)), ...changes, user_id: session.user.id });
     setProfile(saved);
   };
 
-  const value = useMemo<AuthContextValue>(() => ({
-    configured, loading, syncing, session, user: session?.user ?? null, profile,
-    authOpen, authScreen, authMessage, emailOtp, otpEmail: pendingOtp?.email ?? null, verifyOtp, resendOtp, openAuth, closeAuth, signIn, signUp,
-    continueWithSocial,
-    continueWithGoogle: () => continueWithSocial('google'),
-    forgotPassword, resetPassword, signOut, saveProfile, syncNow, refreshProfile,
-  }), [configured, loading, syncing, session, profile, authOpen, authScreen, authMessage, syncNow, pendingOtp]); // eslint-disable-line react-hooks/exhaustive-deps
+  const value = useMemo<AuthContextValue>(
+    () => ({
+      configured,
+      loading,
+      syncing,
+      session,
+      user: session?.user ?? null,
+      profile,
+      authOpen,
+      authScreen,
+      authMessage,
+      emailOtp,
+      otpEmail: pendingOtp?.email ?? null,
+      verifyOtp,
+      resendOtp,
+      openAuth,
+      closeAuth,
+      signIn,
+      signUp,
+      continueWithSocial,
+      continueWithGoogle: () => continueWithSocial('google'),
+      forgotPassword,
+      resetPassword,
+      signOut,
+      saveProfile,
+      syncNow,
+      refreshProfile,
+    }),
+    [configured, loading, syncing, session, profile, authOpen, authScreen, authMessage, syncNow, pendingOtp],
+  ); // eslint-disable-line react-hooks/exhaustive-deps
 
-  return <AuthContext.Provider value={value}>{children}<LogoutNotice idleMinutes={IDLE_LOGOUT_MINUTES} maxHours={MAX_SESSION_HOURS}/>{idleDeadline && <IdleWarning deadline={idleDeadline} onStay={stayActive} onSignOut={() => void endSession()}/>}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+      <LogoutNotice idleMinutes={IDLE_LOGOUT_MINUTES} maxHours={MAX_SESSION_HOURS} />
+      {idleDeadline && <IdleWarning deadline={idleDeadline} onStay={stayActive} onSignOut={() => void endSession()} />}
+    </AuthContext.Provider>
+  );
 };
 
 export function useAuth(): AuthContextValue {

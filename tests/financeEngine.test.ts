@@ -1,11 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  calculateCompoundInterest,
-  calculateCAGR,
-  calculateQuickRatio,
-  calculateBreakEven,
-  calculateDTI,
-} from '../server/financeEngine';
+import { calculateCompoundInterest, calculateCAGR, calculateQuickRatio, calculateBreakEven, calculateDTI } from '../server/financeEngine';
 
 describe('Financial Calculation Engine (Decimal.js)', () => {
   describe('calculateCompoundInterest', () => {
@@ -33,8 +27,8 @@ describe('Financial Calculation Engine (Decimal.js)', () => {
     it('calculates compound interest correctly for daily compounding (n = 365)', () => {
       const res = calculateCompoundInterest(10000, 7, 5, 0, 365);
       // P * (1 + 0.07/365)^1825 = 10000 * 1.419020 = 14190.20
-      expect(res.finalBalance).toBe(14190.20);
-      expect(res.totalInterestEarned).toBe(4190.20);
+      expect(res.finalBalance).toBe(14190.2);
+      expect(res.totalInterestEarned).toBe(4190.2);
     });
 
     it('ensures compounding frequency outputs differ as n increases', () => {
@@ -113,4 +107,3 @@ describe('Input hardening', () => {
     expect(calculateCAGR(100000, 250000, 5).cagrPercent).toBe(20.11);
   });
 });
-

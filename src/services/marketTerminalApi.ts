@@ -68,7 +68,13 @@ export function formatAgo(iso: string | null, now = Date.now()): string {
   return `${Math.floor(hours / 24)} days ago`;
 }
 
-export const FRESHNESS_LABEL: Record<string, string> = { real_time: 'Live', delayed: 'Delayed', end_of_day: 'Market closed · last close', stale: 'Stale', demo: 'Demo' };
+export const FRESHNESS_LABEL: Record<string, string> = {
+  real_time: 'Live',
+  delayed: 'Delayed',
+  end_of_day: 'Market closed · last close',
+  stale: 'Stale',
+  demo: 'Demo',
+};
 
 /** True while the browser tab is visible; polling pauses when it is hidden. */
 export function usePageVisible(): boolean {
@@ -84,6 +90,9 @@ export function usePageVisible(): boolean {
 /** Re-renders every `ms` so relative timestamps ("12s ago") stay current. */
 export function useNow(ms = 1000): number {
   const [now, setNow] = useState(() => Date.now());
-  useEffect(() => { const id = window.setInterval(() => setNow(Date.now()), ms); return () => window.clearInterval(id); }, [ms]);
+  useEffect(() => {
+    const id = window.setInterval(() => setNow(Date.now()), ms);
+    return () => window.clearInterval(id);
+  }, [ms]);
   return now;
 }

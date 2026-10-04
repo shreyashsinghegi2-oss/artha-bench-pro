@@ -128,7 +128,10 @@ export const BatchBenchmarkView: React.FC = () => {
     if (!progress?.results.length) return;
     const headers = 'Scenario ID,Category,Passed,Overall Score,Numerical Score,Consensus Score,Safety Score,Primary Model,Secondary Model\n';
     const rows = progress.results
-      .map((result) => `"${result.scenarioId}","${result.category}",${result.passed},${result.overallScore},${result.groundTruthPassed ? 100 : 0},${result.consensusScore},${result.safetyScore},"${result.primaryModel}","${result.secondaryModel}"`)
+      .map(
+        (result) =>
+          `"${result.scenarioId}","${result.category}",${result.passed},${result.overallScore},${result.groundTruthPassed ? 100 : 0},${result.consensusScore},${result.safetyScore},"${result.primaryModel}","${result.secondaryModel}"`,
+      )
       .join('\n');
     const blob = new Blob([headers + rows], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
@@ -146,16 +149,26 @@ export const BatchBenchmarkView: React.FC = () => {
       <section className="space-y-6 rounded-3xl border border-line bg-surface p-6 shadow-sm sm:p-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
-            <div className="rounded-2xl border border-interactive/40 bg-interactive/20 p-3 text-interactive"><Boxes className="h-6 w-6" /></div>
+            <div className="rounded-2xl border border-interactive/40 bg-interactive/20 p-3 text-interactive">
+              <Boxes className="h-6 w-6" />
+            </div>
             <div>
               <h1 className="text-2xl font-bold text-ink">Batch Benchmark Suite V2.0</h1>
-              <p className="mt-1 max-w-3xl text-xs leading-5 text-secondary">Run the benchmark dataset through the same centralized seven-dimension reliability engine used by Evaluation Lab, Quick Check and Response Comparison.</p>
+              <p className="mt-1 max-w-3xl text-xs leading-5 text-secondary">
+                Run the benchmark dataset through the same centralized seven-dimension reliability engine used by Evaluation Lab, Quick Check and Response
+                Comparison.
+              </p>
             </div>
           </div>
 
           <label className="flex items-center gap-2 text-xs font-bold text-secondary">
             <Globe className="h-4 w-4 text-interactive" />
-            <select value={regionProfile} onChange={(event) => setRegionProfile(event.target.value as typeof regionProfile)} disabled={running} className="rounded-xl border border-line-strong bg-canvas px-3 py-2 text-xs font-bold text-ink outline-none focus:border-interactive">
+            <select
+              value={regionProfile}
+              onChange={(event) => setRegionProfile(event.target.value as typeof regionProfile)}
+              disabled={running}
+              className="rounded-xl border border-line-strong bg-canvas px-3 py-2 text-xs font-bold text-ink outline-none focus:border-interactive"
+            >
               <option value="India">India Profile</option>
               <option value="US">US Profile</option>
               <option value="Global">Global Profile</option>
@@ -171,7 +184,10 @@ export const BatchBenchmarkView: React.FC = () => {
 
           <div className="max-h-64 space-y-2 overflow-y-auto pr-1">
             {scenarios.map((scenario) => (
-              <div key={scenario.scenarioId} className="flex items-center justify-between gap-3 rounded-xl border border-line bg-canvas p-3 text-xs text-secondary">
+              <div
+                key={scenario.scenarioId}
+                className="flex items-center justify-between gap-3 rounded-xl border border-line bg-canvas p-3 text-xs text-secondary"
+              >
                 <div className="min-w-0 space-y-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="font-mono text-[10px] font-bold text-interactive">{scenario.scenarioId}</span>
@@ -179,30 +195,58 @@ export const BatchBenchmarkView: React.FC = () => {
                   </div>
                   <p className="line-clamp-2 text-xs leading-5 text-ink">{scenario.query}</p>
                 </div>
-                <span className="shrink-0 rounded-lg bg-success-soft px-2 py-1 font-mono text-[9px] font-bold text-success">{scenario.expectedNumericalAnswer ?? 'Deterministic / qualitative'}</span>
+                <span className="shrink-0 rounded-lg bg-success-soft px-2 py-1 font-mono text-[9px] font-bold text-success">
+                  {scenario.expectedNumericalAnswer ?? 'Deterministic / qualitative'}
+                </span>
               </div>
             ))}
           </div>
 
-          <button onClick={() => void handleRunBatch()} disabled={running || !scenarios.length} className="inline-flex items-center gap-2 rounded-xl bg-brand px-6 py-2.5 text-xs font-bold text-brand-foreground shadow-sm transition hover:bg-brand-hover hover:text-white disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 focus:ring-offset-canvas">
+          <button
+            onClick={() => void handleRunBatch()}
+            disabled={running || !scenarios.length}
+            className="inline-flex items-center gap-2 rounded-xl bg-brand px-6 py-2.5 text-xs font-bold text-brand-foreground shadow-sm transition hover:bg-brand-hover hover:text-white disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 focus:ring-offset-canvas"
+          >
             {running ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4 fill-current" />}
             <span>{running ? 'Executing benchmark evaluations…' : 'Run Seven-Dimension Batch Benchmark'}</span>
           </button>
         </div>
       </section>
 
-      {error && <div role="alert" className="flex items-start gap-2 rounded-2xl border border-danger/30 bg-danger-soft p-4 text-xs leading-5 text-danger"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />{error}</div>}
+      {error && (
+        <div role="alert" className="flex items-start gap-2 rounded-2xl border border-danger/30 bg-danger-soft p-4 text-xs leading-5 text-danger">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+          {error}
+        </div>
+      )}
 
       {progress?.status === 'COMPLETED' && stats && (
         <section className="space-y-6 rounded-3xl border border-line bg-surface p-6 shadow-sm">
           <div className="flex flex-col gap-4 border-b border-line pb-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h2 className="flex items-center gap-2 text-sm font-black text-ink"><CheckCircle2 className="h-4 w-4 text-success" />Systematic Batch Evaluation</h2>
-              <p className="mt-1 text-[10px] leading-5 text-secondary">{stats.totalCount} scenarios · {stats.totalDurationMs} ms · {stats.primaryModel} / {stats.secondaryModel} · {stats.regionProfile} profile</p>
+              <h2 className="flex items-center gap-2 text-sm font-black text-ink">
+                <CheckCircle2 className="h-4 w-4 text-success" />
+                Systematic Batch Evaluation
+              </h2>
+              <p className="mt-1 text-[10px] leading-5 text-secondary">
+                {stats.totalCount} scenarios · {stats.totalDurationMs} ms · {stats.primaryModel} / {stats.secondaryModel} · {stats.regionProfile} profile
+              </p>
             </div>
             <div className="flex gap-2">
-              <button onClick={handleExportCSV} className="inline-flex items-center gap-1.5 rounded-xl border border-line-strong bg-subtle px-3 py-1.5 text-xs font-semibold text-ink transition hover:bg-hover"><FileSpreadsheet className="h-3.5 w-3.5 text-success" />Export CSV</button>
-              <button onClick={handleExportJSON} className="inline-flex items-center gap-1.5 rounded-xl border border-line-strong bg-subtle px-3 py-1.5 text-xs font-semibold text-ink transition hover:bg-hover"><FileText className="h-3.5 w-3.5 text-interactive" />Export JSON</button>
+              <button
+                onClick={handleExportCSV}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-line-strong bg-subtle px-3 py-1.5 text-xs font-semibold text-ink transition hover:bg-hover"
+              >
+                <FileSpreadsheet className="h-3.5 w-3.5 text-success" />
+                Export CSV
+              </button>
+              <button
+                onClick={handleExportJSON}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-line-strong bg-subtle px-3 py-1.5 text-xs font-semibold text-ink transition hover:bg-hover"
+              >
+                <FileText className="h-3.5 w-3.5 text-interactive" />
+                Export JSON
+              </button>
             </div>
           </div>
 
@@ -232,7 +276,9 @@ export const BatchBenchmarkView: React.FC = () => {
                     <div className="text-xs font-bold text-ink">{dimension.name}</div>
                     <div className="mt-0.5 text-[10px] leading-4 text-secondary">Average across the completed benchmark run.</div>
                   </div>
-                  <span className={`shrink-0 rounded-lg border px-2 py-1 font-mono text-[11px] font-black ${scoreTone(dimension.rawScore)}`}>{dimension.rawScore} / 100</span>
+                  <span className={`shrink-0 rounded-lg border px-2 py-1 font-mono text-[11px] font-black ${scoreTone(dimension.rawScore)}`}>
+                    {dimension.rawScore} / 100
+                  </span>
                 </div>
               ))}
             </div>
@@ -241,7 +287,9 @@ export const BatchBenchmarkView: React.FC = () => {
           <div className="space-y-3">
             <div>
               <h3 className="text-xs font-black text-ink">Individual Scenario Results</h3>
-              <p className="mt-1 text-[10px] text-secondary">Open any scenario to inspect all seven reliability dimensions. Full evidence remains available in Verified Reports.</p>
+              <p className="mt-1 text-[10px] text-secondary">
+                Open any scenario to inspect all seven reliability dimensions. Full evidence remains available in Verified Reports.
+              </p>
             </div>
             <div className="max-h-[560px] space-y-2 overflow-y-auto pr-1">
               {progress.results.map((result) => (
@@ -251,20 +299,32 @@ export const BatchBenchmarkView: React.FC = () => {
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="font-mono text-[10px] font-bold text-interactive">{result.scenarioId}</span>
                         <span className="rounded bg-subtle px-1.5 py-0.5 font-mono text-[10px] text-ink">{result.category}</span>
-                        <span className={`rounded-full border px-2 py-0.5 text-[9px] font-black ${result.passed ? 'border-success-fill/30 bg-success-soft text-success' : 'border-danger/30 bg-danger-soft text-danger'}`}>{result.passed ? 'PASSED' : 'FAILED'}</span>
+                        <span
+                          className={`rounded-full border px-2 py-0.5 text-[9px] font-black ${result.passed ? 'border-success-fill/30 bg-success-soft text-success' : 'border-danger/30 bg-danger-soft text-danger'}`}
+                        >
+                          {result.passed ? 'PASSED' : 'FAILED'}
+                        </span>
                       </div>
                       <p className="line-clamp-2 text-xs leading-5 text-ink">{result.query}</p>
                     </div>
                     <div className="shrink-0 text-right">
                       <span className="block text-[9px] uppercase tracking-wider text-secondary">Overall</span>
-                      <span className={`font-mono text-sm font-black ${result.overallScore >= 80 ? 'text-success' : result.overallScore >= 60 ? 'text-warning' : 'text-danger'}`}>{result.overallScore}%</span>
+                      <span
+                        className={`font-mono text-sm font-black ${result.overallScore >= 80 ? 'text-success' : result.overallScore >= 60 ? 'text-warning' : 'text-danger'}`}
+                      >
+                        {result.overallScore}%
+                      </span>
                     </div>
                   </summary>
                   <div className="mt-3 grid gap-2 border-t border-line pt-3 sm:grid-cols-2 lg:grid-cols-4">
                     {(result.dimensions || []).map((dimension) => (
                       <div key={dimension.id} className="rounded-lg border border-line bg-surface px-3 py-2">
                         <div className="text-[9px] font-bold text-secondary">{dimension.name}</div>
-                        <div className={`mt-0.5 font-mono text-xs font-black ${dimension.rawScore >= 80 ? 'text-success' : dimension.rawScore >= 60 ? 'text-warning' : 'text-danger'}`}>{dimension.rawScore} / 100</div>
+                        <div
+                          className={`mt-0.5 font-mono text-xs font-black ${dimension.rawScore >= 80 ? 'text-success' : dimension.rawScore >= 60 ? 'text-warning' : 'text-danger'}`}
+                        >
+                          {dimension.rawScore} / 100
+                        </div>
                       </div>
                     ))}
                   </div>

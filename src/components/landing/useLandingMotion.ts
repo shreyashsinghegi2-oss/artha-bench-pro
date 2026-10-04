@@ -1,7 +1,6 @@
 import { useEffect, type RefObject } from 'react';
 
-const prefersReducedMotion = () =>
-  typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const prefersReducedMotion = () => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 const easeOutCubic = (t: number) => 1 - (1 - t) ** 3;
 
@@ -25,15 +24,29 @@ function observeCountUps(root: HTMLElement, reduce: boolean): () => void {
     frames.add(requestAnimationFrame(tick));
   };
   // Markup carries the real value; only reset to 0 when we are actually going to animate it.
-  if (reduce || !('IntersectionObserver' in window)) { nodes.forEach((node) => { node.textContent = String(Number(node.dataset.n || 0)); }); return () => undefined; }
-  nodes.forEach((node) => { node.textContent = '0'; });
-  const observer = new IntersectionObserver((entries) => entries.forEach((entry) => {
-    if (!entry.isIntersecting) return;
-    observer.unobserve(entry.target);
-    run(entry.target as HTMLElement);
-  }), { threshold: 0.6 });
+  if (reduce || !('IntersectionObserver' in window)) {
+    nodes.forEach((node) => {
+      node.textContent = String(Number(node.dataset.n || 0));
+    });
+    return () => undefined;
+  }
+  nodes.forEach((node) => {
+    node.textContent = '0';
+  });
+  const observer = new IntersectionObserver(
+    (entries) =>
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        observer.unobserve(entry.target);
+        run(entry.target as HTMLElement);
+      }),
+    { threshold: 0.6 },
+  );
   nodes.forEach((node) => observer.observe(node));
-  return () => { observer.disconnect(); frames.forEach(cancelAnimationFrame); };
+  return () => {
+    observer.disconnect();
+    frames.forEach(cancelAnimationFrame);
+  };
 }
 
 /**
@@ -43,25 +56,44 @@ function observeCountUps(root: HTMLElement, reduce: boolean): () => void {
  */
 function observeStaggerGroups(root: HTMLElement, reduce: boolean): () => void {
   const index = (group: HTMLElement) => Array.from(group.children).forEach((child, i) => (child as HTMLElement).style.setProperty('--stagger', String(i)));
-  const io = reduce || !('IntersectionObserver' in window) ? null : new IntersectionObserver((entries) => entries.forEach((entry) => {
-    if (!entry.isIntersecting) return;
-    entry.target.classList.add('in');
-    io?.unobserve(entry.target);
-  }), { rootMargin: '0px 0px -10% 0px', threshold: 0.1 });
+  const io =
+    reduce || !('IntersectionObserver' in window)
+      ? null
+      : new IntersectionObserver(
+          (entries) =>
+            entries.forEach((entry) => {
+              if (!entry.isIntersecting) return;
+              entry.target.classList.add('in');
+              io?.unobserve(entry.target);
+            }),
+          { rootMargin: '0px 0px -10% 0px', threshold: 0.1 },
+        );
   const bound = new WeakSet<Element>();
   // Lazily mounted sections (`.cl-reveal-section`) arrive after the first scan, so they are
   // picked up here too; otherwise they would stay at opacity 0.
-  const scan = () => root.querySelectorAll<HTMLElement>('[data-stagger], .cl-reveal, .cl-reveal-section').forEach((group) => {
-    if (group.hasAttribute('data-stagger')) index(group);
-    if (bound.has(group)) return;
-    bound.add(group);
-    if (io) io.observe(group); else group.classList.add('in');
-  });
+  const scan = () =>
+    root.querySelectorAll<HTMLElement>('[data-stagger], .cl-reveal, .cl-reveal-section').forEach((group) => {
+      if (group.hasAttribute('data-stagger')) index(group);
+      if (bound.has(group)) return;
+      bound.add(group);
+      if (io) io.observe(group);
+      else group.classList.add('in');
+    });
   scan();
   let frame = 0;
-  const mutations = new MutationObserver(() => { if (!frame) frame = requestAnimationFrame(() => { frame = 0; scan(); }); });
+  const mutations = new MutationObserver(() => {
+    if (!frame)
+      frame = requestAnimationFrame(() => {
+        frame = 0;
+        scan();
+      });
+  });
   mutations.observe(root, { childList: true, subtree: true });
-  return () => { io?.disconnect(); mutations.disconnect(); if (frame) cancelAnimationFrame(frame); };
+  return () => {
+    io?.disconnect();
+    mutations.disconnect();
+    if (frame) cancelAnimationFrame(frame);
+  };
 }
 
 /**
@@ -86,7 +118,9 @@ export function useLandingMotion(rootRef: RefObject<HTMLElement | null>): void {
       const max = document.documentElement.scrollHeight - window.innerHeight;
       root.style.setProperty('--cl-scroll', String(max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0));
     };
-    const onScroll = () => { if (!scrollFrame) scrollFrame = requestAnimationFrame(updateProgress); };
+    const onScroll = () => {
+      if (!scrollFrame) scrollFrame = requestAnimationFrame(updateProgress);
+    };
     updateProgress();
     window.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('resize', onScroll, { passive: true });
@@ -137,11 +171,21 @@ export function useLandingMotion(rootRef: RefObject<HTMLElement | null>): void {
           tiltTarget.style.setProperty('--tilt-y', `${Math.max(-5, Math.min(5, ry)).toFixed(2)}deg`);
         }
       };
-      const move = (event: PointerEvent) => { pointer = { x: event.clientX, y: event.clientY }; if (!heroFrame) heroFrame = requestAnimationFrame(apply); };
-      const leave = () => { tiltTarget?.style.setProperty('--tilt-x', '0deg'); tiltTarget?.style.setProperty('--tilt-y', '0deg'); };
+      const move = (event: PointerEvent) => {
+        pointer = { x: event.clientX, y: event.clientY };
+        if (!heroFrame) heroFrame = requestAnimationFrame(apply);
+      };
+      const leave = () => {
+        tiltTarget?.style.setProperty('--tilt-x', '0deg');
+        tiltTarget?.style.setProperty('--tilt-y', '0deg');
+      };
       hero.addEventListener('pointermove', move);
       hero.addEventListener('pointerleave', leave);
-      cleanups.push(() => { hero.removeEventListener('pointermove', move); hero.removeEventListener('pointerleave', leave); if (heroFrame) cancelAnimationFrame(heroFrame); });
+      cleanups.push(() => {
+        hero.removeEventListener('pointermove', move);
+        hero.removeEventListener('pointerleave', leave);
+        if (heroFrame) cancelAnimationFrame(heroFrame);
+      });
     }
 
     // Magnetic primary buttons.
@@ -154,10 +198,16 @@ export function useLandingMotion(rootRef: RefObject<HTMLElement | null>): void {
         button.style.setProperty('--mag-x', `${(dx * 8).toFixed(1)}px`);
         button.style.setProperty('--mag-y', `${(dy * 6).toFixed(1)}px`);
       };
-      const leave = () => { button.style.setProperty('--mag-x', '0px'); button.style.setProperty('--mag-y', '0px'); };
+      const leave = () => {
+        button.style.setProperty('--mag-x', '0px');
+        button.style.setProperty('--mag-y', '0px');
+      };
       button.addEventListener('pointermove', move);
       button.addEventListener('pointerleave', leave);
-      cleanups.push(() => { button.removeEventListener('pointermove', move); button.removeEventListener('pointerleave', leave); });
+      cleanups.push(() => {
+        button.removeEventListener('pointermove', move);
+        button.removeEventListener('pointerleave', leave);
+      });
     });
 
     return () => cleanups.forEach((cleanup) => cleanup());

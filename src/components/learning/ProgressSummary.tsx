@@ -17,9 +17,7 @@ export const ProgressSummary: React.FC<ProgressSummaryProps> = ({ progress, tota
       {/* Card 1: Course Progress */}
       <div className="bg-surface border border-line rounded-2xl p-5 flex flex-col justify-between space-y-3 shadow-sm transition-all">
         <div className="flex items-center justify-between">
-          <span className="text-[10px] font-bold text-secondary uppercase tracking-wider">
-            Progress
-          </span>
+          <span className="text-[10px] font-bold text-secondary uppercase tracking-wider">Progress</span>
           <div className="w-8 h-8 rounded-xl bg-interactive/15 border border-interactive/30 flex items-center justify-center text-interactive">
             <Target className="w-4 h-4" />
           </div>
@@ -32,19 +30,14 @@ export const ProgressSummary: React.FC<ProgressSummaryProps> = ({ progress, tota
         </div>
         {/* Thin ArthaBench Purple Progress Bar */}
         <div className="w-full bg-subtle h-1.5 rounded-full overflow-hidden">
-          <div
-            className="bg-interactive h-full rounded-full transition-all duration-500"
-            style={{ width: `${Math.max(progressPercent, 4)}%` }}
-          />
+          <div className="bg-interactive h-full rounded-full transition-all duration-500" style={{ width: `${Math.max(progressPercent, 4)}%` }} />
         </div>
       </div>
 
       {/* Card 2: Learning Streak */}
       <div className="bg-surface border border-line rounded-2xl p-5 flex flex-col justify-between space-y-3 shadow-sm transition-all">
         <div className="flex items-center justify-between">
-          <span className="text-[10px] font-bold text-secondary uppercase tracking-wider">
-            Learning Streak
-          </span>
+          <span className="text-[10px] font-bold text-secondary uppercase tracking-wider">Learning Streak</span>
           <div className="w-8 h-8 rounded-xl bg-warning-fill/15 border border-warning-fill/30 flex items-center justify-center text-warning">
             <Flame className="w-4 h-4" />
           </div>
@@ -59,17 +52,13 @@ export const ProgressSummary: React.FC<ProgressSummaryProps> = ({ progress, tota
       {/* Card 3: Bookmarks */}
       <div className="bg-surface border border-line rounded-2xl p-5 flex flex-col justify-between space-y-3 shadow-sm transition-all">
         <div className="flex items-center justify-between">
-          <span className="text-[10px] font-bold text-secondary uppercase tracking-wider">
-            Bookmarks
-          </span>
+          <span className="text-[10px] font-bold text-secondary uppercase tracking-wider">Bookmarks</span>
           <div className="w-8 h-8 rounded-xl bg-success-fill/15 border border-success-fill/30 flex items-center justify-center text-success">
             <Bookmark className="w-4 h-4" />
           </div>
         </div>
         <div>
-          <div className="text-2xl font-bold font-mono text-ink">
-            {progress.bookmarkedLessonIds.length}
-          </div>
+          <div className="text-2xl font-bold font-mono text-ink">{progress.bookmarkedLessonIds.length}</div>
           <p className="text-[11px] text-secondary mt-0.5">Saved lessons</p>
         </div>
         <div className="h-1.5" />
@@ -78,9 +67,7 @@ export const ProgressSummary: React.FC<ProgressSummaryProps> = ({ progress, tota
       {/* Card 4: Study Notes */}
       <div className="bg-surface border border-line rounded-2xl p-5 flex flex-col justify-between space-y-3 shadow-sm transition-all">
         <div className="flex items-center justify-between">
-          <span className="text-[10px] font-bold text-secondary uppercase tracking-wider">
-            Study Notes
-          </span>
+          <span className="text-[10px] font-bold text-secondary uppercase tracking-wider">Study Notes</span>
           <div className="w-8 h-8 rounded-xl bg-interactive/15 border border-interactive/30 flex items-center justify-center text-interactive">
             <FileText className="w-4 h-4" />
           </div>

@@ -43,13 +43,7 @@ var structuredFinancialAnswerSchema = z.object({
   }).strict(),
   example: z.object({
     title: z.string().min(1).max(160),
-    dataStatus: z.enum([
-      "live",
-      "latest_available",
-      "delayed",
-      "illustrative",
-      "not_applicable"
-    ]),
+    dataStatus: z.enum(["live", "latest_available", "delayed", "illustrative", "not_applicable"]),
     dataAsOf: z.string().max(100),
     inputs: z.array(z.string().min(1).max(300)).max(10),
     calculation: z.array(z.string().min(1).max(500)).max(10),
@@ -133,17 +127,7 @@ var STRUCTURED_FINANCIAL_ANSWER_JSON_SCHEMA = {
       }
     }
   },
-  required: [
-    "title",
-    "directAnswer",
-    "steps",
-    "formula",
-    "example",
-    "interpretation",
-    "risks",
-    "keyTakeaways",
-    "sources"
-  ]
+  required: ["title", "directAnswer", "steps", "formula", "example", "interpretation", "risks", "keyTakeaways", "sources"]
 };
 function buildStructuredFinancialAnswerInstructions(options) {
   const responseLength = options.detail === "short" ? "220 to 380" : "420 to 750";
@@ -225,9 +209,7 @@ function sanitizeStructuredFinancialAnswer(answer) {
   };
 }
 function firstUsefulParagraph(rawText) {
-  const jsonDirectAnswer = rawText.match(
-    /"directAnswer"\s*:\s*"((?:\\.|[^"\\])*)"/s
-  );
+  const jsonDirectAnswer = rawText.match(/"directAnswer"\s*:\s*"((?:\\.|[^"\\])*)"/s);
   if (jsonDirectAnswer) {
     try {
       return cleanPlainText(JSON.parse(`"${jsonDirectAnswer[1]}"`)).slice(0, 2200);
@@ -256,9 +238,7 @@ function createFallbackStructuredFinancialAnswer(question, rawText) {
   const isRatio = /valuation|p\/?e\b|price[- ]to[- ](earnings|book|sales)|current ratio|quick ratio|return on equity|\broe\b|fundamental ratio/.test(
     normalizedQuestion
   );
-  const isMarketReturn = /\b(range return|market return|price return|performance|market chart|dashboard signal|price change)\b/.test(
-    normalizedQuestion
-  );
+  const isMarketReturn = /\b(range return|market return|price return|performance|market chart|dashboard signal|price change)\b/.test(normalizedQuestion);
   let expression = "No calculation is required for this concept";
   let variables = [];
   let whenToUse = "Use the step-by-step decision method when comparing the financial choices described above.";
@@ -330,9 +310,7 @@ function createFallbackStructuredFinancialAnswer(question, rawText) {
         `Market price = ${price.toLocaleString(void 0, { maximumFractionDigits: 2 })}`,
         `Reported P/E = ${pe.toLocaleString(void 0, { maximumFractionDigits: 2 })}\xD7`
       ];
-      calculation = [
-        `Implied earnings per share = ${price.toFixed(2)} \xF7 ${pe.toFixed(2)} = ${impliedEps.toFixed(2)}`
-      ];
+      calculation = [`Implied earnings per share = ${price.toFixed(2)} \xF7 ${pe.toFixed(2)} = ${impliedEps.toFixed(2)}`];
       result = `The reported P/E implies earnings per share of approximately ${impliedEps.toFixed(2)} for the ratio's measurement basis.`;
       exampleDataStatus = /delayed|end_of_day|stale|demo/i.test(quoteFreshness) ? "delayed" : "latest_available";
       dataAsOf = retrievedAt;
@@ -357,13 +335,8 @@ function createFallbackStructuredFinancialAnswer(question, rawText) {
     const observedReturn = rawText.match(/range return is\s+(-?[\d.]+)%/i);
     const observedDates = rawText.match(/\(([^()]+)\s+to\s+([^()]+)\)/i);
     if (observedPrices) {
-      inputs = [
-        `Starting price = ${observedPrices[1]}`,
-        `Latest price = ${observedPrices[2]}`
-      ];
-      calculation = [
-        `(${observedPrices[2]} \u2212 ${observedPrices[1]}) / ${observedPrices[1]} \xD7 100`
-      ];
+      inputs = [`Starting price = ${observedPrices[1]}`, `Latest price = ${observedPrices[2]}`];
+      calculation = [`(${observedPrices[2]} \u2212 ${observedPrices[1]}) / ${observedPrices[1]} \xD7 100`];
       result = observedReturn ? `Measured range return = ${observedReturn[1]}%.` : "Calculate the measured percentage change from the two displayed observations.";
       exampleDataStatus = /\b(delayed|demo|stale|end-of-day)\b/i.test(rawText) ? "delayed" : "latest_available";
       dataAsOf = observedDates?.[2]?.trim() || "";
@@ -422,7 +395,11 @@ function serializeStructuredFinancialAnswer(answer) {
     "",
     "## Limitations and verification",
     ...answer.risks.length ? answer.risks.map((item) => `- ${item}`) : ["- No additional limitation was identified from the supplied context."],
-    ...answer.sources.length ? ["", "Sources and freshness:", ...answer.sources.map((source) => `- ${source.name}${source.dataDate ? ` \xB7 ${source.dataDate}` : ""} \xB7 ${source.freshness}`)] : []
+    ...answer.sources.length ? [
+      "",
+      "Sources and freshness:",
+      ...answer.sources.map((source) => `- ${source.name}${source.dataDate ? ` \xB7 ${source.dataDate}` : ""} \xB7 ${source.freshness}`)
+    ] : []
   ];
   return lines.join("\n").trim();
 }
@@ -735,8 +712,12 @@ function findBestNumericValue(numbers, expected) {
 }
 function calculateJaccardSimilarity(textA, textB) {
   if (!textA || !textB) return 0;
-  const wordsA = new Set(textA.toLowerCase().split(/\s+/).filter((w) => w.length > 2));
-  const wordsB = new Set(textB.toLowerCase().split(/\s+/).filter((w) => w.length > 2));
+  const wordsA = new Set(
+    textA.toLowerCase().split(/\s+/).filter((w) => w.length > 2)
+  );
+  const wordsB = new Set(
+    textB.toLowerCase().split(/\s+/).filter((w) => w.length > 2)
+  );
   if (wordsA.size === 0 && wordsB.size === 0) return 1;
   if (wordsA.size === 0 || wordsB.size === 0) return 0;
   const intersection = new Set([...wordsA].filter((x) => wordsB.has(x)));
@@ -1171,13 +1152,16 @@ var SCOPE_BLOCK = [
   'ACCURACY CHECK before you answer: re-do every calculation, compare each figure with the live context, and prefer the most recent dated source. If sources disagree or data is missing, say so plainly instead of guessing. End the interpretation with "Confidence: High, Medium or Low" and one short reason.'
 ].join("\n");
 var SELF = String.raw`(you|u|this|artha ?mind|artha ?bench|the (app|platform|website|site|bot|chatbot|assistant|ai))`;
-var CREATOR_Q = new RegExp([
-  String.raw`\b(who|whom)\b.{0,30}\b(created|made|built|developed|founded|owns?|designed|is behind|started)\b.{0,25}\b${SELF}\b`,
-  String.raw`\b(your|this (app|platform|website|site|assistant)'?s?)\s+(creator|founder|developer|maker|owner|ceo)\b`,
-  String.raw`\b(creator|founder|developer|maker|owner|ceo) of ${SELF}\b`,
-  String.raw`\bshreyash\b`,
-  String.raw`kisne banaya|kisne bana(ya|i)|किसने बनाया|कोणी बनवल`
-].join("|"), "i");
+var CREATOR_Q = new RegExp(
+  [
+    String.raw`\b(who|whom)\b.{0,30}\b(created|made|built|developed|founded|owns?|designed|is behind|started)\b.{0,25}\b${SELF}\b`,
+    String.raw`\b(your|this (app|platform|website|site|assistant)'?s?)\s+(creator|founder|developer|maker|owner|ceo)\b`,
+    String.raw`\b(creator|founder|developer|maker|owner|ceo) of ${SELF}\b`,
+    String.raw`\bshreyash\b`,
+    String.raw`kisne banaya|kisne bana(ya|i)|किसने बनाया|कोणी बनवल`
+  ].join("|"),
+  "i"
+);
 function founderAnswer(question) {
   if (!CREATOR_Q.test(question)) return null;
   return `I'm ArthaMind AI. I was created by ${FOUNDER.name}, ${FOUNDER.title}.
@@ -1213,7 +1197,22 @@ async function assertPublic(url) {
   const addrs = isIP(host) ? [{ address: host }] : await lookup(host, { all: true, verbatim: true });
   if (!addrs.length || addrs.some((a) => isPrivateAddress(a.address))) throw new Error("This address cannot be read.");
 }
-var ENTITIES = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: " ", rsquo: "\u2019", lsquo: "\u2018", rdquo: "\u201D", ldquo: "\u201C", ndash: "\u2013", mdash: "\u2014", hellip: "\u2026", rupee: "\u20B9" };
+var ENTITIES = {
+  amp: "&",
+  lt: "<",
+  gt: ">",
+  quot: '"',
+  apos: "'",
+  nbsp: " ",
+  rsquo: "\u2019",
+  lsquo: "\u2018",
+  rdquo: "\u201D",
+  ldquo: "\u201C",
+  ndash: "\u2013",
+  mdash: "\u2014",
+  hellip: "\u2026",
+  rupee: "\u20B9"
+};
 var decode = (s2) => s2.replace(/&(#x?[0-9a-f]+|[a-z]+);/gi, (m, e) => {
   if (e[0] === "#") {
     const n2 = e[1].toLowerCase() === "x" ? parseInt(e.slice(2), 16) : parseInt(e.slice(1), 10);
@@ -1223,7 +1222,9 @@ var decode = (s2) => s2.replace(/&(#x?[0-9a-f]+|[a-z]+);/gi, (m, e) => {
 });
 function htmlToText(html) {
   const title = decode(html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] ?? "").replace(/\s+/g, " ").trim();
-  const description = decode(html.match(/<meta[^>]+name=["']description["'][^>]*content=["']([^"']*)["']/i)?.[1] ?? html.match(/<meta[^>]+property=["']og:description["'][^>]*content=["']([^"']*)["']/i)?.[1] ?? "").trim();
+  const description = decode(
+    html.match(/<meta[^>]+name=["']description["'][^>]*content=["']([^"']*)["']/i)?.[1] ?? html.match(/<meta[^>]+property=["']og:description["'][^>]*content=["']([^"']*)["']/i)?.[1] ?? ""
+  ).trim();
   const body = html.replace(/<(script|style|noscript|svg|iframe|template|head)[\s\S]*?<\/\1>/gi, " ").replace(/<(nav|footer|header|aside|form)[\s\S]*?<\/\1>/gi, " ").replace(/<!--[\s\S]*?-->/g, " ").replace(/<\/(p|div|li|h[1-6]|tr|section|article|br)>/gi, "\n").replace(/<br\s*\/?>/gi, "\n").replace(/<td[^>]*>/gi, " | ").replace(/<[^>]+>/g, " ");
   const text = decode(body).split("\n").map((l) => l.replace(/\s+/g, " ").trim()).filter((l) => l.length > 2).join("\n");
   return { title, description, text };
@@ -1237,7 +1238,14 @@ async function readWebPage(raw) {
   }
   for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
     await assertPublic(url);
-    const res = await fetch(url, { redirect: "manual", signal: AbortSignal.timeout(1e4), headers: { "User-Agent": "Mozilla/5.0 (compatible; ArthaMindReader/1.0; +https://artha-bench-pro.vercel.app)", Accept: "text/html,text/plain,application/json;q=0.9,*/*;q=0.5" } });
+    const res = await fetch(url, {
+      redirect: "manual",
+      signal: AbortSignal.timeout(1e4),
+      headers: {
+        "User-Agent": "Mozilla/5.0 (compatible; ArthaMindReader/1.0; +https://artha-bench-pro.vercel.app)",
+        Accept: "text/html,text/plain,application/json;q=0.9,*/*;q=0.5"
+      }
+    });
     if (res.status >= 300 && res.status < 400) {
       const loc = res.headers.get("location");
       if (!loc) throw new Error("The page redirected without a destination.");
@@ -1262,7 +1270,13 @@ async function readWebPage(raw) {
     }
     const bodyText = new TextDecoder().decode(Buffer.concat(chunks));
     const parsed = type.includes("html") ? htmlToText(bodyText) : { title: url.hostname, description: "", text: bodyText.replace(/\s+\n/g, "\n").trim() };
-    return { url: url.toString(), title: parsed.title || url.hostname, description: parsed.description, text: parsed.text.slice(0, 12e3), retrievedAt: (/* @__PURE__ */ new Date()).toISOString() };
+    return {
+      url: url.toString(),
+      title: parsed.title || url.hostname,
+      description: parsed.description,
+      text: parsed.text.slice(0, 12e3),
+      retrievedAt: (/* @__PURE__ */ new Date()).toISOString()
+    };
   }
   throw new Error("The page redirected too many times.");
 }
@@ -1273,13 +1287,18 @@ function assetClassFor(category, name = "") {
   const c2 = `${category} ${name}`.toLowerCase();
   if (/gold|silver|commodit/.test(c2)) return "Gold & commodities";
   if (/hybrid|balanced|asset allocation|arbitrage|equity savings|multi asset/.test(c2)) return "Hybrid";
-  if (/equity|elss|tax saver|index|etf|large ?cap|mid ?cap|small ?cap|large (&|and) mid|flexi|multi ?cap|focused|value|contra|dividend yield|sectoral|thematic|nifty|sensex|top 100|top 200|bluechip|blue chip|opportunities|infrastructure|pharma|banking (&|and) financial services|technology|consumption/.test(c2)) return "Equity";
+  if (/equity|elss|tax saver|index|etf|large ?cap|mid ?cap|small ?cap|large (&|and) mid|flexi|multi ?cap|focused|value|contra|dividend yield|sectoral|thematic|nifty|sensex|top 100|top 200|bluechip|blue chip|opportunities|infrastructure|pharma|banking (&|and) financial services|technology|consumption/.test(
+    c2
+  ))
+    return "Equity";
   if (/debt|liquid|overnight|money market|gilt|bond|duration|credit risk|banking and psu|floater|income|fixed maturity|fmp/.test(c2)) return "Debt";
   return "Other";
 }
 
 // server/mutualFundService.ts
-var AMFI_URLS = [process.env.AMFI_NAV_URL, "https://www.amfiindia.com/spages/NAVAll.txt", "https://portal.amfiindia.com/spages/NAVAll.txt"].filter(Boolean);
+var AMFI_URLS = [process.env.AMFI_NAV_URL, "https://www.amfiindia.com/spages/NAVAll.txt", "https://portal.amfiindia.com/spages/NAVAll.txt"].filter(
+  Boolean
+);
 var MFAPI_URL = (process.env.MFAPI_BASE_URL || "https://api.mfapi.in").replace(/\/$/, "");
 var AMFI_TTL_MS = 6 * 60 * 60 * 1e3;
 var HISTORY_TTL_MS = 3 * 60 * 60 * 1e3;
@@ -1301,7 +1320,17 @@ function parseAmfiNav(text) {
       const nav = Number(parts[4]);
       if (!Number.isFinite(nav) || nav <= 0) continue;
       const isin = (s2) => /^INF[A-Z0-9]{9}$/.test(s2.trim()) ? s2.trim() : null;
-      out.push({ code: parts[0], isinGrowth: isin(parts[1]), isinReinvest: isin(parts[2]), name: parts[3].trim(), nav, navDate: isoDate(parts[5]), category, house, assetClass: assetClassFor(category, parts[3]) });
+      out.push({
+        code: parts[0],
+        isinGrowth: isin(parts[1]),
+        isinReinvest: isin(parts[2]),
+        name: parts[3].trim(),
+        nav,
+        navDate: isoDate(parts[5]),
+        category,
+        house,
+        assetClass: assetClassFor(category, parts[3])
+      });
     } else if (/schemes?\s*\(/i.test(line)) {
       category = line.replace(/^.*?\((.*)\)\s*$/, "$1").trim() || line;
     } else if (parts.length === 1) {
@@ -1321,7 +1350,11 @@ async function amfiSchemes() {
       let list = [];
       for (const url of AMFI_URLS) {
         try {
-          const res = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0 (compatible; ArthaMind/1.0)", Accept: "text/plain,*/*" }, redirect: "follow", signal: AbortSignal.timeout(15e3) });
+          const res = await fetch(url, {
+            headers: { "User-Agent": "Mozilla/5.0 (compatible; ArthaMind/1.0)", Accept: "text/plain,*/*" },
+            redirect: "follow",
+            signal: AbortSignal.timeout(15e3)
+          });
           const text = await res.text();
           if (!res.ok) {
             problems.push(`${new URL(url).host}: HTTP ${res.status}`);
@@ -1370,10 +1403,23 @@ async function searchFunds(query, limit = 20) {
     const { list } = await amfiSchemes();
     return { results: searchSchemes(list, q, limit), source: "AMFI daily NAV file" };
   } catch (amfiError) {
-    const res = await fetch(`${MFAPI_URL}/mf/search?q=${encodeURIComponent(q)}`, { headers: { Accept: "application/json" }, signal: AbortSignal.timeout(1e4) }).catch(() => null);
+    const res = await fetch(`${MFAPI_URL}/mf/search?q=${encodeURIComponent(q)}`, {
+      headers: { Accept: "application/json" },
+      signal: AbortSignal.timeout(1e4)
+    }).catch(() => null);
     if (!res?.ok) throw amfiError;
     const rows = await res.json();
-    const results = rows.slice(0, 200).map((r) => ({ code: String(r.schemeCode), name: r.schemeName, house: "", category: "", assetClass: assetClassFor("", r.schemeName), isinGrowth: null, isinReinvest: null, nav: 0, navDate: "" }));
+    const results = rows.slice(0, 200).map((r) => ({
+      code: String(r.schemeCode),
+      name: r.schemeName,
+      house: "",
+      category: "",
+      assetClass: assetClassFor("", r.schemeName),
+      isinGrowth: null,
+      isinReinvest: null,
+      nav: 0,
+      navDate: ""
+    }));
     return { results: searchSchemes(results, q, limit), source: "mfapi.in (AMFI data)" };
   }
 }
@@ -1393,10 +1439,23 @@ var historyCache = /* @__PURE__ */ new Map();
 function schemeFromMeta(code, meta, last) {
   if (!meta?.scheme_name) return null;
   const category = (meta.scheme_category || "").replace(/^.*?Scheme\s*-\s*/i, (m) => m).trim();
-  return { code, name: meta.scheme_name, house: meta.fund_house || "", category, assetClass: assetClassFor(category, meta.scheme_name), isinGrowth: meta.isin_growth || null, isinReinvest: meta.isin_div_reinvestment || null, nav: last?.nav ?? 0, navDate: last?.date ?? "" };
+  return {
+    code,
+    name: meta.scheme_name,
+    house: meta.fund_house || "",
+    category,
+    assetClass: assetClassFor(category, meta.scheme_name),
+    isinGrowth: meta.isin_growth || null,
+    isinReinvest: meta.isin_div_reinvestment || null,
+    nav: last?.nav ?? 0,
+    navDate: last?.date ?? ""
+  };
 }
 async function mfapiScheme(code, latestOnly = false) {
-  const res = await fetch(`${MFAPI_URL}/mf/${code}${latestOnly ? "/latest" : ""}`, { headers: { Accept: "application/json" }, signal: AbortSignal.timeout(1e4) });
+  const res = await fetch(`${MFAPI_URL}/mf/${code}${latestOnly ? "/latest" : ""}`, {
+    headers: { Accept: "application/json" },
+    signal: AbortSignal.timeout(1e4)
+  });
   if (!res.ok) throw new Error(`mfapi HTTP ${res.status}`);
   const body = await res.json();
   const points = (body.data ?? []).map((d) => ({ date: isoDate(d.date), nav: Number(d.nav) })).filter((p) => Number.isFinite(p.nav) && p.nav > 0).reverse();
@@ -1439,7 +1498,12 @@ async function fundDetail(code) {
   const last = cached2.points[cached2.points.length - 1];
   const scheme = amfi?.byCode.get(code) ?? schemeFromMeta(code, cached2.meta, last);
   if (!scheme && !cached2.points.length) throw new Error("Scheme not found.");
-  return { scheme, history: thinHistory(cached2.points), returns: trailingReturns(cached2.points), sources: [amfi ? "AMFI (official NAVs)" : "mfapi.in (AMFI NAV data)"] };
+  return {
+    scheme,
+    history: thinHistory(cached2.points),
+    returns: trailingReturns(cached2.points),
+    sources: [amfi ? "AMFI (official NAVs)" : "mfapi.in (AMFI NAV data)"]
+  };
 }
 async function matchFund(isin, name) {
   const id = isin.trim().toUpperCase();
@@ -1447,11 +1511,16 @@ async function matchFund(isin, name) {
   if (amfi) return amfi.byIsin.get(id) ?? null;
   const words = name.replace(/\(.*?\)/g, " ").replace(/[^A-Za-z0-9 ]+/g, " ").split(/\s+/).filter((w) => w.length > 1 && !/^(fund|plan|option|the|of)$/i.test(w)).slice(0, 5).join(" ");
   if (!words) return null;
-  const res = await fetch(`${MFAPI_URL}/mf/search?q=${encodeURIComponent(words)}`, { headers: { Accept: "application/json" }, signal: AbortSignal.timeout(1e4) }).catch(() => null);
+  const res = await fetch(`${MFAPI_URL}/mf/search?q=${encodeURIComponent(words)}`, {
+    headers: { Accept: "application/json" },
+    signal: AbortSignal.timeout(1e4)
+  }).catch(() => null);
   if (!res?.ok) return null;
   const rows = (await res.json()).slice(0, 12);
   const direct = /direct/i.test(name), growth = !/idcw|dividend/i.test(name);
-  rows.sort((a, b) => Number(/direct/i.test(b.schemeName) === direct) - Number(/direct/i.test(a.schemeName) === direct) || Number(!/idcw|dividend/i.test(b.schemeName) === growth) - Number(!/idcw|dividend/i.test(a.schemeName) === growth));
+  rows.sort(
+    (a, b) => Number(/direct/i.test(b.schemeName) === direct) - Number(/direct/i.test(a.schemeName) === direct) || Number(!/idcw|dividend/i.test(b.schemeName) === growth) - Number(!/idcw|dividend/i.test(a.schemeName) === growth)
+  );
   for (const r of rows.slice(0, 6)) {
     try {
       const { meta, points } = await mfapiScheme(String(r.schemeCode), true);
@@ -1474,7 +1543,13 @@ function trailingReturns(points) {
     return found;
   };
   const out = {};
-  for (const [label, days] of [["1M", 30], ["6M", 182], ["1Y", 365], ["3Y", 1095], ["5Y", 1826]]) {
+  for (const [label, days] of [
+    ["1M", 30],
+    ["6M", 182],
+    ["1Y", 365],
+    ["3Y", 1095],
+    ["5Y", 1826]
+  ]) {
     const p = at(days);
     if (!p) continue;
     const years = days / 365;
@@ -1489,39 +1564,135 @@ var INDIA_MARKET_UNIVERSE = [
   c("hdfc-bank", "HDFC Bank Limited", "HDFC Bank", "HDFCBANK.NS", "Banking & Financial Services", "Private Bank", "https://www.hdfcbank.com"),
   c("icici-bank", "ICICI Bank Limited", "ICICI Bank", "ICICIBANK.NS", "Banking & Financial Services", "Private Bank", "https://www.icicibank.com"),
   c("sbi", "State Bank of India", "State Bank of India", "SBIN.NS", "Banking & Financial Services", "Public Sector Bank", "https://sbi.co.in"),
-  c("kotak-bank", "Kotak Mahindra Bank Limited", "Kotak Mahindra Bank", "KOTAKBANK.NS", "Banking & Financial Services", "Private Bank", "https://www.kotak.com"),
+  c(
+    "kotak-bank",
+    "Kotak Mahindra Bank Limited",
+    "Kotak Mahindra Bank",
+    "KOTAKBANK.NS",
+    "Banking & Financial Services",
+    "Private Bank",
+    "https://www.kotak.com"
+  ),
   c("axis-bank", "Axis Bank Limited", "Axis Bank", "AXISBANK.NS", "Banking & Financial Services", "Private Bank", "https://www.axisbank.com"),
-  c("bajaj-finance", "Bajaj Finance Limited", "Bajaj Finance", "BAJFINANCE.NS", "Banking & Financial Services", "Non-Banking Financial Company", "https://www.bajajfinserv.in"),
-  c("bajaj-finserv", "Bajaj Finserv Limited", "Bajaj Finserv", "BAJAJFINSV.NS", "Banking & Financial Services", "Financial Services", "https://www.bajajfinserv.in"),
+  c(
+    "bajaj-finance",
+    "Bajaj Finance Limited",
+    "Bajaj Finance",
+    "BAJFINANCE.NS",
+    "Banking & Financial Services",
+    "Non-Banking Financial Company",
+    "https://www.bajajfinserv.in"
+  ),
+  c(
+    "bajaj-finserv",
+    "Bajaj Finserv Limited",
+    "Bajaj Finserv",
+    "BAJAJFINSV.NS",
+    "Banking & Financial Services",
+    "Financial Services",
+    "https://www.bajajfinserv.in"
+  ),
   c("indusind-bank", "IndusInd Bank Limited", "IndusInd Bank", "INDUSINDBK.NS", "Banking & Financial Services", "Private Bank", "https://www.indusind.com"),
-  c("shriram-finance", "Shriram Finance Limited", "Shriram Finance", "SHRIRAMFIN.NS", "Banking & Financial Services", "Non-Banking Financial Company", "https://www.shriramfinance.in"),
-  c("hdfc-life", "HDFC Life Insurance Company Limited", "HDFC Life", "HDFCLIFE.NS", "Banking & Financial Services", "Life Insurance", "https://www.hdfclife.com"),
+  c(
+    "shriram-finance",
+    "Shriram Finance Limited",
+    "Shriram Finance",
+    "SHRIRAMFIN.NS",
+    "Banking & Financial Services",
+    "Non-Banking Financial Company",
+    "https://www.shriramfinance.in"
+  ),
+  c(
+    "hdfc-life",
+    "HDFC Life Insurance Company Limited",
+    "HDFC Life",
+    "HDFCLIFE.NS",
+    "Banking & Financial Services",
+    "Life Insurance",
+    "https://www.hdfclife.com"
+  ),
   c("sbi-life", "SBI Life Insurance Company Limited", "SBI Life", "SBILIFE.NS", "Banking & Financial Services", "Life Insurance", "https://www.sbilife.co.in"),
-  c("icici-pru", "ICICI Prudential Life Insurance Company Limited", "ICICI Prudential Life", "ICICIPRULI.NS", "Banking & Financial Services", "Life Insurance", "https://www.iciciprulife.com"),
+  c(
+    "icici-pru",
+    "ICICI Prudential Life Insurance Company Limited",
+    "ICICI Prudential Life",
+    "ICICIPRULI.NS",
+    "Banking & Financial Services",
+    "Life Insurance",
+    "https://www.iciciprulife.com"
+  ),
   c("tcs", "Tata Consultancy Services Limited", "Tata Consultancy Services", "TCS.NS", "Information Technology", "IT Services", "https://www.tcs.com"),
   c("infosys", "Infosys Limited", "Infosys", "INFY.NS", "Information Technology", "IT Services", "https://www.infosys.com"),
   c("hcl-tech", "HCL Technologies Limited", "HCL Technologies", "HCLTECH.NS", "Information Technology", "IT Services", "https://www.hcltech.com"),
   c("wipro", "Wipro Limited", "Wipro", "WIPRO.NS", "Information Technology", "IT Services", "https://www.wipro.com"),
   c("tech-mahindra", "Tech Mahindra Limited", "Tech Mahindra", "TECHM.NS", "Information Technology", "IT Services", "https://www.techmahindra.com"),
   c("ltimindtree", "LTM Limited (formerly LTIMindtree)", "LTM (LTIMindtree)", "LTM.NS", "Information Technology", "IT Services", "https://www.ltimindtree.com"),
-  c("persistent", "Persistent Systems Limited", "Persistent Systems", "PERSISTENT.NS", "Information Technology", "Software & IT Services", "https://www.persistent.com"),
+  c(
+    "persistent",
+    "Persistent Systems Limited",
+    "Persistent Systems",
+    "PERSISTENT.NS",
+    "Information Technology",
+    "Software & IT Services",
+    "https://www.persistent.com"
+  ),
   c("mphasis", "Mphasis Limited", "Mphasis", "MPHASIS.NS", "Information Technology", "IT Services", "https://www.mphasis.com"),
   c("coforge", "Coforge Limited", "Coforge", "COFORGE.NS", "Information Technology", "IT Services", "https://www.coforge.com"),
-  c("reliance", "Reliance Industries Limited", "Reliance Industries", "RELIANCE.NS", "Energy & Utilities", "Diversified Energy & Consumer", "https://www.ril.com"),
+  c(
+    "reliance",
+    "Reliance Industries Limited",
+    "Reliance Industries",
+    "RELIANCE.NS",
+    "Energy & Utilities",
+    "Diversified Energy & Consumer",
+    "https://www.ril.com"
+  ),
   c("ntpc", "NTPC Limited", "NTPC", "NTPC.NS", "Energy & Utilities", "Power Generation", "https://ntpc.co.in"),
-  c("power-grid", "Power Grid Corporation of India Limited", "Power Grid", "POWERGRID.NS", "Energy & Utilities", "Power Transmission", "https://www.powergrid.in"),
+  c(
+    "power-grid",
+    "Power Grid Corporation of India Limited",
+    "Power Grid",
+    "POWERGRID.NS",
+    "Energy & Utilities",
+    "Power Transmission",
+    "https://www.powergrid.in"
+  ),
   c("ongc", "Oil and Natural Gas Corporation Limited", "ONGC", "ONGC.NS", "Energy & Utilities", "Oil & Gas Exploration", "https://ongcindia.com"),
-  c("adani-ports", "Adani Ports and Special Economic Zone Limited", "Adani Ports", "ADANIPORTS.NS", "Energy & Utilities", "Ports & Logistics", "https://www.adaniports.com"),
+  c(
+    "adani-ports",
+    "Adani Ports and Special Economic Zone Limited",
+    "Adani Ports",
+    "ADANIPORTS.NS",
+    "Energy & Utilities",
+    "Ports & Logistics",
+    "https://www.adaniports.com"
+  ),
   c("tata-power", "Tata Power Company Limited", "Tata Power", "TATAPOWER.NS", "Energy & Utilities", "Power Utility", "https://www.tatapower.com"),
   c("gail", "GAIL (India) Limited", "GAIL India", "GAIL.NS", "Energy & Utilities", "Natural Gas", "https://gailonline.com"),
   c("ioc", "Indian Oil Corporation Limited", "Indian Oil", "IOC.NS", "Energy & Utilities", "Oil Refining & Marketing", "https://iocl.com"),
-  c("bpcl", "Bharat Petroleum Corporation Limited", "Bharat Petroleum", "BPCL.NS", "Energy & Utilities", "Oil Refining & Marketing", "https://www.bharatpetroleum.in"),
+  c(
+    "bpcl",
+    "Bharat Petroleum Corporation Limited",
+    "Bharat Petroleum",
+    "BPCL.NS",
+    "Energy & Utilities",
+    "Oil Refining & Marketing",
+    "https://www.bharatpetroleum.in"
+  ),
   c("coal-india", "Coal India Limited", "Coal India", "COALINDIA.NS", "Energy & Utilities", "Coal Mining", "https://www.coalindia.in"),
   c("itc", "ITC Limited", "ITC", "ITC.NS", "FMCG & Consumer", "Diversified Consumer", "https://www.itcportal.com"),
   c("hul", "Hindustan Unilever Limited", "Hindustan Unilever", "HINDUNILVR.NS", "FMCG & Consumer", "FMCG", "https://www.hul.co.in"),
   c("nestle", "Nestl\xE9 India Limited", "Nestl\xE9 India", "NESTLEIND.NS", "FMCG & Consumer", "Packaged Foods", "https://www.nestle.in"),
   c("britannia", "Britannia Industries Limited", "Britannia Industries", "BRITANNIA.NS", "FMCG & Consumer", "Packaged Foods", "https://www.britannia.co.in"),
-  c("tata-consumer", "Tata Consumer Products Limited", "Tata Consumer Products", "TATACONSUM.NS", "FMCG & Consumer", "Food & Beverages", "https://www.tataconsumer.com"),
+  c(
+    "tata-consumer",
+    "Tata Consumer Products Limited",
+    "Tata Consumer Products",
+    "TATACONSUM.NS",
+    "FMCG & Consumer",
+    "Food & Beverages",
+    "https://www.tataconsumer.com"
+  ),
   c("dabur", "Dabur India Limited", "Dabur India", "DABUR.NS", "FMCG & Consumer", "FMCG", "https://www.dabur.com"),
   c("godrej-consumer", "Godrej Consumer Products Limited", "Godrej Consumer Products", "GODREJCP.NS", "FMCG & Consumer", "FMCG", "https://www.godrejcp.com"),
   c("marico", "Marico Limited", "Marico", "MARICO.NS", "FMCG & Consumer", "FMCG", "https://marico.com"),
@@ -1535,22 +1706,102 @@ var INDIA_MARKET_UNIVERSE = [
   c("eicher", "Eicher Motors Limited", "Eicher Motors", "EICHERMOT.NS", "Automobile", "Automobiles", "https://www.eichermotors.com"),
   c("hero", "Hero MotoCorp Limited", "Hero MotoCorp", "HEROMOTOCO.NS", "Automobile", "Two-Wheelers", "https://www.heromotocorp.com"),
   c("tvs", "TVS Motor Company Limited", "TVS Motor", "TVSMOTOR.NS", "Automobile", "Two-Wheelers", "https://www.tvsmotor.com"),
-  c("sun-pharma", "Sun Pharmaceutical Industries Limited", "Sun Pharma", "SUNPHARMA.NS", "Pharmaceuticals & Healthcare", "Pharmaceuticals", "https://sunpharma.com"),
-  c("dr-reddy", "Dr. Reddy\u2019s Laboratories Limited", "Dr. Reddy\u2019s Laboratories", "DRREDDY.NS", "Pharmaceuticals & Healthcare", "Pharmaceuticals", "https://www.drreddys.com"),
+  c(
+    "sun-pharma",
+    "Sun Pharmaceutical Industries Limited",
+    "Sun Pharma",
+    "SUNPHARMA.NS",
+    "Pharmaceuticals & Healthcare",
+    "Pharmaceuticals",
+    "https://sunpharma.com"
+  ),
+  c(
+    "dr-reddy",
+    "Dr. Reddy\u2019s Laboratories Limited",
+    "Dr. Reddy\u2019s Laboratories",
+    "DRREDDY.NS",
+    "Pharmaceuticals & Healthcare",
+    "Pharmaceuticals",
+    "https://www.drreddys.com"
+  ),
   c("cipla", "Cipla Limited", "Cipla", "CIPLA.NS", "Pharmaceuticals & Healthcare", "Pharmaceuticals", "https://www.cipla.com"),
-  c("divis", "Divi\u2019s Laboratories Limited", "Divi\u2019s Laboratories", "DIVISLAB.NS", "Pharmaceuticals & Healthcare", "Pharmaceuticals", "https://www.divislabs.com"),
-  c("apollo", "Apollo Hospitals Enterprise Limited", "Apollo Hospitals", "APOLLOHOSP.NS", "Pharmaceuticals & Healthcare", "Hospitals", "https://www.apollohospitals.com"),
+  c(
+    "divis",
+    "Divi\u2019s Laboratories Limited",
+    "Divi\u2019s Laboratories",
+    "DIVISLAB.NS",
+    "Pharmaceuticals & Healthcare",
+    "Pharmaceuticals",
+    "https://www.divislabs.com"
+  ),
+  c(
+    "apollo",
+    "Apollo Hospitals Enterprise Limited",
+    "Apollo Hospitals",
+    "APOLLOHOSP.NS",
+    "Pharmaceuticals & Healthcare",
+    "Hospitals",
+    "https://www.apollohospitals.com"
+  ),
   c("lupin", "Lupin Limited", "Lupin", "LUPIN.NS", "Pharmaceuticals & Healthcare", "Pharmaceuticals", "https://www.lupin.com"),
-  c("aurobindo", "Aurobindo Pharma Limited", "Aurobindo Pharma", "AUROPHARMA.NS", "Pharmaceuticals & Healthcare", "Pharmaceuticals", "https://www.aurobindo.com"),
-  c("larsen", "Larsen & Toubro Limited", "Larsen & Toubro", "LT.NS", "Metals, Materials & Industrials", "Engineering & Construction", "https://www.larsentoubro.com"),
-  c("ultratech", "UltraTech Cement Limited", "UltraTech Cement", "ULTRACEMCO.NS", "Metals, Materials & Industrials", "Cement", "https://www.ultratechcement.com"),
+  c(
+    "aurobindo",
+    "Aurobindo Pharma Limited",
+    "Aurobindo Pharma",
+    "AUROPHARMA.NS",
+    "Pharmaceuticals & Healthcare",
+    "Pharmaceuticals",
+    "https://www.aurobindo.com"
+  ),
+  c(
+    "larsen",
+    "Larsen & Toubro Limited",
+    "Larsen & Toubro",
+    "LT.NS",
+    "Metals, Materials & Industrials",
+    "Engineering & Construction",
+    "https://www.larsentoubro.com"
+  ),
+  c(
+    "ultratech",
+    "UltraTech Cement Limited",
+    "UltraTech Cement",
+    "ULTRACEMCO.NS",
+    "Metals, Materials & Industrials",
+    "Cement",
+    "https://www.ultratechcement.com"
+  ),
   c("tata-steel", "Tata Steel Limited", "Tata Steel", "TATASTEEL.NS", "Metals, Materials & Industrials", "Steel", "https://www.tatasteel.com"),
   c("jsw-steel", "JSW Steel Limited", "JSW Steel", "JSWSTEEL.NS", "Metals, Materials & Industrials", "Steel", "https://www.jswsteel.in"),
   c("hindalco", "Hindalco Industries Limited", "Hindalco Industries", "HINDALCO.NS", "Metals, Materials & Industrials", "Metals", "https://www.hindalco.com"),
-  c("grasim", "Grasim Industries Limited", "Grasim Industries", "GRASIM.NS", "Metals, Materials & Industrials", "Diversified Materials", "https://www.grasim.com"),
-  c("adani-enterprises", "Adani Enterprises Limited", "Adani Enterprises", "ADANIENT.NS", "Metals, Materials & Industrials", "Diversified Industrials", "https://www.adanienterprises.com"),
+  c(
+    "grasim",
+    "Grasim Industries Limited",
+    "Grasim Industries",
+    "GRASIM.NS",
+    "Metals, Materials & Industrials",
+    "Diversified Materials",
+    "https://www.grasim.com"
+  ),
+  c(
+    "adani-enterprises",
+    "Adani Enterprises Limited",
+    "Adani Enterprises",
+    "ADANIENT.NS",
+    "Metals, Materials & Industrials",
+    "Diversified Industrials",
+    "https://www.adanienterprises.com"
+  ),
   c("airtel", "Bharti Airtel Limited", "Bharti Airtel", "BHARTIARTL.NS", "Telecom & Digital", "Telecommunications", "https://www.airtel.in"),
-  c("jio-financial", "Jio Financial Services Limited", "Jio Financial Services", "JIOFIN.NS", "Telecom & Digital", "Financial Technology", "https://www.jfs.in"),
+  c(
+    "jio-financial",
+    "Jio Financial Services Limited",
+    "Jio Financial Services",
+    "JIOFIN.NS",
+    "Telecom & Digital",
+    "Financial Technology",
+    "https://www.jfs.in"
+  ),
   c("info-edge", "Info Edge (India) Limited", "Info Edge", "NAUKRI.NS", "Telecom & Digital", "Internet Services", "https://www.infoedge.in")
 ];
 var INDIA_MARKET_SECTORS = Array.from(new Set(INDIA_MARKET_UNIVERSE.map((item) => item.sector)));
@@ -1835,41 +2086,45 @@ var DEMO_MARKET_QUOTES = [
 var DEFAULT_YAHOO_CHART_URL = "https://query1.finance.yahoo.com/v8/finance/chart";
 var yahooChartResponseSchema = z2.object({
   chart: z2.object({
-    result: z2.array(z2.object({
-      meta: z2.object({
-        currency: z2.string().optional(),
-        symbol: z2.string().optional(),
-        exchangeName: z2.string().optional(),
-        fullExchangeName: z2.string().optional(),
-        instrumentType: z2.string().optional(),
-        regularMarketTime: z2.number().nullable().optional(),
-        regularMarketPrice: z2.number().nullable().optional(),
-        regularMarketDayHigh: z2.number().nullable().optional(),
-        regularMarketDayLow: z2.number().nullable().optional(),
-        regularMarketVolume: z2.number().nullable().optional(),
-        chartPreviousClose: z2.number().nullable().optional(),
-        previousClose: z2.number().nullable().optional(),
-        exchangeDataDelayedBy: z2.number().nullable().optional(),
-        longName: z2.string().optional(),
-        shortName: z2.string().optional(),
-        currentTradingPeriod: z2.object({
-          regular: z2.object({
-            start: z2.number().optional(),
-            end: z2.number().optional()
+    result: z2.array(
+      z2.object({
+        meta: z2.object({
+          currency: z2.string().optional(),
+          symbol: z2.string().optional(),
+          exchangeName: z2.string().optional(),
+          fullExchangeName: z2.string().optional(),
+          instrumentType: z2.string().optional(),
+          regularMarketTime: z2.number().nullable().optional(),
+          regularMarketPrice: z2.number().nullable().optional(),
+          regularMarketDayHigh: z2.number().nullable().optional(),
+          regularMarketDayLow: z2.number().nullable().optional(),
+          regularMarketVolume: z2.number().nullable().optional(),
+          chartPreviousClose: z2.number().nullable().optional(),
+          previousClose: z2.number().nullable().optional(),
+          exchangeDataDelayedBy: z2.number().nullable().optional(),
+          longName: z2.string().optional(),
+          shortName: z2.string().optional(),
+          currentTradingPeriod: z2.object({
+            regular: z2.object({
+              start: z2.number().optional(),
+              end: z2.number().optional()
+            }).passthrough().optional()
           }).passthrough().optional()
-        }).passthrough().optional()
-      }).passthrough(),
-      timestamp: z2.array(z2.number()).optional().default([]),
-      indicators: z2.object({
-        quote: z2.array(z2.object({
-          open: z2.array(z2.number().nullable()).optional().default([]),
-          high: z2.array(z2.number().nullable()).optional().default([]),
-          low: z2.array(z2.number().nullable()).optional().default([]),
-          close: z2.array(z2.number().nullable()).optional().default([]),
-          volume: z2.array(z2.number().nullable()).optional().default([])
-        }).passthrough()).optional().default([])
+        }).passthrough(),
+        timestamp: z2.array(z2.number()).optional().default([]),
+        indicators: z2.object({
+          quote: z2.array(
+            z2.object({
+              open: z2.array(z2.number().nullable()).optional().default([]),
+              high: z2.array(z2.number().nullable()).optional().default([]),
+              low: z2.array(z2.number().nullable()).optional().default([]),
+              close: z2.array(z2.number().nullable()).optional().default([]),
+              volume: z2.array(z2.number().nullable()).optional().default([])
+            }).passthrough()
+          ).optional().default([])
+        }).passthrough()
       }).passthrough()
-    }).passthrough()).nullable().optional(),
+    ).nullable().optional(),
     error: z2.unknown().nullable().optional()
   }).passthrough()
 }).passthrough();
@@ -1978,9 +2233,7 @@ function fallbackQuote(symbol, assetType) {
 function resolveFreshness(meta, providerTimestampSeconds) {
   const nowSeconds = Math.floor(Date.now() / 1e3);
   const regular = meta.currentTradingPeriod?.regular;
-  const isRegularSession = Boolean(
-    regular?.start && regular?.end && nowSeconds >= regular.start && nowSeconds <= regular.end
-  );
+  const isRegularSession = Boolean(regular?.start && regular?.end && nowSeconds >= regular.start && nowSeconds <= regular.end);
   if (!isRegularSession) return "end_of_day";
   if (!providerTimestampSeconds) return "stale";
   const ageSeconds = Math.max(0, nowSeconds - providerTimestampSeconds);
@@ -2106,15 +2359,17 @@ async function fetchYahooFinanceChart(symbol, range, interval) {
     const high = valueAt(series.high, index);
     const low = valueAt(series.low, index);
     const volume = valueAt(series.volume, index);
-    return [{
-      date: new Date(timestamp * 1e3).toISOString(),
-      price: close,
-      ...open === null ? {} : { open },
-      ...high === null ? {} : { high },
-      ...low === null ? {} : { low },
-      close,
-      ...volume === null ? {} : { volume }
-    }];
+    return [
+      {
+        date: new Date(timestamp * 1e3).toISOString(),
+        price: close,
+        ...open === null ? {} : { open },
+        ...high === null ? {} : { high },
+        ...low === null ? {} : { low },
+        close,
+        ...volume === null ? {} : { volume }
+      }
+    ];
   });
   const marketTime = toFiniteNumber(result.meta.regularMarketTime);
   return {
@@ -2134,11 +2389,46 @@ async function fetchYahooFinanceHistory(symbol, range = "1m") {
 
 // server/providers/marketDataProvider.ts
 var DEFAULT_TWELVE_DATA_QUOTE_URL = "https://api.twelvedata.com/quote";
-var quoteResponseSchema = z3.object({ symbol: z3.string().optional(), name: z3.string().optional(), exchange: z3.string().nullable().optional(), currency: z3.string().optional(), datetime: z3.string().nullable().optional(), timestamp: z3.union([z3.string(), z3.number()]).nullable().optional(), open: z3.union([z3.string(), z3.number()]).nullable().optional(), high: z3.union([z3.string(), z3.number()]).nullable().optional(), low: z3.union([z3.string(), z3.number()]).nullable().optional(), close: z3.union([z3.string(), z3.number()]).nullable().optional(), price: z3.union([z3.string(), z3.number()]).nullable().optional(), previous_close: z3.union([z3.string(), z3.number()]).nullable().optional(), change: z3.union([z3.string(), z3.number()]).nullable().optional(), percent_change: z3.union([z3.string(), z3.number()]).nullable().optional(), volume: z3.union([z3.string(), z3.number()]).nullable().optional(), is_market_open: z3.boolean().optional() }).passthrough();
-var timeSeriesResponseSchema = z3.object({ status: z3.string().optional(), values: z3.array(z3.object({ datetime: z3.string(), open: z3.union([z3.string(), z3.number()]).nullable().optional(), high: z3.union([z3.string(), z3.number()]).nullable().optional(), low: z3.union([z3.string(), z3.number()]).nullable().optional(), close: z3.union([z3.string(), z3.number()]), volume: z3.union([z3.string(), z3.number()]).nullable().optional() }).passthrough()).optional().default([]) }).passthrough();
+var quoteResponseSchema = z3.object({
+  symbol: z3.string().optional(),
+  name: z3.string().optional(),
+  exchange: z3.string().nullable().optional(),
+  currency: z3.string().optional(),
+  datetime: z3.string().nullable().optional(),
+  timestamp: z3.union([z3.string(), z3.number()]).nullable().optional(),
+  open: z3.union([z3.string(), z3.number()]).nullable().optional(),
+  high: z3.union([z3.string(), z3.number()]).nullable().optional(),
+  low: z3.union([z3.string(), z3.number()]).nullable().optional(),
+  close: z3.union([z3.string(), z3.number()]).nullable().optional(),
+  price: z3.union([z3.string(), z3.number()]).nullable().optional(),
+  previous_close: z3.union([z3.string(), z3.number()]).nullable().optional(),
+  change: z3.union([z3.string(), z3.number()]).nullable().optional(),
+  percent_change: z3.union([z3.string(), z3.number()]).nullable().optional(),
+  volume: z3.union([z3.string(), z3.number()]).nullable().optional(),
+  is_market_open: z3.boolean().optional()
+}).passthrough();
+var timeSeriesResponseSchema = z3.object({
+  status: z3.string().optional(),
+  values: z3.array(
+    z3.object({
+      datetime: z3.string(),
+      open: z3.union([z3.string(), z3.number()]).nullable().optional(),
+      high: z3.union([z3.string(), z3.number()]).nullable().optional(),
+      low: z3.union([z3.string(), z3.number()]).nullable().optional(),
+      close: z3.union([z3.string(), z3.number()]),
+      volume: z3.union([z3.string(), z3.number()]).nullable().optional()
+    }).passthrough()
+  ).optional().default([])
+}).passthrough();
 var INDIA_EXCHANGE_ALIASES = { NSE: "NSE", XNSE: "NSE", NS: "NSE", BSE: "BSE", XBOM: "BSE", BO: "BSE" };
 function getConfiguration() {
-  return { provider: (process.env.MARKET_DATA_PROVIDER || "yahoo").trim().toLowerCase(), primaryProvider: (process.env.MARKET_DATA_PRIMARY_PROVIDER || "yahoo").trim().toLowerCase(), fallbackProvider: (process.env.MARKET_DATA_FALLBACK_PROVIDER || "twelvedata").trim().toLowerCase(), apiKey: process.env.MARKET_DATA_API_KEY?.trim() || process.env.TWELVE_DATA_API_KEY?.trim() || "", baseUrl: process.env.MARKET_DATA_BASE_URL?.trim() || DEFAULT_TWELVE_DATA_QUOTE_URL };
+  return {
+    provider: (process.env.MARKET_DATA_PROVIDER || "yahoo").trim().toLowerCase(),
+    primaryProvider: (process.env.MARKET_DATA_PRIMARY_PROVIDER || "yahoo").trim().toLowerCase(),
+    fallbackProvider: (process.env.MARKET_DATA_FALLBACK_PROVIDER || "twelvedata").trim().toLowerCase(),
+    apiKey: process.env.MARKET_DATA_API_KEY?.trim() || process.env.TWELVE_DATA_API_KEY?.trim() || "",
+    baseUrl: process.env.MARKET_DATA_BASE_URL?.trim() || DEFAULT_TWELVE_DATA_QUOTE_URL
+  };
 }
 function safeSymbol(symbol) {
   const normalized = symbol.trim().toUpperCase();
@@ -2235,13 +2525,32 @@ async function fetchTwelveDataQuote(symbol, assetType, configuration) {
   const responseExchange = data.exchange ? INDIA_EXCHANGE_ALIASES[data.exchange.toUpperCase()] || null : null;
   const indiaExchange = normalized.exchange || responseExchange;
   const responseBase = data.symbol ? normalizeTwelveDataSymbol(data.symbol).baseSymbol : normalized.baseSymbol;
-  const quote = { symbol: indiaExchange ? `${responseBase}:${indiaExchange}` : data.symbol || normalized.baseSymbol, name: data.name || data.symbol || normalized.baseSymbol, assetType, exchange: indiaExchange || data.exchange || null, currency: data.currency || (indiaExchange ? "INR" : "USD"), price, open: toNumber(data.open), high: toNumber(data.high), low: toNumber(data.low), previousClose, change, changePercent, volume: toNumber(data.volume), providerTimestamp: data.datetime || (data.timestamp == null ? null : String(data.timestamp)), retrievedAt: (/* @__PURE__ */ new Date()).toISOString(), freshness: twelveFreshness(indiaExchange || data.exchange, data.is_market_open), providerName: "Twelve Data" };
+  const quote = {
+    symbol: indiaExchange ? `${responseBase}:${indiaExchange}` : data.symbol || normalized.baseSymbol,
+    name: data.name || data.symbol || normalized.baseSymbol,
+    assetType,
+    exchange: indiaExchange || data.exchange || null,
+    currency: data.currency || (indiaExchange ? "INR" : "USD"),
+    price,
+    open: toNumber(data.open),
+    high: toNumber(data.high),
+    low: toNumber(data.low),
+    previousClose,
+    change,
+    changePercent,
+    volume: toNumber(data.volume),
+    providerTimestamp: data.datetime || (data.timestamp == null ? null : String(data.timestamp)),
+    retrievedAt: (/* @__PURE__ */ new Date()).toISOString(),
+    freshness: twelveFreshness(indiaExchange || data.exchange, data.is_market_open),
+    providerName: "Twelve Data"
+  };
   return { quote, status: "connected", message: `Twelve Data ${quote.freshness.replaceAll("_", " ")} quote loaded.` };
 }
 async function fetchRealQuote(provider, symbol, assetType, configuration) {
   if (provider === "twelvedata") return fetchTwelveDataQuote(symbol, assetType, configuration);
   const result = await fetchYahooFinanceQuote(symbol, assetType);
-  if (result.status !== "connected" || result.quote.freshness === "demo" || !Number.isFinite(result.quote.price) || result.quote.price < 0) throw new Error(result.message || "Yahoo Finance quote is unavailable.");
+  if (result.status !== "connected" || result.quote.freshness === "demo" || !Number.isFinite(result.quote.price) || result.quote.price < 0)
+    throw new Error(result.message || "Yahoo Finance quote is unavailable.");
   return result;
 }
 function providerOrder(symbol, configuration) {
@@ -2269,10 +2578,24 @@ async function fetchQuoteFromProvider(symbol, assetType = "equity") {
 }
 function rangeConfiguration(range, indiaEndOfDay = false) {
   if (indiaEndOfDay) {
-    const values2 = { "1d": { interval: "1day", outputsize: "2" }, "1w": { interval: "1day", outputsize: "5" }, "1m": { interval: "1day", outputsize: "30" }, "3m": { interval: "1day", outputsize: "90" }, "6m": { interval: "1day", outputsize: "180" }, "1y": { interval: "1day", outputsize: "365" } };
+    const values2 = {
+      "1d": { interval: "1day", outputsize: "2" },
+      "1w": { interval: "1day", outputsize: "5" },
+      "1m": { interval: "1day", outputsize: "30" },
+      "3m": { interval: "1day", outputsize: "90" },
+      "6m": { interval: "1day", outputsize: "180" },
+      "1y": { interval: "1day", outputsize: "365" }
+    };
     return values2[range] || values2["1m"];
   }
-  const values = { "1d": { interval: "5min", outputsize: "78" }, "1w": { interval: "1h", outputsize: "40" }, "1m": { interval: "1day", outputsize: "30" }, "3m": { interval: "1day", outputsize: "90" }, "6m": { interval: "1week", outputsize: "26" }, "1y": { interval: "1week", outputsize: "52" } };
+  const values = {
+    "1d": { interval: "5min", outputsize: "78" },
+    "1w": { interval: "1h", outputsize: "40" },
+    "1m": { interval: "1day", outputsize: "30" },
+    "3m": { interval: "1day", outputsize: "90" },
+    "6m": { interval: "1week", outputsize: "26" },
+    "1y": { interval: "1week", outputsize: "52" }
+  };
   return values[range] || values["1m"];
 }
 async function fetchTwelveDataHistory(symbol, range, configuration) {
@@ -2298,7 +2621,17 @@ async function fetchTwelveDataHistory(symbol, range, configuration) {
       const high = toNumber(value.high);
       const low = toNumber(value.low);
       const volume = toNumber(value.volume);
-      return [{ date: value.datetime, price: close, ...open === null ? {} : { open }, ...high === null ? {} : { high }, ...low === null ? {} : { low }, close, ...volume === null ? {} : { volume } }];
+      return [
+        {
+          date: value.datetime,
+          price: close,
+          ...open === null ? {} : { open },
+          ...high === null ? {} : { high },
+          ...low === null ? {} : { low },
+          close,
+          ...volume === null ? {} : { volume }
+        }
+      ];
     });
   } catch {
     return [];
@@ -2316,17 +2649,31 @@ async function checkMarketProviderDiagnostic() {
   const startedAt = Date.now();
   try {
     const result = await fetchQuoteFromProvider("INFY:NSE");
-    return { id: "market-data", name: result.quote.providerName, role: "Market quotes and history with provider-derived freshness labels", status: "connected", lastChecked: (/* @__PURE__ */ new Date()).toISOString(), latencyMs: Date.now() - startedAt, message: result.message };
+    return {
+      id: "market-data",
+      name: result.quote.providerName,
+      role: "Market quotes and history with provider-derived freshness labels",
+      status: "connected",
+      lastChecked: (/* @__PURE__ */ new Date()).toISOString(),
+      latencyMs: Date.now() - startedAt,
+      message: result.message
+    };
   } catch (error) {
-    return { id: "market-data", name: "Yahoo Finance \xB7 experimental/reference", role: "Free market quotes and history", status: "provider_unavailable", lastChecked: (/* @__PURE__ */ new Date()).toISOString(), latencyMs: Date.now() - startedAt, message: error instanceof Error ? error.message : "Free market provider is unavailable." };
+    return {
+      id: "market-data",
+      name: "Yahoo Finance \xB7 experimental/reference",
+      role: "Free market quotes and history",
+      status: "provider_unavailable",
+      lastChecked: (/* @__PURE__ */ new Date()).toISOString(),
+      latencyMs: Date.now() - startedAt,
+      message: error instanceof Error ? error.message : "Free market provider is unavailable."
+    };
   }
 }
 
 // server/marketDataService.ts
 function isUsableQuote(quote) {
-  return Boolean(
-    quote && quote.freshness !== "demo" && Number.isFinite(quote.price)
-  );
+  return Boolean(quote && quote.freshness !== "demo" && Number.isFinite(quote.price));
 }
 async function getMarketQuote(symbol, assetType = "equity") {
   const result = await fetchQuoteFromProvider(symbol, assetType);
@@ -2489,7 +2836,12 @@ async function fetchNewsData(query, category, region, page, endpointUrl = getCon
       return { items: [], status: "invalid_credentials", providerName, message: `${providerName} rejected the API key (HTTP ${response.status}).` };
     }
     if (response.status === 429) {
-      return { items: [], status: "rate_limited", providerName, message: `${providerName} rate limit reached. Cached results will continue to be served when available.` };
+      return {
+        items: [],
+        status: "rate_limited",
+        providerName,
+        message: `${providerName} rate limit reached. Cached results will continue to be served when available.`
+      };
     }
     throw new Error(`${providerName} request failed with HTTP ${response.status}.`);
   }
@@ -2503,18 +2855,20 @@ async function fetchNewsData(query, category, region, page, endpointUrl = getCon
     const sourceUrl = safeUrl(article.link);
     if (!title || sourceUrl === "#") return [];
     const imageUrl = safeUrl(article.image_url);
-    return [{
-      id: article.article_id || `newsdata-${retrievedAt}-${index}`,
-      title,
-      summary: article.description?.trim() || "Open the original publisher article for the full report.",
-      sourceName: article.source_name || article.source_id || "Publisher",
-      sourceUrl,
-      publishedAt: toIsoDate(article.pubDate),
-      retrievedAt,
-      category: article.category?.[0] || mapCategory(category),
-      region: article.country?.[0] || region || "global",
-      imageUrl: imageUrl === "#" ? null : imageUrl
-    }];
+    return [
+      {
+        id: article.article_id || `newsdata-${retrievedAt}-${index}`,
+        title,
+        summary: article.description?.trim() || "Open the original publisher article for the full report.",
+        sourceName: article.source_name || article.source_id || "Publisher",
+        sourceUrl,
+        publishedAt: toIsoDate(article.pubDate),
+        retrievedAt,
+        category: article.category?.[0] || mapCategory(category),
+        region: article.country?.[0] || region || "global",
+        imageUrl: imageUrl === "#" ? null : imageUrl
+      }
+    ];
   });
   return {
     items,
@@ -2692,7 +3046,35 @@ var TOPICS = [
 ];
 var POSITIVE = /\b(rise|rises|rose|gain|gains|gained|surge|surges|surged|jump|jumps|jumped|rally|rallies|record high|beat|beats|up \d|higher|growth|grew|boost|strong|upgrade|expands?|approval|approved|profit rose|recovers?|eases?|cut rates?)\b/gi;
 var NEGATIVE = /\b(fall|falls|fell|drop|drops|dropped|slump|slumps|plunge|plunges|plunged|decline|declines|declined|loss|losses|miss|misses|missed|lower|weak|weaker|cut jobs|layoffs?|downgrade|probe|fine|penalty|ban|lawsuit|default|slowdown|recession|tariff hike|warns?|crash|sell-off|selloff)\b/gi;
-var METRICS = ["net profit", "profit", "net loss", "loss", "revenue", "sales", "EBITDA", "margin", "dividend", "repo rate", "interest rate", "yield", "CPI inflation", "inflation", "GDP", "growth", "exports", "imports", "valuation", "funding", "deal", "market cap", "shares", "stock", "price", "jobs", "unemployment"];
+var METRICS = [
+  "net profit",
+  "profit",
+  "net loss",
+  "loss",
+  "revenue",
+  "sales",
+  "EBITDA",
+  "margin",
+  "dividend",
+  "repo rate",
+  "interest rate",
+  "yield",
+  "CPI inflation",
+  "inflation",
+  "GDP",
+  "growth",
+  "exports",
+  "imports",
+  "valuation",
+  "funding",
+  "deal",
+  "market cap",
+  "shares",
+  "stock",
+  "price",
+  "jobs",
+  "unemployment"
+];
 function extractFigures(text) {
   const out = [];
   const re = /((?:₹|Rs\.?|\$|€|£)\s?\d[\d,.]*(?:\s?(?:lakh|crore|million|billion|trillion|bn|mn|cr|k))?|\d[\d,.]*\s?(?:%|per cent|percent|bps|basis points)|\d[\d,.]*\s?(?:lakh|crore|million|billion|trillion)\b)/gi;
@@ -2728,33 +3110,45 @@ function buildRuleBasedNewsBrief(input, now = /* @__PURE__ */ new Date()) {
   const text = `${title}. ${summaryText}`;
   const topics = TOPICS.filter((t) => t.re.test(text));
   const primary = topics[0];
-  const entities = uniq(ENTITIES2.filter((e) => e.re.test(text)).map(({ name, type, symbol }) => ({ name, type, symbol })), (e) => e.name).slice(0, 6);
+  const entities = uniq(
+    ENTITIES2.filter((e) => e.re.test(text)).map(({ name, type, symbol }) => ({ name, type, symbol })),
+    (e) => e.name
+  ).slice(0, 6);
   const figures = extractFigures(text);
   const { sentiment, strength } = scoreSentiment(text);
   const body = sentences(summaryText).filter((s2) => s2.toLowerCase() !== title.toLowerCase());
   const lead = entities.find((e) => e.type === "company") ?? entities[0];
   const summary = body.length ? body.slice(0, 2).join(" ") : `${input.sourceName} reports: ${title}${/[.!?]$/.test(title) ? "" : "."} Only the headline is available, so the detail behind it needs the full article.`;
-  const keyPoints = uniq([
-    ...body.slice(0, 3),
-    ...figures.filter((f) => !body.some((b) => b.includes(f.value))).slice(0, 2).map((f) => `${f.label}: ${f.value} (as reported).`),
-    lead ? `Main subject: ${lead.name}${lead.type === "company" ? "" : ` (${lead.type})`}.` : ""
-  ].filter(Boolean)).slice(0, 5);
+  const keyPoints = uniq(
+    [
+      ...body.slice(0, 3),
+      ...figures.filter((f) => !body.some((b) => b.includes(f.value))).slice(0, 2).map((f) => `${f.label}: ${f.value} (as reported).`),
+      lead ? `Main subject: ${lead.name}${lead.type === "company" ? "" : ` (${lead.type})`}.` : ""
+    ].filter(Boolean)
+  ).slice(0, 5);
   if (!keyPoints.length) keyPoints.push(title);
   const impact = topics.slice(0, 3).map((t) => ({
     area: t.area,
     direction: sentiment,
     note: `${t.label} news; on the reported facts the effect looks ${DIRECTION_WORD[sentiment]}. ${t.why}`
   }));
-  if (!impact.length) impact.push({ area: "Markets", direction: "unclear", note: "The headline does not name a clear market channel. Read the full article before drawing a conclusion." });
+  if (!impact.length)
+    impact.push({
+      area: "Markets",
+      direction: "unclear",
+      note: "The headline does not name a clear market channel. Read the full article before drawing a conclusion."
+    });
   const whyItMatters = primary ? `${primary.why}${lead ? ` Here it concerns ${lead.name}.` : ""}` : "The supplied text does not show a direct link to prices, rates or household finances; treat it as context until the full article confirms more.";
   const whatToWatch = uniq(topics.flatMap((t) => t.watch)).slice(0, 4);
   if (!whatToWatch.length) whatToWatch.push("Follow-up reporting with figures and named sources", "Any official statement or filing");
-  const verify = uniq([
-    "Read the full article; this brief uses only the headline and summary.",
-    entities.some((e) => e.type === "company") ? "Check the company\u2019s own exchange filing or press release." : "",
-    topics.some((t) => ["rates", "inflation", "jobs", "currency"].includes(t.id)) ? "Confirm figures against the official release (RBI, MoSPI, Fed or the relevant agency)." : "",
-    figures.length ? "Check whether reported figures are year-on-year, quarter-on-quarter or absolute." : ""
-  ].filter(Boolean));
+  const verify = uniq(
+    [
+      "Read the full article; this brief uses only the headline and summary.",
+      entities.some((e) => e.type === "company") ? "Check the company\u2019s own exchange filing or press release." : "",
+      topics.some((t) => ["rates", "inflation", "jobs", "currency"].includes(t.id)) ? "Confirm figures against the official release (RBI, MoSPI, Fed or the relevant agency)." : "",
+      figures.length ? "Check whether reported figures are year-on-year, quarter-on-quarter or absolute." : ""
+    ].filter(Boolean)
+  );
   const confidence = !summaryText ? "low" : strength >= 2 && figures.length ? "medium" : "low";
   return {
     headline: title,
@@ -2847,10 +3241,7 @@ async function fetchRssFeed(feedUrl, sourceName, category = "Business") {
     });
     if (!response.ok) return [];
     const xml = await response.text();
-    const blocks = [
-      ...xml.match(/<item\b[\s\S]*?<\/item>/gi) || [],
-      ...xml.match(/<entry\b[\s\S]*?<\/entry>/gi) || []
-    ];
+    const blocks = [...xml.match(/<item\b[\s\S]*?<\/item>/gi) || [], ...xml.match(/<entry\b[\s\S]*?<\/entry>/gi) || []];
     const retrievedAt = (/* @__PURE__ */ new Date()).toISOString();
     return blocks.slice(0, 16).flatMap((block, index) => {
       const title = stripHtml(extractTag(block, "title"));
@@ -2861,18 +3252,20 @@ async function fetchRssFeed(feedUrl, sourceName, category = "Business") {
       const imageUrl = safeHttpUrl(extractAttribute(block, "media:content", "url")) || safeHttpUrl(extractAttribute(block, "media:thumbnail", "url")) || safeHttpUrl(extractAttribute(block, "enclosure", "url"));
       if (!title || !url) return [];
       const timestamp = Date.parse(publishedAt);
-      return [{
-        id: `rss-${itemSource.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${timestamp || retrievedAt}-${index}`,
-        title,
-        summary: description || "Open the original publisher article for the full report.",
-        sourceName: itemSource,
-        sourceUrl: url,
-        publishedAt: Number.isFinite(timestamp) ? new Date(timestamp).toISOString() : null,
-        retrievedAt,
-        category,
-        region: "global",
-        imageUrl: imageUrl || null
-      }];
+      return [
+        {
+          id: `rss-${itemSource.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${timestamp || retrievedAt}-${index}`,
+          title,
+          summary: description || "Open the original publisher article for the full report.",
+          sourceName: itemSource,
+          sourceUrl: url,
+          publishedAt: Number.isFinite(timestamp) ? new Date(timestamp).toISOString() : null,
+          retrievedAt,
+          category,
+          region: "global",
+          imageUrl: imageUrl || null
+        }
+      ];
     });
   } catch {
     return [];
@@ -2943,11 +3336,7 @@ Please explain:
 5. Key limitations caused by having only a headline and summary`;
   let structuredAnswer;
   try {
-    structuredAnswer = await callGroqStructuredFinancialAnswer(
-      systemPrompt2,
-      userPrompt,
-      { fallbackQuestion: article.title }
-    );
+    structuredAnswer = await callGroqStructuredFinancialAnswer(systemPrompt2, userPrompt, { fallbackQuestion: article.title });
   } catch {
     structuredAnswer = createFallbackStructuredFinancialAnswer(
       article.title,
@@ -3048,8 +3437,21 @@ var FORMULAS = {
   },
   hraExemption: (hra, rent, basicDa, metro) => Math.max(0, Math.min(hra, rent - 0.1 * basicDa, (metro ? 0.5 : 0.4) * basicDa))
 };
-var NEW_REGIME_SLABS = [[4e5, 0], [8e5, 0.05], [12e5, 0.1], [16e5, 0.15], [2e6, 0.2], [24e5, 0.25], [Infinity, 0.3]];
-var OLD_REGIME_SLABS = [[25e4, 0], [5e5, 0.05], [1e6, 0.2], [Infinity, 0.3]];
+var NEW_REGIME_SLABS = [
+  [4e5, 0],
+  [8e5, 0.05],
+  [12e5, 0.1],
+  [16e5, 0.15],
+  [2e6, 0.2],
+  [24e5, 0.25],
+  [Infinity, 0.3]
+];
+var OLD_REGIME_SLABS = [
+  [25e4, 0],
+  [5e5, 0.05],
+  [1e6, 0.2],
+  [Infinity, 0.3]
+];
 var F = FORMULAS;
 var newTax15L = F.slabTax(15e5 - 75e3, NEW_REGIME_SLABS);
 var oldTax15L = F.slabTax(15e5 - 5e4 - 15e4 - 25e3, OLD_REGIME_SLABS);
@@ -3061,8 +3463,16 @@ var KNOWLEDGE = [
     title: "Simple interest",
     summary: "Interest is earned only on the original principal, so it grows in a straight line.",
     formula: "SI = P \xD7 r \xD7 t",
-    variables: [["P", "principal"], ["r", "annual rate (decimal)"], ["t", "years"]],
-    example: { inputs: "\u20B91,00,000 at 8% for 3 years", result: `${inr(F.simpleInterest(1e5, 0.08, 3))} interest; maturity \u20B91,24,000`, value: F.simpleInterest(1e5, 0.08, 3) },
+    variables: [
+      ["P", "principal"],
+      ["r", "annual rate (decimal)"],
+      ["t", "years"]
+    ],
+    example: {
+      inputs: "\u20B91,00,000 at 8% for 3 years",
+      result: `${inr(F.simpleInterest(1e5, 0.08, 3))} interest; maturity \u20B91,24,000`,
+      value: F.simpleInterest(1e5, 0.08, 3)
+    },
     keywords: ["simple interest", "si", "flat interest"],
     reference: "Standard time-value-of-money definition (NCERT Class 8 Mathematics, Comparing Quantities)."
   },
@@ -3072,8 +3482,18 @@ var KNOWLEDGE = [
     title: "Compound interest",
     summary: "Interest is added to the principal each period, so later interest is earned on earlier interest.",
     formula: "A = P \xD7 (1 + r/n)^(n \xD7 t);  CI = A \u2212 P",
-    variables: [["A", "maturity amount"], ["P", "principal"], ["r", "annual rate"], ["n", "compounding periods per year (4 = quarterly)"], ["t", "years"]],
-    example: { inputs: "\u20B91,00,000 at 8% compounded quarterly for 5 years", result: `${inr(F.compound(1e5, 0.08, 4, 5))} (interest ${inr(F.compound(1e5, 0.08, 4, 5) - 1e5)})`, value: F.compound(1e5, 0.08, 4, 5) },
+    variables: [
+      ["A", "maturity amount"],
+      ["P", "principal"],
+      ["r", "annual rate"],
+      ["n", "compounding periods per year (4 = quarterly)"],
+      ["t", "years"]
+    ],
+    example: {
+      inputs: "\u20B91,00,000 at 8% compounded quarterly for 5 years",
+      result: `${inr(F.compound(1e5, 0.08, 4, 5))} (interest ${inr(F.compound(1e5, 0.08, 4, 5) - 1e5)})`,
+      value: F.compound(1e5, 0.08, 4, 5)
+    },
     notes: ["Bank FDs in India usually compound quarterly.", "More frequent compounding gives a slightly higher amount for the same stated rate."],
     keywords: ["compound interest", "compounding", "ci", "fd maturity", "fixed deposit"],
     reference: "Standard TVM formula; RBI and bank FD calculators use quarterly compounding."
@@ -3105,7 +3525,11 @@ var KNOWLEDGE = [
     title: "Rule of 72",
     summary: "A quick estimate of how many years money takes to double.",
     formula: "Years to double \u2248 72 \xF7 rate (%);  exact = ln 2 \xF7 ln(1 + r)",
-    example: { inputs: "8% a year", result: `${F.ruleOf72(8)} years by the rule; ${F.doublingYearsExact(0.08).toFixed(2)} years exactly`, value: F.ruleOf72(8) },
+    example: {
+      inputs: "8% a year",
+      result: `${F.ruleOf72(8)} years by the rule; ${F.doublingYearsExact(0.08).toFixed(2)} years exactly`,
+      value: F.ruleOf72(8)
+    },
     keywords: ["rule of 72", "double money", "doubling time"],
     reference: "Standard approximation; accurate for rates of roughly 6\u201310%."
   },
@@ -3135,7 +3559,11 @@ var KNOWLEDGE = [
     title: "Present value",
     summary: "What a future amount is worth today at a given rate.",
     formula: "PV = FV \xF7 (1 + r)^t",
-    example: { inputs: "\u20B910,00,000 received in 10 years, 8% rate", result: inr(F.presentValue(1e6, 0.08, 10)), value: F.presentValue(1e6, 0.08, 10) },
+    example: {
+      inputs: "\u20B910,00,000 received in 10 years, 8% rate",
+      result: inr(F.presentValue(1e6, 0.08, 10)),
+      value: F.presentValue(1e6, 0.08, 10)
+    },
     keywords: ["present value", "pv", "discounting", "time value of money"],
     reference: "Standard TVM formula."
   },
@@ -3156,9 +3584,16 @@ var KNOWLEDGE = [
     title: "SIP future value",
     summary: "What a fixed monthly investment grows to, assuming a steady return.",
     formula: "FV = P \xD7 [((1 + i)^n \u2212 1) \xF7 i] \xD7 (1 + i),  i = annual rate \xF7 12, n = months",
-    variables: [["P", "monthly SIP"], ["i", "monthly rate"], ["n", "number of instalments"]],
+    variables: [
+      ["P", "monthly SIP"],
+      ["i", "monthly rate"],
+      ["n", "number of instalments"]
+    ],
     example: { inputs: "\u20B910,000 a month for 10 years at 12%", result: inr(F.sipFutureValue(1e4, 0.12, 120)), value: F.sipFutureValue(1e4, 0.12, 120) },
-    notes: ["Assumes each instalment is invested at the start of the month (the convention most AMC calculators use).", "Real returns vary; equity funds do not grow at a fixed rate."],
+    notes: [
+      "Assumes each instalment is invested at the start of the month (the convention most AMC calculators use).",
+      "Real returns vary; equity funds do not grow at a fixed rate."
+    ],
     keywords: ["sip", "systematic investment plan", "sip calculator", "monthly investment"],
     reference: "Future value of an annuity due; matches AMFI-style SIP calculators."
   },
@@ -3168,7 +3603,11 @@ var KNOWLEDGE = [
     title: "SIP needed for a target",
     summary: "The monthly amount required to reach a goal by a date.",
     formula: "P = Target \xF7 ([((1 + i)^n \u2212 1) \xF7 i] \xD7 (1 + i))",
-    example: { inputs: "\u20B91,00,00,000 in 15 years at 12%", result: `${inr(F.sipForTarget(1e7, 0.12, 180))} a month`, value: F.sipForTarget(1e7, 0.12, 180) },
+    example: {
+      inputs: "\u20B91,00,00,000 in 15 years at 12%",
+      result: `${inr(F.sipForTarget(1e7, 0.12, 180))} a month`,
+      value: F.sipForTarget(1e7, 0.12, 180)
+    },
     keywords: ["sip needed", "goal sip", "how much to invest monthly", "target corpus"],
     reference: "Rearranged SIP future-value formula."
   },
@@ -3187,7 +3626,13 @@ var KNOWLEDGE = [
     chapter: "Investing",
     title: "Asset allocation by goal horizon",
     summary: "Money needed soon belongs in stable assets; money for 5+ years can take equity risk.",
-    notes: ["Under 1 year: liquid funds, FDs, savings.", "1\u20133 years: mostly debt (short-duration funds, FDs).", "3\u20135 years: a mix, for example 40% equity and 60% debt.", "5+ years: equity-heavy, for example 60\u201375% equity, with some debt and gold.", "Rebalance once a year back to your target mix."],
+    notes: [
+      "Under 1 year: liquid funds, FDs, savings.",
+      "1\u20133 years: mostly debt (short-duration funds, FDs).",
+      "3\u20135 years: a mix, for example 40% equity and 60% debt.",
+      "5+ years: equity-heavy, for example 60\u201375% equity, with some debt and gold.",
+      "Rebalance once a year back to your target mix."
+    ],
     keywords: ["asset allocation", "equity debt gold mix", "where to invest", "portfolio mix", "rebalancing"],
     reference: "SEBI investor education material on risk and time horizon; widely used planning practice."
   },
@@ -3196,8 +3641,17 @@ var KNOWLEDGE = [
     chapter: "Tax (India)",
     title: "Capital gains tax on equity and mutual funds",
     summary: "Tax on profit when you sell investments, from 23 July 2024.",
-    notes: ["Listed equity and equity mutual funds: short-term (held 12 months or less) taxed at 20%.", "Long-term (held more than 12 months) taxed at 12.5% on gains above \u20B91,25,000 a year.", "Debt mutual funds bought on or after 1 April 2023: gains added to income and taxed at your slab rate.", "Add 4% health and education cess (and surcharge where it applies)."],
-    example: { inputs: "\u20B93,00,000 long-term equity gain in a year", result: `${inr((3e5 - 125e3) * 0.125)} before cess (12.5% of \u20B91,75,000)`, value: (3e5 - 125e3) * 0.125 },
+    notes: [
+      "Listed equity and equity mutual funds: short-term (held 12 months or less) taxed at 20%.",
+      "Long-term (held more than 12 months) taxed at 12.5% on gains above \u20B91,25,000 a year.",
+      "Debt mutual funds bought on or after 1 April 2023: gains added to income and taxed at your slab rate.",
+      "Add 4% health and education cess (and surcharge where it applies)."
+    ],
+    example: {
+      inputs: "\u20B93,00,000 long-term equity gain in a year",
+      result: `${inr((3e5 - 125e3) * 0.125)} before cess (12.5% of \u20B91,75,000)`,
+      value: (3e5 - 125e3) * 0.125
+    },
     keywords: ["capital gains", "ltcg", "stcg", "tax on mutual funds", "tax on shares", "equity tax"],
     reference: "Income-tax Act sections 111A and 112A as amended by the Finance (No. 2) Act 2024."
   },
@@ -3208,8 +3662,15 @@ var KNOWLEDGE = [
     title: "EMI (equated monthly instalment)",
     summary: "The fixed monthly payment that repays a loan with interest over its tenure.",
     formula: "EMI = P \xD7 i \xD7 (1 + i)^n \xF7 [(1 + i)^n \u2212 1],  i = annual rate \xF7 12, n = months",
-    example: { inputs: "\u20B910,00,000 at 9% for 20 years", result: `${inr(F.emi(1e6, 0.09, 240))} a month; total interest ${inr(F.emi(1e6, 0.09, 240) * 240 - 1e6)}`, value: F.emi(1e6, 0.09, 240) },
-    notes: ["In month 1 of this loan, interest is \u20B97,500 (\u20B910,00,000 \xD7 0.75%) and only about \u20B91,497 repays principal; the split shifts towards principal over time.", "Keep total EMIs under 30\u201340% of take-home pay."],
+    example: {
+      inputs: "\u20B910,00,000 at 9% for 20 years",
+      result: `${inr(F.emi(1e6, 0.09, 240))} a month; total interest ${inr(F.emi(1e6, 0.09, 240) * 240 - 1e6)}`,
+      value: F.emi(1e6, 0.09, 240)
+    },
+    notes: [
+      "In month 1 of this loan, interest is \u20B97,500 (\u20B910,00,000 \xD7 0.75%) and only about \u20B91,497 repays principal; the split shifts towards principal over time.",
+      "Keep total EMIs under 30\u201340% of take-home pay."
+    ],
     keywords: ["emi", "loan emi", "home loan", "car loan", "personal loan", "instalment"],
     reference: "Standard reducing-balance annuity formula used by Indian banks."
   },
@@ -3218,7 +3679,11 @@ var KNOWLEDGE = [
     chapter: "Loans",
     title: "Loan prepayment",
     summary: "Paying extra reduces the balance, so every later month carries less interest.",
-    notes: ["Prepaying a loan earns you its interest rate, risk-free and tax-free.", "RBI rules bar prepayment penalties on floating-rate loans taken by individuals.", 'Choose "reduce tenure" to save the most interest, or "reduce EMI" for cash-flow relief.'],
+    notes: [
+      "Prepaying a loan earns you its interest rate, risk-free and tax-free.",
+      "RBI rules bar prepayment penalties on floating-rate loans taken by individuals.",
+      'Choose "reduce tenure" to save the most interest, or "reduce EMI" for cash-flow relief.'
+    ],
     keywords: ["prepayment", "prepay loan", "foreclosure", "part payment", "reduce tenure"],
     reference: "RBI circular on foreclosure charges for floating-rate term loans to individuals."
   },
@@ -3227,7 +3692,11 @@ var KNOWLEDGE = [
     chapter: "Loans",
     title: "Debt avalanche and snowball",
     summary: "Two ways to clear several debts.",
-    notes: ["Avalanche: pay minimums on all, put extra on the highest interest rate first. Saves the most interest.", "Snowball: put extra on the smallest balance first. Quick wins help motivation.", "Credit cards (often 36\u201342% a year) come first under either method."],
+    notes: [
+      "Avalanche: pay minimums on all, put extra on the highest interest rate first. Saves the most interest.",
+      "Snowball: put extra on the smallest balance first. Quick wins help motivation.",
+      "Credit cards (often 36\u201342% a year) come first under either method."
+    ],
     keywords: ["debt avalanche", "debt snowball", "multiple loans", "credit card debt"],
     reference: "Widely used personal-finance methods."
   },
@@ -3238,8 +3707,17 @@ var KNOWLEDGE = [
     title: "New tax regime, FY 2025-26",
     summary: "The default regime: lower slab rates, few deductions.",
     formula: "Slabs on taxable income: \u20B90\u20134,00,000 nil; \u20B94,00,001\u20138,00,000 5%; \u20B98,00,001\u201312,00,000 10%; \u20B912,00,001\u201316,00,000 15%; \u20B916,00,001\u201320,00,000 20%; \u20B920,00,001\u201324,00,000 25%; above \u20B924,00,000 30%",
-    example: { inputs: "\u20B915,00,000 salary", working: "Taxable = 15,00,000 \u2212 75,000 standard deduction = 14,25,000", result: `${inr(newTax15L)} + 4% cess = ${inr(newTax15L * 1.04)}`, value: newTax15L },
-    notes: ["Standard deduction \u20B975,000 for salaried and pensioners.", "Section 87A rebate up to \u20B960,000 when taxable income is \u20B912,00,000 or less, so salary up to \u20B912,75,000 pays no tax (marginal relief just above).", "Employer NPS contribution up to 14% of basic + DA is deductible (80CCD(2))."],
+    example: {
+      inputs: "\u20B915,00,000 salary",
+      working: "Taxable = 15,00,000 \u2212 75,000 standard deduction = 14,25,000",
+      result: `${inr(newTax15L)} + 4% cess = ${inr(newTax15L * 1.04)}`,
+      value: newTax15L
+    },
+    notes: [
+      "Standard deduction \u20B975,000 for salaried and pensioners.",
+      "Section 87A rebate up to \u20B960,000 when taxable income is \u20B912,00,000 or less, so salary up to \u20B912,75,000 pays no tax (marginal relief just above).",
+      "Employer NPS contribution up to 14% of basic + DA is deductible (80CCD(2))."
+    ],
     keywords: ["new regime", "new tax regime", "tax slabs", "income tax", "87a rebate", "tax calculation"],
     reference: "Finance Act 2025, section 115BAC; Income Tax Department FY 2025-26 guidance."
   },
@@ -3249,8 +3727,18 @@ var KNOWLEDGE = [
     title: "Old tax regime, FY 2025-26",
     summary: "Higher slab rates but allows deductions such as 80C, 80D, HRA and home-loan interest.",
     formula: "Slabs (below 60): \u20B90\u20132,50,000 nil; \u20B92,50,001\u20135,00,000 5%; \u20B95,00,001\u201310,00,000 20%; above \u20B910,00,000 30%",
-    example: { inputs: "\u20B915,00,000 salary, \u20B91,50,000 80C, \u20B925,000 80D", working: "Taxable = 15,00,000 \u2212 50,000 \u2212 1,50,000 \u2212 25,000 = 12,75,000", result: `${inr(oldTax15L)} + 4% cess = ${inr(oldTax15L * 1.04)}`, value: oldTax15L },
-    notes: ["Standard deduction \u20B950,000.", "Section 87A rebate up to \u20B912,500 when taxable income is \u20B95,00,000 or less.", "Seniors (60+) have a \u20B93,00,000 nil slab; super seniors (80+) \u20B95,00,000.", "Compare both regimes every year; the ArthaMind tax tool does this for you."],
+    example: {
+      inputs: "\u20B915,00,000 salary, \u20B91,50,000 80C, \u20B925,000 80D",
+      working: "Taxable = 15,00,000 \u2212 50,000 \u2212 1,50,000 \u2212 25,000 = 12,75,000",
+      result: `${inr(oldTax15L)} + 4% cess = ${inr(oldTax15L * 1.04)}`,
+      value: oldTax15L
+    },
+    notes: [
+      "Standard deduction \u20B950,000.",
+      "Section 87A rebate up to \u20B912,500 when taxable income is \u20B95,00,000 or less.",
+      "Seniors (60+) have a \u20B93,00,000 nil slab; super seniors (80+) \u20B95,00,000.",
+      "Compare both regimes every year; the ArthaMind tax tool does this for you."
+    ],
     keywords: ["old regime", "old tax regime", "80c", "deductions", "hra", "tax comparison"],
     reference: "Income-tax Act first schedule; Finance Act 2025."
   },
@@ -3259,7 +3747,13 @@ var KNOWLEDGE = [
     chapter: "Tax (India)",
     title: "Main deductions (old regime)",
     summary: "Limits most salaried people use.",
-    notes: ["80C: up to \u20B91,50,000 (EPF, PPF, ELSS, life premium, principal on home loan, children\u2019s tuition).", "80D: health insurance up to \u20B925,000 for self and family (\u20B950,000 if 60+), plus up to \u20B925,000 / \u20B950,000 for parents.", "80CCD(1B): extra \u20B950,000 for your own NPS contribution.", "Section 24(b): up to \u20B92,00,000 home-loan interest on a self-occupied house.", "Most of these are not available in the new regime."],
+    notes: [
+      "80C: up to \u20B91,50,000 (EPF, PPF, ELSS, life premium, principal on home loan, children\u2019s tuition).",
+      "80D: health insurance up to \u20B925,000 for self and family (\u20B950,000 if 60+), plus up to \u20B925,000 / \u20B950,000 for parents.",
+      "80CCD(1B): extra \u20B950,000 for your own NPS contribution.",
+      "Section 24(b): up to \u20B92,00,000 home-loan interest on a self-occupied house.",
+      "Most of these are not available in the new regime."
+    ],
     keywords: ["80c", "80d", "80ccd", "nps deduction", "home loan interest", "section 24", "deductions"],
     reference: "Income-tax Act chapter VI-A and section 24(b)."
   },
@@ -3269,7 +3763,11 @@ var KNOWLEDGE = [
     title: "HRA exemption",
     summary: "Part of house rent allowance is tax-free if you pay rent (old regime).",
     formula: "Exempt HRA = least of: actual HRA; rent \u2212 10% of (basic + DA); 50% of (basic + DA) in Delhi, Mumbai, Kolkata, Chennai, else 40%",
-    example: { inputs: "Basic + DA \u20B96,00,000, HRA \u20B92,40,000, rent \u20B93,00,000, metro", result: `${inr(F.hraExemption(24e4, 3e5, 6e5, true))} exempt`, value: F.hraExemption(24e4, 3e5, 6e5, true) },
+    example: {
+      inputs: "Basic + DA \u20B96,00,000, HRA \u20B92,40,000, rent \u20B93,00,000, metro",
+      result: `${inr(F.hraExemption(24e4, 3e5, 6e5, true))} exempt`,
+      value: F.hraExemption(24e4, 3e5, 6e5, true)
+    },
     keywords: ["hra", "house rent allowance", "rent exemption"],
     reference: "Section 10(13A) and rule 2A of the Income-tax Rules."
   },
@@ -3351,7 +3849,11 @@ var KNOWLEDGE = [
     title: "Break-even point",
     summary: "Units to sell before a business stops losing money.",
     formula: "Break-even units = Fixed costs \xF7 (Price \u2212 Variable cost per unit)",
-    example: { inputs: "Fixed \u20B95,00,000, price \u20B9250, variable \u20B9150", result: `${F.breakEvenUnits(5e5, 250, 150).toLocaleString("en-IN")} units`, value: F.breakEvenUnits(5e5, 250, 150) },
+    example: {
+      inputs: "Fixed \u20B95,00,000, price \u20B9250, variable \u20B9150",
+      result: `${F.breakEvenUnits(5e5, 250, 150).toLocaleString("en-IN")} units`,
+      value: F.breakEvenUnits(5e5, 250, 150)
+    },
     keywords: ["break even", "contribution margin", "fixed cost"],
     reference: "Standard cost-volume-profit analysis."
   },
@@ -3362,7 +3864,11 @@ var KNOWLEDGE = [
     title: "Net present value (NPV)",
     summary: "Present value of future cash flows minus the cost today; positive NPV creates value at that rate.",
     formula: "NPV = \u03A3 CF\u209C \xF7 (1 + r)^t \u2212 Initial investment",
-    example: { inputs: "Invest \u20B91,00,000; receive \u20B940,000 a year for 3 years; 10% rate", result: `${inr(F.npv(0.1, [-1e5, 4e4, 4e4, 4e4]))} (negative, so it falls short of 10%)`, value: F.npv(0.1, [-1e5, 4e4, 4e4, 4e4]) },
+    example: {
+      inputs: "Invest \u20B91,00,000; receive \u20B940,000 a year for 3 years; 10% rate",
+      result: `${inr(F.npv(0.1, [-1e5, 4e4, 4e4, 4e4]))} (negative, so it falls short of 10%)`,
+      value: F.npv(0.1, [-1e5, 4e4, 4e4, 4e4])
+    },
     keywords: ["npv", "net present value", "discounted cash flow", "dcf"],
     reference: "Standard capital-budgeting method."
   },
@@ -3372,7 +3878,11 @@ var KNOWLEDGE = [
     title: "Internal rate of return (IRR)",
     summary: "The discount rate at which NPV is zero.",
     formula: "Find r such that \u03A3 CF\u209C \xF7 (1 + r)^t = 0",
-    example: { inputs: "\u2212\u20B91,00,000 then \u20B940,000 a year for 3 years", result: pct(F.irr([-1e5, 4e4, 4e4, 4e4])), value: F.irr([-1e5, 4e4, 4e4, 4e4]) },
+    example: {
+      inputs: "\u2212\u20B91,00,000 then \u20B940,000 a year for 3 years",
+      result: pct(F.irr([-1e5, 4e4, 4e4, 4e4])),
+      value: F.irr([-1e5, 4e4, 4e4, 4e4])
+    },
     keywords: ["irr", "internal rate of return"],
     reference: "Standard capital-budgeting method."
   },
@@ -3382,7 +3892,11 @@ var KNOWLEDGE = [
     title: "Bond price and yield",
     summary: "A bond is worth its coupons and face value discounted at the market yield; prices fall when yields rise.",
     formula: "Price = \u03A3 C \xF7 (1 + y)^t + F \xF7 (1 + y)^T;  Current yield = Annual coupon \xF7 Price",
-    example: { inputs: "\u20B91,000 face, 8% annual coupon, 3 years, market yield 7%", result: `${inr(F.bondPrice(1e3, 0.08, 0.07, 3), 2)} (above face because coupon > yield)`, value: F.bondPrice(1e3, 0.08, 0.07, 3) },
+    example: {
+      inputs: "\u20B91,000 face, 8% annual coupon, 3 years, market yield 7%",
+      result: `${inr(F.bondPrice(1e3, 0.08, 0.07, 3), 2)} (above face because coupon > yield)`,
+      value: F.bondPrice(1e3, 0.08, 0.07, 3)
+    },
     keywords: ["bond price", "yield to maturity", "ytm", "current yield", "coupon", "g-sec"],
     reference: "Standard fixed-income pricing."
   },
@@ -3434,7 +3948,11 @@ var KNOWLEDGE = [
     chapter: "Personal finance rules",
     title: "Term and health cover",
     summary: "Protect the family before investing for growth.",
-    notes: ["Term cover: roughly 10\u201315\xD7 annual income, or enough to fund family expenses to your retirement age plus loans, minus existing savings.", "Health cover: at least \u20B910,00,000 for a family in a metro; a super top-up adds cover cheaply.", "Avoid mixing insurance and investment (endowment/ULIP) unless you understand the costs."],
+    notes: [
+      "Term cover: roughly 10\u201315\xD7 annual income, or enough to fund family expenses to your retirement age plus loans, minus existing savings.",
+      "Health cover: at least \u20B910,00,000 for a family in a metro; a super top-up adds cover cheaply.",
+      "Avoid mixing insurance and investment (endowment/ULIP) unless you understand the costs."
+    ],
     keywords: ["term insurance", "life cover", "health insurance", "human life value", "hlv"],
     reference: "IRDAI consumer education; common planning practice."
   },
@@ -3455,7 +3973,12 @@ var KNOWLEDGE = [
     title: "GDP (expenditure method)",
     summary: "The value of all final goods and services produced in a year.",
     formula: "GDP = C + I + G + (X \u2212 M)",
-    variables: [["C", "private consumption"], ["I", "investment"], ["G", "government spending"], ["X \u2212 M", "net exports"]],
+    variables: [
+      ["C", "private consumption"],
+      ["I", "investment"],
+      ["G", "government spending"],
+      ["X \u2212 M", "net exports"]
+    ],
     notes: ["Real GDP removes inflation; nominal GDP does not.", "India\u2019s GDP data is published by NSO (MoSPI)."],
     keywords: ["gdp", "gross domestic product", "economic growth", "national income"],
     reference: "NCERT Class 12 Introductory Macroeconomics, chapter on national income accounting."
@@ -3476,7 +3999,11 @@ var KNOWLEDGE = [
     chapter: "Economics",
     title: "Repo rate and monetary policy",
     summary: "The rate at which RBI lends to banks overnight; it steers loan and deposit rates.",
-    notes: ["Set by RBI\u2019s Monetary Policy Committee, which meets about every two months.", "A cut usually lowers floating-rate EMIs (EBLR-linked loans reset quickly) and FD rates.", "Check the current rate on rbi.org.in; do not rely on remembered values."],
+    notes: [
+      "Set by RBI\u2019s Monetary Policy Committee, which meets about every two months.",
+      "A cut usually lowers floating-rate EMIs (EBLR-linked loans reset quickly) and FD rates.",
+      "Check the current rate on rbi.org.in; do not rely on remembered values."
+    ],
     keywords: ["repo rate", "reverse repo", "monetary policy", "mpc", "rbi policy", "interest rates"],
     reference: "RBI Monetary Policy Framework."
   },
@@ -3513,7 +4040,9 @@ var KNOWLEDGE = [
 ];
 
 // src/services/knowledgeLibrary.ts
-var STOP = new Set("a an and are as at be by for from how i in is it of on or that the this to what when which why with you your my me do does can should about".split(" "));
+var STOP = new Set(
+  "a an and are as at be by for from how i in is it of on or that the this to what when which why with you your my me do does can should about".split(" ")
+);
 var tokenize = (s2) => s2.toLowerCase().replace(/[₹%]/g, " ").split(/[^a-z0-9/]+/).filter((t) => t.length > 1 && !STOP.has(t));
 var entryText = (e) => [e.title, e.title, e.keywords.join(" "), e.keywords.join(" "), e.summary, e.formula ?? "", (e.notes ?? []).join(" "), e.chapter].join(" ");
 function rankPassages(query, docs, k = 4) {
@@ -4345,15 +4874,83 @@ var FY2025_26_RULES = {
   standardDeduction: { new: 75e3, old: 5e4 },
   housePropertyStandardDeductionRate: 0.3,
   deductions: [
-    { type: "80c", label: "Section 80C-type investments", oldRegime: true, newRegime: false, cap: 15e4, note: "Subject to the combined statutory limit and evidence." },
-    { type: "health-insurance", label: "Health insurance", oldRegime: true, newRegime: false, cap: 25e3, note: "Base cap; age and insured-person conditions can change eligibility." },
-    { type: "nps", label: "Additional NPS contribution", oldRegime: true, newRegime: false, cap: 5e4, note: "Self-contribution entry; employer contribution is handled separately." },
-    { type: "education-loan-interest", label: "Education-loan interest", oldRegime: true, newRegime: false, cap: null, requiresReview: true, note: "Allowed amount depends on statutory period and evidence." },
-    { type: "savings-interest", label: "Savings/deposit interest deduction", oldRegime: true, newRegime: false, cap: 1e4, note: "Senior-citizen provisions may permit a different cap." },
-    { type: "donations", label: "Eligible donations", oldRegime: true, newRegime: false, cap: null, requiresReview: true, note: "Percentage and qualifying-limit rules require evidence review." },
-    { type: "home-loan", label: "Home-loan deduction", oldRegime: true, newRegime: false, cap: null, requiresReview: true, note: "Property use and loss-set-off rules require review." },
-    { type: "hra", label: "HRA exemption", oldRegime: true, newRegime: false, cap: null, requiresReview: true, note: "Requires rent, salary and metro/non-metro inputs." },
-    { type: "other", label: "Other deduction", oldRegime: true, newRegime: false, cap: null, requiresReview: true, note: "Not included until a supported rule is selected." }
+    {
+      type: "80c",
+      label: "Section 80C-type investments",
+      oldRegime: true,
+      newRegime: false,
+      cap: 15e4,
+      note: "Subject to the combined statutory limit and evidence."
+    },
+    {
+      type: "health-insurance",
+      label: "Health insurance",
+      oldRegime: true,
+      newRegime: false,
+      cap: 25e3,
+      note: "Base cap; age and insured-person conditions can change eligibility."
+    },
+    {
+      type: "nps",
+      label: "Additional NPS contribution",
+      oldRegime: true,
+      newRegime: false,
+      cap: 5e4,
+      note: "Self-contribution entry; employer contribution is handled separately."
+    },
+    {
+      type: "education-loan-interest",
+      label: "Education-loan interest",
+      oldRegime: true,
+      newRegime: false,
+      cap: null,
+      requiresReview: true,
+      note: "Allowed amount depends on statutory period and evidence."
+    },
+    {
+      type: "savings-interest",
+      label: "Savings/deposit interest deduction",
+      oldRegime: true,
+      newRegime: false,
+      cap: 1e4,
+      note: "Senior-citizen provisions may permit a different cap."
+    },
+    {
+      type: "donations",
+      label: "Eligible donations",
+      oldRegime: true,
+      newRegime: false,
+      cap: null,
+      requiresReview: true,
+      note: "Percentage and qualifying-limit rules require evidence review."
+    },
+    {
+      type: "home-loan",
+      label: "Home-loan deduction",
+      oldRegime: true,
+      newRegime: false,
+      cap: null,
+      requiresReview: true,
+      note: "Property use and loss-set-off rules require review."
+    },
+    {
+      type: "hra",
+      label: "HRA exemption",
+      oldRegime: true,
+      newRegime: false,
+      cap: null,
+      requiresReview: true,
+      note: "Requires rent, salary and metro/non-metro inputs."
+    },
+    {
+      type: "other",
+      label: "Other deduction",
+      oldRegime: true,
+      newRegime: false,
+      cap: null,
+      requiresReview: true,
+      note: "Not included until a supported rule is selected."
+    }
   ],
   surcharge: [
     { above: 5e7, rate: 0.37, newRate: 0.25 },
@@ -4397,10 +4994,7 @@ var FY2026_27_RULES = {
     "https://www.incometaxindia.gov.in/w/section-19-206",
     "https://www.incometaxindia.gov.in/w/schedule_vda"
   ],
-  notes: [
-    "The Income-tax Act, 2025 applies from tax year 2026-27.",
-    ...FY2025_26_RULES.notes
-  ]
+  notes: ["The Income-tax Act, 2025 applies from tax year 2026-27.", ...FY2025_26_RULES.notes]
 };
 
 // src/config/taxRules/india/index.ts
@@ -4503,7 +5097,9 @@ function calculateBusinessOrProfessionalIncome(sources) {
   let tcs = ZERO;
   let advanceTax = ZERO;
   const warnings = [];
-  for (const source of sources.filter((item) => ["Freelance", "Business"].includes(item.type) && item.currency.toUpperCase() === "INR" && item.taxStatus !== "Tax-free")) {
+  for (const source of sources.filter(
+    (item) => ["Freelance", "Business"].includes(item.type) && item.currency.toUpperCase() === "INR" && item.taxStatus !== "Tax-free"
+  )) {
     const details = source.taxDetails;
     const gross = source.type === "Business" ? money(details?.revenue || annualAmount(source)) : money(details?.grossReceipts || annualAmount(source));
     const expenses = source.type === "Business" ? money(details?.costOfGoods).plus(money(details?.operatingExpenses)).plus(money(details?.depreciation)) : money(details?.businessExpenses);
@@ -4512,7 +5108,8 @@ function calculateBusinessOrProfessionalIncome(sources) {
     tcs = tcs.plus(money(details?.tcsCollected));
     advanceTax = advanceTax.plus(money(details?.advanceTaxPaid));
     if (details?.presumptiveEligible) warnings.push("Presumptive-tax eligibility is recorded but not automatically applied; verify conditions with a CA.");
-    if (details?.gstTreatment === "included" || money(details?.gstCollected).gt(0)) warnings.push("GST is shown separately and is not deducted automatically from income-tax gross receipts.");
+    if (details?.gstTreatment === "included" || money(details?.gstCollected).gt(0))
+      warnings.push("GST is shown separately and is not deducted automatically from income-tax gross receipts.");
   }
   return { taxable, tds, tcs, advanceTax, warnings };
 }
@@ -4578,7 +5175,8 @@ function calculateIncomeFromOtherSources(sources) {
     if (source.type === "Investment Returns" && !investmentInterest) continue;
     const value = annualAmount(source);
     if (source.taxStatus === "Tax-free" || details?.taxability === "exempt") exempt = exempt.plus(value);
-    else if (details?.taxability === "special" && money(details.specialRatePercent).gt(0)) specialRateTax = specialRateTax.plus(value.times(money(details.specialRatePercent).div(100)));
+    else if (details?.taxability === "special" && money(details.specialRatePercent).gt(0))
+      specialRateTax = specialRateTax.plus(value.times(money(details.specialRatePercent).div(100)));
     else if (details?.taxability === "review" || details?.taxability === "partly-taxable") {
       warnings.push(`${source.description} needs taxability review and is conservatively included at slab rate.`);
       taxable = taxable.plus(value);
@@ -4703,7 +5301,8 @@ function calculateForRegime(sources, profile, deductions, credits, regime) {
   const effectiveRate = grossIncome.gt(0) ? totalTaxLiability.div(grossIncome).times(100) : ZERO;
   warnings.push(...house.warnings, ...business.warnings, ...capital.warnings, ...other.warnings, ...deduction.warnings);
   if (!sources.length) warnings.push("Add at least one income source to calculate an estimate.");
-  if (sources.some((source) => source.currency.toUpperCase() !== "INR")) warnings.push("Non-INR sources are excluded until an evidenced FX conversion is available.");
+  if (sources.some((source) => source.currency.toUpperCase() !== "INR"))
+    warnings.push("Non-INR sources are excluded until an evidenced FX conversion is available.");
   if (!profile.panAvailable) warnings.push("PAN is marked unavailable; higher withholding or other consequences may apply.");
   if (profile.taxpayerType === "other") warnings.push("Taxpayer type \u201COther\u201D may follow different rules; this estimate is not filing-ready.");
   if (profile.residentialStatus !== "resident") warnings.push("RNOR/non-resident scope and foreign-income rules require professional review.");
@@ -4849,7 +5448,9 @@ function offlineSnapshot(prompt) {
   if (monthlySpend !== null) {
     const surplus = monthlyIncome - monthlySpend - monthlyEmi;
     const rate = surplus / monthlyIncome;
-    lines.push(`Monthly surplus: ${inr2(monthlyIncome)} \u2212 ${inr2(monthlySpend)} spending${monthlyEmi ? ` \u2212 ${inr2(monthlyEmi)} EMI` : ""} = ${inr2(surplus)} (savings rate ${(rate * 100).toFixed(1)}%, before tax).`);
+    lines.push(
+      `Monthly surplus: ${inr2(monthlyIncome)} \u2212 ${inr2(monthlySpend)} spending${monthlyEmi ? ` \u2212 ${inr2(monthlyEmi)} EMI` : ""} = ${inr2(surplus)} (savings rate ${(rate * 100).toFixed(1)}%, before tax).`
+    );
     const buffer = (monthlySpend + monthlyEmi) * 6;
     lines.push(`Emergency fund target: 6 \xD7 ${inr2(monthlySpend + monthlyEmi)} monthly outgo = ${inr2(buffer)}.`);
     if (surplus > 0) {
@@ -4868,14 +5469,17 @@ import { Router } from "express";
 
 // server/rateLimiter.ts
 var store = /* @__PURE__ */ new Map();
-var cleanupTimer = setInterval(() => {
-  const now = Date.now();
-  for (const [key, record] of store.entries()) {
-    if (now > record.resetTime) {
-      store.delete(key);
+var cleanupTimer = setInterval(
+  () => {
+    const now = Date.now();
+    for (const [key, record] of store.entries()) {
+      if (now > record.resetTime) {
+        store.delete(key);
+      }
     }
-  }
-}, 5 * 60 * 1e3);
+  },
+  5 * 60 * 1e3
+);
 cleanupTimer.unref?.();
 function createRateLimiter(options) {
   const { windowMs, max, message = "Too many requests from this IP, please try again later." } = options;
@@ -5154,9 +5758,14 @@ function stripUserProfile(req, _res, next) {
   next();
 }
 function groundingMiddleware(req, _res, next) {
-  const raw = String(req.header("x-artha-web-search") ?? (req.body && typeof req.body === "object" ? req.body.webSearch : "") ?? "auto").toLowerCase();
+  const raw = String(
+    req.header("x-artha-web-search") ?? (req.body && typeof req.body === "object" ? req.body.webSearch : "") ?? "auto"
+  ).toLowerCase();
   const mode = raw === "on" || raw === "true" ? "on" : raw === "off" || raw === "false" ? "off" : "auto";
-  store2.run({ mode, sources: [], used: false, numbered: [], verified: [], userProfile: req.arthaUserProfile }, next);
+  store2.run(
+    { mode, sources: [], used: false, numbered: [], verified: [], userProfile: req.arthaUserProfile },
+    next
+  );
 }
 var currentWebSearchMode = () => store2.getStore()?.mode ?? "auto";
 var currentGroundingSources = () => store2.getStore()?.sources ?? [];
@@ -5197,7 +5806,8 @@ function detectInstruments(text) {
   for (const c2 of INDIA_MARKET_UNIVERSE) {
     const short = c2.displayName.toLowerCase().replace(/ (limited|ltd\.?)$/, "");
     const ticker = c2.providerSymbol.replace(/\.(NS|BO)$/, "").toLowerCase();
-    if (lower.includes(short) || new RegExp(`\\b${ticker.replace(/[&]/g, "\\&")}\\b`).test(lower)) found.push({ symbol: c2.providerSymbol, label: c2.displayName });
+    if (lower.includes(short) || new RegExp(`\\b${ticker.replace(/[&]/g, "\\&")}\\b`).test(lower))
+      found.push({ symbol: c2.providerSymbol, label: c2.displayName });
   }
   const seen = /* @__PURE__ */ new Set();
   return found.filter((f) => seen.has(f.symbol) ? false : (seen.add(f.symbol), true)).slice(0, 4);
@@ -5222,22 +5832,50 @@ function shouldSearchWeb(query, mode) {
 var withTimeout = (p, ms) => Promise.race([p.catch(() => null), new Promise((r) => setTimeout(() => r(null), ms))]);
 var strip = (s2) => s2.replace(/<[^>]+>/g, "").replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, "&").replace(/\s+/g, " ").trim();
 async function tavily(q, key) {
-  const r = await fetch("https://api.tavily.com/search", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ api_key: key, query: q, max_results: 5, search_depth: "basic" }), signal: AbortSignal.timeout(6e3) });
+  const r = await fetch("https://api.tavily.com/search", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ api_key: key, query: q, max_results: 5, search_depth: "basic" }),
+    signal: AbortSignal.timeout(6e3)
+  });
   if (!r.ok) throw new Error(`Tavily ${r.status}`);
   const j = await r.json();
-  return (j.results ?? []).map((x) => ({ title: strip(x.title ?? ""), url: x.url ?? "", snippet: strip(x.content ?? "").slice(0, 400), source: "Tavily web search" }));
+  return (j.results ?? []).map((x) => ({
+    title: strip(x.title ?? ""),
+    url: x.url ?? "",
+    snippet: strip(x.content ?? "").slice(0, 400),
+    source: "Tavily web search"
+  }));
 }
 async function brave(q, key) {
-  const r = await fetch(`https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(q)}&count=5`, { headers: { Accept: "application/json", "X-Subscription-Token": key }, signal: AbortSignal.timeout(6e3) });
+  const r = await fetch(`https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(q)}&count=5`, {
+    headers: { Accept: "application/json", "X-Subscription-Token": key },
+    signal: AbortSignal.timeout(6e3)
+  });
   if (!r.ok) throw new Error(`Brave ${r.status}`);
   const j = await r.json();
-  return (j.web?.results ?? []).map((x) => ({ title: strip(x.title ?? ""), url: x.url ?? "", snippet: strip(x.description ?? "").slice(0, 400), source: "Brave web search" }));
+  return (j.web?.results ?? []).map((x) => ({
+    title: strip(x.title ?? ""),
+    url: x.url ?? "",
+    snippet: strip(x.description ?? "").slice(0, 400),
+    source: "Brave web search"
+  }));
 }
 async function serper(q, key) {
-  const r = await fetch("https://google.serper.dev/search", { method: "POST", headers: { "X-API-KEY": key, "Content-Type": "application/json" }, body: JSON.stringify({ q, gl: "in", hl: "en", num: 6, tbs: /\b(today|latest|current|now|this (week|month|year))\b/i.test(q) ? "qdr:m" : void 0 }), signal: AbortSignal.timeout(6e3) });
+  const r = await fetch("https://google.serper.dev/search", {
+    method: "POST",
+    headers: { "X-API-KEY": key, "Content-Type": "application/json" },
+    body: JSON.stringify({ q, gl: "in", hl: "en", num: 6, tbs: /\b(today|latest|current|now|this (week|month|year))\b/i.test(q) ? "qdr:m" : void 0 }),
+    signal: AbortSignal.timeout(6e3)
+  });
   if (!r.ok) throw new Error(`Serper ${r.status}`);
   const j = await r.json();
-  return (j.organic ?? []).map((x) => ({ title: strip(x.title ?? ""), url: x.link ?? "", snippet: strip(x.snippet ?? "").slice(0, 400), source: "Google results via Serper" }));
+  return (j.organic ?? []).map((x) => ({
+    title: strip(x.title ?? ""),
+    url: x.link ?? "",
+    snippet: strip(x.snippet ?? "").slice(0, 400),
+    source: "Google results via Serper"
+  }));
 }
 var decode2 = (s2) => strip(s2.replace(/<!\[CDATA\[|\]\]>/g, ""));
 var tag2 = (xml, name) => xml.match(new RegExp(`<${name}[^>]*>([\\s\\S]*?)</${name}>`))?.[1] ?? "";
@@ -5246,7 +5884,10 @@ function googleQuery(q) {
   return cleaned.split(" ").slice(0, 16).join(" ");
 }
 async function googleNews(q) {
-  const r = await fetch(`https://news.google.com/rss/search?q=${encodeURIComponent(googleQuery(q))}&hl=en-IN&gl=IN&ceid=IN:en`, { headers: { "User-Agent": "Mozilla/5.0 (ArthaMindAI; +https://artha-bench-pro.vercel.app)" }, signal: AbortSignal.timeout(6e3) });
+  const r = await fetch(`https://news.google.com/rss/search?q=${encodeURIComponent(googleQuery(q))}&hl=en-IN&gl=IN&ceid=IN:en`, {
+    headers: { "User-Agent": "Mozilla/5.0 (ArthaMindAI; +https://artha-bench-pro.vercel.app)" },
+    signal: AbortSignal.timeout(6e3)
+  });
   if (!r.ok) throw new Error(`Google News ${r.status}`);
   const xml = await r.text();
   const items = [...xml.matchAll(/<item>([\s\S]*?)<\/item>/g)].slice(0, 10).map((m) => {
@@ -5259,14 +5900,29 @@ async function googleNews(q) {
   items.sort((a, b) => (b.date.getTime() || 0) - (a.date.getTime() || 0));
   return items.slice(0, 6).map((x) => {
     const when = Number.isFinite(x.date.getTime()) ? x.date.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Kolkata" }) : "date unknown";
-    return { title: x.title, url: x.url, snippet: `${x.title} (${x.source || "publisher"}, published ${when})`, source: `Google News \xB7 ${x.source || "publisher"}`, publishedAt: Number.isFinite(x.date.getTime()) ? x.date.toISOString() : void 0 };
+    return {
+      title: x.title,
+      url: x.url,
+      snippet: `${x.title} (${x.source || "publisher"}, published ${when})`,
+      source: `Google News \xB7 ${x.source || "publisher"}`,
+      publishedAt: Number.isFinite(x.date.getTime()) ? x.date.toISOString() : void 0
+    };
   });
 }
 async function duckduckgo(q) {
-  const r = await fetch(`https://api.duckduckgo.com/?q=${encodeURIComponent(googleQuery(q))}&format=json&no_html=1&skip_disambig=1`, { signal: AbortSignal.timeout(5e3) });
+  const r = await fetch(`https://api.duckduckgo.com/?q=${encodeURIComponent(googleQuery(q))}&format=json&no_html=1&skip_disambig=1`, {
+    signal: AbortSignal.timeout(5e3)
+  });
   if (!r.ok) throw new Error(`DuckDuckGo ${r.status}`);
   const j = await r.json();
-  return j.AbstractText ? [{ title: j.Heading || q, url: j.AbstractURL || "https://duckduckgo.com", snippet: `Background (may be out of date): ${j.AbstractText.slice(0, 300)}`, source: `${j.AbstractSource || "DuckDuckGo"} (background)` }] : [];
+  return j.AbstractText ? [
+    {
+      title: j.Heading || q,
+      url: j.AbstractURL || "https://duckduckgo.com",
+      snippet: `Background (may be out of date): ${j.AbstractText.slice(0, 300)}`,
+      source: `${j.AbstractSource || "DuckDuckGo"} (background)`
+    }
+  ] : [];
 }
 async function webSearch(query) {
   const q = query.slice(0, 300);
@@ -5291,7 +5947,11 @@ var CACHE_MS = 6e4;
 var istNow = () => (/* @__PURE__ */ new Date()).toLocaleString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
 var FUND_HOUSES = /\b(hdfc|sbi|icici(?: prudential)?|axis|parag parikh|ppfas|nippon(?: india)?|kotak|mirae(?: asset)?|uti|quant|dsp|tata|aditya birla(?: sun life)?|motilal oswal|franklin(?: india| templeton)?|canara robeco|bandhan|edelweiss|invesco(?: india)?|hsbc|pgim(?: india)?|sundaram|mahindra manulife|navi|zerodha|groww|whiteoak|360 one|bajaj finserv|jm financial|lic|baroda bnp paribas|union|samco|old bridge|helios|quantum)\b/i;
 var FUND_WORD = /\b(fund|mutual funds?|nav|sip|scheme|elss|index fund|etf)\b/i;
-var FUND_STOP = new Set("what is the of should i invest in for a an my how are was were today now current latest nav returns return sip mutual fund funds scheme good bad better best me tell about to and or vs with price value performance".split(" "));
+var FUND_STOP = new Set(
+  "what is the of should i invest in for a an my how are was were today now current latest nav returns return sip mutual fund funds scheme good bad better best me tell about to and or vs with price value performance".split(
+    " "
+  )
+);
 function fundQueryFrom(q) {
   if (!FUND_WORD.test(q)) return null;
   const m = q.match(FUND_HOUSES);
@@ -5312,7 +5972,10 @@ async function fundContext(q) {
   const pc = (k, label) => r[k] !== void 0 ? `${label} ${(r[k] * 100).toFixed(1)}%` : "";
   const name = d.scheme?.name ?? pick2.name;
   const line = `- ${name}${d.scheme?.category ? ` [${d.scheme.category}]` : ""}: NAV \u20B9${last?.nav} on ${last?.date}; returns ${[pc("1Y", "1 year"), pc("3Y", "3 years (a year)"), pc("5Y", "5 years (a year)")].filter(Boolean).join(", ")}. Source: ${d.sources.join(", ")}. Past returns do not guarantee future returns.`;
-  return { lines: ["Mutual fund data (official NAVs):", line], sources: [{ name: `AMFI NAV: ${name.slice(0, 80)}`, dataDate: last?.date ?? "", freshness: "end of day", kind: "fund" }] };
+  return {
+    lines: ["Mutual fund data (official NAVs):", line],
+    sources: [{ name: `AMFI NAV: ${name.slice(0, 80)}`, dataDate: last?.date ?? "", freshness: "end of day", kind: "fund" }]
+  };
 }
 var registrySources = null;
 function liveSources() {
@@ -5327,7 +5990,16 @@ function liveSources() {
   });
   return registrySources;
 }
-var KIND_FOR = { rag: "doc", official: "doc", market: "market", fund: "fund", "user-page": "page", news: "news", web: "web", wikipedia: "web" };
+var KIND_FOR = {
+  rag: "doc",
+  official: "doc",
+  market: "market",
+  fund: "fund",
+  "user-page": "page",
+  news: "news",
+  web: "web",
+  wikipedia: "web"
+};
 async function gatherLiveContext(query, mode = "auto") {
   const q = query.replace(/\s+/g, " ").trim().slice(0, 600);
   if (!q) return { text: "", sources: [], numbered: [], runs: [] };
@@ -5351,11 +6023,15 @@ async function gatherLiveContext(query, mode = "auto") {
   const built = buildSourcesBlock(items, q, { retrievedAtIst: `${istNow()} IST` });
   const notes = [];
   if (instruments.length && !items.some((i) => i.sourceId === "market")) {
-    notes.push(`Market data: live quotes for ${instruments.map((i) => i.label).join(", ")} could not be retrieved right now; say so rather than guessing a price.`);
+    notes.push(
+      `Market data: live quotes for ${instruments.map((i) => i.label).join(", ")} could not be retrieved right now; say so rather than guessing a price.`
+    );
   }
-  if (ctx.wantWeb && !runs.find((r) => r.id === "web")?.items.length) notes.push("Web search: no results could be retrieved; do not state current figures you cannot verify.");
+  if (ctx.wantWeb && !runs.find((r) => r.id === "web")?.items.length)
+    notes.push("Web search: no results could be retrieved; do not state current figures you cannot verify.");
   const fundRun = runs.find((r) => r.id === "fund");
-  if (fundRun?.ok && !fundRun.items.length && fundQueryFrom(q)) notes.push(`Mutual fund data: no scheme matched "${fundQueryFrom(q)}"; ask the user for the exact fund name.`);
+  if (fundRun?.ok && !fundRun.items.length && fundQueryFrom(q))
+    notes.push(`Mutual fund data: no scheme matched "${fundQueryFrom(q)}"; ask the user for the exact fund name.`);
   const formulas = rankPassages(q, [], 2).flatMap((h) => h.kind === "formula" && h.score > 2.5 && h.entry.formula ? [h.entry] : []);
   if (formulas.length) {
     notes.push("Verified formulas (ArthaMind formula book, checked by automated tests):");
@@ -5480,15 +6156,9 @@ function resolveGroqModel(environmentKey, fallback) {
 function getGroqModels() {
   return {
     tutorModel: resolveGroqModel("GROQ_TUTOR_MODEL", GROQ_DEFAULT_MODELS.tutorModel),
-    evaluatorModel: resolveGroqModel(
-      "GROQ_EVALUATOR_MODEL",
-      GROQ_DEFAULT_MODELS.evaluatorModel
-    ),
+    evaluatorModel: resolveGroqModel("GROQ_EVALUATOR_MODEL", GROQ_DEFAULT_MODELS.evaluatorModel),
     primaryModel: resolveGroqModel("GROQ_PRIMARY_MODEL", GROQ_DEFAULT_MODELS.primaryModel),
-    secondaryModel: resolveGroqModel(
-      "GROQ_SECONDARY_MODEL",
-      GROQ_DEFAULT_MODELS.secondaryModel
-    )
+    secondaryModel: resolveGroqModel("GROQ_SECONDARY_MODEL", GROQ_DEFAULT_MODELS.secondaryModel)
   };
 }
 var GROQ_MODELS_URL = "https://api.groq.com/openai/v1/models";
@@ -5563,9 +6233,7 @@ async function checkGroqDiagnostics() {
       }));
     }
     const activeModels = new Set(
-      data.data.map(
-        (model) => model && typeof model === "object" && "id" in model ? model.id : null
-      ).filter((id) => typeof id === "string" && id.length > 0)
+      data.data.map((model) => model && typeof model === "object" && "id" in model ? model.id : null).filter((id) => typeof id === "string" && id.length > 0)
     );
     return roles.map((role) => {
       const connected = activeModels.has(role.name);
@@ -5654,9 +6322,7 @@ The live AI adviser is not connected right now, so this is a general framework r
 Please try again in a moment for a full answer. *For education only; not personalised investment advice.*`;
 }
 function buildGroqMessages(systemPrompt2, userPrompt, history) {
-  const messages = [
-    { role: "system", content: withDateContext(systemPrompt2) }
-  ];
+  const messages = [{ role: "system", content: withDateContext(systemPrompt2) }];
   if (Array.isArray(history)) {
     for (const item of history.slice(-10)) {
       if ((item.role === "user" || item.role === "assistant") && typeof item.content === "string" && item.content.trim()) {
@@ -5758,10 +6424,7 @@ Return one valid JSON object only with exactly this contract: ${JSON.stringify(S
         userPrompt,
         options.history
       );
-      response = await requestStructuredCompletion(
-        compatibilityMessages,
-        { type: "json_object" }
-      );
+      response = await requestStructuredCompletion(compatibilityMessages, { type: "json_object" });
     }
   } catch {
     return fail("Groq request failed.");
@@ -5804,13 +6467,7 @@ For $10,000 at 7% over 5 years compounded monthly (n=12), the final amount is $1
 2. Financial Disclaimer:
 This is an educational simulation. Past performance is not indicative of future returns.`;
     const demoSecondaryText = `[Secondary Model Check]: Verified formula A = P * (1 + r/n)^(n*t). Final calculated result is $14,176.25.`;
-    const demoReport = computeFullReliabilityEvaluation(
-      query,
-      demoPrimaryText,
-      demoSecondaryText,
-      startTime,
-      scenarioContext
-    );
+    const demoReport = computeFullReliabilityEvaluation(query, demoPrimaryText, demoSecondaryText, startTime, scenarioContext);
     demoReport.demoMode = true;
     demoReport.isVerified = false;
     if (demoReport.verdict === "HIGHLY_RELIABLE" || demoReport.verdict === "MODERATE_RELIABILITY") {
@@ -5828,13 +6485,7 @@ This is an educational simulation. Past performance is not indicative of future 
   const primaryText = primaryResult.status === "fulfilled" ? primaryResult.value : "";
   const secondaryText = secondaryResult.status === "fulfilled" ? secondaryResult.value : "";
   const failedEvaluatorCount = Number(primaryResult.status === "rejected") + Number(secondaryResult.status === "rejected");
-  const report = computeFullReliabilityEvaluation(
-    query,
-    primaryText,
-    secondaryText,
-    startTime,
-    scenarioContext
-  );
+  const report = computeFullReliabilityEvaluation(query, primaryText, secondaryText, startTime, scenarioContext);
   if (failedEvaluatorCount === 2) {
     report.overallScore = 0;
     report.metrics.overallReliabilityScore = 0;
@@ -6433,9 +7084,7 @@ var LEARNING_TRACKS = [
               correctIndex: 1,
               explanation: "Short-term trading carries substantial tail risk, execution slippage, friction costs, and behavioral stress."
             },
-            riskAndLimitationNotes: [
-              "CRITICAL SAFETY WARNING: Educational material only. Never trade with money you cannot afford to lose."
-            ],
+            riskAndLimitationNotes: ["CRITICAL SAFETY WARNING: Educational material only. Never trade with money you cannot afford to lose."],
             estimatedMinutes: 20,
             prerequisites: []
           },
@@ -6865,11 +7514,7 @@ Please provide:
   const fallbackQuestion = `${canonicalTitle}: ${canonicalObjective}. ${lessonObj?.examplePrompt || ""}`;
   let structuredAnswer;
   try {
-    structuredAnswer = await callGroqStructuredFinancialAnswer(
-      systemPrompt2,
-      userPrompt,
-      { fallbackQuestion }
-    );
+    structuredAnswer = await callGroqStructuredFinancialAnswer(systemPrompt2, userPrompt, { fallbackQuestion });
   } catch (err) {
     structuredAnswer = createFallbackStructuredFinancialAnswer(
       fallbackQuestion,
@@ -6883,19 +7528,12 @@ Please provide:
     directExplanation: aiExplanation,
     structuredAnswer,
     keyConcepts: canonicalKeyConcepts,
-    stepByStepLesson: structuredAnswer.steps.map(
-      (step) => `${step.title}: ${step.explanation}`
-    ),
+    stepByStepLesson: structuredAnswer.steps.map((step) => `${step.title}: ${step.explanation}`),
     formula: structuredAnswer.formula.expression,
     workedExample: `${structuredAnswer.example.title}: ${structuredAnswer.example.result}`,
     assumptions: structuredAnswer.example.inputs,
-    risksAndLimitations: structuredAnswer.risks.length > 0 ? structuredAnswer.risks : lessonObj?.riskAndLimitationNotes || [
-      "Educational material only; past performance is not indicative of future returns."
-    ],
-    commonMistakes: [
-      "Confusing revenue with net profit",
-      "Ignoring inflation and taxes when projecting long-term growth"
-    ],
+    risksAndLimitations: structuredAnswer.risks.length > 0 ? structuredAnswer.risks : lessonObj?.riskAndLimitationNotes || ["Educational material only; past performance is not indicative of future returns."],
+    commonMistakes: ["Confusing revenue with net profit", "Ignoring inflation and taxes when projecting long-term growth"],
     practiceActivity: lessonObj?.practiceActivity || "Calculate your personal numbers using this framework.",
     knowledgeCheck: canonicalKnowledgeCheck,
     suggestedNextLesson: "Continue to the next lesson in this module.",
@@ -7037,10 +7675,7 @@ function unavailableItem(instrument) {
 }
 async function fetchTickerItem(instrument) {
   try {
-    const result = await fetchYahooFinanceQuote(
-      instrument.yahooSymbol,
-      instrument.assetType
-    );
+    const result = await fetchYahooFinanceQuote(instrument.yahooSymbol, instrument.assetType);
     const { quote } = result;
     const isUsable = result.status === "connected" && quote.freshness !== "demo" && quote.freshness !== "stale" && Number.isFinite(quote.price);
     if (!isUsable) return unavailableItem(instrument);
@@ -7063,25 +7698,18 @@ async function fetchTickerItem(instrument) {
 async function mapWithConcurrency(values, concurrency, mapper) {
   const results = new Array(values.length);
   let nextIndex = 0;
-  const workers = Array.from(
-    { length: Math.min(concurrency, values.length) },
-    async () => {
-      while (nextIndex < values.length) {
-        const currentIndex = nextIndex;
-        nextIndex += 1;
-        results[currentIndex] = await mapper(values[currentIndex]);
-      }
+  const workers = Array.from({ length: Math.min(concurrency, values.length) }, async () => {
+    while (nextIndex < values.length) {
+      const currentIndex = nextIndex;
+      nextIndex += 1;
+      results[currentIndex] = await mapper(values[currentIndex]);
     }
-  );
+  });
   await Promise.all(workers);
   return results;
 }
 async function loadIndiaMarketTicker() {
-  const items = await mapWithConcurrency(
-    INDIA_MARKET_INSTRUMENTS,
-    MAX_CONCURRENT_REQUESTS,
-    fetchTickerItem
-  );
+  const items = await mapWithConcurrency(INDIA_MARKET_INSTRUMENTS, MAX_CONCURRENT_REQUESTS, fetchTickerItem);
   const availableCount = items.filter((item) => item.status === "available").length;
   const status = availableCount === items.length ? "available" : availableCount > 0 ? "partial" : "unavailable";
   return {
@@ -7148,7 +7776,12 @@ async function fetchFredApi(seriesId, limit, apiKey, baseUrl) {
   if (!response.ok) {
     const rawMessage = raw && typeof raw === "object" && "error_message" in raw ? String(raw.error_message || "") : "";
     const status = classifyError(response.status, rawMessage);
-    return { seriesId, observations: [], status, message: status === "invalid_credentials" ? "FRED rejected the configured credential." : status === "rate_limited" ? "FRED request limit reached." : `FRED request failed with HTTP ${response.status}.` };
+    return {
+      seriesId,
+      observations: [],
+      status,
+      message: status === "invalid_credentials" ? "FRED rejected the configured credential." : status === "rate_limited" ? "FRED request limit reached." : `FRED request failed with HTTP ${response.status}.`
+    };
   }
   const parsed = fredResponseSchema.safeParse(raw);
   if (!parsed.success) return { seriesId, observations: [], status: "invalid_response", message: "FRED returned an unexpected response." };
@@ -7174,7 +7807,13 @@ async function fetchFredCsv(seriesId, limit, csvUrl) {
     if (url.protocol !== "https:") throw new Error("FRED CSV URL must use HTTPS.");
     url.searchParams.set("id", seriesId);
     const response = await fetch(url, { headers: { Accept: "text/csv,text/plain" }, signal: AbortSignal.timeout(8e3) });
-    if (!response.ok) return { seriesId, observations: [], status: response.status === 429 ? "rate_limited" : "error", message: `FRED public CSV request failed with HTTP ${response.status}.` };
+    if (!response.ok)
+      return {
+        seriesId,
+        observations: [],
+        status: response.status === 429 ? "rate_limited" : "error",
+        message: `FRED public CSV request failed with HTTP ${response.status}.`
+      };
     const observations = parseFredCsv(await response.text(), seriesId, limit);
     return observations.length ? { seriesId, observations, status: "connected", message: "Latest official FRED observations loaded through the public FRED CSV endpoint." } : { seriesId, observations: [], status: "invalid_response", message: "FRED public CSV returned no usable observations." };
   } catch {
@@ -7388,17 +8027,9 @@ function toIndicator2(definition, result) {
   };
 }
 async function fetchWorldBankIndiaOverview() {
-  const results = await Promise.all(
-    INDIA_INDICATORS.map(
-      (indicator) => fetchWorldBankIndiaSeries(indicator.seriesId, 20)
-    )
-  );
-  const indicators = INDIA_INDICATORS.map(
-    (indicator, index) => toIndicator2(indicator, results[index])
-  );
-  const connectedCount = indicators.filter(
-    (indicator) => indicator.status === "connected"
-  ).length;
+  const results = await Promise.all(INDIA_INDICATORS.map((indicator) => fetchWorldBankIndiaSeries(indicator.seriesId, 20)));
+  const indicators = INDIA_INDICATORS.map((indicator, index) => toIndicator2(indicator, results[index]));
+  const connectedCount = indicators.filter((indicator) => indicator.status === "connected").length;
   return {
     indicators,
     status: connectedCount > 0 ? "connected" : results[0]?.status || "error",
@@ -7578,9 +8209,7 @@ async function fetchFinnhubCompanyIntelligence(symbol) {
   ]);
   const results = [profileResult, metricsResult, earningsResult, recommendationResult];
   const connectedCount = results.filter((result) => result.status === "connected").length;
-  const blockingStatus = results.find(
-    (result) => result.status === "invalid_credentials" || result.status === "rate_limited"
-  );
+  const blockingStatus = results.find((result) => result.status === "invalid_credentials" || result.status === "rate_limited");
   const profile = profileResult.data;
   const rawMetrics = metricsResult.data?.metric || {};
   const normalizedProfile = profile && (profile.name || profile.ticker) ? {
@@ -7606,11 +8235,7 @@ async function fetchFinnhubCompanyIntelligence(symbol) {
     beta: metricNumber(rawMetrics, "beta"),
     week52High: metricNumber(rawMetrics, "52WeekHigh"),
     week52Low: metricNumber(rawMetrics, "52WeekLow"),
-    dividendYield: metricNumber(
-      rawMetrics,
-      "dividendYieldIndicatedAnnual",
-      "dividendYield5Y"
-    ),
+    dividendYield: metricNumber(rawMetrics, "dividendYieldIndicatedAnnual", "dividendYield5Y"),
     epsGrowth3Y: metricNumber(rawMetrics, "epsGrowth3Y"),
     revenueGrowth3Y: metricNumber(rawMetrics, "revenueGrowth3Y")
   } : null;
@@ -7654,23 +8279,11 @@ async function checkFinnhubDiagnostic() {
 }
 
 // src/components/crypto/cryptoTypes.ts
-var CRYPTO_SYMBOLS = [
-  "BTCUSDT",
-  "ETHUSDT",
-  "BNBUSDT",
-  "SOLUSDT",
-  "XRPUSDT",
-  "ADAUSDT",
-  "DOGEUSDT"
-];
+var CRYPTO_SYMBOLS = ["BTCUSDT", "ETHUSDT", "BNBUSDT", "SOLUSDT", "XRPUSDT", "ADAUSDT", "DOGEUSDT"];
 var CRYPTO_INTERVALS = ["1m", "5m", "15m", "1h", "4h", "1d"];
 
 // server/cryptoService.ts
-var BINANCE_REST_BASES = [
-  "https://data-api.binance.vision",
-  "https://api.binance.com",
-  "https://api1.binance.com"
-];
+var BINANCE_REST_BASES = ["https://data-api.binance.vision", "https://api.binance.com", "https://api1.binance.com"];
 var SOURCE_LABEL2 = "Binance Public Market Data";
 var QUOTE_CACHE_MS = 5e3;
 var KLINE_CACHE_MS = 1e4;
@@ -7812,7 +8425,14 @@ Verified Binance candle context:
 ${JSON.stringify(context2)}`,
       getGroqModels().tutorModel
     );
-    const required = ["## Direct answer", "## Assumptions and context", "## Formula or rule", "## Step-by-step calculation or reasoning", "## Final result and interpretation", "## Limitations and verification"];
+    const required = [
+      "## Direct answer",
+      "## Assumptions and context",
+      "## Formula or rule",
+      "## Step-by-step calculation or reasoning",
+      "## Final result and interpretation",
+      "## Limitations and verification"
+    ];
     return { answer: required.every((heading) => answer.includes(heading)) ? answer : fallback, provider: "groq", model: getGroqModels().tutorModel };
   } catch {
     return { answer: fallback, provider: "deterministic", model: null };
@@ -7822,11 +8442,56 @@ ${JSON.stringify(context2)}`,
 // server/marketTerminal.ts
 var TERMINAL_INTERVALS = ["1m", "5m", "15m", "1h", "4h", "1d"];
 var TERMINAL_INSTRUMENTS = [
-  { id: "nifty50", label: "NIFTY 50", category: "Index \xB7 NSE", currency: "INR", decimals: 2, provider: "yahoo", providerSymbol: "^NSEI", timezone: "Asia/Kolkata" },
-  { id: "sensex", label: "BSE SENSEX", category: "Index \xB7 BSE", currency: "INR", decimals: 2, provider: "yahoo", providerSymbol: "^BSESN", timezone: "Asia/Kolkata" },
-  { id: "usdinr", label: "USD/INR", category: "Currency \xB7 FX", currency: "INR", decimals: 4, provider: "yahoo", providerSymbol: "INR=X", timezone: "Asia/Kolkata" },
-  { id: "gold", label: "Gold", category: "Commodity \xB7 COMEX futures (USD/oz)", currency: "USD", decimals: 2, provider: "yahoo", providerSymbol: "GC=F", timezone: "UTC" },
-  { id: "btcusdt", label: "BTC/USDT", category: "Crypto \xB7 Binance spot", currency: "USDT", decimals: 2, provider: "binance", providerSymbol: "BTCUSDT", timezone: "UTC" }
+  {
+    id: "nifty50",
+    label: "NIFTY 50",
+    category: "Index \xB7 NSE",
+    currency: "INR",
+    decimals: 2,
+    provider: "yahoo",
+    providerSymbol: "^NSEI",
+    timezone: "Asia/Kolkata"
+  },
+  {
+    id: "sensex",
+    label: "BSE SENSEX",
+    category: "Index \xB7 BSE",
+    currency: "INR",
+    decimals: 2,
+    provider: "yahoo",
+    providerSymbol: "^BSESN",
+    timezone: "Asia/Kolkata"
+  },
+  {
+    id: "usdinr",
+    label: "USD/INR",
+    category: "Currency \xB7 FX",
+    currency: "INR",
+    decimals: 4,
+    provider: "yahoo",
+    providerSymbol: "INR=X",
+    timezone: "Asia/Kolkata"
+  },
+  {
+    id: "gold",
+    label: "Gold",
+    category: "Commodity \xB7 COMEX futures (USD/oz)",
+    currency: "USD",
+    decimals: 2,
+    provider: "yahoo",
+    providerSymbol: "GC=F",
+    timezone: "UTC"
+  },
+  {
+    id: "btcusdt",
+    label: "BTC/USDT",
+    category: "Crypto \xB7 Binance spot",
+    currency: "USDT",
+    decimals: 2,
+    provider: "binance",
+    providerSymbol: "BTCUSDT",
+    timezone: "UTC"
+  }
 ];
 var YAHOO_INTERVALS = {
   "1m": { range: "1d", interval: "1m" },
@@ -7889,7 +8554,14 @@ var binanceProvider = {
   name: "Binance public market data",
   async fetchCandles(instrument, interval) {
     const result = await getCryptoKlines(instrument.providerSymbol, interval);
-    const candles = result.candles.map((candle) => ({ time: Math.floor(candle.openTime / 1e3), open: candle.open, high: candle.high, low: candle.low, close: candle.close, volume: candle.volume }));
+    const candles = result.candles.map((candle) => ({
+      time: Math.floor(candle.openTime / 1e3),
+      open: candle.open,
+      high: candle.high,
+      low: candle.low,
+      close: candle.close,
+      volume: candle.volume
+    }));
     return {
       candles,
       hasOhlc: true,
@@ -7953,7 +8625,10 @@ var snapshotCache = null;
 var snapshotInflight = null;
 var lastGoodSnapshot = /* @__PURE__ */ new Map();
 async function sparklineFor(instrument) {
-  for (const [range, interval] of [["1d", "5m"], ["5d", "30m"]]) {
+  for (const [range, interval] of [
+    ["1d", "5m"],
+    ["5d", "30m"]
+  ]) {
     try {
       const series = await fetchYahooFinanceChart(instrument.providerSymbol, range, interval);
       const closes = series.points.map((point) => point.close ?? point.price).filter(Number.isFinite);
@@ -7985,7 +8660,19 @@ async function snapshotItem(instrument) {
   } catch (error) {
     const previous = lastGoodSnapshot.get(instrument.id);
     if (previous) return { ...previous, message: "Showing the last successful value; the provider did not respond to the latest refresh." };
-    return { ...base, status: "unavailable", price: null, change: null, changePercent: null, previousClose: null, providerTimestamp: null, freshness: null, source: "Yahoo Finance (experimental)", sparkline: [], message: error instanceof Error ? error.message.slice(0, 160) : "Provider unavailable." };
+    return {
+      ...base,
+      status: "unavailable",
+      price: null,
+      change: null,
+      changePercent: null,
+      previousClose: null,
+      providerTimestamp: null,
+      freshness: null,
+      source: "Yahoo Finance (experimental)",
+      sparkline: [],
+      message: error instanceof Error ? error.message.slice(0, 160) : "Provider unavailable."
+    };
   }
 }
 async function getTerminalSnapshot() {
@@ -8056,7 +8743,13 @@ async function publicTts(chunk, tl, rate) {
   url.searchParams.set("tl", tl);
   url.searchParams.set("q", chunk);
   url.searchParams.set("ttsspeed", rate < 0.9 ? "0.24" : "1");
-  const res = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36", Referer: "https://translate.google.com/" }, signal: AbortSignal.timeout(12e3) });
+  const res = await fetch(url, {
+    headers: {
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36",
+      Referer: "https://translate.google.com/"
+    },
+    signal: AbortSignal.timeout(12e3)
+  });
   if (!res.ok) throw new Error(`Speech service HTTP ${res.status}`);
   const type = res.headers.get("content-type") || "";
   if (!type.includes("audio")) throw new Error("Speech service did not return audio");
@@ -8065,7 +8758,9 @@ async function publicTts(chunk, tl, rate) {
 var FISH_TTS_URL = "https://api.fish.audio/v1/tts";
 function fishLanguages() {
   const raw = process.env.FISH_AUDIO_LANGS?.trim() || "en,hi";
-  return new Set(raw.split(",").map((x) => x.trim().toLowerCase()).filter((x) => x in VOICE_LANGS));
+  return new Set(
+    raw.split(",").map((x) => x.trim().toLowerCase()).filter((x) => x in VOICE_LANGS)
+  );
 }
 function fishConfigured(lang) {
   return Boolean(process.env.FISH_AUDIO_API_KEY?.trim()) && fishLanguages().has(lang);
@@ -8081,7 +8776,15 @@ async function fishTts(text, rate, fetchImpl = fetch) {
     method: "POST",
     headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json", ...model ? { model } : {} },
     signal: AbortSignal.timeout(3e4),
-    body: JSON.stringify({ text: clean2, format: "mp3", mp3_bitrate: 128, normalize: true, latency: "normal", prosody: { speed: rate }, ...voice ? { reference_id: voice } : {} })
+    body: JSON.stringify({
+      text: clean2,
+      format: "mp3",
+      mp3_bitrate: 128,
+      normalize: true,
+      latency: "normal",
+      prosody: { speed: rate },
+      ...voice ? { reference_id: voice } : {}
+    })
   });
   if (!res.ok) throw new Error(`Fish Audio HTTP ${res.status}`);
   const type = res.headers.get("content-type") || "";
@@ -8226,7 +8929,12 @@ apiRouter.post("/voice/tts", voiceLimiter, (req, res) => {
   void sendSpeech(res, text, lang, req.body?.rate);
 });
 apiRouter.get("/voice/tts", voiceLimiter, (req, res) => {
-  void sendSpeech(res, String(req.query.text ?? "").trim().slice(0, 600), String(req.query.lang ?? "").toLowerCase(), req.query.rate);
+  void sendSpeech(
+    res,
+    String(req.query.text ?? "").trim().slice(0, 600),
+    String(req.query.lang ?? "").toLowerCase(),
+    req.query.rate
+  );
 });
 var readerLimiter = createRateLimiter({ windowMs: 6e4, max: 12, message: "Too many links at once. Please wait a minute." });
 apiRouter.get("/web/read", readerLimiter, async (req, res) => {
@@ -8461,18 +9169,12 @@ var cryptoAssistantSchema = z8.object({
   })
 });
 function buildDashboardDemoAnswer(snapshot) {
-  const selectedQuote = snapshot.quotes.find(
-    (quote) => quote.symbol.toUpperCase() === snapshot.selectedSymbol.toUpperCase()
-  );
+  const selectedQuote = snapshot.quotes.find((quote) => quote.symbol.toUpperCase() === snapshot.selectedSymbol.toUpperCase());
   const history = snapshot.marketHistory;
-  const regionalIndicators = snapshot.economicIndicators.filter(
-    (indicator) => snapshot.selectedCountry === "india" ? indicator.sourceName === "World Bank" : indicator.sourceName === "FRED"
-  ).filter((indicator) => indicator.value !== null).slice(0, 5);
+  const regionalIndicators = snapshot.economicIndicators.filter((indicator) => snapshot.selectedCountry === "india" ? indicator.sourceName === "World Bank" : indicator.sourceName === "FRED").filter((indicator) => indicator.value !== null).slice(0, 5);
   const marketSummary = history ? `${history.symbol} moved from ${history.startPrice ?? "an unavailable starting value"} to ${history.latestPrice ?? "an unavailable latest value"} across ${history.pointCount} observations (${history.startDate || "unknown start date"} to ${history.endDate || "unknown end date"}). The measured range return is ${history.returnPercent === null ? "unavailable" : `${history.returnPercent.toFixed(2)}%`}, with a period high of ${history.high ?? "\u2014"} and low of ${history.low ?? "\u2014"}.` : `Historical observations are not available for ${snapshot.selectedSymbol} in the selected ${snapshot.selectedRange} range.`;
   const quoteSummary = selectedQuote ? `The displayed quote is ${selectedQuote.price} with a ${selectedQuote.changePercent === null ? "missing" : `${selectedQuote.changePercent.toFixed(2)}%`} reported change. Its freshness label is ${selectedQuote.freshness} from ${selectedQuote.providerName}.` : "The selected symbol does not have a usable quote in this snapshot.";
-  const economicSummary = regionalIndicators.length ? regionalIndicators.map(
-    (indicator) => `${indicator.label}: ${indicator.value} ${indicator.unit} (${indicator.date || "date unavailable"})`
-  ).join("; ") : "No usable regional economic indicators are present in this snapshot.";
+  const economicSummary = regionalIndicators.length ? regionalIndicators.map((indicator) => `${indicator.label}: ${indicator.value} ${indicator.unit} (${indicator.date || "date unavailable"})`).join("; ") : "No usable regional economic indicators are present in this snapshot.";
   return `### Dashboard snapshot
 
 **Selected market:** ${quoteSummary}
@@ -8560,11 +9262,7 @@ function recalculateScenario(scenario, inputs) {
     );
   }
   if (scenario === "cagr") {
-    return calculateCAGR(
-      requiredScenarioNumber(inputs, "initialValue"),
-      requiredScenarioNumber(inputs, "finalValue"),
-      requiredScenarioNumber(inputs, "years")
-    );
+    return calculateCAGR(requiredScenarioNumber(inputs, "initialValue"), requiredScenarioNumber(inputs, "finalValue"), requiredScenarioNumber(inputs, "years"));
   }
   if (scenario === "break-even") {
     return calculateBreakEven(
@@ -8573,10 +9271,7 @@ function recalculateScenario(scenario, inputs) {
       requiredScenarioNumber(inputs, "variableCostPerUnit")
     );
   }
-  return calculateDTI(
-    requiredScenarioNumber(inputs, "monthlyGrossIncome"),
-    requiredScenarioNumber(inputs, "monthlyDebtPayments")
-  );
+  return calculateDTI(requiredScenarioNumber(inputs, "monthlyGrossIncome"), requiredScenarioNumber(inputs, "monthlyDebtPayments"));
 }
 async function loadScenarioExternalContext(profile, companySymbol, enabled2) {
   if (!enabled2) {
@@ -8593,7 +9288,9 @@ async function loadScenarioExternalContext(profile, companySymbol, enabled2) {
   if (profile === "US" || profile === "Global") economicTasks.push(fetchFredOverview());
   if (profile === "India" || profile === "Global") economicTasks.push(fetchWorldBankIndiaOverview());
   const economicSettled = await Promise.allSettled(economicTasks);
-  const economicOverviews = economicSettled.filter((item) => item.status === "fulfilled").map((item) => item.value);
+  const economicOverviews = economicSettled.filter(
+    (item) => item.status === "fulfilled"
+  ).map((item) => item.value);
   const economicIndicators = economicOverviews.flatMap((overview) => overview.indicators).filter((indicator) => indicator.status === "connected" && indicator.value !== null).slice(0, 12).map((indicator) => ({
     label: indicator.label,
     value: indicator.value,
@@ -8607,10 +9304,7 @@ async function loadScenarioExternalContext(profile, companySymbol, enabled2) {
   const notes = [];
   const normalizedSymbol = companySymbol?.trim().toUpperCase();
   if (normalizedSymbol) {
-    const [companyResult, quoteResult] = await Promise.allSettled([
-      fetchFinnhubCompanyIntelligence(normalizedSymbol),
-      getMarketQuote(normalizedSymbol)
-    ]);
+    const [companyResult, quoteResult] = await Promise.allSettled([fetchFinnhubCompanyIntelligence(normalizedSymbol), getMarketQuote(normalizedSymbol)]);
     if (companyResult.status === "fulfilled" && companyResult.value.status === "connected") {
       company = {
         symbol: normalizedSymbol,
@@ -8644,10 +9338,13 @@ async function loadScenarioExternalContext(profile, companySymbol, enabled2) {
   };
 }
 function scenarioFallbackSummary(scenario, result, currency) {
-  if (scenario === "compound") return `The verified Decimal.js compound-interest result is a final balance of ${currency} ${result.finalBalance}, including ${currency} ${result.totalInterestEarned} of calculated interest.`;
-  if (scenario === "quick-ratio") return `The verified Decimal.js quick ratio is ${result.quickRatio}, with the calculator assessment recorded as ${result.assessment}.`;
+  if (scenario === "compound")
+    return `The verified Decimal.js compound-interest result is a final balance of ${currency} ${result.finalBalance}, including ${currency} ${result.totalInterestEarned} of calculated interest.`;
+  if (scenario === "quick-ratio")
+    return `The verified Decimal.js quick ratio is ${result.quickRatio}, with the calculator assessment recorded as ${result.assessment}.`;
   if (scenario === "cagr") return `The verified Decimal.js CAGR is ${result.cagrPercent}% across the entered ${result.years}-year period.`;
-  if (scenario === "break-even") return `The verified Decimal.js break-even point is ${result.breakEvenUnits} units, corresponding to ${currency} ${result.breakEvenRevenue} of modeled revenue.`;
+  if (scenario === "break-even")
+    return `The verified Decimal.js break-even point is ${result.breakEvenUnits} units, corresponding to ${currency} ${result.breakEvenRevenue} of modeled revenue.`;
   return `The verified Decimal.js debt-to-income ratio is ${result.dtiPercent}%, with the calculator's educational tier recorded as ${result.healthCategory}.`;
 }
 apiRouter.post("/finance/compound-interest", (req, res) => {
@@ -8655,13 +9352,17 @@ apiRouter.post("/finance/compound-interest", (req, res) => {
   if (parsed.success === false) return calculatorValidationError(res, parsed);
   try {
     const value = parsed.data;
-    sendDeterministicFinanceResult(res, "compound", calculateCompoundInterest(
-      value.principal,
-      value.annualRatePercent,
-      value.years,
-      value.monthlyContribution,
-      value.compoundingFrequencyPerYear
-    ));
+    sendDeterministicFinanceResult(
+      res,
+      "compound",
+      calculateCompoundInterest(
+        value.principal,
+        value.annualRatePercent,
+        value.years,
+        value.monthlyContribution,
+        value.compoundingFrequencyPerYear
+      )
+    );
   } catch (error) {
     res.status(400).json({ error: error instanceof Error ? error.message : "Compound-interest calculation failed." });
   }
@@ -8671,12 +9372,11 @@ apiRouter.post("/finance/quick-ratio", (req, res) => {
   if (parsed.success === false) return calculatorValidationError(res, parsed);
   try {
     const value = parsed.data;
-    sendDeterministicFinanceResult(res, "quick-ratio", calculateQuickRatio(
-      value.cash,
-      value.marketableSecurities,
-      value.receivables,
-      value.currentLiabilities
-    ));
+    sendDeterministicFinanceResult(
+      res,
+      "quick-ratio",
+      calculateQuickRatio(value.cash, value.marketableSecurities, value.receivables, value.currentLiabilities)
+    );
   } catch (error) {
     res.status(400).json({ error: error instanceof Error ? error.message : "Quick-ratio calculation failed." });
   }
@@ -8696,7 +9396,11 @@ apiRouter.post("/finance/break-even", (req, res) => {
   if (parsed.success === false) return calculatorValidationError(res, parsed);
   try {
     const value = parsed.data;
-    sendDeterministicFinanceResult(res, "break-even", calculateBreakEven(value.fixedCosts, value.pricePerUnit, value.variableCostPerUnit));
+    sendDeterministicFinanceResult(
+      res,
+      "break-even",
+      calculateBreakEven(value.fixedCosts, value.pricePerUnit, value.variableCostPerUnit)
+    );
   } catch (error) {
     res.status(400).json({ error: error instanceof Error ? error.message : "Break-even calculation failed." });
   }
@@ -8720,11 +9424,7 @@ apiRouter.post("/finance/scenario-assistant", async (req, res, next) => {
     const safety = checkPromptSafety(parsed.data.question);
     if (!safety.safe) return res.status(400).json({ error: safety.reason, safety });
     const deterministicResult = recalculateScenario(parsed.data.scenario, parsed.data.inputs);
-    const externalContext = await loadScenarioExternalContext(
-      parsed.data.profile,
-      parsed.data.companySymbol || void 0,
-      parsed.data.useExternalContext
-    );
+    const externalContext = await loadScenarioExternalContext(parsed.data.profile, parsed.data.companySymbol || void 0, parsed.data.useExternalContext);
     const hasVerifiedCurrentData = externalContext.economicIndicators.length > 0 || Boolean(externalContext.company) || Boolean(externalContext.quote);
     const systemPrompt2 = `You are ArthaMind Scenario Analyst inside ArthaBench Pro's deterministic Financial Scenario & Calculation Studio.
 
@@ -8907,11 +9607,7 @@ ${currentData ? JSON.stringify(currentData) : "No verified current-data context 
       answer: text,
       response: text,
       structuredAnswer,
-      suggestedFollowUps: [
-        "Explain the formula symbols one by one.",
-        "Give me another worked example to solve.",
-        "Quiz me on this concept."
-      ],
+      suggestedFollowUps: ["Explain the formula symbols one by one.", "Give me another worked example to solve.", "Quiz me on this concept."],
       demoMode,
       provider: demoMode ? "demo" : "groq",
       model: demoMode ? null : getGroqModels().tutorModel,
@@ -8953,9 +9649,7 @@ apiRouter.post("/dashboard/assistant", async (req, res, next) => {
       providerHealth: snapshot.providerHealth,
       latestReliabilityEvaluation: snapshot.latestEvaluation
     };
-    const hasVerifiedCurrentData = snapshot.quotes.length > 0 || snapshot.economicIndicators.some(
-      (indicator) => indicator.status === "connected" && indicator.value !== null
-    );
+    const hasVerifiedCurrentData = snapshot.quotes.length > 0 || snapshot.economicIndicators.some((indicator) => indicator.status === "connected" && indicator.value !== null);
     const systemPrompt2 = `You are Ask Artha AI, the evidence-grounded dashboard analyst inside ArthaBench Pro.
 
 Rules:
@@ -8977,10 +9671,7 @@ ${buildStructuredFinancialAnswerInstructions({
 Verified dashboard snapshot:
 ${JSON.stringify(groundedContext)}`;
     const demoMode = !process.env.GROQ_API_KEY?.trim();
-    const structuredAnswer = demoMode ? createFallbackStructuredFinancialAnswer(
-      parsed.data.question,
-      buildDashboardDemoAnswer(snapshot)
-    ) : await callGroqStructuredFinancialAnswer(systemPrompt2, userPrompt, {
+    const structuredAnswer = demoMode ? createFallbackStructuredFinancialAnswer(parsed.data.question, buildDashboardDemoAnswer(snapshot)) : await callGroqStructuredFinancialAnswer(systemPrompt2, userPrompt, {
       history: parsed.data.history,
       fallbackQuestion: parsed.data.question
     });
@@ -9071,12 +9762,7 @@ apiRouter.get("/news/image", handleNewsImage);
 apiRouter.get("/news", async (req, res, next) => {
   try {
     const { query, category, region, page } = req.query;
-    const providerResult = await getBusinessNews(
-      query || "",
-      category || "all",
-      region || "global",
-      Number(page) || 1
-    );
+    const providerResult = await getBusinessNews(query || "", category || "all", region || "global", Number(page) || 1);
     res.json({
       status: providerResult.status || "ok",
       items: providerResult.items || [],
@@ -9164,7 +9850,10 @@ apiRouter.get("/markets/terminal/candles", async (req, res) => {
     res.setHeader("Cache-Control", `public, s-maxage=${ttl}, stale-while-revalidate=${ttl * 2}`);
     res.json(data);
   } catch (error) {
-    res.status(503).json({ error: "Candles for this instrument and interval are temporarily unavailable.", detail: error instanceof Error ? error.message.slice(0, 160) : void 0 });
+    res.status(503).json({
+      error: "Candles for this instrument and interval are temporarily unavailable.",
+      detail: error instanceof Error ? error.message.slice(0, 160) : void 0
+    });
   }
 });
 apiRouter.get("/markets/history", async (req, res, next) => {
@@ -9186,10 +9875,7 @@ apiRouter.get("/company/intelligence", async (req, res, next) => {
       return res.status(400).json({ error: "A valid company stock symbol is required." });
     }
     const result = await fetchFinnhubCompanyIntelligence(parsed.data.symbol);
-    res.setHeader(
-      "Cache-Control",
-      result.status === "connected" ? "public, s-maxage=900, stale-while-revalidate=3600" : "no-store"
-    );
+    res.setHeader("Cache-Control", result.status === "connected" ? "public, s-maxage=900, stale-while-revalidate=3600" : "no-store");
     res.json(result);
   } catch (err) {
     next(err);
@@ -9260,15 +9946,11 @@ ${buildStructuredFinancialAnswerInstructions({
 
 Verified structured context:
 ${JSON.stringify(groundedContext)}`;
-    const structuredAnswer = await callGroqStructuredFinancialAnswer(
-      systemPrompt2,
-      userPrompt,
-      {
-        history: parsed.data.history,
-        fallbackQuestion: `${parsed.data.question}
+    const structuredAnswer = await callGroqStructuredFinancialAnswer(systemPrompt2, userPrompt, {
+      history: parsed.data.history,
+      fallbackQuestion: `${parsed.data.question}
 Verified context: ${JSON.stringify(groundedContext)}`
-      }
-    );
+    });
     const answer = serializeStructuredFinancialAnswer(structuredAnswer);
     const demoMode = !process.env.GROQ_API_KEY?.trim();
     res.json({
@@ -9294,10 +9976,7 @@ Verified context: ${JSON.stringify(groundedContext)}`
 apiRouter.get("/economy/overview", async (_req, res, next) => {
   try {
     const result = await fetchFredOverview();
-    res.setHeader(
-      "Cache-Control",
-      result.status === "connected" ? "public, s-maxage=900, stale-while-revalidate=3600" : "no-store"
-    );
+    res.setHeader("Cache-Control", result.status === "connected" ? "public, s-maxage=900, stale-while-revalidate=3600" : "no-store");
     res.json(result);
   } catch (err) {
     next(err);
@@ -9320,10 +9999,7 @@ apiRouter.get("/economy/series", async (req, res, next) => {
 apiRouter.get("/economy/india/overview", async (_req, res, next) => {
   try {
     const result = await fetchWorldBankIndiaOverview();
-    res.setHeader(
-      "Cache-Control",
-      result.status === "connected" ? "public, s-maxage=3600, stale-while-revalidate=86400" : "no-store"
-    );
+    res.setHeader("Cache-Control", result.status === "connected" ? "public, s-maxage=3600, stale-while-revalidate=86400" : "no-store");
     res.json(result);
   } catch (err) {
     next(err);
@@ -9338,14 +10014,8 @@ apiRouter.get("/economy/india/series", async (req, res, next) => {
     if (!parsed.success) {
       return res.status(400).json({ error: "A valid World Bank indicatorId is required." });
     }
-    const result = await fetchWorldBankIndiaSeries(
-      parsed.data.indicatorId,
-      parsed.data.limit || 60
-    );
-    res.setHeader(
-      "Cache-Control",
-      result.status === "connected" ? "public, s-maxage=3600, stale-while-revalidate=86400" : "no-store"
-    );
+    const result = await fetchWorldBankIndiaSeries(parsed.data.indicatorId, parsed.data.limit || 60);
+    res.setHeader("Cache-Control", result.status === "connected" ? "public, s-maxage=3600, stale-while-revalidate=86400" : "no-store");
     res.json(result);
   } catch (err) {
     next(err);
@@ -9413,7 +10083,8 @@ var allowedModels = /* @__PURE__ */ new Set([DEFAULT_NVIDIA_MODEL]);
 function buildMessages(systemPrompt2, userPrompt, history) {
   const messages = [{ role: "system", content: withDateContext(systemPrompt2) }];
   for (const item of Array.isArray(history) ? history.slice(-10) : []) {
-    if ((item.role === "user" || item.role === "assistant") && typeof item.content === "string" && item.content.trim()) messages.push({ role: item.role, content: item.content.slice(0, 4e3) });
+    if ((item.role === "user" || item.role === "assistant") && typeof item.content === "string" && item.content.trim())
+      messages.push({ role: item.role, content: item.content.slice(0, 4e3) });
   }
   messages.push({ role: "user", content: userPrompt });
   return messages;
@@ -9439,7 +10110,14 @@ async function callNvidiaNemotron(userPrompt, history, systemPrompt2, requestedM
         headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
         body: JSON.stringify({
           model,
-          messages: buildMessages(await groundSystemPrompt(systemPrompt2 || "You are ArthaBench NVIDIA Nemotron financial-learning assistant. Explain clearly, reason carefully, and never provide personalized buy/sell trading instructions. Never output JSON, code, API payloads or developer instructions.", extractQuestion(userPrompt)), userPrompt, history),
+          messages: buildMessages(
+            await groundSystemPrompt(
+              systemPrompt2 || "You are ArthaBench NVIDIA Nemotron financial-learning assistant. Explain clearly, reason carefully, and never provide personalized buy/sell trading instructions. Never output JSON, code, API payloads or developer instructions.",
+              extractQuestion(userPrompt)
+            ),
+            userPrompt,
+            history
+          ),
           temperature: 0.2,
           top_p: 0.7,
           max_tokens: 2e3
@@ -9478,11 +10156,28 @@ async function handleNvidiaTutor(req, res) {
   const requestedModel = typeof req.body?.model === "string" ? req.body.model.trim() : "";
   if (!userPrompt || userPrompt.length > 2e3) return res.status(400).json({ error: "Please enter a question between 1 and 2000 characters." });
   try {
-    const result = await callNvidiaNemotron(userPrompt, history, typeof req.body?.systemPrompt === "string" ? req.body.systemPrompt : void 0, requestedModel);
+    const result = await callNvidiaNemotron(
+      userPrompt,
+      history,
+      typeof req.body?.systemPrompt === "string" ? req.body.systemPrompt : void 0,
+      requestedModel
+    );
     return res.json({ answer: result.text, provider: "NVIDIA NIM", model: result.model, fallbackMode: false, requestId: res.getHeader("x-request-id") });
   } catch (error) {
-    console.warn(JSON.stringify({ scope: "nvidia", requestId: res.getHeader("x-request-id"), status: 502, error: error instanceof Error ? error.message : "provider_failure" }));
-    return res.status(502).json({ error: "This model is temporarily unavailable. Retrying with another available AI model.", provider: "NVIDIA NIM", model: requestedModel || DEFAULT_NVIDIA_MODEL, requestId: res.getHeader("x-request-id") });
+    console.warn(
+      JSON.stringify({
+        scope: "nvidia",
+        requestId: res.getHeader("x-request-id"),
+        status: 502,
+        error: error instanceof Error ? error.message : "provider_failure"
+      })
+    );
+    return res.status(502).json({
+      error: "This model is temporarily unavailable. Retrying with another available AI model.",
+      provider: "NVIDIA NIM",
+      model: requestedModel || DEFAULT_NVIDIA_MODEL,
+      requestId: res.getHeader("x-request-id")
+    });
   }
 }
 
@@ -9497,7 +10192,22 @@ function inferTask(prompt, ctx) {
   if (/report/i.test(prompt)) return "report";
   return "education";
 }
-var REPLY_LANGUAGES = { English: "clear, warm, plain English", Hindi: "simple everyday Hindi in Devanagari script", Hinglish: "natural Roman Hindi mixed with simple English", Bengali: "simple everyday Bengali in Bengali script", Marathi: "simple everyday Marathi in Devanagari script", Telugu: "simple everyday Telugu in Telugu script", Tamil: "simple everyday Tamil in Tamil script", Gujarati: "simple everyday Gujarati in Gujarati script", Urdu: "simple everyday Urdu in Urdu script", Kannada: "simple everyday Kannada in Kannada script", Malayalam: "simple everyday Malayalam in Malayalam script", Punjabi: "simple everyday Punjabi in Gurmukhi script", Odia: "simple everyday Odia in Odia script", Assamese: "simple everyday Assamese in Assamese script" };
+var REPLY_LANGUAGES = {
+  English: "clear, warm, plain English",
+  Hindi: "simple everyday Hindi in Devanagari script",
+  Hinglish: "natural Roman Hindi mixed with simple English",
+  Bengali: "simple everyday Bengali in Bengali script",
+  Marathi: "simple everyday Marathi in Devanagari script",
+  Telugu: "simple everyday Telugu in Telugu script",
+  Tamil: "simple everyday Tamil in Tamil script",
+  Gujarati: "simple everyday Gujarati in Gujarati script",
+  Urdu: "simple everyday Urdu in Urdu script",
+  Kannada: "simple everyday Kannada in Kannada script",
+  Malayalam: "simple everyday Malayalam in Malayalam script",
+  Punjabi: "simple everyday Punjabi in Gurmukhi script",
+  Odia: "simple everyday Odia in Odia script",
+  Assamese: "simple everyday Assamese in Assamese script"
+};
 var VOICE_STYLE = "VOICE MODE: the answer will be read aloud to someone who may be new to finance. Talk like a patient elder in the family: short sentences, everyday words, no jargon (or explain it in a few words), no tables, symbols or markdown. directAnswer must be 3-5 short spoken sentences that fully answer the question; keyTakeaways are at most 3 short actions. Write amounts in digits with Indian grouping and the word for rupees in the reply language.";
 function cfoSystemPrompt(c2) {
   const chosen = c2.replyLanguage && REPLY_LANGUAGES[c2.replyLanguage];
@@ -9525,7 +10235,24 @@ function sanitizeText(text) {
   return text.replace(/```(?:json|markdown|text)?/gi, "").replace(/```/g, "").replace(/^\s*(JSON|Answer):\s*/i, "").replace(/\\text\{([^}]*)\}/g, "$1").replace(/\\times/g, "\xD7").replace(/\\cdot/g, "\xB7").replace(/\\%/g, "%").replace(/\\#/g, "#").replace(/\\frac\{([^}]*)\}\{([^}]*)\}/g, "($1) / ($2)").replace(/\\\[|\\\]/g, "").trim();
 }
 function presentationFromText(text, task) {
-  return { title: task === "cfo" ? "CFO brief" : task === "calculation" ? "Verified financial calculation" : task === "quiz" ? "Financial learning check" : "ArthaBench financial explanation", directAnswer: sanitizeText(text), steps: [], formula: { expression: "Shown when relevant.", variables: [], whenToUse: "Use a formula when the question requires a calculation." }, example: { title: "Context applied", dataStatus: "not_applicable", dataAsOf: (/* @__PURE__ */ new Date()).toISOString(), inputs: [], calculation: [], result: sanitizeText(text) }, interpretation: [], risks: ["AI-generated explanations should be verified for consequential decisions."], keyTakeaways: [], sources: currentGroundingSources().map(({ name, dataDate, freshness }) => ({ name, dataDate, freshness })) };
+  return {
+    title: task === "cfo" ? "CFO brief" : task === "calculation" ? "Verified financial calculation" : task === "quiz" ? "Financial learning check" : "ArthaBench financial explanation",
+    directAnswer: sanitizeText(text),
+    steps: [],
+    formula: { expression: "Shown when relevant.", variables: [], whenToUse: "Use a formula when the question requires a calculation." },
+    example: {
+      title: "Context applied",
+      dataStatus: "not_applicable",
+      dataAsOf: (/* @__PURE__ */ new Date()).toISOString(),
+      inputs: [],
+      calculation: [],
+      result: sanitizeText(text)
+    },
+    interpretation: [],
+    risks: ["AI-generated explanations should be verified for consequential decisions."],
+    keyTakeaways: [],
+    sources: currentGroundingSources().map(({ name, dataDate, freshness }) => ({ name, dataDate, freshness }))
+  };
 }
 async function runAiGateway(request) {
   const creator = founderAnswer(extractQuestion(request.prompt));
@@ -9533,7 +10260,16 @@ async function runAiGateway(request) {
     const answer = presentationFromText(creator, "general");
     answer.title = "About ArthaMind AI";
     answer.risks = [];
-    return { ok: true, requestId: requestId(), answer: creator, structuredAnswer: answer, provider: "ArthaMind", model: "identity", fallbackUsed: false, latencyMs: 0 };
+    return {
+      ok: true,
+      requestId: requestId(),
+      answer: creator,
+      structuredAnswer: answer,
+      provider: "ArthaMind",
+      model: "identity",
+      fallbackUsed: false,
+      latencyMs: 0
+    };
   }
   const id = requestId(), started = Date.now(), context2 = request.context || {}, task = request.task || inferTask(request.prompt, context2), preferred = request.requestedModel || "artha";
   const candidates = preferred === "nemotron" ? ["nemotron", "artha"] : ["artha", "nemotron"];
@@ -9544,24 +10280,63 @@ async function runAiGateway(request) {
         if (!process.env.NVIDIA_API_KEY?.trim()) throw new Error("NVIDIA is not configured.");
         const r = await callNvidiaNemotron(request.prompt, request.history, systemPrompt(task, context2), DEFAULT_NVIDIA_MODEL);
         const structured = finalizeGroundedAnswer(presentationFromText(r.text, task));
-        return { ok: true, requestId: id, answer: structured.directAnswer, structuredAnswer: structured, provider: "NVIDIA NIM", model: r.model, fallbackUsed: model !== preferred, latencyMs: Date.now() - started, grounding: currentGroundingReport() };
+        return {
+          ok: true,
+          requestId: id,
+          answer: structured.directAnswer,
+          structuredAnswer: structured,
+          provider: "NVIDIA NIM",
+          model: r.model,
+          fallbackUsed: model !== preferred,
+          latencyMs: Date.now() - started,
+          grounding: currentGroundingReport()
+        };
       }
       if (!process.env.GROQ_API_KEY?.trim()) throw new Error("Groq is not configured.");
       const models = getGroqModels();
-      const raw = await callGroqStructuredFinancialAnswer(systemPrompt(task, context2), request.prompt, { modelName: models.tutorModel, history: request.history, fallbackQuestion: request.prompt, throwOnFailure: true });
+      const raw = await callGroqStructuredFinancialAnswer(systemPrompt(task, context2), request.prompt, {
+        modelName: models.tutorModel,
+        history: request.history,
+        fallbackQuestion: request.prompt,
+        throwOnFailure: true
+      });
       const parsed = structuredFinancialAnswerSchema.safeParse(raw);
       if (!parsed.success) throw new Error("AI structured response failed validation.");
-      return { ok: true, requestId: id, answer: sanitizeText(parsed.data.directAnswer || parsed.data.example?.result || ""), structuredAnswer: parsed.data, provider: "Groq", model: models.tutorModel, fallbackUsed: model !== preferred, latencyMs: Date.now() - started, grounding: currentGroundingReport() };
+      return {
+        ok: true,
+        requestId: id,
+        answer: sanitizeText(parsed.data.directAnswer || parsed.data.example?.result || ""),
+        structuredAnswer: parsed.data,
+        provider: "Groq",
+        model: models.tutorModel,
+        fallbackUsed: model !== preferred,
+        latencyMs: Date.now() - started,
+        grounding: currentGroundingReport()
+      };
     } catch (error) {
       lastError = error instanceof Error ? error.message : "Provider request failed.";
     }
   }
   const live = await liveFallbackContext(request.prompt);
-  const fallback = createFallbackStructuredFinancialAnswer(request.prompt, live.text ? `The AI models are unavailable right now, so here is what the live sources show for your question. Read them directly; nothing below has been interpreted by AI.
-${live.text}` : "The live AI providers are temporarily unavailable. A safe educational fallback is being shown instead.");
+  const fallback = createFallbackStructuredFinancialAnswer(
+    request.prompt,
+    live.text ? `The AI models are unavailable right now, so here is what the live sources show for your question. Read them directly; nothing below has been interpreted by AI.
+${live.text}` : "The live AI providers are temporarily unavailable. A safe educational fallback is being shown instead."
+  );
   if (live.sources.length) fallback.sources = live.sources;
   applyOfflineDetail(fallback, request.prompt, live.text);
-  return { ok: false, requestId: id, answer: fallback.directAnswer, structuredAnswer: fallback, provider: "Local fallback", model: "ArthaBench", fallbackUsed: true, latencyMs: Date.now() - started, error: "AI providers temporarily unavailable", sanitizedProviderError: lastError.replace(/Bearer\s+\S+/gi, "Bearer [redacted]") };
+  return {
+    ok: false,
+    requestId: id,
+    answer: fallback.directAnswer,
+    structuredAnswer: fallback,
+    provider: "Local fallback",
+    model: "ArthaBench",
+    fallbackUsed: true,
+    latencyMs: Date.now() - started,
+    error: "AI providers temporarily unavailable",
+    sanitizedProviderError: lastError.replace(/Bearer\s+\S+/gi, "Bearer [redacted]")
+  };
 }
 async function liveFallbackContext(prompt) {
   try {
@@ -9608,7 +10383,16 @@ function calculateEMI(principal2, annualRatePercent, years) {
   const r = annual.div(100).div(12);
   const emi3 = r.isZero() ? P.div(n2) : P.times(r).times(new Decimal4(1).plus(r).pow(n2)).div(new Decimal4(1).plus(r).pow(n2).minus(1));
   const monthly = rounded(emi3);
-  return { principal: P.toNumber(), annualRatePercent: annual.toNumber(), years: t.toNumber(), payments: n2, monthlyRatePercent: rounded(r.times(100)), emi: monthly, totalPayments: rounded(new Decimal4(monthly).times(n2)), totalInterest: rounded(new Decimal4(monthly).times(n2).minus(P)) };
+  return {
+    principal: P.toNumber(),
+    annualRatePercent: annual.toNumber(),
+    years: t.toNumber(),
+    payments: n2,
+    monthlyRatePercent: rounded(r.times(100)),
+    emi: monthly,
+    totalPayments: rounded(new Decimal4(monthly).times(n2)),
+    totalInterest: rounded(new Decimal4(monthly).times(n2).minus(P))
+  };
 }
 function calculateEmergencyFund(monthlyExpenses, months) {
   const expenses = nonNegative2(monthlyExpenses, "Monthly expenses");
@@ -9617,7 +10401,12 @@ function calculateEmergencyFund(monthlyExpenses, months) {
 }
 function calculateBudget503020(monthlyIncome) {
   const income = nonNegative2(monthlyIncome, "Monthly income");
-  return { monthlyIncome: rounded(income), needs: rounded(income.times(".50")), wants: rounded(income.times(".30")), savingsAndDebt: rounded(income.times(".20")) };
+  return {
+    monthlyIncome: rounded(income),
+    needs: rounded(income.times(".50")),
+    wants: rounded(income.times(".30")),
+    savingsAndDebt: rounded(income.times(".20"))
+  };
 }
 function calculateSavingsTarget(targetAmount, months) {
   const target = positive(targetAmount, "Target amount");
@@ -9628,17 +10417,68 @@ function calculateSavingsTarget(targetAmount, months) {
 // server/aiRoutes.ts
 var aiChatLimiter = createRateLimiter({ windowMs: 6e4, max: 20, message: "You are sending questions quickly. Please wait a minute and try again." });
 var aiRouter = Router4();
-var context = z9.object({ country: z9.enum(["India", "US", "Global"]).optional().catch(void 0), currency: z9.enum(["INR", "USD", "EUR", "GBP"]).optional().catch(void 0), language: z9.enum(["english", "hindi", "hinglish"]).optional().catch(void 0), replyLanguage: z9.string().max(40).optional().catch(void 0), voice: z9.boolean().optional().catch(void 0), level: z9.enum(["beginner", "intermediate", "advanced"]).optional().catch(void 0), mode: z9.enum(["explain", "quiz", "calc"]).optional().catch(void 0), detail: z9.enum(["short", "standard", "detailed"]).optional().catch(void 0), useOfficialSources: z9.boolean().optional().catch(void 0), highContrast: z9.boolean().optional().catch(void 0), reducedMotion: z9.boolean().optional().catch(void 0), learningGoal: z9.string().max(200).optional().catch(void 0), learningStyle: z9.enum(["visual", "practical", "reading", "socratic", "example-first", "step-by-step", "challenge-based", "deep-dive"]).optional().catch(void 0), activityType: z9.enum(["lesson", "quiz", "calculation", "scenario", "flashcards", "revision", "mock-test"]).optional().catch(void 0), quizType: z9.enum(["mcq", "mixed", "true-false", "fill-blank", "short-answer", "scenario", "calculation"]).optional().catch(void 0), quizLength: z9.union([z9.literal(5), z9.literal(10), z9.literal(20), z9.literal(50)]).optional().catch(void 0), adaptiveDifficulty: z9.boolean().optional().catch(void 0), sessionLength: z9.union([z9.literal(2), z9.literal(5), z9.literal(10), z9.literal(15), z9.literal(20), z9.literal(30), z9.literal(45), z9.literal(60)]).optional().catch(void 0), learnerProfile: z9.string().max(500).optional().catch(void 0) });
-var requestSchema = z9.object({ prompt: z9.preprocess((value) => typeof value === "string" ? value.trim().slice(0, 4e3) : value, z9.string().min(1).max(4e3)), model: z9.enum(["artha", "nemotron"]).optional(), task: z9.enum(["education", "calculation", "live_data", "quiz", "scenario", "evaluation", "report", "general", "cfo"]).optional(), history: z9.preprocess((value) => Array.isArray(value) ? value.filter((turn) => turn && (turn.role === "user" || turn.role === "assistant") && typeof turn.content === "string" && turn.content.trim()).slice(-10).map((turn) => ({ role: turn.role, content: turn.content.slice(0, 4e3) })) : void 0, z9.array(z9.object({ role: z9.enum(["user", "assistant"]), content: z9.string().min(1).max(4e3) })).max(10).optional()), context: context.optional().catch(void 0) });
-var calcSchema = z9.object({ kind: z9.enum(["emi", "emergency-fund", "budget-503020", "savings-target"]), principal: z9.coerce.number().finite().optional(), annualRatePercent: z9.coerce.number().finite().optional(), years: z9.coerce.number().finite().optional(), monthlyIncome: z9.coerce.number().finite().optional(), monthlyExpenses: z9.coerce.number().finite().optional(), targetAmount: z9.coerce.number().finite().optional(), months: z9.coerce.number().finite().optional() });
+var context = z9.object({
+  country: z9.enum(["India", "US", "Global"]).optional().catch(void 0),
+  currency: z9.enum(["INR", "USD", "EUR", "GBP"]).optional().catch(void 0),
+  language: z9.enum(["english", "hindi", "hinglish"]).optional().catch(void 0),
+  replyLanguage: z9.string().max(40).optional().catch(void 0),
+  voice: z9.boolean().optional().catch(void 0),
+  level: z9.enum(["beginner", "intermediate", "advanced"]).optional().catch(void 0),
+  mode: z9.enum(["explain", "quiz", "calc"]).optional().catch(void 0),
+  detail: z9.enum(["short", "standard", "detailed"]).optional().catch(void 0),
+  useOfficialSources: z9.boolean().optional().catch(void 0),
+  highContrast: z9.boolean().optional().catch(void 0),
+  reducedMotion: z9.boolean().optional().catch(void 0),
+  learningGoal: z9.string().max(200).optional().catch(void 0),
+  learningStyle: z9.enum(["visual", "practical", "reading", "socratic", "example-first", "step-by-step", "challenge-based", "deep-dive"]).optional().catch(void 0),
+  activityType: z9.enum(["lesson", "quiz", "calculation", "scenario", "flashcards", "revision", "mock-test"]).optional().catch(void 0),
+  quizType: z9.enum(["mcq", "mixed", "true-false", "fill-blank", "short-answer", "scenario", "calculation"]).optional().catch(void 0),
+  quizLength: z9.union([z9.literal(5), z9.literal(10), z9.literal(20), z9.literal(50)]).optional().catch(void 0),
+  adaptiveDifficulty: z9.boolean().optional().catch(void 0),
+  sessionLength: z9.union([z9.literal(2), z9.literal(5), z9.literal(10), z9.literal(15), z9.literal(20), z9.literal(30), z9.literal(45), z9.literal(60)]).optional().catch(void 0),
+  learnerProfile: z9.string().max(500).optional().catch(void 0)
+});
+var requestSchema = z9.object({
+  prompt: z9.preprocess((value) => typeof value === "string" ? value.trim().slice(0, 4e3) : value, z9.string().min(1).max(4e3)),
+  model: z9.enum(["artha", "nemotron"]).optional(),
+  task: z9.enum(["education", "calculation", "live_data", "quiz", "scenario", "evaluation", "report", "general", "cfo"]).optional(),
+  history: z9.preprocess(
+    (value) => Array.isArray(value) ? value.filter((turn) => turn && (turn.role === "user" || turn.role === "assistant") && typeof turn.content === "string" && turn.content.trim()).slice(-10).map((turn) => ({ role: turn.role, content: turn.content.slice(0, 4e3) })) : void 0,
+    z9.array(z9.object({ role: z9.enum(["user", "assistant"]), content: z9.string().min(1).max(4e3) })).max(10).optional()
+  ),
+  context: context.optional().catch(void 0)
+});
+var calcSchema = z9.object({
+  kind: z9.enum(["emi", "emergency-fund", "budget-503020", "savings-target"]),
+  principal: z9.coerce.number().finite().optional(),
+  annualRatePercent: z9.coerce.number().finite().optional(),
+  years: z9.coerce.number().finite().optional(),
+  monthlyIncome: z9.coerce.number().finite().optional(),
+  monthlyExpenses: z9.coerce.number().finite().optional(),
+  targetAmount: z9.coerce.number().finite().optional(),
+  months: z9.coerce.number().finite().optional()
+});
 function logEvent(event) {
   console.info(JSON.stringify({ scope: "artha-ai", ...event }));
 }
 async function handleCentralChat(req, res) {
   const parsed = requestSchema.safeParse({ ...req.body, prompt: req.body?.prompt || req.body?.userPrompt || req.body?.message || req.body?.query });
   if (!parsed.success) return res.status(400).json({ error: "Please check the tutor request and try again." });
-  const result = await runAiGateway({ prompt: parsed.data.prompt, requestedModel: parsed.data.model, task: parsed.data.task, history: parsed.data.history, context: parsed.data.context });
-  logEvent({ requestId: result.requestId, provider: result.provider, model: result.model, fallbackUsed: result.fallbackUsed, latencyMs: result.latencyMs, status: result.ok ? "ok" : "fallback" });
+  const result = await runAiGateway({
+    prompt: parsed.data.prompt,
+    requestedModel: parsed.data.model,
+    task: parsed.data.task,
+    history: parsed.data.history,
+    context: parsed.data.context
+  });
+  logEvent({
+    requestId: result.requestId,
+    provider: result.provider,
+    model: result.model,
+    fallbackUsed: result.fallbackUsed,
+    latencyMs: result.latencyMs,
+    status: result.ok ? "ok" : "fallback"
+  });
   return res.status(200).json({ ...result, error: result.ok ? void 0 : "The selected AI model is temporarily unavailable. A safe fallback is being shown." });
 }
 aiRouter.post("/ai/chat", aiChatLimiter, handleCentralChat);
@@ -9711,7 +10551,16 @@ var personalizedAssistantSchema = z10.object({
       low: z10.number().nullable(),
       returnPercent: z10.number().nullable()
     }).nullable().optional(),
-    economicIndicators: z10.array(z10.object({ label: z10.string(), value: z10.number().nullable(), unit: z10.string(), date: z10.string().nullable(), sourceName: z10.string(), status: z10.string() })).max(30),
+    economicIndicators: z10.array(
+      z10.object({
+        label: z10.string(),
+        value: z10.number().nullable(),
+        unit: z10.string(),
+        date: z10.string().nullable(),
+        sourceName: z10.string(),
+        status: z10.string()
+      })
+    ).max(30),
     providerHealth: z10.object({
       connected: z10.number(),
       total: z10.number(),
@@ -9782,13 +10631,28 @@ function buildPersonalContext(workspace, settings) {
   const emisEnabled = enabled(settings, "emis", "personalFinance");
   if (incomeEnabled) {
     const income = parsePayload(workspace, "artha_income_sources_v1");
-    const sources = Array.isArray(income?.sources) ? income.sources.slice(0, 80).map((item) => ({ type: item.type, amount: item.amount, currency: item.currency, frequency: item.frequency, description: item.description, startDate: item.startDate, endDate: item.endDate ?? null })) : [];
+    const sources = Array.isArray(income?.sources) ? income.sources.slice(0, 80).map((item) => ({
+      type: item.type,
+      amount: item.amount,
+      currency: item.currency,
+      frequency: item.frequency,
+      description: item.description,
+      startDate: item.startDate,
+      endDate: item.endDate ?? null
+    })) : [];
     context2.income = sources;
     if (sources.length) references.push(`Income: ${sources.length} recorded source${sources.length === 1 ? "" : "s"}`);
   }
   if (expensesEnabled) {
     const expenses = parsePayload(workspace, "artha_expenses_v1");
-    const records = Array.isArray(expenses?.records) ? expenses.records.slice(-150).map((item) => ({ amount: item.amount, category: item.category, date: item.date, merchant: item.merchant, paymentMethod: item.paymentMethod, recurring: item.recurring })) : [];
+    const records = Array.isArray(expenses?.records) ? expenses.records.slice(-150).map((item) => ({
+      amount: item.amount,
+      category: item.category,
+      date: item.date,
+      merchant: item.merchant,
+      paymentMethod: item.paymentMethod,
+      recurring: item.recurring
+    })) : [];
     context2.expenses = records;
     if (records.length) {
       const dates = records.map((item) => item.date).filter(Boolean).sort();
@@ -9797,27 +10661,57 @@ function buildPersonalContext(workspace, settings) {
   }
   if (budgetsEnabled) {
     const budgets = parsePayload(workspace, "artha_budgets_v1");
-    const items = Array.isArray(budgets?.budgets) ? budgets.budgets.slice(-24).map((budget) => ({ name: budget.name, month: budget.month, savingsTarget: budget.savingsTarget, notes: budget.notes, categories: budget.categories })) : [];
+    const items = Array.isArray(budgets?.budgets) ? budgets.budgets.slice(-24).map((budget) => ({
+      name: budget.name,
+      month: budget.month,
+      savingsTarget: budget.savingsTarget,
+      notes: budget.notes,
+      categories: budget.categories
+    })) : [];
     context2.budgets = items;
     if (items.length) references.push(`Budgets: ${items.length} saved plan${items.length === 1 ? "" : "s"}`);
   }
   if (emisEnabled) {
     const emis = parsePayload(workspace, "artha_emi_records_v1");
-    const items = Array.isArray(emis?.records) ? emis.records.slice(0, 60).map((item) => ({ name: item.name, lender: item.lender, loanType: item.loanType, status: item.status, emiAmount: item.emiAmount, outstandingBalance: item.outstandingBalance, annualInterestRate: item.annualInterestRate, nextDueDate: item.nextDueDate, remainingInstallments: item.remainingInstallments })) : [];
+    const items = Array.isArray(emis?.records) ? emis.records.slice(0, 60).map((item) => ({
+      name: item.name,
+      lender: item.lender,
+      loanType: item.loanType,
+      status: item.status,
+      emiAmount: item.emiAmount,
+      outstandingBalance: item.outstandingBalance,
+      annualInterestRate: item.annualInterestRate,
+      nextDueDate: item.nextDueDate,
+      remainingInstallments: item.remainingInstallments
+    })) : [];
     context2.emis = items;
     if (items.length) references.push(`EMIs: ${items.length} recorded commitment${items.length === 1 ? "" : "s"}`);
   }
   if (settings.paperPortfolio) {
     const portfolio = parsePayload(workspace, "artha_paper_portfolio_v1");
     if (portfolio) {
-      context2.paperPortfolio = { cashBalance: portfolio.cashBalance, initialBalance: portfolio.initialBalance, positions: Array.isArray(portfolio.positions) ? portfolio.positions : [], trades: Array.isArray(portfolio.trades) ? portfolio.trades.slice(0, 50) : [] };
-      references.push(`Paper portfolio: ${Array.isArray(portfolio.positions) ? portfolio.positions.length : 0} positions; ${Array.isArray(portfolio.trades) ? portfolio.trades.length : 0} trades`);
+      context2.paperPortfolio = {
+        cashBalance: portfolio.cashBalance,
+        initialBalance: portfolio.initialBalance,
+        positions: Array.isArray(portfolio.positions) ? portfolio.positions : [],
+        trades: Array.isArray(portfolio.trades) ? portfolio.trades.slice(0, 50) : []
+      };
+      references.push(
+        `Paper portfolio: ${Array.isArray(portfolio.positions) ? portfolio.positions.length : 0} positions; ${Array.isArray(portfolio.trades) ? portfolio.trades.length : 0} trades`
+      );
     }
   }
   if (settings.learningProgress) {
     const progress = parsePayload(workspace, "artha_learning_progress_v1");
     if (progress) {
-      context2.learningProgress = { completedLessonIds: progress.completedLessonIds ?? [], quizScores: progress.quizScores ?? {}, bookmarkedLessonIds: progress.bookmarkedLessonIds ?? [], lastActiveLessonId: progress.lastActiveLessonId ?? null, streakDays: progress.streakDays ?? 0, lastActiveDate: progress.lastActiveDate ?? null };
+      context2.learningProgress = {
+        completedLessonIds: progress.completedLessonIds ?? [],
+        quizScores: progress.quizScores ?? {},
+        bookmarkedLessonIds: progress.bookmarkedLessonIds ?? [],
+        lastActiveLessonId: progress.lastActiveLessonId ?? null,
+        streakDays: progress.streakDays ?? 0,
+        lastActiveDate: progress.lastActiveDate ?? null
+      };
       references.push(`Learning: ${Array.isArray(progress.completedLessonIds) ? progress.completedLessonIds.length : 0} completed lessons`);
     }
   }
@@ -9889,7 +10783,10 @@ personalAccountRouter.post("/personal/assistant", async (req, res) => {
     const safety = checkPromptSafety(parsed.data.question);
     if (!safety.safe) return res.status(400).json({ error: safety.reason, safety });
     const directAdvicePattern = /\b(should i|would you|do you recommend|tell me (?:whether|if) to)\b.{0,80}\b(buy|sell|hold|invest)\b|\b(target price|trade signal|guaranteed return)\b/i;
-    if (directAdvicePattern.test(parsed.data.question)) return res.status(400).json({ error: "ArthaMind can explain your recorded data and educational trade-offs, but cannot provide personalized buy/sell/hold instructions, target prices, or guaranteed outcomes." });
+    if (directAdvicePattern.test(parsed.data.question))
+      return res.status(400).json({
+        error: "ArthaMind can explain your recorded data and educational trade-offs, but cannot provide personalized buy/sell/hold instructions, target prices, or guaranteed outcomes."
+      });
     const workspace = await fetchWorkspace(token);
     const { context: personalContext, references } = buildPersonalContext(workspace, parsed.data.settings);
     const personalDataUsed = Object.keys(personalContext).length > 0;
@@ -9914,11 +10811,13 @@ ${JSON.stringify(groundedContext)}`;
     const fallback = personalDataUsed ? `I found authorized personal context for this account (${references.join("; ")}). The live AI model is not configured, so I will not invent an interpretation. Review the recorded values in the relevant workspace or configure the AI provider for grounded natural-language analysis.` : "There is not enough authorized personal data in the enabled context to answer this as a personal-data question. Add records or enable the relevant AI Data Context source; I will not invent missing values.";
     const structuredAnswer = demoMode ? createFallbackStructuredFinancialAnswer(parsed.data.question, fallback) : await callGroqStructuredFinancialAnswer(systemPrompt2, userPrompt, { history: parsed.data.history, fallbackQuestion: parsed.data.question });
     const answer = serializeStructuredFinancialAnswer(structuredAnswer);
-    const sourceLabels = Array.from(/* @__PURE__ */ new Set([
-      ...publicContext.quotes.map((quote) => quote.providerName),
-      ...publicContext.economicIndicators.map((indicator) => indicator.sourceName),
-      ...personalDataUsed ? ["My authorized Artha Bench workspace"] : []
-    ]));
+    const sourceLabels = Array.from(
+      /* @__PURE__ */ new Set([
+        ...publicContext.quotes.map((quote) => quote.providerName),
+        ...publicContext.economicIndicators.map((indicator) => indicator.sourceName),
+        ...personalDataUsed ? ["My authorized Artha Bench workspace"] : []
+      ])
+    );
     return res.json({
       answer,
       structuredAnswer,
@@ -9926,7 +10825,12 @@ ${JSON.stringify(groundedContext)}`;
       model: demoMode ? null : getGroqModels().tutorModel,
       groundedAt: publicContext.capturedAt,
       sourceLabels,
-      suggestedQuestions: ["Where did I spend the most in my recorded expenses?", "Which saved budget category is closest to its limit?", "Summarize my recorded income and expenses.", "How would a change in one monthly commitment affect my recorded cash flow?"],
+      suggestedQuestions: [
+        "Where did I spend the most in my recorded expenses?",
+        "Which saved budget category is closest to its limit?",
+        "Summarize my recorded income and expenses.",
+        "How would a change in one monthly commitment affect my recorded cash flow?"
+      ],
       disclaimer: "Educational analysis only \u2014 not investment, tax, legal, or financial advice.",
       personalDataUsed,
       personalContextReferences: references,
@@ -10016,7 +10920,10 @@ personalAccountRouter.post("/personal/decision-replay", async (req, res) => {
     if (parsed.data.explain) {
       const prompt = `Explain this private Decision Replay without changing its arithmetic. Separate recorded baseline facts from scenario assumptions. Do not give investment, tax, legal, lending-approval, refinancing, or guaranteed-outcome advice. State data completeness as record coverage, not accuracy. Authenticated user id: ${user.id}. Deterministic replay: ${JSON.stringify(replay)}`;
       const demoMode = !process.env.GROQ_API_KEY?.trim();
-      structuredAnswer = demoMode ? createFallbackStructuredFinancialAnswer("Decision Replay", "The deterministic replay is available above, but the live AI explanation provider is not configured. No interpretation has been invented.") : await callGroqStructuredFinancialAnswer(
+      structuredAnswer = demoMode ? createFallbackStructuredFinancialAnswer(
+        "Decision Replay",
+        "The deterministic replay is available above, but the live AI explanation provider is not configured. No interpretation has been invented."
+      ) : await callGroqStructuredFinancialAnswer(
         `You are ArthaMind Decision Replay, a private counterfactual financial-education assistant. Use the supplied deterministic output exactly. ${buildStructuredFinancialAnswerInstructions({ audience: "dashboard", language: "English", level: "beginner", detail: "detailed", hasVerifiedCurrentData: true })}`,
         prompt,
         { fallbackQuestion: "Explain my Decision Replay." }
@@ -10085,12 +10992,18 @@ function buildComparisonReasons(winner, reportA, reportB) {
     const comparison = otherMap.get(dimension.id);
     const difference = dimension.rawScore - (comparison?.rawScore ?? 0);
     return { dimension, difference };
-  }).filter(({ difference }) => difference >= 3).sort((a, b) => b.difference - a.difference).slice(0, 4).map(({ dimension, difference }) => `${dimension.name} is ${Math.round(difference)} points stronger (${Math.round(dimension.rawScore)}/100): ${dimension.reason}`);
+  }).filter(({ difference }) => difference >= 3).sort((a, b) => b.difference - a.difference).slice(0, 4).map(
+    ({ dimension, difference }) => `${dimension.name} is ${Math.round(difference)} points stronger (${Math.round(dimension.rawScore)}/100): ${dimension.reason}`
+  );
   if (preferred.groundTruth.hasNumericalCheck && preferred.groundTruth.pass && !other.groundTruth.pass) {
-    reasons.unshift(`Its numerical result matches the deterministic ground truth within the configured ${preferred.groundTruth.allowedTolerancePercent}% tolerance, while the other response does not.`);
+    reasons.unshift(
+      `Its numerical result matches the deterministic ground truth within the configured ${preferred.groundTruth.allowedTolerancePercent}% tolerance, while the other response does not.`
+    );
   }
   if (!reasons.length) {
-    reasons.push(`Response ${winner} has the higher weighted reliability score (${preferred.overallScore}/100 versus ${other.overallScore}/100) under the current seven-dimension methodology.`);
+    reasons.push(
+      `Response ${winner} has the higher weighted reliability score (${preferred.overallScore}/100 versus ${other.overallScore}/100) under the current seven-dimension methodology.`
+    );
   }
   return reasons.slice(0, 5);
 }
@@ -10110,13 +11023,7 @@ evaluationComparisonRouter.post("/evaluate-response", async (req, res, next) => 
     const profile = parsed.data.profile || "US";
     const startedAt = Date.now();
     const independentReference = await buildIndependentReference(query, profile);
-    const report = computeFullReliabilityEvaluation(
-      query,
-      response,
-      independentReference,
-      startedAt,
-      { profile }
-    );
+    const report = computeFullReliabilityEvaluation(query, response, independentReference, startedAt, { profile });
     res.json({
       report,
       evaluationMode: "supplied_response",
@@ -10162,7 +11069,11 @@ var MAX_SYMBOLS = 20;
 var MAX_CONCURRENCY = 4;
 function parseSymbols(value) {
   if (typeof value !== "string") return [];
-  return [...new Set(value.split(",").map((item) => item.trim()).filter(Boolean))].slice(0, MAX_SYMBOLS);
+  return [
+    ...new Set(
+      value.split(",").map((item) => item.trim()).filter(Boolean)
+    )
+  ].slice(0, MAX_SYMBOLS);
 }
 async function mapWithConcurrency2(values, concurrency, mapper) {
   const results = new Array(values.length);
@@ -13987,7 +14898,19 @@ var timetableRouter = createTimetableRouter();
 
 // server/vercelHandler.ts
 var app = express2();
-var GROUNDED_AI_PATHS = /* @__PURE__ */ new Set(["/ai/chat", "/ai/tutor", "/tutor", "/nvidia-tutor", "/crypto/assistant", "/company/assistant", "/dashboard/assistant", "/personal/assistant", "/finance/scenario-assistant", "/news/explain", "/news/brief"]);
+var GROUNDED_AI_PATHS = /* @__PURE__ */ new Set([
+  "/ai/chat",
+  "/ai/tutor",
+  "/tutor",
+  "/nvidia-tutor",
+  "/crypto/assistant",
+  "/company/assistant",
+  "/dashboard/assistant",
+  "/personal/assistant",
+  "/finance/scenario-assistant",
+  "/news/explain",
+  "/news/brief"
+]);
 app.disable("x-powered-by");
 app.use(express2.json({ limit: "2mb" }));
 app.get("/api/news/image", handleNewsImage);
@@ -14015,7 +14938,16 @@ app.get("/api/auth/status", async (_req, res) => {
   try {
     const r = await fetch(`${url}/auth/v1/settings`, { headers: { apikey: key }, signal: AbortSignal.timeout(8e3) });
     const body = await r.json().catch(() => ({}));
-    res.json({ reachable: true, status: r.status, project: new URL(url).hostname.split(".")[0], keyType: key.startsWith("sb_") ? "publishable" : "jwt", emailEnabled: body?.external?.email ?? null, signupDisabled: body?.disable_signup ?? null, autoConfirm: body?.mailer_autoconfirm ?? null, error: r.ok ? null : body?.message || body?.msg || body?.error || null });
+    res.json({
+      reachable: true,
+      status: r.status,
+      project: new URL(url).hostname.split(".")[0],
+      keyType: key.startsWith("sb_") ? "publishable" : "jwt",
+      emailEnabled: body?.external?.email ?? null,
+      signupDisabled: body?.disable_signup ?? null,
+      autoConfirm: body?.mailer_autoconfirm ?? null,
+      error: r.ok ? null : body?.message || body?.msg || body?.error || null
+    });
   } catch (e) {
     res.json({ reachable: false, error: e instanceof Error ? e.message : "unreachable" });
   }

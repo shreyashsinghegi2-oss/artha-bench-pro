@@ -69,9 +69,7 @@ export const MarketView: React.FC = () => {
   const loadMarketStrip = async () => {
     setMarketStripLoading(true);
     try {
-      const quotes = await fetchMarketOverview(
-        MARKET_STRIP_INSTRUMENTS.map((instrument) => instrument.symbol),
-      );
+      const quotes = await fetchMarketOverview(MARKET_STRIP_INSTRUMENTS.map((instrument) => instrument.symbol));
       setMarketStripQuotes(quotes);
     } catch (err) {
       console.error('Failed to load market strip:', err);
@@ -111,17 +109,12 @@ export const MarketView: React.FC = () => {
     const normalizedSymbol = searchTicker.trim().toUpperCase();
     setCompanyLoading(true);
 
-    const [quoteResult, companyResult] = await Promise.allSettled([
-      fetchTickerQuote(normalizedSymbol),
-      fetchCompanyIntelligence(normalizedSymbol),
-    ]);
+    const [quoteResult, companyResult] = await Promise.allSettled([fetchTickerQuote(normalizedSymbol), fetchCompanyIntelligence(normalizedSymbol)]);
 
     if (quoteResult.status === 'fulfilled') setSearchedQuote(quoteResult.value);
     else setSearchError(`Ticker ${normalizedSymbol} not found or unavailable.`);
 
-    setCompanyIntelligence(
-      companyResult.status === 'fulfilled' ? companyResult.value : null,
-    );
+    setCompanyIntelligence(companyResult.status === 'fulfilled' ? companyResult.value : null);
     setCompanyLoading(false);
   };
 
@@ -179,11 +172,7 @@ export const MarketView: React.FC = () => {
         </button>
       </div>
 
-      <MarketStrip
-        instruments={MARKET_STRIP_INSTRUMENTS}
-        quotes={marketStripQuotes}
-        loading={marketStripLoading}
-      />
+      <MarketStrip instruments={MARKET_STRIP_INSTRUMENTS} quotes={marketStripQuotes} loading={marketStripLoading} />
 
       <SafetyBanner />
 
@@ -223,9 +212,7 @@ export const MarketView: React.FC = () => {
                   <span className="font-bold text-ink text-sm">{searchedQuote.symbol}</span>
                   <span className="text-[10px] text-secondary truncate max-w-28">{searchedQuote.name}</span>
                 </div>
-                <div className="text-lg font-extrabold text-ink mt-1">
-                  {formatQuoteValue(searchedQuote)}
-                </div>
+                <div className="text-lg font-extrabold text-ink mt-1">{formatQuoteValue(searchedQuote)}</div>
               </div>
               <div className="text-right space-y-2">
                 <div className={`text-xs font-bold flex items-center justify-end gap-1 ${searchedQuote.change >= 0 ? 'text-success' : 'text-danger'}`}>
@@ -244,10 +231,7 @@ export const MarketView: React.FC = () => {
         </div>
       </div>
 
-      <CompanyIntelligencePanel
-        data={companyIntelligence}
-        loading={companyLoading}
-      />
+      <CompanyIntelligencePanel data={companyIntelligence} loading={companyLoading} />
 
       {/* Main Grid Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -265,24 +249,18 @@ export const MarketView: React.FC = () => {
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {marketQuotes.map((q) => (
-                  <div
-                    key={q.symbol}
-                    className="p-4 bg-surface border border-line/80 rounded-xl flex items-center justify-between"
-                  >
+                  <div key={q.symbol} className="p-4 bg-surface border border-line/80 rounded-xl flex items-center justify-between">
                     <div>
                       <div className="flex items-center gap-2">
-                        <CompanyLogo symbol={q.symbol} size={22} className="rounded-md border border-line" /><span className="font-bold text-ink text-xs">{q.symbol}</span>
+                        <CompanyLogo symbol={q.symbol} size={22} className="rounded-md border border-line" />
+                        <span className="font-bold text-ink text-xs">{q.symbol}</span>
                         <span className="text-[10px] text-secondary truncate max-w-[100px]">{q.name}</span>
                       </div>
                       <div className="text-sm font-bold text-ink mt-1">${q.price.toFixed(2)}</div>
                     </div>
 
                     <div className="text-right space-y-2">
-                      <div
-                        className={`text-xs font-semibold flex items-center justify-end gap-1 ${
-                          q.change >= 0 ? 'text-success' : 'text-danger'
-                        }`}
-                      >
+                      <div className={`text-xs font-semibold flex items-center justify-end gap-1 ${q.change >= 0 ? 'text-success' : 'text-danger'}`}>
                         {q.change >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
                         <span>{q.changePercent.toFixed(2)}%</span>
                       </div>
@@ -291,9 +269,7 @@ export const MarketView: React.FC = () => {
                         <button
                           onClick={() => toggleWatchlist(q.symbol)}
                           className={`text-[10px] px-2 py-0.5 rounded ${
-                            watchlist.includes(q.symbol)
-                              ? 'bg-warning-soft/80 text-warning border border-warning-fill/60'
-                              : 'bg-hover text-secondary'
+                            watchlist.includes(q.symbol) ? 'bg-warning-soft/80 text-warning border border-warning-fill/60' : 'bg-hover text-secondary'
                           }`}
                         >
                           {watchlist.includes(q.symbol) ? 'Saved' : 'Watch'}
@@ -434,9 +410,7 @@ export const MarketView: React.FC = () => {
             <div className="bg-surface border border-line p-4 rounded-xl flex items-center justify-between">
               <div>
                 <div className="text-[10px] text-secondary uppercase tracking-wider">Virtual Balance</div>
-                <div className="text-lg font-bold text-success mt-0.5">
-                  ${portfolio.cashBalance.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                </div>
+                <div className="text-lg font-bold text-success mt-0.5">${portfolio.cashBalance.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
               </div>
               <DollarSign className="w-8 h-8 text-ink" />
             </div>
@@ -449,18 +423,15 @@ export const MarketView: React.FC = () => {
               ) : (
                 <div className="space-y-2">
                   {portfolio.positions.map((p) => (
-                    <div
-                      key={p.symbol}
-                      className="p-3 bg-surface border border-line/80 rounded-xl flex items-center justify-between text-xs"
-                    >
+                    <div key={p.symbol} className="p-3 bg-surface border border-line/80 rounded-xl flex items-center justify-between text-xs">
                       <div>
                         <div className="font-bold text-ink">{p.symbol}</div>
-                        <div className="text-[10px] text-secondary">{p.quantity} shares @ ${p.averageCost.toFixed(2)}</div>
+                        <div className="text-[10px] text-secondary">
+                          {p.quantity} shares @ ${p.averageCost.toFixed(2)}
+                        </div>
                       </div>
                       <div className="text-right">
-                        <div className="font-semibold text-secondary">
-                          ${(p.quantity * p.averageCost).toFixed(2)}
-                        </div>
+                        <div className="font-semibold text-secondary">${(p.quantity * p.averageCost).toFixed(2)}</div>
                       </div>
                     </div>
                   ))}
@@ -478,15 +449,9 @@ export const MarketView: React.FC = () => {
             ) : (
               <div className="space-y-2">
                 {watchlist.map((sym) => (
-                  <div
-                    key={sym}
-                    className="p-3 bg-surface border border-line rounded-xl flex items-center justify-between text-xs"
-                  >
+                  <div key={sym} className="p-3 bg-surface border border-line rounded-xl flex items-center justify-between text-xs">
                     <span className="font-bold text-ink">{sym}</span>
-                    <button
-                      onClick={() => toggleWatchlist(sym)}
-                      className="text-secondary hover:text-danger transition-colors p-1"
-                    >
+                    <button onClick={() => toggleWatchlist(sym)} className="text-secondary hover:text-danger transition-colors p-1">
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>

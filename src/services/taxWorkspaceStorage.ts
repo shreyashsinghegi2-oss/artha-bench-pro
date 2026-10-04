@@ -1,11 +1,4 @@
-import {
-  DocumentStatus,
-  IndianTaxProfile,
-  TaxAuditEvent,
-  TaxCreditEntry,
-  TaxDeductionEntry,
-  TaxWorkspaceState,
-} from '../types/taxTypes';
+import { DocumentStatus, IndianTaxProfile, TaxAuditEvent, TaxCreditEntry, TaxDeductionEntry, TaxWorkspaceState } from '../types/taxTypes';
 
 export const TAX_WORKSPACE_STORAGE_KEY = 'artha_india_tax_workspace_v1';
 
@@ -69,12 +62,7 @@ export function createAuditEvent(action: string, detail: string): TaxAuditEvent 
   return { id: crypto.randomUUID(), timestamp: new Date().toISOString(), action, detail };
 }
 
-export function createDeduction(
-  type: TaxDeductionEntry['type'],
-  amount: number,
-  description: string,
-  status: DocumentStatus = 'not-added',
-): TaxDeductionEntry {
+export function createDeduction(type: TaxDeductionEntry['type'], amount: number, description: string, status: DocumentStatus = 'not-added'): TaxDeductionEntry {
   return { id: crypto.randomUUID(), type, amount, description, status, createdAt: new Date().toISOString() };
 }
 

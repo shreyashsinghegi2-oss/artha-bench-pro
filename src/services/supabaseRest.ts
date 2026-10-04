@@ -77,7 +77,8 @@ function authHeaders(token?: string): HeadersInit {
 
 /** Supabase error text rewritten so people know what to do next. */
 function friendlyAuthError(raw: string): string {
-  if (/invalid login credentials/i.test(raw)) return 'That email and password do not match an account. Check the password, use "Forgot password?" to reset it, or create a free account if you have not signed up yet. If you first signed up with Google, use the Google button.';
+  if (/invalid login credentials/i.test(raw))
+    return 'That email and password do not match an account. Check the password, use "Forgot password?" to reset it, or create a free account if you have not signed up yet. If you first signed up with Google, use the Google button.';
   if (/user already registered/i.test(raw)) return 'An account with this email already exists. Sign in instead, or reset your password.';
   if (/password should be at least/i.test(raw)) return 'Please choose a password of at least 8 characters.';
   const wait = raw.match(/only request this after (\d+) seconds?/i);
@@ -151,7 +152,11 @@ export function parseOAuthSessionFromLocation(): AuthSession | null {
   const tokenType = params.get('token_type') || 'bearer';
   const rawUser = params.get('user');
   let user: AuthUser | null = null;
-  try { user = rawUser ? JSON.parse(decodeURIComponent(rawUser)) : null; } catch { user = null; }
+  try {
+    user = rawUser ? JSON.parse(decodeURIComponent(rawUser)) : null;
+  } catch {
+    user = null;
+  }
   if (!user?.id) return null;
   window.history.replaceState({}, document.title, `${window.location.pathname}${window.location.search}`);
   return {
@@ -235,7 +240,9 @@ export async function signUpWithPassword(input: {
  * a custom SMTP sender in Supabase and email templates that include {{ .Token }} (see docs/EMAIL_OTP_SETUP.md).
  */
 export function emailOtpRequired(): boolean {
-  const raw = String((import.meta.env.VITE_EMAIL_OTP as string | undefined) ?? '').trim().toLowerCase();
+  const raw = String((import.meta.env.VITE_EMAIL_OTP as string | undefined) ?? '')
+    .trim()
+    .toLowerCase();
   return raw === 'on' || raw === 'true' || raw === '1';
 }
 
@@ -246,7 +253,14 @@ export function sessionAuthMethods(accessToken: string): string[] {
   try {
     const part = accessToken.split('.')[1];
     if (!part) return [];
-    const json = JSON.parse(atob(part.replace(/-/g, '+').replace(/_/g, '/').padEnd(Math.ceil(part.length / 4) * 4, '=')));
+    const json = JSON.parse(
+      atob(
+        part
+          .replace(/-/g, '+')
+          .replace(/_/g, '/')
+          .padEnd(Math.ceil(part.length / 4) * 4, '='),
+      ),
+    );
     const amr = Array.isArray(json?.amr) ? json.amr : [];
     return amr.map((m: unknown) => (typeof m === 'string' ? m : String((m as { method?: unknown })?.method ?? ''))).filter(Boolean);
   } catch {
@@ -424,7 +438,11 @@ export async function upsertProfile(token: string, profile: Partial<UserProfile>
   return rows[0];
 }
 
-export interface WorkspaceRow { storage_key: string; payload: string | null; updated_at?: string; }
+export interface WorkspaceRow {
+  storage_key: string;
+  payload: string | null;
+  updated_at?: string;
+}
 
 export async function fetchWorkspaceRows(token: string): Promise<WorkspaceRow[]> {
   return rest<WorkspaceRow[]>('user_workspace_state?select=storage_key,payload,updated_at', token);
@@ -454,7 +472,14 @@ export async function createAiConversation(token: string, userId: string, title:
   return rows[0].id;
 }
 
-export async function saveAiMessage(token: string, userId: string, conversationId: string, role: 'user' | 'assistant', content: string, contextReference?: string): Promise<void> {
+export async function saveAiMessage(
+  token: string,
+  userId: string,
+  conversationId: string,
+  role: 'user' | 'assistant',
+  content: string,
+  contextReference?: string,
+): Promise<void> {
   await rest('ai_messages', token, {
     method: 'POST',
     headers: { Prefer: 'return=minimal' },
@@ -508,7 +533,11 @@ export async function checkSession(session: AuthSession): Promise<{ state: 'vali
   let current = session;
   try {
     if (current.expires_at <= Math.floor(Date.now() / 1000) + 120) {
-      const r = await fetch(`${url}/auth/v1/token?grant_type=refresh_token`, { method: 'POST', headers: authHeaders(), body: JSON.stringify({ refresh_token: current.refresh_token }) });
+      const r = await fetch(`${url}/auth/v1/token?grant_type=refresh_token`, {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({ refresh_token: current.refresh_token }),
+      });
       if (r.status === 400 || r.status === 401 || r.status === 403) return { state: 'revoked' };
       if (!r.ok) return { state: 'unknown' };
       const next = normalizeSession(await r.json());

@@ -1,9 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { ArrowDownRight, ArrowUpRight, Minus } from 'lucide-react';
-import type {
-  IndiaMarketTickerItem,
-  IndiaMarketTickerResponse,
-} from '../../types';
+import type { IndiaMarketTickerItem, IndiaMarketTickerResponse } from '../../types';
 import { fetchIndiaMarketTicker } from '../../services/learningApi';
 import { CompanyLogo } from '../market/CompanyLogo';
 
@@ -47,31 +44,22 @@ function TickerItem({ item }: { item: IndiaMarketTickerItem }) {
   const change = item.change ?? 0;
   const changePercent = item.changePercent ?? 0;
   const direction = change > 0 ? 'up' : change < 0 ? 'down' : 'neutral';
-  const valueColor = direction === 'up'
-    ? 'text-emerald-300'
-    : direction === 'down'
-      ? 'text-red-300'
-      : 'text-slate-300';
-  const DirectionIcon = direction === 'up'
-    ? ArrowUpRight
-    : direction === 'down'
-      ? ArrowDownRight
-      : Minus;
+  const valueColor = direction === 'up' ? 'text-emerald-300' : direction === 'down' ? 'text-red-300' : 'text-slate-300';
+  const DirectionIcon = direction === 'up' ? ArrowUpRight : direction === 'down' ? ArrowDownRight : Minus;
   const sentiment = direction === 'up' ? 'Bullish' : direction === 'down' ? 'Bearish' : 'Neutral';
   const sentimentDot = direction === 'up' ? 'bg-emerald-400' : direction === 'down' ? 'bg-red-400' : 'bg-amber-300';
-  const sentimentClass = direction === 'up'
-    ? 'border-emerald-400/25 bg-emerald-400/10 text-emerald-200'
-    : direction === 'down'
-      ? 'border-red-400/25 bg-red-400/10 text-red-200'
-      : 'border-amber-300/25 bg-amber-300/10 text-amber-100';
+  const sentimentClass =
+    direction === 'up'
+      ? 'border-emerald-400/25 bg-emerald-400/10 text-emerald-200'
+      : direction === 'down'
+        ? 'border-red-400/25 bg-red-400/10 text-red-200'
+        : 'border-amber-300/25 bg-amber-300/10 text-amber-100';
 
   return (
     <li className="flex h-10 shrink-0 items-center gap-2.5 border-r border-slate-700/80 px-5 text-xs tabular-nums">
       <CompanyLogo symbol={item.yahooSymbol} size={22} className="rounded-md" />
       <span className="font-semibold text-slate-100">{item.label}</span>
-      <span className="min-w-[5.5rem] text-right font-medium text-white">
-        {formatPrice(item.price, item.currency)}
-      </span>
+      <span className="min-w-[5.5rem] text-right font-medium text-white">{formatPrice(item.price, item.currency)}</span>
       <span className={`inline-flex min-w-[8.75rem] items-center gap-1 font-semibold ${valueColor}`}>
         <DirectionIcon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
         <span>{signedNumber(change)}</span>
@@ -89,13 +77,7 @@ function TickerItem({ item }: { item: IndiaMarketTickerItem }) {
   );
 }
 
-function TickerGroup({
-  items,
-  duplicate = false,
-}: {
-  items: IndiaMarketTickerItem[];
-  duplicate?: boolean;
-}) {
+function TickerGroup({ items, duplicate = false }: { items: IndiaMarketTickerItem[]; duplicate?: boolean }) {
   return (
     <ul
       className={`india-market-ticker-group flex shrink-0 items-center ${duplicate ? 'india-market-ticker-duplicate' : ''}`}
@@ -185,17 +167,11 @@ export const IndiaMarketTicker: React.FC = () => {
             <TickerGroup items={data.items} duplicate />
           </div>
         ) : requestFailed ? (
-          <div className="flex h-10 items-center px-5 text-xs text-slate-300">
-            Market data temporarily unavailable
-          </div>
+          <div className="flex h-10 items-center px-5 text-xs text-slate-300">Market data temporarily unavailable</div>
         ) : (
           <div className="flex h-10 items-center gap-5 px-5" aria-label="Loading India market data">
             {[0, 1, 2, 3].map((item) => (
-              <span
-                key={item}
-                className="h-2.5 w-32 animate-pulse rounded-full bg-slate-700 motion-reduce:animate-none"
-                aria-hidden="true"
-              />
+              <span key={item} className="h-2.5 w-32 animate-pulse rounded-full bg-slate-700 motion-reduce:animate-none" aria-hidden="true" />
             ))}
           </div>
         )}

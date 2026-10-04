@@ -1,17 +1,5 @@
 import React from 'react';
-import {
-  Wallet,
-  TrendingUp,
-  ShieldAlert,
-  Coins,
-  Building2,
-  Briefcase,
-  LineChart,
-  DollarSign,
-  CheckCircle2,
-  Clock,
-  ChevronRight,
-} from 'lucide-react';
+import { Wallet, TrendingUp, ShieldAlert, Coins, Building2, Briefcase, LineChart, DollarSign, CheckCircle2, Clock, ChevronRight } from 'lucide-react';
 import { LearningTrack } from '../../types';
 
 interface LearningTrackCardProps {
@@ -32,15 +20,9 @@ const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   DollarSign,
 };
 
-export const LearningTrackCard: React.FC<LearningTrackCardProps> = ({
-  track,
-  completedLessonCount,
-  totalLessonCount,
-  onSelectTrack,
-}) => {
+export const LearningTrackCard: React.FC<LearningTrackCardProps> = ({ track, completedLessonCount, totalLessonCount, onSelectTrack }) => {
   const Icon = ICON_MAP[track.iconName] || Wallet;
-  const progressPercent =
-    totalLessonCount > 0 ? Math.round((completedLessonCount / totalLessonCount) * 100) : 0;
+  const progressPercent = totalLessonCount > 0 ? Math.round((completedLessonCount / totalLessonCount) * 100) : 0;
 
   return (
     <div
@@ -52,17 +34,11 @@ export const LearningTrackCard: React.FC<LearningTrackCardProps> = ({
           <div className="w-10 h-10 rounded-xl bg-hover border border-line-strong/80 flex items-center justify-center text-success group-hover:bg-success-soft/60 group- transition-colors">
             <Icon className="w-5 h-5" />
           </div>
-          <span className="text-[10px] font-semibold px-2.5 py-1 rounded-full bg-hover text-secondary border border-line-strong">
-            {track.riskLabel}
-          </span>
+          <span className="text-[10px] font-semibold px-2.5 py-1 rounded-full bg-hover text-secondary border border-line-strong">{track.riskLabel}</span>
         </div>
 
-        <h3 className="font-bold text-ink text-base group-hover:text-success transition-colors">
-          {track.title}
-        </h3>
-        <p className="text-xs text-secondary mt-1.5 line-clamp-2 leading-relaxed">
-          {track.description}
-        </p>
+        <h3 className="font-bold text-ink text-base group-hover:text-success transition-colors">{track.title}</h3>
+        <p className="text-xs text-secondary mt-1.5 line-clamp-2 leading-relaxed">{track.description}</p>
       </div>
 
       <div className="mt-5 pt-4 border-t border-line/80">
@@ -76,10 +52,7 @@ export const LearningTrackCard: React.FC<LearningTrackCardProps> = ({
 
         {/* Progress Bar */}
         <div className="w-full h-1.5 bg-hover rounded-full overflow-hidden">
-          <div
-            className="h-full bg-brand transition-all duration-300"
-            style={{ width: `${progressPercent}%` }}
-          />
+          <div className="h-full bg-brand transition-all duration-300" style={{ width: `${progressPercent}%` }} />
         </div>
 
         <div className="mt-4 flex items-center justify-between text-xs font-semibold text-success group- transition-transform">

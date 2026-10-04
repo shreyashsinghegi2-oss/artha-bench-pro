@@ -13,7 +13,12 @@ function allowedUrl(value: string) {
 }
 
 function decodeHtml(value: string) {
-  return value.replace(/&amp;/gi, '&').replace(/&quot;/gi, '"').replace(/&#39;|&apos;/gi, "'").replace(/&lt;/gi, '<').replace(/&gt;/gi, '>');
+  return value
+    .replace(/&amp;/gi, '&')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;|&apos;/gi, "'")
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>');
 }
 
 function extractMetaImage(html: string, pageUrl: URL) {
@@ -24,13 +29,22 @@ function extractMetaImage(html: string, pageUrl: URL) {
     if (!wanted.has(property)) continue;
     const content = decodeHtml(tag.match(/\bcontent\s*=\s*["']([^"']+)["']/i)?.[1] || '').trim();
     if (content) {
-      try { return new URL(content, pageUrl).toString(); } catch { /* continue */ }
+      try {
+        return new URL(content, pageUrl).toString();
+      } catch {
+        /* continue */
+      }
     }
   }
-  const imageSrc = html.match(/<link\b[^>]*\brel\s*=\s*["'][^"']*image_src[^"']*["'][^>]*\bhref\s*=\s*["']([^"']+)["']/i)
-    || html.match(/<link\b[^>]*\bhref\s*=\s*["']([^"']+)["'][^>]*\brel\s*=\s*["'][^"']*image_src[^"']*["']/i);
+  const imageSrc =
+    html.match(/<link\b[^>]*\brel\s*=\s*["'][^"']*image_src[^"']*["'][^>]*\bhref\s*=\s*["']([^"']+)["']/i) ||
+    html.match(/<link\b[^>]*\bhref\s*=\s*["']([^"']+)["'][^>]*\brel\s*=\s*["'][^"']*image_src[^"']*["']/i);
   if (imageSrc?.[1]) {
-    try { return new URL(decodeHtml(imageSrc[1]), pageUrl).toString(); } catch { /* ignore */ }
+    try {
+      return new URL(decodeHtml(imageSrc[1]), pageUrl).toString();
+    } catch {
+      /* ignore */
+    }
   }
   return '';
 }
@@ -95,7 +109,10 @@ export async function handleNewsImage(req: Request, res: Response) {
     // Slow publisher sites time out often; that is expected, so cache the miss briefly and let the page use its fallback image.
     const timedOut = error instanceof Error && (error.name === 'TimeoutError' || error.name === 'AbortError');
     res.setHeader('Cache-Control', 'public, s-maxage=600');
-    if (timedOut) { console.warn('News image proxy: publisher timed out'); return res.status(504).json({ error: 'Publisher image timed out.' }); }
+    if (timedOut) {
+      console.warn('News image proxy: publisher timed out');
+      return res.status(504).json({ error: 'Publisher image timed out.' });
+    }
     console.error('News image proxy failed:', error);
     return res.status(502).json({ error: 'Unable to resolve publisher image.' });
   }

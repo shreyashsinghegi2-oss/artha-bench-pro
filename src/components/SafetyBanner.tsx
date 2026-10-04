@@ -18,9 +18,7 @@ export const SafetyBanner: React.FC<SafetyBannerProps> = ({
   return (
     <div
       className={`rounded-xl border p-3.5 mb-6 text-xs flex items-start gap-3 ${
-        isWarning
-          ? 'bg-warning-soft/40 border-warning-fill/60 text-warning'
-          : 'bg-subtle border-line-strong/60 text-secondary'
+        isWarning ? 'bg-warning-soft/40 border-warning-fill/60 text-warning' : 'bg-subtle border-line-strong/60 text-secondary'
       }`}
     >
       <Icon className={`w-4 h-4 shrink-0 mt-0.5 ${isWarning ? 'text-warning' : 'text-interactive'}`} />

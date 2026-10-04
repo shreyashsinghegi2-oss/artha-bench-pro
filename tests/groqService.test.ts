@@ -1,17 +1,9 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { checkGroqDiagnostics, getGroqModels } from '../server/groqService';
 
-const trackedEnvironmentKeys = [
-  'GROQ_API_KEY',
-  'GROQ_TUTOR_MODEL',
-  'GROQ_EVALUATOR_MODEL',
-  'GROQ_PRIMARY_MODEL',
-  'GROQ_SECONDARY_MODEL',
-] as const;
+const trackedEnvironmentKeys = ['GROQ_API_KEY', 'GROQ_TUTOR_MODEL', 'GROQ_EVALUATOR_MODEL', 'GROQ_PRIMARY_MODEL', 'GROQ_SECONDARY_MODEL'] as const;
 
-const originalEnvironment = Object.fromEntries(
-  trackedEnvironmentKeys.map((key) => [key, process.env[key]]),
-);
+const originalEnvironment = Object.fromEntries(trackedEnvironmentKeys.map((key) => [key, process.env[key]]));
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -113,10 +105,7 @@ describe('Groq model configuration and diagnostics', () => {
       vi.fn().mockResolvedValue(
         new Response(
           JSON.stringify({
-            data: [
-              { id: 'openai/gpt-oss-120b' },
-              { id: 'openai/gpt-oss-20b' },
-            ],
+            data: [{ id: 'openai/gpt-oss-120b' }, { id: 'openai/gpt-oss-20b' }],
           }),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
@@ -125,9 +114,7 @@ describe('Groq model configuration and diagnostics', () => {
 
     const diagnostics = await checkGroqDiagnostics();
 
-    expect(diagnostics.find((diagnostic) => diagnostic.id === 'groq-tutor')?.status).toBe(
-      'connected',
-    );
+    expect(diagnostics.find((diagnostic) => diagnostic.id === 'groq-tutor')?.status).toBe('connected');
     expect(diagnostics.find((diagnostic) => diagnostic.id === 'groq-primary')).toMatchObject({
       name: 'retired-model',
       status: 'error',
@@ -138,16 +125,11 @@ describe('Groq model configuration and diagnostics', () => {
   it('reports rejected credentials without exposing the key', async () => {
     clearModelOverrides();
     process.env.GROQ_API_KEY = 'never-return-this-groq-key';
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue(new Response('{}', { status: 401 })),
-    );
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('{}', { status: 401 })));
 
     const diagnostics = await checkGroqDiagnostics();
 
-    expect(diagnostics.every((diagnostic) => diagnostic.status === 'invalid_credentials')).toBe(
-      true,
-    );
+    expect(diagnostics.every((diagnostic) => diagnostic.status === 'invalid_credentials')).toBe(true);
     expect(JSON.stringify(diagnostics)).not.toContain('never-return-this-groq-key');
   });
 });

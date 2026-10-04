@@ -12,6 +12,7 @@ describe('Financial Scenario Studio API registration', () => {
       '/finance/break-even',
       '/finance/dti',
       '/finance/scenario-assistant',
-    ]) expect(paths).toContain(path);
+    ])
+      expect(paths).toContain(path);
   });
 });

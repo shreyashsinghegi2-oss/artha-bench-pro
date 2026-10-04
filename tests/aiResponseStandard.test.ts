@@ -36,9 +36,7 @@ const validAnswer: StructuredFinancialAnswer = {
   interpretation: ['Compounding increases the balance nonlinearly.'],
   risks: ['Actual account rates and fees may differ.'],
   keyTakeaways: ['Confirm the compounding frequency.'],
-  sources: [
-    { name: 'ArthaBench educational framework', dataDate: '', freshness: 'Illustrative' },
-  ],
+  sources: [{ name: 'ArthaBench educational framework', dataDate: '', freshness: 'Illustrative' }],
 };
 
 afterEach(() => {
@@ -99,18 +97,16 @@ describe('Artha structured financial-answer standard', () => {
   it('requests strict Groq JSON Schema output for the active GPT-OSS tutor', async () => {
     process.env.GROQ_API_KEY = 'structured-test-key';
     const fetchMock = vi.fn().mockResolvedValue(
-      new Response(
-        JSON.stringify({ choices: [{ message: { content: JSON.stringify(validAnswer) } }] }),
-        { status: 200, headers: { 'Content-Type': 'application/json' } },
-      ),
+      new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify(validAnswer) } }] }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
     );
     vi.stubGlobal('fetch', fetchMock);
 
-    const result = await callGroqStructuredFinancialAnswer(
-      'Teach finance clearly.',
-      'Explain compound interest.',
-      { fallbackQuestion: 'Explain compound interest.' },
-    );
+    const result = await callGroqStructuredFinancialAnswer('Teach finance clearly.', 'Explain compound interest.', {
+      fallbackQuestion: 'Explain compound interest.',
+    });
 
     const request = JSON.parse(String(fetchMock.mock.calls[0][1]?.body));
     expect(request.response_format).toMatchObject({
@@ -127,18 +123,16 @@ describe('Artha structured financial-answer standard', () => {
       .fn()
       .mockResolvedValueOnce(new Response('unsupported schema', { status: 400 }))
       .mockResolvedValueOnce(
-        new Response(
-          JSON.stringify({ choices: [{ message: { content: JSON.stringify(validAnswer) } }] }),
-          { status: 200, headers: { 'Content-Type': 'application/json' } },
-        ),
+        new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify(validAnswer) } }] }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
       );
     vi.stubGlobal('fetch', fetchMock);
 
-    const result = await callGroqStructuredFinancialAnswer(
-      'Teach finance clearly.',
-      'Explain compound interest.',
-      { fallbackQuestion: 'Explain compound interest.' },
-    );
+    const result = await callGroqStructuredFinancialAnswer('Teach finance clearly.', 'Explain compound interest.', {
+      fallbackQuestion: 'Explain compound interest.',
+    });
 
     expect(fetchMock).toHaveBeenCalledTimes(2);
     const retryRequest = JSON.parse(String(fetchMock.mock.calls[1][1]?.body));

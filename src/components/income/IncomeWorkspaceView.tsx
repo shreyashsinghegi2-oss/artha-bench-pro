@@ -14,18 +14,8 @@ export const IncomeWorkspaceView: React.FC = () => {
     const sources = loadIncomeSources();
     const taxWorkspace = loadTaxWorkspace();
     const summaries = summarizeIncomeByCurrency(sources);
-    const taxComparison = compareTaxRegimes(
-      sources,
-      taxWorkspace.profile,
-      taxWorkspace.deductions,
-      taxWorkspace.credits,
-    );
-    const taxEstimate = calculateIndiaTaxEstimate(
-      sources,
-      taxWorkspace.profile,
-      taxWorkspace.deductions,
-      taxWorkspace.credits,
-    );
+    const taxComparison = compareTaxRegimes(sources, taxWorkspace.profile, taxWorkspace.deductions, taxWorkspace.credits);
+    const taxEstimate = calculateIndiaTaxEstimate(sources, taxWorkspace.profile, taxWorkspace.deductions, taxWorkspace.credits);
 
     return { sources, taxWorkspace, summaries, taxComparison, taxEstimate };
   }, [revision]);
@@ -37,9 +27,8 @@ export const IncomeWorkspaceView: React.FC = () => {
   const openIncomeForm = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
     window.setTimeout(() => {
-      const button = Array.from(document.querySelectorAll('button')).find((candidate) =>
-        /add income source/i.test(candidate.textContent || ''),
-      ) as HTMLButtonElement | undefined;
+      const button = Array.from(document.querySelectorAll('button')).find((candidate) => /add income source/i.test(candidate.textContent || '')) as
+        HTMLButtonElement | undefined;
       button?.click();
     }, 350);
   };

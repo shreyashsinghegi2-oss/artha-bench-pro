@@ -11,9 +11,19 @@ import type { IncomeSource } from './incomeStorage';
 import type { ExpenseRecord } from './personalFinanceStorage';
 
 export type FigureSource = 'profile' | 'loans' | 'income' | 'expenses' | 'calculated';
-export interface Figure { value: number; source: FigureSource }
+export interface Figure {
+  value: number;
+  source: FigureSource;
+}
 
-export interface DashboardLoan { name: string; type: string; emi: number; outstanding: number; rate: number | null; nextDue: string | null }
+export interface DashboardLoan {
+  name: string;
+  type: string;
+  emi: number;
+  outstanding: number;
+  rate: number | null;
+  nextDue: string | null;
+}
 
 export interface CompleteDashboard {
   report: MoneyCheckReport;
@@ -38,10 +48,14 @@ const r0 = (v: number) => Math.round(v);
 
 function monthlyFromSource(s: Pick<IncomeSource, 'amount' | 'frequency'>): number {
   switch (s.frequency) {
-    case 'Monthly': return s.amount;
-    case 'Quarterly': return s.amount / 3;
-    case 'Annually': return s.amount / 12;
-    default: return 0; // one-time income is not a recurring monthly amount
+    case 'Monthly':
+      return s.amount;
+    case 'Quarterly':
+      return s.amount / 3;
+    case 'Annually':
+      return s.amount / 12;
+    default:
+      return 0; // one-time income is not a recurring monthly amount
   }
 }
 
@@ -56,8 +70,12 @@ export function buildCompleteDashboard(input: {
   const now = input.now ?? new Date();
   const active = (input.loans ?? []).filter((l) => l.status === 'active');
   const loans: DashboardLoan[] = active.map((l) => ({
-    name: l.name || l.loanType, type: l.loanType, emi: l.emiAmount ?? 0, outstanding: l.outstandingBalance ?? 0,
-    rate: l.annualInterestRate, nextDue: l.nextDueDate || null,
+    name: l.name || l.loanType,
+    type: l.loanType,
+    emi: l.emiAmount ?? 0,
+    outstanding: l.outstandingBalance ?? 0,
+    rate: l.annualInterestRate,
+    nextDue: l.nextDueDate || null,
   }));
   const recordedEmi = loans.reduce((s, l) => s + l.emi, 0);
   const recordedDebt = loans.reduce((s, l) => s + l.outstanding, 0);
@@ -68,7 +86,8 @@ export function buildCompleteDashboard(input: {
 
   const inrIncome = (input.income ?? []).filter((s) => s.currency === 'INR' && (!s.endDate || new Date(s.endDate) >= now));
   const recordedAnnual = inrIncome.reduce((s, src) => s + monthlyFromSource(src) * 12, 0);
-  const annualIncome: Figure = recordedAnnual > profile.annualSalary ? { value: r0(recordedAnnual), source: 'income' } : { value: r0(profile.annualSalary), source: 'profile' };
+  const annualIncome: Figure =
+    recordedAnnual > profile.annualSalary ? { value: r0(recordedAnnual), source: 'income' } : { value: r0(profile.annualSalary), source: 'profile' };
 
   const report = buildMoneyCheck({ ...profile, monthlyEmi: monthlyEmi.value, loanOutstanding: totalDebt.value });
   const taxThisYear = Math.min(report.tax.oldRegimeTax, report.tax.newRegimeTax);

@@ -5,7 +5,18 @@
  */
 import type { MoneyCheckInputs } from '../../services/moneyCheck';
 
-export const HERO_SAMPLE: MoneyCheckInputs = { age: 28, annualSalary: 1_200_000, monthlyExpenses: 45_000, monthlyEmi: 8_000, liquidSavings: 200_000, investments: 650_000, dependants: 0, section80C: 150_000, section80D: 25_000, retireAge: 60 };
+export const HERO_SAMPLE: MoneyCheckInputs = {
+  age: 28,
+  annualSalary: 1_200_000,
+  monthlyExpenses: 45_000,
+  monthlyEmi: 8_000,
+  liquidSavings: 200_000,
+  investments: 650_000,
+  dependants: 0,
+  section80C: 150_000,
+  section80D: 25_000,
+  retireAge: 60,
+};
 
 export interface HeroReport {
   netWorth: number;

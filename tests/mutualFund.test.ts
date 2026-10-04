@@ -21,7 +21,16 @@ describe('mutual fund data', () => {
   const list = parseAmfiNav(SAMPLE);
   it('parses AMFI rows with category, fund house, ISINs and NAV', () => {
     expect(list).toHaveLength(3);
-    expect(list[0]).toMatchObject({ code: '122639', house: 'Parag Parikh Mutual Fund', category: 'Equity Scheme - Flexi Cap Fund', assetClass: 'Equity', isinGrowth: 'INF879O01027', isinReinvest: null, nav: 92.1234, navDate: '2026-09-24' });
+    expect(list[0]).toMatchObject({
+      code: '122639',
+      house: 'Parag Parikh Mutual Fund',
+      category: 'Equity Scheme - Flexi Cap Fund',
+      assetClass: 'Equity',
+      isinGrowth: 'INF879O01027',
+      isinReinvest: null,
+      nav: 92.1234,
+      navDate: '2026-09-24',
+    });
     expect(list[2]).toMatchObject({ assetClass: 'Debt', isinReinvest: 'INF179KB1HL8' });
   });
   it('searches by words and puts direct growth plans first', () => {
@@ -35,7 +44,11 @@ describe('mutual fund data', () => {
     expect(isoDate('05-01-2024')).toBe('2024-01-05');
   });
   it('computes trailing returns (absolute to 1 year, CAGR beyond)', () => {
-    const pts = [{ date: '2023-09-24', nav: 100 }, { date: '2025-09-24', nav: 121 }, { date: '2026-09-24', nav: 133.1 }];
+    const pts = [
+      { date: '2023-09-24', nav: 100 },
+      { date: '2025-09-24', nav: 121 },
+      { date: '2026-09-24', nav: 133.1 },
+    ];
     const r = trailingReturns(pts);
     expect(r['1Y']).toBeCloseTo(0.1, 6);
     expect(r['3Y']).toBeCloseTo(0.1, 3);

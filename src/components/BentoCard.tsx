@@ -11,16 +11,7 @@ interface BentoCardProps {
   onClick?: () => void;
 }
 
-export const BentoCard: React.FC<BentoCardProps> = ({
-  title,
-  subtitle,
-  icon,
-  badge,
-  badgeColor = 'purple',
-  children,
-  className = '',
-  onClick,
-}) => {
+export const BentoCard: React.FC<BentoCardProps> = ({ title, subtitle, icon, badge, badgeColor = 'purple', children, className = '', onClick }) => {
   const badgeStyles = {
     purple: 'bg-interactive/20 text-interactive border-interactive/40',
     cyan: 'bg-interactive/20 text-interactive border-interactive/40',
@@ -42,28 +33,20 @@ export const BentoCard: React.FC<BentoCardProps> = ({
   return (
     <div
       onClick={onClick}
-      className={`bg-surface border border-line rounded-2xl p-5 shadow-sm transition-all ${
-        onClick ? 'cursor-pointer hover:bg-surface' : ''
-      } ${className}`}
+      className={`bg-surface border border-line rounded-2xl p-5 shadow-sm transition-all ${onClick ? 'cursor-pointer hover:bg-surface' : ''} ${className}`}
     >
       {(title || icon || badge) && (
         <div className="flex items-center justify-between gap-3 mb-4 border-b border-line pb-3">
           <div className="flex items-center gap-2.5">
             {icon && (
-              <div className="w-8 h-8 rounded-xl bg-canvas border border-line flex items-center justify-center text-interactive shrink-0">
-                {renderIcon()}
-              </div>
+              <div className="w-8 h-8 rounded-xl bg-canvas border border-line flex items-center justify-center text-interactive shrink-0">{renderIcon()}</div>
             )}
             <div>
               {title && <h3 className="font-semibold text-ink text-sm">{title}</h3>}
               {subtitle && <p className="text-xs text-secondary mt-0.5">{subtitle}</p>}
             </div>
           </div>
-          {badge && (
-            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${badgeStyles[badgeColor]}`}>
-              {badge}
-            </span>
-          )}
+          {badge && <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${badgeStyles[badgeColor]}`}>{badge}</span>}
         </div>
       )}
       {children}

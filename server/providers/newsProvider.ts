@@ -13,24 +13,28 @@ type CacheEntry = { expiresAt: number; result: NewsProviderResult };
 const cache = new Map<string, CacheEntry>();
 const inFlight = new Map<string, Promise<NewsProviderResult>>();
 
-const newsDataArticleSchema = z.object({
-  article_id: z.string().optional(),
-  title: z.string().nullable().optional(),
-  description: z.string().nullable().optional(),
-  link: z.string().nullable().optional(),
-  pubDate: z.string().nullable().optional(),
-  image_url: z.string().nullable().optional(),
-  source_id: z.string().nullable().optional(),
-  source_name: z.string().nullable().optional(),
-  category: z.array(z.string()).nullable().optional(),
-  country: z.array(z.string()).nullable().optional(),
-}).passthrough();
+const newsDataArticleSchema = z
+  .object({
+    article_id: z.string().optional(),
+    title: z.string().nullable().optional(),
+    description: z.string().nullable().optional(),
+    link: z.string().nullable().optional(),
+    pubDate: z.string().nullable().optional(),
+    image_url: z.string().nullable().optional(),
+    source_id: z.string().nullable().optional(),
+    source_name: z.string().nullable().optional(),
+    category: z.array(z.string()).nullable().optional(),
+    country: z.array(z.string()).nullable().optional(),
+  })
+  .passthrough();
 
-const newsDataResponseSchema = z.object({
-  status: z.string(),
-  results: z.array(newsDataArticleSchema).optional().default([]),
-  nextPage: z.string().nullable().optional(),
-}).passthrough();
+const newsDataResponseSchema = z
+  .object({
+    status: z.string(),
+    results: z.array(newsDataArticleSchema).optional().default([]),
+    nextPage: z.string().nullable().optional(),
+  })
+  .passthrough();
 
 export interface NewsProviderResult {
   items: NormalizedNewsItem[];
@@ -56,12 +60,18 @@ function mapCategory(category: string) {
 
 function categoryQuery(category: string) {
   switch (category.trim().toLowerCase()) {
-    case 'macroeconomics': return '(inflation OR GDP OR economy OR "interest rates" OR central bank OR monetary policy)';
-    case 'corporate': return '(earnings OR companies OR merger OR acquisition OR revenue OR profit)';
-    case 'tech': return '(AI OR technology OR software OR semiconductor OR cloud OR startup)';
-    case 'policy': return '(central bank OR monetary policy OR interest rates OR regulation OR fiscal policy)';
-    case 'business': return '(business OR markets OR economy OR finance OR investing OR companies)';
-    default: return '(business OR markets OR economy OR finance OR investing OR companies OR AI)';
+    case 'macroeconomics':
+      return '(inflation OR GDP OR economy OR "interest rates" OR central bank OR monetary policy)';
+    case 'corporate':
+      return '(earnings OR companies OR merger OR acquisition OR revenue OR profit)';
+    case 'tech':
+      return '(AI OR technology OR software OR semiconductor OR cloud OR startup)';
+    case 'policy':
+      return '(central bank OR monetary policy OR interest rates OR regulation OR fiscal policy)';
+    case 'business':
+      return '(business OR markets OR economy OR finance OR investing OR companies)';
+    default:
+      return '(business OR markets OR economy OR finance OR investing OR companies OR AI)';
   }
 }
 
@@ -104,14 +114,21 @@ function buildQuery(query: string, category: string, region: string) {
   return parts.join(' ');
 }
 
-async function fetchNewsData(query: string, category: string, region: string, page: number | string, endpointUrl = getConfiguration().baseUrl, providerName = 'NewsData.io'): Promise<NewsProviderResult> {
+async function fetchNewsData(
+  query: string,
+  category: string,
+  region: string,
+  page: number | string,
+  endpointUrl = getConfiguration().baseUrl,
+  providerName = 'NewsData.io',
+): Promise<NewsProviderResult> {
   const { apiKey, baseUrl } = getConfiguration();
   if (!apiKey) {
     return {
       items: [],
       status: 'not_configured',
       providerName,
-      message: `${providerName} is not connected. Add BUSINESS_NEWS_API_KEY to the production environment.`
+      message: `${providerName} is not connected. Add BUSINESS_NEWS_API_KEY to the production environment.`,
     };
   }
 
@@ -149,7 +166,12 @@ async function fetchNewsData(query: string, category: string, region: string, pa
     const basic = new URL(url.origin + url.pathname);
     basic.searchParams.set('apikey', apiKey);
     basic.searchParams.set('language', 'en');
-    const shortQuery = (query.trim() || categoryQuery(category) || 'business finance markets').replace(/[()]/g, ' ').split(/\s+OR\s+|\s+/).filter(Boolean).slice(0, 4).join(' OR ');
+    const shortQuery = (query.trim() || categoryQuery(category) || 'business finance markets')
+      .replace(/[()]/g, ' ')
+      .split(/\s+OR\s+|\s+/)
+      .filter(Boolean)
+      .slice(0, 4)
+      .join(' OR ');
     if (shortQuery) basic.searchParams.set('q', shortQuery.slice(0, 100));
     const country = url.searchParams.get('country');
     if (country) basic.searchParams.set('country', country);
@@ -164,7 +186,12 @@ async function fetchNewsData(query: string, category: string, region: string, pa
       return { items: [], status: 'invalid_credentials', providerName, message: `${providerName} rejected the API key (HTTP ${response.status}).` };
     }
     if (response.status === 429) {
-      return { items: [], status: 'rate_limited', providerName, message: `${providerName} rate limit reached. Cached results will continue to be served when available.` };
+      return {
+        items: [],
+        status: 'rate_limited',
+        providerName,
+        message: `${providerName} rate limit reached. Cached results will continue to be served when available.`,
+      };
     }
     throw new Error(`${providerName} request failed with HTTP ${response.status}.`);
   }
@@ -180,18 +207,20 @@ async function fetchNewsData(query: string, category: string, region: string, pa
     const sourceUrl = safeUrl(article.link);
     if (!title || sourceUrl === '#') return [];
     const imageUrl = safeUrl(article.image_url);
-    return [{
-      id: article.article_id || `newsdata-${retrievedAt}-${index}`,
-      title,
-      summary: article.description?.trim() || 'Open the original publisher article for the full report.',
-      sourceName: article.source_name || article.source_id || 'Publisher',
-      sourceUrl,
-      publishedAt: toIsoDate(article.pubDate),
-      retrievedAt,
-      category: article.category?.[0] || mapCategory(category),
-      region: article.country?.[0] || region || 'global',
-      imageUrl: imageUrl === '#' ? null : imageUrl,
-    }];
+    return [
+      {
+        id: article.article_id || `newsdata-${retrievedAt}-${index}`,
+        title,
+        summary: article.description?.trim() || 'Open the original publisher article for the full report.',
+        sourceName: article.source_name || article.source_id || 'Publisher',
+        sourceUrl,
+        publishedAt: toIsoDate(article.pubDate),
+        retrievedAt,
+        category: article.category?.[0] || mapCategory(category),
+        region: article.country?.[0] || region || 'global',
+        imageUrl: imageUrl === '#' ? null : imageUrl,
+      },
+    ];
   });
 
   return {
@@ -200,7 +229,7 @@ async function fetchNewsData(query: string, category: string, region: string, pa
     providerName,
     nextPage: parsed.data.nextPage || undefined,
     mode: 'live',
-    message: `${items.length} current ${providerName} headlines loaded directly from the provider.`
+    message: `${items.length} current ${providerName} headlines loaded directly from the provider.`,
   };
 }
 
@@ -235,9 +264,25 @@ export async function fetchSecondaryNewsProviders(query = '', category = 'all', 
     { url: DEFAULT_CRYPTO_NEWSDATA_URL, name: 'NewsData.io Crypto' },
   ];
   for (const candidate of candidates) {
-    const key = JSON.stringify({ secondary: candidate.name, query: query.trim(), category: category.trim().toLowerCase(), region: region.trim().toLowerCase(), page });
-    const result = await getCachedOrFetch(key, () => fetchNewsData(query || '(markets OR finance OR stocks OR economy OR companies OR crypto OR technology)', category, region, page, candidate.url, candidate.name));
-    if (result.items.length) return { ...result, mode: 'live', message: `${result.items.length} current ${candidate.name} headlines loaded as the secondary provider.` };
+    const key = JSON.stringify({
+      secondary: candidate.name,
+      query: query.trim(),
+      category: category.trim().toLowerCase(),
+      region: region.trim().toLowerCase(),
+      page,
+    });
+    const result = await getCachedOrFetch(key, () =>
+      fetchNewsData(
+        query || '(markets OR finance OR stocks OR economy OR companies OR crypto OR technology)',
+        category,
+        region,
+        page,
+        candidate.url,
+        candidate.name,
+      ),
+    );
+    if (result.items.length)
+      return { ...result, mode: 'live', message: `${result.items.length} current ${candidate.name} headlines loaded as the secondary provider.` };
     const stale = cache.get(key)?.result;
     if (stale?.items.length) return { ...stale, mode: 'cached', message: `Serving the most recent cached ${candidate.name} feed.` };
   }

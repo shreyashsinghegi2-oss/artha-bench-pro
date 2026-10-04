@@ -9,7 +9,14 @@ const MAX_CONCURRENCY = 4;
 
 function parseSymbols(value: unknown): string[] {
   if (typeof value !== 'string') return [];
-  return [...new Set(value.split(',').map((item) => item.trim()).filter(Boolean))].slice(0, MAX_SYMBOLS);
+  return [
+    ...new Set(
+      value
+        .split(',')
+        .map((item) => item.trim())
+        .filter(Boolean),
+    ),
+  ].slice(0, MAX_SYMBOLS);
 }
 
 async function mapWithConcurrency<T, R>(values: T[], concurrency: number, mapper: (value: T) => Promise<R>): Promise<R[]> {

@@ -1,10 +1,4 @@
-import {
-  LearningProgress,
-  PaperPortfolio,
-  PaperPosition,
-  PaperTrade,
-  VerificationReport,
-} from '../types';
+import { LearningProgress, PaperPortfolio, PaperPosition, PaperTrade, VerificationReport } from '../types';
 
 const STORAGE_KEYS = {
   PROGRESS: 'artha_learning_progress_v1',
@@ -70,9 +64,7 @@ export function saveUserProgress(data: {
   completedAt: string;
 }): void {
   const current = getLearningProgress();
-  const completedIds = current.completedLessonIds.includes(data.lessonId)
-    ? current.completedLessonIds
-    : [...current.completedLessonIds, data.lessonId];
+  const completedIds = current.completedLessonIds.includes(data.lessonId) ? current.completedLessonIds : [...current.completedLessonIds, data.lessonId];
 
   const updated: LearningProgress = {
     ...current,
@@ -127,9 +119,7 @@ export function recordQuizScore(lessonId: string, scorePercent: number): Learnin
 export function toggleBookmarkLesson(lessonId: string): boolean {
   const current = getLearningProgress();
   const exists = current.bookmarkedLessonIds.includes(lessonId);
-  const updatedBookmarks = exists
-    ? current.bookmarkedLessonIds.filter((id) => id !== lessonId)
-    : [...current.bookmarkedLessonIds, lessonId];
+  const updatedBookmarks = exists ? current.bookmarkedLessonIds.filter((id) => id !== lessonId) : [...current.bookmarkedLessonIds, lessonId];
 
   saveLearningProgress({
     ...current,
@@ -190,7 +180,7 @@ export function executePaperTrade(
   assetType: string,
   side: 'buy' | 'sell',
   quantity: number,
-  price: number
+  price: number,
 ): { success: boolean; message: string; portfolio: PaperPortfolio } {
   const portfolio = getPaperPortfolio();
   const totalAmount = quantity * price;

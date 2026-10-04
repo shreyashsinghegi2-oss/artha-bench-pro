@@ -7,18 +7,7 @@ export const LessonRequestSchema = z.object({
   objective: z.string().min(1).max(500),
   learnerLevel: z.enum(['beginner', 'intermediate', 'advanced']).default('beginner'),
   language: z.enum(['english', 'hindi', 'hinglish']).default('english'),
-  learningMode: z
-    .enum([
-      'explain',
-      'step-by-step',
-      'socratic',
-      'worked-example',
-      'quiz',
-      'revision',
-      'flashcards',
-      'compare',
-    ])
-    .default('explain'),
+  learningMode: z.enum(['explain', 'step-by-step', 'socratic', 'worked-example', 'quiz', 'revision', 'flashcards', 'compare']).default('explain'),
   country: z.string().max(50).default('Global'),
   currency: z.string().max(10).default('USD'),
   selectedAnswer: z.string().max(200).optional(),

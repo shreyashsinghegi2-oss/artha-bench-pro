@@ -30,8 +30,7 @@ export const DEMO_NEWS_ITEMS: NormalizedNewsItem[] = [
   {
     id: 'news-demo-3',
     title: 'India Retail Participation Increases in Systemic Investment Plans (SIPs)',
-    summary:
-      'Domestic mutual fund inflow data indicates steady retail monthly contributions into index funds and diversified equity schemes.',
+    summary: 'Domestic mutual fund inflow data indicates steady retail monthly contributions into index funds and diversified equity schemes.',
     sourceName: 'Economic Times (Demo)',
     sourceUrl: 'https://example.com/demo/news/india-sips',
     publishedAt: new Date(Date.now() - 3600000 * 8).toISOString(),

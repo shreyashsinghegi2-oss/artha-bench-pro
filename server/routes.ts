@@ -5,30 +5,13 @@
 
 import { Router, Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
-import {
-  checkGroqDiagnostics,
-  callGroqChat,
-  callGroqStructuredFinancialAnswer,
-  getGroqModels,
-  runMultiModelEvaluation,
-} from './groqService';
-import {
-  buildStructuredFinancialAnswerInstructions,
-  createFallbackStructuredFinancialAnswer,
-  serializeStructuredFinancialAnswer,
-} from './aiResponseStandard';
+import { checkGroqDiagnostics, callGroqChat, callGroqStructuredFinancialAnswer, getGroqModels, runMultiModelEvaluation } from './groqService';
+import { buildStructuredFinancialAnswerInstructions, createFallbackStructuredFinancialAnswer, serializeStructuredFinancialAnswer } from './aiResponseStandard';
 import { checkPromptSafety } from './safetyChecker';
 import { executeBatchBenchmark, getBatchRunProgress } from './batchBenchmark';
 import { getAllReportRecords, exportReportsToCSV, saveReportRecord } from './reportStorage';
 import { BENCHMARK_DATASET_V1 } from './data/benchmarks/v1/scenarios';
-import {
-  calculateBreakEven,
-  calculateCAGR,
-  calculateCompoundInterest,
-  calculateDTI,
-  calculateQuickRatio,
-  generateVerificationCode,
-} from './financeEngine';
+import { calculateBreakEven, calculateCAGR, calculateCompoundInterest, calculateDTI, calculateQuickRatio, generateVerificationCode } from './financeEngine';
 import { generateLessonContent, reviewQuizAnswer } from './learningService';
 import { getBusinessNews, explainNewsArticle, buildNewsResearchBrief } from './businessNewsService';
 import { handleNewsImage } from './newsImageProxy';
@@ -36,20 +19,9 @@ import { getMarketQuote, searchMarketQuotes, getMarketHistory } from './marketDa
 import { getIndiaMarketTicker } from './indiaMarketTickerService';
 import { checkNewsProviderDiagnostic } from './providers/newsProvider';
 import { checkMarketProviderDiagnostic } from './providers/marketDataProvider';
-import {
-  checkFredDiagnostic,
-  fetchFredOverview,
-  fetchFredSeries,
-} from './providers/fredProvider';
-import {
-  checkWorldBankIndiaDiagnostic,
-  fetchWorldBankIndiaOverview,
-  fetchWorldBankIndiaSeries,
-} from './providers/worldBankProvider';
-import {
-  checkFinnhubDiagnostic,
-  fetchFinnhubCompanyIntelligence,
-} from './providers/finnhubProvider';
+import { checkFredDiagnostic, fetchFredOverview, fetchFredSeries } from './providers/fredProvider';
+import { checkWorldBankIndiaDiagnostic, fetchWorldBankIndiaOverview, fetchWorldBankIndiaSeries } from './providers/worldBankProvider';
+import { checkFinnhubDiagnostic, fetchFinnhubCompanyIntelligence } from './providers/finnhubProvider';
 import { answerCryptoQuestion, getCryptoKlines, getCryptoMarkets } from './cryptoService';
 import { CRYPTO_INTERVALS, CRYPTO_SYMBOLS } from '../src/components/crypto/cryptoTypes';
 import { candleTtlMs, findInstrument, getTerminalCandles, getTerminalSnapshot, TERMINAL_INTERVALS } from './marketTerminal';
@@ -79,8 +51,11 @@ const voiceBody = (req: Request) => {
 apiRouter.post('/voice/translate', voiceLimiter, async (req: Request, res: Response) => {
   const { text, lang, ok } = voiceBody(req);
   if (!ok) return res.status(400).json({ error: 'Send text and a supported language code.' });
-  try { res.json(await translateText(text, lang)); }
-  catch { res.status(503).json({ error: 'Translation is unavailable right now. Please try again.' }); }
+  try {
+    res.json(await translateText(text, lang));
+  } catch {
+    res.status(503).json({ error: 'Translation is unavailable right now. Please try again.' });
+  }
 });
 async function sendSpeech(res: Response, text: string, lang: string, rateRaw: unknown) {
   if (!text || !(lang in VOICE_LANGS)) return res.status(400).json({ error: 'Send text and a supported language code.' });
@@ -97,17 +72,32 @@ async function sendSpeech(res: Response, text: string, lang: string, rateRaw: un
     return res.status(503).json({ error: 'Voice is unavailable right now. Please try again.' });
   }
 }
-apiRouter.post('/voice/tts', voiceLimiter, (req: Request, res: Response) => { const { text, lang } = voiceBody(req); void sendSpeech(res, text, lang, req.body?.rate); });
+apiRouter.post('/voice/tts', voiceLimiter, (req: Request, res: Response) => {
+  const { text, lang } = voiceBody(req);
+  void sendSpeech(res, text, lang, req.body?.rate);
+});
 // For <audio src> and quick checks: /api/voice/tts?lang=hi&text=...
-apiRouter.get('/voice/tts', voiceLimiter, (req: Request, res: Response) => { void sendSpeech(res, String(req.query.text ?? '').trim().slice(0, 600), String(req.query.lang ?? '').toLowerCase(), req.query.rate); });
+apiRouter.get('/voice/tts', voiceLimiter, (req: Request, res: Response) => {
+  void sendSpeech(
+    res,
+    String(req.query.text ?? '')
+      .trim()
+      .slice(0, 600),
+    String(req.query.lang ?? '').toLowerCase(),
+    req.query.rate,
+  );
+});
 
 // ---------------- Web page reader (public pages only) ----------------
 const readerLimiter = createRateLimiter({ windowMs: 60_000, max: 12, message: 'Too many links at once. Please wait a minute.' });
 apiRouter.get('/web/read', readerLimiter, async (req: Request, res: Response) => {
   const url = String(req.query.url ?? '').slice(0, 2000);
   if (!url) return res.status(400).json({ error: 'Send a link to read.' });
-  try { res.json(await readWebPage(url)); }
-  catch (e) { res.status(422).json({ error: e instanceof Error ? e.message : 'This page could not be read.' }); }
+  try {
+    res.json(await readWebPage(url));
+  } catch (e) {
+    res.status(422).json({ error: e instanceof Error ? e.message : 'This page could not be read.' });
+  }
 });
 
 // ---------------- Mutual funds (official AMFI NAVs) ----------------
@@ -118,7 +108,9 @@ apiRouter.get('/mf/search', async (req: Request, res: Response) => {
     res.setHeader('Cache-Control', 'public, s-maxage=1800, stale-while-revalidate=21600');
     res.json({ results, source });
   } catch (error) {
-    res.status(503).json({ error: 'Mutual fund data is unavailable right now. Please try again shortly.', detail: error instanceof Error ? error.message : undefined });
+    res
+      .status(503)
+      .json({ error: 'Mutual fund data is unavailable right now. Please try again shortly.', detail: error instanceof Error ? error.message : undefined });
   }
 });
 apiRouter.get('/mf/scheme/:code', async (req: Request, res: Response) => {
@@ -132,14 +124,19 @@ apiRouter.get('/mf/scheme/:code', async (req: Request, res: Response) => {
   }
 });
 apiRouter.post('/mf/isin', async (req: Request, res: Response) => {
-  const raw = Array.isArray(req.body?.items) ? req.body.items as unknown[] : [];
+  const raw = Array.isArray(req.body?.items) ? (req.body.items as unknown[]) : [];
   const items = raw.flatMap((i) => {
     const o = i as { isin?: unknown; name?: unknown };
-    return typeof o?.isin === 'string' && /^INF[A-Z0-9]{9}$/i.test(o.isin.trim()) ? [{ isin: o.isin.trim(), name: typeof o.name === 'string' ? o.name.slice(0, 160) : '' }] : [];
+    return typeof o?.isin === 'string' && /^INF[A-Z0-9]{9}$/i.test(o.isin.trim())
+      ? [{ isin: o.isin.trim(), name: typeof o.name === 'string' ? o.name.slice(0, 160) : '' }]
+      : [];
   });
   if (!items.length) return res.status(400).json({ error: 'Send mutual fund ISINs with their names.' });
-  try { res.json({ funds: await fundsByIsin(items) }); }
-  catch { res.status(503).json({ error: 'Mutual fund data is unavailable right now.' }); }
+  try {
+    res.json({ funds: await fundsByIsin(items) });
+  } catch {
+    res.status(503).json({ error: 'Mutual fund data is unavailable right now.' });
+  }
 });
 
 // Simple in-memory rate limiter
@@ -248,13 +245,15 @@ const cagrInputSchema = z.object({
   years: z.coerce.number().finite().gt(0).max(200),
 });
 
-const breakEvenInputSchema = z.object({
-  fixedCosts: calculatorMoneySchema,
-  pricePerUnit: calculatorPositiveSchema,
-  variableCostPerUnit: calculatorMoneySchema,
-}).refine((value) => value.pricePerUnit > value.variableCostPerUnit, {
-  message: 'Price per unit must be greater than variable cost per unit.',
-});
+const breakEvenInputSchema = z
+  .object({
+    fixedCosts: calculatorMoneySchema,
+    pricePerUnit: calculatorPositiveSchema,
+    variableCostPerUnit: calculatorMoneySchema,
+  })
+  .refine((value) => value.pricePerUnit > value.variableCostPerUnit, {
+    message: 'Price per unit must be greater than variable cost per unit.',
+  });
 
 const dtiInputSchema = z.object({
   monthlyGrossIncome: calculatorPositiveSchema,
@@ -266,7 +265,13 @@ const scenarioAssistantSchema = z.object({
   question: z.string().min(3).max(1200),
   profile: z.enum(['US', 'India', 'Global']).default('US'),
   currency: z.enum(['USD', 'INR', 'EUR', 'GBP']).default('USD'),
-  companySymbol: z.string().trim().max(20).regex(/^[A-Za-z0-9][A-Za-z0-9.:_&-]*$/).optional().or(z.literal('')),
+  companySymbol: z
+    .string()
+    .trim()
+    .max(20)
+    .regex(/^[A-Za-z0-9][A-Za-z0-9.:_&-]*$/)
+    .optional()
+    .or(z.literal('')),
   useExternalContext: z.boolean().default(true),
   inputs: z.record(z.string(), z.union([z.number().finite(), z.string().max(120), z.boolean()])),
 });
@@ -284,7 +289,11 @@ const dashboardAssistantSchema = z.object({
     .optional(),
   snapshot: z.object({
     capturedAt: z.string().max(64),
-    selectedSymbol: z.string().min(1).max(20).regex(/^[A-Za-z0-9][A-Za-z0-9.:_&-]*$/),
+    selectedSymbol: z
+      .string()
+      .min(1)
+      .max(20)
+      .regex(/^[A-Za-z0-9][A-Za-z0-9.:_&-]*$/),
     selectedRange: z.enum(['1d', '1w', '1m', '3m', '6m', '1y']),
     selectedCountry: z.enum(['us', 'india']),
     quotes: z
@@ -352,42 +361,39 @@ const cryptoKlineQuerySchema = z.object({
 
 const cryptoAssistantSchema = z.object({
   question: z.string().min(3).max(500),
-  context: z.object({
-    symbol: z.enum(CRYPTO_SYMBOLS),
-    interval: z.enum(CRYPTO_INTERVALS),
-    candleStatus: z.enum(['Forming', 'Closed']),
-    timeUtc: z.string().min(1).max(80),
-    timeIst: z.string().min(1).max(80),
-    open: z.number().finite().nonnegative(),
-    high: z.number().finite().nonnegative(),
-    low: z.number().finite().nonnegative(),
-    close: z.number().finite().nonnegative(),
-    absoluteChange: z.number().finite(),
-    percentChange: z.number().finite(),
-    baseVolume: z.number().finite().nonnegative(),
-    quoteVolume: z.number().finite().nonnegative(),
-    tradeCount: z.number().int().nonnegative(),
-    provider: z.literal('Binance Public Market Data'),
-    streamStatus: z.enum(['connecting', 'cached', 'live', 'reconnecting', 'stale', 'unavailable']),
-    lastUpdatedAt: z.string().max(80).nullable(),
-  }).refine((context) => context.high >= Math.max(context.open, context.close, context.low), {
-    message: 'Candle high must be greater than or equal to the other OHLC values.',
-  }).refine((context) => context.low <= Math.min(context.open, context.close, context.high), {
-    message: 'Candle low must be less than or equal to the other OHLC values.',
-  }),
+  context: z
+    .object({
+      symbol: z.enum(CRYPTO_SYMBOLS),
+      interval: z.enum(CRYPTO_INTERVALS),
+      candleStatus: z.enum(['Forming', 'Closed']),
+      timeUtc: z.string().min(1).max(80),
+      timeIst: z.string().min(1).max(80),
+      open: z.number().finite().nonnegative(),
+      high: z.number().finite().nonnegative(),
+      low: z.number().finite().nonnegative(),
+      close: z.number().finite().nonnegative(),
+      absoluteChange: z.number().finite(),
+      percentChange: z.number().finite(),
+      baseVolume: z.number().finite().nonnegative(),
+      quoteVolume: z.number().finite().nonnegative(),
+      tradeCount: z.number().int().nonnegative(),
+      provider: z.literal('Binance Public Market Data'),
+      streamStatus: z.enum(['connecting', 'cached', 'live', 'reconnecting', 'stale', 'unavailable']),
+      lastUpdatedAt: z.string().max(80).nullable(),
+    })
+    .refine((context) => context.high >= Math.max(context.open, context.close, context.low), {
+      message: 'Candle high must be greater than or equal to the other OHLC values.',
+    })
+    .refine((context) => context.low <= Math.min(context.open, context.close, context.high), {
+      message: 'Candle low must be less than or equal to the other OHLC values.',
+    }),
 });
 
 function buildDashboardDemoAnswer(snapshot: z.infer<typeof dashboardAssistantSchema>['snapshot']) {
-  const selectedQuote = snapshot.quotes.find(
-    (quote) => quote.symbol.toUpperCase() === snapshot.selectedSymbol.toUpperCase(),
-  );
+  const selectedQuote = snapshot.quotes.find((quote) => quote.symbol.toUpperCase() === snapshot.selectedSymbol.toUpperCase());
   const history = snapshot.marketHistory;
   const regionalIndicators = snapshot.economicIndicators
-    .filter((indicator) =>
-      snapshot.selectedCountry === 'india'
-        ? indicator.sourceName === 'World Bank'
-        : indicator.sourceName === 'FRED',
-    )
+    .filter((indicator) => (snapshot.selectedCountry === 'india' ? indicator.sourceName === 'World Bank' : indicator.sourceName === 'FRED'))
     .filter((indicator) => indicator.value !== null)
     .slice(0, 5);
   const marketSummary = history
@@ -397,12 +403,7 @@ function buildDashboardDemoAnswer(snapshot: z.infer<typeof dashboardAssistantSch
     ? `The displayed quote is ${selectedQuote.price} with a ${selectedQuote.changePercent === null ? 'missing' : `${selectedQuote.changePercent.toFixed(2)}%`} reported change. Its freshness label is ${selectedQuote.freshness} from ${selectedQuote.providerName}.`
     : 'The selected symbol does not have a usable quote in this snapshot.';
   const economicSummary = regionalIndicators.length
-    ? regionalIndicators
-        .map(
-          (indicator) =>
-            `${indicator.label}: ${indicator.value} ${indicator.unit} (${indicator.date || 'date unavailable'})`,
-        )
-        .join('; ')
+    ? regionalIndicators.map((indicator) => `${indicator.label}: ${indicator.value} ${indicator.unit} (${indicator.date || 'date unavailable'})`).join('; ')
     : 'No usable regional economic indicators are present in this snapshot.';
 
   return `### Dashboard snapshot\n\n**Selected market:** ${quoteSummary}\n\n**Chart reading:** ${marketSummary}\n\n**Economic context:** ${economicSummary}.\n\n**Data quality:** ${snapshot.providerHealth.connected} of ${snapshot.providerHealth.total} provider checks are connected. A demo, delayed, stale, or end-of-day label must not be interpreted as a real-time signal.\n\nThis is a description of observed dashboard data, not a forecast.\n\nEducational analysis only — not investment advice.`;
@@ -424,10 +425,7 @@ function questionNeedsCurrentData(question: string) {
   );
 }
 
-async function loadTutorCurrentData(
-  question: string,
-  context: typeof DEFAULT_TUTOR_CONTEXT | NonNullable<z.infer<typeof tutorSchema>['context']>,
-) {
+async function loadTutorCurrentData(question: string, context: typeof DEFAULT_TUTOR_CONTEXT | NonNullable<z.infer<typeof tutorSchema>['context']>) {
   if (!context.useOfficialSources || !questionNeedsCurrentData(question)) return null;
 
   const overviews =
@@ -459,11 +457,7 @@ async function loadTutorCurrentData(
 
 type FinanceScenarioKind = z.infer<typeof scenarioAssistantSchema>['scenario'];
 
-function sendDeterministicFinanceResult(
-  res: Response,
-  calculationType: FinanceScenarioKind,
-  result: Record<string, unknown>,
-) {
+function sendDeterministicFinanceResult(res: Response, calculationType: FinanceScenarioKind, result: Record<string, unknown>) {
   const calculatedAt = new Date().toISOString();
   const verificationCode = generateVerificationCode(`${calculationType}:${JSON.stringify(result)}`);
   res.json({
@@ -488,10 +482,7 @@ function requiredScenarioNumber(inputs: Record<string, string | number | boolean
   return value;
 }
 
-function recalculateScenario(
-  scenario: FinanceScenarioKind,
-  inputs: Record<string, string | number | boolean>,
-): any {
+function recalculateScenario(scenario: FinanceScenarioKind, inputs: Record<string, string | number | boolean>): any {
   if (scenario === 'compound') {
     return calculateCompoundInterest(
       requiredScenarioNumber(inputs, 'principal'),
@@ -510,11 +501,7 @@ function recalculateScenario(
     );
   }
   if (scenario === 'cagr') {
-    return calculateCAGR(
-      requiredScenarioNumber(inputs, 'initialValue'),
-      requiredScenarioNumber(inputs, 'finalValue'),
-      requiredScenarioNumber(inputs, 'years'),
-    );
+    return calculateCAGR(requiredScenarioNumber(inputs, 'initialValue'), requiredScenarioNumber(inputs, 'finalValue'), requiredScenarioNumber(inputs, 'years'));
   }
   if (scenario === 'break-even') {
     return calculateBreakEven(
@@ -523,17 +510,10 @@ function recalculateScenario(
       requiredScenarioNumber(inputs, 'variableCostPerUnit'),
     );
   }
-  return calculateDTI(
-    requiredScenarioNumber(inputs, 'monthlyGrossIncome'),
-    requiredScenarioNumber(inputs, 'monthlyDebtPayments'),
-  );
+  return calculateDTI(requiredScenarioNumber(inputs, 'monthlyGrossIncome'), requiredScenarioNumber(inputs, 'monthlyDebtPayments'));
 }
 
-async function loadScenarioExternalContext(
-  profile: 'US' | 'India' | 'Global',
-  companySymbol: string | undefined,
-  enabled: boolean,
-) {
+async function loadScenarioExternalContext(profile: 'US' | 'India' | 'Global', companySymbol: string | undefined, enabled: boolean) {
   if (!enabled) {
     return {
       retrievedAt: new Date().toISOString(),
@@ -551,7 +531,10 @@ async function loadScenarioExternalContext(
 
   const economicSettled = await Promise.allSettled(economicTasks);
   const economicOverviews = economicSettled
-    .filter((item): item is PromiseFulfilledResult<Awaited<ReturnType<typeof fetchFredOverview>> | Awaited<ReturnType<typeof fetchWorldBankIndiaOverview>>> => item.status === 'fulfilled')
+    .filter(
+      (item): item is PromiseFulfilledResult<Awaited<ReturnType<typeof fetchFredOverview>> | Awaited<ReturnType<typeof fetchWorldBankIndiaOverview>>> =>
+        item.status === 'fulfilled',
+    )
     .map((item) => item.value);
   const economicIndicators = economicOverviews
     .flatMap((overview) => overview.indicators)
@@ -567,17 +550,12 @@ async function loadScenarioExternalContext(
 
   let company: Record<string, unknown> | null = null;
   let quote: Record<string, unknown> | null = null;
-  const sourceLabels = economicOverviews
-    .filter((overview) => overview.status === 'connected')
-    .map((overview) => overview.providerName);
+  const sourceLabels = economicOverviews.filter((overview) => overview.status === 'connected').map((overview) => overview.providerName);
   const notes: string[] = [];
 
   const normalizedSymbol = companySymbol?.trim().toUpperCase();
   if (normalizedSymbol) {
-    const [companyResult, quoteResult] = await Promise.allSettled([
-      fetchFinnhubCompanyIntelligence(normalizedSymbol),
-      getMarketQuote(normalizedSymbol),
-    ]);
+    const [companyResult, quoteResult] = await Promise.allSettled([fetchFinnhubCompanyIntelligence(normalizedSymbol), getMarketQuote(normalizedSymbol)]);
     if (companyResult.status === 'fulfilled' && companyResult.value.status === 'connected') {
       company = {
         symbol: normalizedSymbol,
@@ -614,10 +592,13 @@ async function loadScenarioExternalContext(
 }
 
 function scenarioFallbackSummary(scenario: FinanceScenarioKind, result: Record<string, unknown>, currency: string) {
-  if (scenario === 'compound') return `The verified Decimal.js compound-interest result is a final balance of ${currency} ${result.finalBalance}, including ${currency} ${result.totalInterestEarned} of calculated interest.`;
-  if (scenario === 'quick-ratio') return `The verified Decimal.js quick ratio is ${result.quickRatio}, with the calculator assessment recorded as ${result.assessment}.`;
+  if (scenario === 'compound')
+    return `The verified Decimal.js compound-interest result is a final balance of ${currency} ${result.finalBalance}, including ${currency} ${result.totalInterestEarned} of calculated interest.`;
+  if (scenario === 'quick-ratio')
+    return `The verified Decimal.js quick ratio is ${result.quickRatio}, with the calculator assessment recorded as ${result.assessment}.`;
   if (scenario === 'cagr') return `The verified Decimal.js CAGR is ${result.cagrPercent}% across the entered ${result.years}-year period.`;
-  if (scenario === 'break-even') return `The verified Decimal.js break-even point is ${result.breakEvenUnits} units, corresponding to ${currency} ${result.breakEvenRevenue} of modeled revenue.`;
+  if (scenario === 'break-even')
+    return `The verified Decimal.js break-even point is ${result.breakEvenUnits} units, corresponding to ${currency} ${result.breakEvenRevenue} of modeled revenue.`;
   return `The verified Decimal.js debt-to-income ratio is ${result.dtiPercent}%, with the calculator's educational tier recorded as ${result.healthCategory}.`;
 }
 
@@ -626,13 +607,17 @@ apiRouter.post('/finance/compound-interest', (req: Request, res: Response) => {
   if (parsed.success === false) return calculatorValidationError(res, parsed);
   try {
     const value = parsed.data;
-    sendDeterministicFinanceResult(res, 'compound', calculateCompoundInterest(
-      value.principal,
-      value.annualRatePercent,
-      value.years,
-      value.monthlyContribution,
-      value.compoundingFrequencyPerYear,
-    ) as unknown as Record<string, unknown>);
+    sendDeterministicFinanceResult(
+      res,
+      'compound',
+      calculateCompoundInterest(
+        value.principal,
+        value.annualRatePercent,
+        value.years,
+        value.monthlyContribution,
+        value.compoundingFrequencyPerYear,
+      ) as unknown as Record<string, unknown>,
+    );
   } catch (error) {
     res.status(400).json({ error: error instanceof Error ? error.message : 'Compound-interest calculation failed.' });
   }
@@ -643,12 +628,11 @@ apiRouter.post('/finance/quick-ratio', (req: Request, res: Response) => {
   if (parsed.success === false) return calculatorValidationError(res, parsed);
   try {
     const value = parsed.data;
-    sendDeterministicFinanceResult(res, 'quick-ratio', calculateQuickRatio(
-      value.cash,
-      value.marketableSecurities,
-      value.receivables,
-      value.currentLiabilities,
-    ) as unknown as Record<string, unknown>);
+    sendDeterministicFinanceResult(
+      res,
+      'quick-ratio',
+      calculateQuickRatio(value.cash, value.marketableSecurities, value.receivables, value.currentLiabilities) as unknown as Record<string, unknown>,
+    );
   } catch (error) {
     res.status(400).json({ error: error instanceof Error ? error.message : 'Quick-ratio calculation failed.' });
   }
@@ -670,7 +654,11 @@ apiRouter.post('/finance/break-even', (req: Request, res: Response) => {
   if (parsed.success === false) return calculatorValidationError(res, parsed);
   try {
     const value = parsed.data;
-    sendDeterministicFinanceResult(res, 'break-even', calculateBreakEven(value.fixedCosts, value.pricePerUnit, value.variableCostPerUnit) as unknown as Record<string, unknown>);
+    sendDeterministicFinanceResult(
+      res,
+      'break-even',
+      calculateBreakEven(value.fixedCosts, value.pricePerUnit, value.variableCostPerUnit) as unknown as Record<string, unknown>,
+    );
   } catch (error) {
     res.status(400).json({ error: error instanceof Error ? error.message : 'Break-even calculation failed.' });
   }
@@ -697,11 +685,7 @@ apiRouter.post('/finance/scenario-assistant', async (req: Request, res: Response
     if (!safety.safe) return res.status(400).json({ error: safety.reason, safety });
 
     const deterministicResult = recalculateScenario(parsed.data.scenario, parsed.data.inputs);
-    const externalContext = await loadScenarioExternalContext(
-      parsed.data.profile,
-      parsed.data.companySymbol || undefined,
-      parsed.data.useExternalContext,
-    );
+    const externalContext = await loadScenarioExternalContext(parsed.data.profile, parsed.data.companySymbol || undefined, parsed.data.useExternalContext);
     const hasVerifiedCurrentData = externalContext.economicIndicators.length > 0 || Boolean(externalContext.company) || Boolean(externalContext.quote);
     const systemPrompt = `You are ArthaMind Scenario Analyst inside ArthaBench Pro's deterministic Financial Scenario & Calculation Studio.
 
@@ -912,11 +896,7 @@ ${currentData ? JSON.stringify(currentData) : 'No verified current-data context 
       answer: text,
       response: text,
       structuredAnswer,
-      suggestedFollowUps: [
-        'Explain the formula symbols one by one.',
-        'Give me another worked example to solve.',
-        'Quiz me on this concept.',
-      ],
+      suggestedFollowUps: ['Explain the formula symbols one by one.', 'Give me another worked example to solve.', 'Quiz me on this concept.'],
       demoMode,
       provider: demoMode ? 'demo' : 'groq',
       model: demoMode ? null : getGroqModels().tutorModel,
@@ -966,10 +946,7 @@ apiRouter.post('/dashboard/assistant', async (req: Request, res: Response, next:
     };
 
     const hasVerifiedCurrentData =
-      snapshot.quotes.length > 0 ||
-      snapshot.economicIndicators.some(
-        (indicator) => indicator.status === 'connected' && indicator.value !== null,
-      );
+      snapshot.quotes.length > 0 || snapshot.economicIndicators.some((indicator) => indicator.status === 'connected' && indicator.value !== null);
     const systemPrompt = `You are Ask Artha AI, the evidence-grounded dashboard analyst inside ArthaBench Pro.
 
 Rules:
@@ -990,10 +967,7 @@ ${buildStructuredFinancialAnswerInstructions({
     const userPrompt = `Dashboard question: ${parsed.data.question}\n\nVerified dashboard snapshot:\n${JSON.stringify(groundedContext)}`;
     const demoMode = !process.env.GROQ_API_KEY?.trim();
     const structuredAnswer = demoMode
-      ? createFallbackStructuredFinancialAnswer(
-          parsed.data.question,
-          buildDashboardDemoAnswer(snapshot),
-        )
+      ? createFallbackStructuredFinancialAnswer(parsed.data.question, buildDashboardDemoAnswer(snapshot))
       : await callGroqStructuredFinancialAnswer(systemPrompt, userPrompt, {
           history: parsed.data.history,
           fallbackQuestion: parsed.data.question,
@@ -1018,9 +992,7 @@ ${buildStructuredFinancialAnswerInstructions({
         `Explain the ${snapshot.selectedSymbol} chart in simple language.`,
         `Compare the latest ${snapshot.selectedCountry === 'us' ? 'US' : 'India'} economic signals.`,
         'Which dashboard data limitations should I notice?',
-        snapshot.latestEvaluation
-          ? 'Explain the latest reliability score and its weakest dimension.'
-          : 'How does ArthaBench measure AI reliability?',
+        snapshot.latestEvaluation ? 'Explain the latest reliability score and its weakest dimension.' : 'How does ArthaBench measure AI reliability?',
       ],
       disclaimer: 'Educational analysis only — not investment advice.',
       requestId: res.getHeader('x-request-id'),
@@ -1098,12 +1070,7 @@ apiRouter.get('/news/image', handleNewsImage);
 apiRouter.get('/news', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { query, category, region, page } = req.query;
-    const providerResult = await getBusinessNews(
-      (query as string) || '',
-      (category as string) || 'all',
-      (region as string) || 'global',
-      Number(page) || 1
-    );
+    const providerResult = await getBusinessNews((query as string) || '', (category as string) || 'all', (region as string) || 'global', Number(page) || 1);
     res.json({
       status: providerResult.status || 'ok',
       items: providerResult.items || [],
@@ -1200,7 +1167,10 @@ apiRouter.get('/markets/terminal/candles', async (req: Request, res: Response) =
     res.setHeader('Cache-Control', `public, s-maxage=${ttl}, stale-while-revalidate=${ttl * 2}`);
     res.json(data);
   } catch (error) {
-    res.status(503).json({ error: 'Candles for this instrument and interval are temporarily unavailable.', detail: error instanceof Error ? error.message.slice(0, 160) : undefined });
+    res.status(503).json({
+      error: 'Candles for this instrument and interval are temporarily unavailable.',
+      detail: error instanceof Error ? error.message.slice(0, 160) : undefined,
+    });
   }
 });
 
@@ -1219,7 +1189,11 @@ apiRouter.get('/company/intelligence', async (req: Request, res: Response, next:
   try {
     const parsed = z
       .object({
-        symbol: z.string().min(1).max(20).regex(/^[A-Za-z0-9][A-Za-z0-9.:_&-]*$/),
+        symbol: z
+          .string()
+          .min(1)
+          .max(20)
+          .regex(/^[A-Za-z0-9][A-Za-z0-9.:_&-]*$/),
       })
       .safeParse(req.query);
 
@@ -1228,12 +1202,7 @@ apiRouter.get('/company/intelligence', async (req: Request, res: Response, next:
     }
 
     const result = await fetchFinnhubCompanyIntelligence(parsed.data.symbol);
-    res.setHeader(
-      'Cache-Control',
-      result.status === 'connected'
-        ? 'public, s-maxage=900, stale-while-revalidate=3600'
-        : 'no-store',
-    );
+    res.setHeader('Cache-Control', result.status === 'connected' ? 'public, s-maxage=900, stale-while-revalidate=3600' : 'no-store');
     res.json(result);
   } catch (err) {
     next(err);
@@ -1244,7 +1213,11 @@ apiRouter.post('/company/assistant', async (req: Request, res: Response, next: N
   try {
     const parsed = z
       .object({
-        symbol: z.string().min(1).max(20).regex(/^[A-Za-z0-9][A-Za-z0-9.:_&-]*$/),
+        symbol: z
+          .string()
+          .min(1)
+          .max(20)
+          .regex(/^[A-Za-z0-9][A-Za-z0-9.:_&-]*$/),
         question: z.string().min(3).max(1200),
         history: z
           .array(
@@ -1317,14 +1290,10 @@ ${buildStructuredFinancialAnswerInstructions({
 })}`;
 
     const userPrompt = `Question about ${symbol}: ${parsed.data.question}\n\nVerified structured context:\n${JSON.stringify(groundedContext)}`;
-    const structuredAnswer = await callGroqStructuredFinancialAnswer(
-      systemPrompt,
-      userPrompt,
-      {
-        history: parsed.data.history,
-        fallbackQuestion: `${parsed.data.question}\nVerified context: ${JSON.stringify(groundedContext)}`,
-      },
-    );
+    const structuredAnswer = await callGroqStructuredFinancialAnswer(systemPrompt, userPrompt, {
+      history: parsed.data.history,
+      fallbackQuestion: `${parsed.data.question}\nVerified context: ${JSON.stringify(groundedContext)}`,
+    });
     const answer = serializeStructuredFinancialAnswer(structuredAnswer);
     const demoMode = !process.env.GROQ_API_KEY?.trim();
 
@@ -1353,12 +1322,7 @@ ${buildStructuredFinancialAnswerInstructions({
 apiRouter.get('/economy/overview', async (_req: Request, res: Response, next: NextFunction) => {
   try {
     const result = await fetchFredOverview();
-    res.setHeader(
-      'Cache-Control',
-      result.status === 'connected'
-        ? 'public, s-maxage=900, stale-while-revalidate=3600'
-        : 'no-store',
-    );
+    res.setHeader('Cache-Control', result.status === 'connected' ? 'public, s-maxage=900, stale-while-revalidate=3600' : 'no-store');
     res.json(result);
   } catch (err) {
     next(err);
@@ -1369,7 +1333,11 @@ apiRouter.get('/economy/series', async (req: Request, res: Response, next: NextF
   try {
     const parsed = z
       .object({
-        seriesId: z.string().min(1).max(64).regex(/^[A-Za-z0-9._-]+$/),
+        seriesId: z
+          .string()
+          .min(1)
+          .max(64)
+          .regex(/^[A-Za-z0-9._-]+$/),
         limit: z.coerce.number().int().min(1).max(240).optional(),
       })
       .safeParse(req.query);
@@ -1387,12 +1355,7 @@ apiRouter.get('/economy/series', async (req: Request, res: Response, next: NextF
 apiRouter.get('/economy/india/overview', async (_req: Request, res: Response, next: NextFunction) => {
   try {
     const result = await fetchWorldBankIndiaOverview();
-    res.setHeader(
-      'Cache-Control',
-      result.status === 'connected'
-        ? 'public, s-maxage=3600, stale-while-revalidate=86400'
-        : 'no-store',
-    );
+    res.setHeader('Cache-Control', result.status === 'connected' ? 'public, s-maxage=3600, stale-while-revalidate=86400' : 'no-store');
     res.json(result);
   } catch (err) {
     next(err);
@@ -1403,7 +1366,11 @@ apiRouter.get('/economy/india/series', async (req: Request, res: Response, next:
   try {
     const parsed = z
       .object({
-        indicatorId: z.string().min(2).max(64).regex(/^[A-Za-z0-9._-]+$/),
+        indicatorId: z
+          .string()
+          .min(2)
+          .max(64)
+          .regex(/^[A-Za-z0-9._-]+$/),
         limit: z.coerce.number().int().min(1).max(240).optional(),
       })
       .safeParse(req.query);
@@ -1412,16 +1379,8 @@ apiRouter.get('/economy/india/series', async (req: Request, res: Response, next:
       return res.status(400).json({ error: 'A valid World Bank indicatorId is required.' });
     }
 
-    const result = await fetchWorldBankIndiaSeries(
-      parsed.data.indicatorId,
-      parsed.data.limit || 60,
-    );
-    res.setHeader(
-      'Cache-Control',
-      result.status === 'connected'
-        ? 'public, s-maxage=3600, stale-while-revalidate=86400'
-        : 'no-store',
-    );
+    const result = await fetchWorldBankIndiaSeries(parsed.data.indicatorId, parsed.data.limit || 60);
+    res.setHeader('Cache-Control', result.status === 'connected' ? 'public, s-maxage=3600, stale-while-revalidate=86400' : 'no-store');
     res.json(result);
   } catch (err) {
     next(err);
@@ -1484,9 +1443,7 @@ apiRouter.use((err: any, req: Request, res: Response, next: NextFunction) => {
   const reqId = res.getHeader('x-request-id') || 'unknown';
   console.error(`[API ERROR ${reqId}]`, err?.message || err);
 
-  const safeMessage = err?.message?.includes('GROQ_API_KEY')
-    ? 'Server API Key configuration error.'
-    : err?.message || 'An internal API error occurred.';
+  const safeMessage = err?.message?.includes('GROQ_API_KEY') ? 'Server API Key configuration error.' : err?.message || 'An internal API error occurred.';
 
   res.status(500).json({
     error: safeMessage,

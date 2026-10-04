@@ -11,7 +11,8 @@ export const FOUNDER = {
     'the dual-model AI consensus architecture and live-data grounding (market prices, mutual fund NAVs, news and web search)',
     'system security, privacy controls and rate limiting',
   ],
-  mission: 'to give every Indian household the financial intelligence a CFO gives a company, so people can grow their money and secure their future, in their own language',
+  mission:
+    'to give every Indian household the financial intelligence a CFO gives a company, so people can grow their money and secure their future, in their own language',
   team: 'developed with the ArthaBench Research Team (financial reliability, datasets, regulatory evidence checks and localisation)',
 };
 
@@ -24,24 +25,29 @@ export const IDENTITY_BLOCK = [
 export const SCOPE_BLOCK = [
   'SCOPE: Answer every question about money, personal finance, investing, markets, companies, crypto, economics, tax, loans, insurance, business, mathematics, statistics or any real-life scenario that involves numbers or decisions, even when it goes beyond the page or data you were given.',
   'Use the live context below (prices, news, web results) for anything current, name the source and date, and show the working for any calculation so the user can check it.',
-  'If the question is about the user\'s own data and that data is missing, say what is missing, then still give a useful general answer.',
+  "If the question is about the user's own data and that data is missing, say what is missing, then still give a useful general answer.",
   'For questions far outside these areas, reply briefly and helpfully, then offer to help with a money or maths question.',
   'ACCURACY CHECK before you answer: re-do every calculation, compare each figure with the live context, and prefer the most recent dated source. If sources disagree or data is missing, say so plainly instead of guessing. End the interpretation with "Confidence: High, Medium or Low" and one short reason.',
 ].join('\n');
 
 const SELF = String.raw`(you|u|this|artha ?mind|artha ?bench|the (app|platform|website|site|bot|chatbot|assistant|ai))`;
-const CREATOR_Q = new RegExp([
-  String.raw`\b(who|whom)\b.{0,30}\b(created|made|built|developed|founded|owns?|designed|is behind|started)\b.{0,25}\b${SELF}\b`,
-  String.raw`\b(your|this (app|platform|website|site|assistant)'?s?)\s+(creator|founder|developer|maker|owner|ceo)\b`,
-  String.raw`\b(creator|founder|developer|maker|owner|ceo) of ${SELF}\b`,
-  String.raw`\bshreyash\b`,
-  String.raw`kisne banaya|kisne bana(ya|i)|किसने बनाया|कोणी बनवल`,
-].join('|'), 'i');
+const CREATOR_Q = new RegExp(
+  [
+    String.raw`\b(who|whom)\b.{0,30}\b(created|made|built|developed|founded|owns?|designed|is behind|started)\b.{0,25}\b${SELF}\b`,
+    String.raw`\b(your|this (app|platform|website|site|assistant)'?s?)\s+(creator|founder|developer|maker|owner|ceo)\b`,
+    String.raw`\b(creator|founder|developer|maker|owner|ceo) of ${SELF}\b`,
+    String.raw`\bshreyash\b`,
+    String.raw`kisne banaya|kisne bana(ya|i)|किसने बनाया|कोणी बनवल`,
+  ].join('|'),
+  'i',
+);
 
 /** A fixed, accurate answer when the user asks who made the assistant; null otherwise. */
 export function founderAnswer(question: string): string | null {
   if (!CREATOR_Q.test(question)) return null;
-  return `I'm ArthaMind AI. I was created by ${FOUNDER.name}, ${FOUNDER.title}.\n\n` +
+  return (
+    `I'm ArthaMind AI. I was created by ${FOUNDER.name}, ${FOUNDER.title}.\n\n` +
     `He designed and built:\n${FOUNDER.built.map((b) => `• ${b[0].toUpperCase()}${b.slice(1)}`).join('\n')}\n\n` +
-    `His mission: ${FOUNDER.mission}.\n\nThe platform was ${FOUNDER.team}.`;
+    `His mission: ${FOUNDER.mission}.\n\nThe platform was ${FOUNDER.team}.`
+  );
 }

@@ -1,35 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import {
-  Activity,
-  BarChart3,
-  CalendarDays,
-  CheckCircle2,
-  Database,
-  ExternalLink,
-  Info,
-  RefreshCw,
-  Search,
-  TrendingUp,
-} from 'lucide-react';
-import {
-  CartesianGrid,
-  Line,
-  LineChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from 'recharts';
-import {
-  fetchEconomicOverview,
-  fetchEconomicSeries,
-  fetchIndiaEconomicOverview,
-  fetchIndiaEconomicSeries,
-} from '../../services/learningApi';
-import {
-  EconomicIndicator,
-  EconomicObservation,
-} from '../../types';
+import { Activity, BarChart3, CalendarDays, CheckCircle2, Database, ExternalLink, Info, RefreshCw, Search, TrendingUp } from 'lucide-react';
+import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { fetchEconomicOverview, fetchEconomicSeries, fetchIndiaEconomicOverview, fetchIndiaEconomicSeries } from '../../services/learningApi';
+import { EconomicIndicator, EconomicObservation } from '../../types';
 import { SafetyBanner } from '../SafetyBanner';
 
 interface IndicatorMetadata {
@@ -49,11 +22,9 @@ const INDICATOR_METADATA: Record<string, IndicatorMetadata> = {
     label: 'US Inflation Rate',
     shortLabel: 'Inflation',
     unit: '% YoY',
-    description:
-      'Measures the year-over-year change in the Consumer Price Index for all urban consumers.',
+    description: 'Measures the year-over-year change in the Consumer Price Index for all urban consumers.',
     frequency: 'Monthly',
-    whyItMatters:
-      'Inflation affects purchasing power, household budgets, interest-rate policy, and the real value of savings.',
+    whyItMatters: 'Inflation affects purchasing power, household budgets, interest-rate policy, and the real value of savings.',
     transform: 'inflation_yoy',
   },
   GDPC1: {
@@ -61,11 +32,9 @@ const INDICATOR_METADATA: Record<string, IndicatorMetadata> = {
     label: 'US Real Gross Domestic Product',
     shortLabel: 'Real GDP',
     unit: '$T',
-    description:
-      'Inflation-adjusted value of goods and services produced by the United States economy.',
+    description: 'Inflation-adjusted value of goods and services produced by the United States economy.',
     frequency: 'Quarterly',
-    whyItMatters:
-      'Real GDP helps identify economic expansion, contraction, and longer-term changes in productive activity.',
+    whyItMatters: 'Real GDP helps identify economic expansion, contraction, and longer-term changes in productive activity.',
     transform: 'gdp_trillions',
   },
   UNRATE: {
@@ -73,44 +42,36 @@ const INDICATOR_METADATA: Record<string, IndicatorMetadata> = {
     label: 'US Unemployment Rate',
     shortLabel: 'Unemployment',
     unit: '%',
-    description:
-      'Share of the civilian labor force that is unemployed and actively seeking employment.',
+    description: 'Share of the civilian labor force that is unemployed and actively seeking employment.',
     frequency: 'Monthly',
-    whyItMatters:
-      'It is a central measure of labor-market strength, household income pressure, and economic slack.',
+    whyItMatters: 'It is a central measure of labor-market strength, household income pressure, and economic slack.',
   },
   FEDFUNDS: {
     seriesId: 'FEDFUNDS',
     label: 'Effective Federal Funds Rate',
     shortLabel: 'Fed Funds Rate',
     unit: '%',
-    description:
-      'The interest rate at which depository institutions trade federal funds with one another overnight.',
+    description: 'The interest rate at which depository institutions trade federal funds with one another overnight.',
     frequency: 'Monthly average',
-    whyItMatters:
-      'It influences borrowing costs, deposit rates, business financing, and financial conditions throughout the economy.',
+    whyItMatters: 'It influences borrowing costs, deposit rates, business financing, and financial conditions throughout the economy.',
   },
   DGS10: {
     seriesId: 'DGS10',
     label: 'US 10-Year Treasury Yield',
     shortLabel: '10-Year Treasury',
     unit: '%',
-    description:
-      'Market yield on US Treasury securities with a constant maturity of ten years.',
+    description: 'Market yield on US Treasury securities with a constant maturity of ten years.',
     frequency: 'Business daily',
-    whyItMatters:
-      'It is widely used as a long-term benchmark for mortgages, valuation discount rates, and market expectations.',
+    whyItMatters: 'It is widely used as a long-term benchmark for mortgages, valuation discount rates, and market expectations.',
   },
   'NY.GDP.MKTP.CD': {
     seriesId: 'NY.GDP.MKTP.CD',
     label: 'India Gross Domestic Product',
     shortLabel: 'India GDP',
     unit: 'US$T',
-    description:
-      'The total market value of goods and services produced in India, expressed in current US dollars.',
+    description: 'The total market value of goods and services produced in India, expressed in current US dollars.',
     frequency: 'Annual',
-    whyItMatters:
-      'GDP provides a broad measure of the size of India’s economy and its long-term economic development.',
+    whyItMatters: 'GDP provides a broad measure of the size of India’s economy and its long-term economic development.',
     transform: 'usd_to_trillions',
   },
   'NY.GDP.MKTP.KD.ZG': {
@@ -118,44 +79,36 @@ const INDICATOR_METADATA: Record<string, IndicatorMetadata> = {
     label: 'India Real GDP Growth',
     shortLabel: 'GDP Growth',
     unit: '%',
-    description:
-      'Annual percentage growth rate of India’s GDP at constant prices, adjusted for inflation.',
+    description: 'Annual percentage growth rate of India’s GDP at constant prices, adjusted for inflation.',
     frequency: 'Annual',
-    whyItMatters:
-      'Real GDP growth shows whether inflation-adjusted economic production is expanding or contracting.',
+    whyItMatters: 'Real GDP growth shows whether inflation-adjusted economic production is expanding or contracting.',
   },
   'FP.CPI.TOTL.ZG': {
     seriesId: 'FP.CPI.TOTL.ZG',
     label: 'India Consumer Inflation',
     shortLabel: 'India Inflation',
     unit: '% annual',
-    description:
-      'Annual percentage change in the consumer price index for India.',
+    description: 'Annual percentage change in the consumer price index for India.',
     frequency: 'Annual',
-    whyItMatters:
-      'Consumer inflation affects household purchasing power, savings, wages, and monetary-policy decisions.',
+    whyItMatters: 'Consumer inflation affects household purchasing power, savings, wages, and monetary-policy decisions.',
   },
   'SL.UEM.TOTL.ZS': {
     seriesId: 'SL.UEM.TOTL.ZS',
     label: 'India Unemployment Rate',
     shortLabel: 'India Unemployment',
     unit: '%',
-    description:
-      'Share of India’s total labor force that is without work but available for and seeking employment.',
+    description: 'Share of India’s total labor force that is without work but available for and seeking employment.',
     frequency: 'Annual modeled estimate',
-    whyItMatters:
-      'Unemployment is an important measure of labor-market conditions and household income pressure.',
+    whyItMatters: 'Unemployment is an important measure of labor-market conditions and household income pressure.',
   },
   'FR.INR.LEND': {
     seriesId: 'FR.INR.LEND',
     label: 'India Lending Interest Rate',
     shortLabel: 'Lending Rate',
     unit: '%',
-    description:
-      'Bank lending rate that usually meets the short- and medium-term financing needs of India’s private sector.',
+    description: 'Bank lending rate that usually meets the short- and medium-term financing needs of India’s private sector.',
     frequency: 'Annual',
-    whyItMatters:
-      'Lending rates influence the cost of household borrowing, business credit, and investment activity.',
+    whyItMatters: 'Lending rates influence the cost of household borrowing, business credit, and investment activity.',
   },
 };
 
@@ -171,10 +124,7 @@ const INDIA_OBSERVATION_OPTIONS = [
   { value: 60, label: '60 annual observations' },
 ];
 
-function transformObservations(
-  observations: EconomicObservation[],
-  metadata: IndicatorMetadata,
-) {
+function transformObservations(observations: EconomicObservation[], metadata: IndicatorMetadata) {
   if (metadata.transform === 'gdp_trillions') {
     return observations.map((observation) => ({
       date: observation.date,
@@ -190,9 +140,7 @@ function transformObservations(
   }
 
   if (metadata.transform === 'inflation_yoy') {
-    const byDate = new Map(
-      observations.map((observation) => [observation.date, observation.value]),
-    );
+    const byDate = new Map(observations.map((observation) => [observation.date, observation.value]));
     return observations.flatMap((observation) => {
       const priorDate = new Date(`${observation.date}T00:00:00Z`);
       priorDate.setUTCFullYear(priorDate.getUTCFullYear() - 1);
@@ -201,9 +149,7 @@ function transformObservations(
       return [
         {
           date: observation.date,
-          value:
-            Math.round((((observation.value / priorValue) - 1) * 100) * 100) /
-            100,
+          value: Math.round((observation.value / priorValue - 1) * 100 * 100) / 100,
         },
       ];
     });
@@ -240,33 +186,25 @@ export const EconomicDashboardView: React.FC = () => {
   const [loadingSeries, setLoadingSeries] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const selectedMetadata =
-    INDICATOR_METADATA[selectedSeriesId] || {
-      seriesId: selectedSeriesId,
-      label: `${country === 'us' ? 'FRED Series' : 'World Bank Indicator'} ${selectedSeriesId}`,
-      shortLabel: selectedSeriesId,
-      unit: 'Value',
-      description: `A custom economic time series loaded directly from ${country === 'us' ? 'FRED' : 'the World Bank Indicators API'}.`,
-      frequency: 'Defined by source series',
-      whyItMatters:
-        `Use the official ${country === 'us' ? 'FRED series' : 'World Bank indicator'} page to review its definition, units, frequency, and methodology.`,
-    };
+  const selectedMetadata = INDICATOR_METADATA[selectedSeriesId] || {
+    seriesId: selectedSeriesId,
+    label: `${country === 'us' ? 'FRED Series' : 'World Bank Indicator'} ${selectedSeriesId}`,
+    shortLabel: selectedSeriesId,
+    unit: 'Value',
+    description: `A custom economic time series loaded directly from ${country === 'us' ? 'FRED' : 'the World Bank Indicators API'}.`,
+    frequency: 'Defined by source series',
+    whyItMatters: `Use the official ${country === 'us' ? 'FRED series' : 'World Bank indicator'} page to review its definition, units, frequency, and methodology.`,
+  };
 
   const providerName = country === 'us' ? 'Federal Reserve Economic Data' : 'World Bank India Data';
   const providerShortName = country === 'us' ? 'FRED' : 'World Bank';
   const officialSeriesUrl =
-    country === 'us'
-      ? `https://fred.stlouisfed.org/series/${selectedSeriesId}`
-      : `https://data.worldbank.org/indicator/${selectedSeriesId}?locations=IN`;
+    country === 'us' ? `https://fred.stlouisfed.org/series/${selectedSeriesId}` : `https://data.worldbank.org/indicator/${selectedSeriesId}?locations=IN`;
 
   const loadOverview = async () => {
     setLoadingOverview(true);
     try {
-      setIndicators(
-        country === 'us'
-          ? await fetchEconomicOverview()
-          : await fetchIndiaEconomicOverview(),
-      );
+      setIndicators(country === 'us' ? await fetchEconomicOverview() : await fetchIndiaEconomicOverview());
     } catch {
       setError(`The ${providerShortName} economic overview is temporarily unavailable.`);
     } finally {
@@ -291,10 +229,7 @@ export const EconomicDashboardView: React.FC = () => {
     let active = true;
     setLoadingSeries(true);
     setError(null);
-    const request =
-      country === 'us'
-        ? fetchEconomicSeries(selectedSeriesId, observationLimit)
-        : fetchIndiaEconomicSeries(selectedSeriesId, observationLimit);
+    const request = country === 'us' ? fetchEconomicSeries(selectedSeriesId, observationLimit) : fetchIndiaEconomicSeries(selectedSeriesId, observationLimit);
     request
       .then((response) => {
         if (!active) return;
@@ -314,16 +249,10 @@ export const EconomicDashboardView: React.FC = () => {
     };
   }, [country, selectedSeriesId, observationLimit, loadingOverview]);
 
-  const chartData = useMemo(
-    () => transformObservations(observations, selectedMetadata),
-    [observations, selectedMetadata],
-  );
+  const chartData = useMemo(() => transformObservations(observations, selectedMetadata), [observations, selectedMetadata]);
   const latestChartPoint = chartData.at(-1);
   const previousChartPoint = chartData.at(-2);
-  const change =
-    latestChartPoint && previousChartPoint
-      ? latestChartPoint.value - previousChartPoint.value
-      : null;
+  const change = latestChartPoint && previousChartPoint ? latestChartPoint.value - previousChartPoint.value : null;
 
   const handleCustomSeries = (event: React.FormEvent) => {
     event.preventDefault();
@@ -360,9 +289,7 @@ export const EconomicDashboardView: React.FC = () => {
               Live {providerName}
             </div>
             <div>
-              <h1 className="text-3xl sm:text-4xl font-extrabold text-ink tracking-tight">
-                Economic Dashboard
-              </h1>
+              <h1 className="text-3xl sm:text-4xl font-extrabold text-ink tracking-tight">Economic Dashboard</h1>
               <p className="text-sm text-secondary leading-relaxed max-w-3xl mt-2">
                 Compare official United States and India macroeconomic indicators, historical trends, observation dates, and educational explanations.
               </p>
@@ -405,9 +332,7 @@ export const EconomicDashboardView: React.FC = () => {
               key={indicator.id}
               onClick={() => setSelectedSeriesId(indicator.seriesId)}
               className={`text-left rounded-2xl p-5 border transition-all min-h-40 ${
-                active
-                  ? 'bg-interactive-soft border-interactive/40 shadow-sm'
-                  : 'bg-surface border-line'
+                active ? 'bg-interactive-soft border-interactive/40 shadow-sm' : 'bg-surface border-line'
               }`}
             >
               <div className="flex items-center justify-between gap-2">
@@ -470,12 +395,7 @@ export const EconomicDashboardView: React.FC = () => {
                     tick={{ fill: 'var(--text-secondary)', fontSize: 10 }}
                     minTickGap={34}
                   />
-                  <YAxis
-                    stroke="var(--border-subtle)"
-                    tick={{ fill: 'var(--text-secondary)', fontSize: 10 }}
-                    width={54}
-                    domain={['auto', 'auto']}
-                  />
+                  <YAxis stroke="var(--border-subtle)" tick={{ fill: 'var(--text-secondary)', fontSize: 10 }} width={54} domain={['auto', 'auto']} />
                   <Tooltip
                     labelFormatter={(date) => formatFullDate(String(date))}
                     formatter={(value) => [`${Number(value).toLocaleString()} ${selectedMetadata.unit}`, selectedMetadata.shortLabel]}
@@ -498,17 +418,11 @@ export const EconomicDashboardView: React.FC = () => {
                 </LineChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-full flex items-center justify-center text-xs text-secondary">
-                No usable observations were returned for this series.
-              </div>
+              <div className="h-full flex items-center justify-center text-xs text-secondary">No usable observations were returned for this series.</div>
             )}
           </div>
 
-          {error && (
-            <div className="mt-4 p-3 rounded-xl bg-danger/10 border border-danger/25 text-xs text-danger">
-              {error}
-            </div>
-          )}
+          {error && <div className="mt-4 p-3 rounded-xl bg-danger/10 border border-danger/25 text-xs text-danger">{error}</div>}
         </div>
 
         <aside className="xl:col-span-4 space-y-6">
@@ -588,15 +502,16 @@ export const EconomicDashboardView: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {chartData.slice(-10).reverse().map((observation) => (
-                  <tr key={observation.date} className="border-b border-line">
-                    <td className="py-3 text-secondary">{observation.date}</td>
-                    <td className="py-3 text-right font-mono font-semibold text-ink">
-                      {observation.value.toLocaleString()}
-                    </td>
-                    <td className="py-3 text-right text-secondary">{selectedMetadata.unit}</td>
-                  </tr>
-                ))}
+                {chartData
+                  .slice(-10)
+                  .reverse()
+                  .map((observation) => (
+                    <tr key={observation.date} className="border-b border-line">
+                      <td className="py-3 text-secondary">{observation.date}</td>
+                      <td className="py-3 text-right font-mono font-semibold text-ink">{observation.value.toLocaleString()}</td>
+                      <td className="py-3 text-right text-secondary">{selectedMetadata.unit}</td>
+                    </tr>
+                  ))}
               </tbody>
             </table>
           </div>
@@ -610,8 +525,18 @@ export const EconomicDashboardView: React.FC = () => {
           <div className="space-y-4">
             {[
               ['Values', `Each number is a historical observation retrieved from ${providerShortName}, not a forecast.`],
-              ['Dates', country === 'us' ? 'Release frequencies differ: GDP is quarterly, CPI and unemployment are monthly, and Treasury yields are daily.' : 'World Bank India indicators are generally annual and may have different latest available years.'],
-              ['Inflation', country === 'us' ? 'ArthaBench calculates the displayed year-over-year percentage from the official CPI index observations.' : 'India inflation is the annual percentage change in consumer prices reported through World Development Indicators.'],
+              [
+                'Dates',
+                country === 'us'
+                  ? 'Release frequencies differ: GDP is quarterly, CPI and unemployment are monthly, and Treasury yields are daily.'
+                  : 'World Bank India indicators are generally annual and may have different latest available years.',
+              ],
+              [
+                'Inflation',
+                country === 'us'
+                  ? 'ArthaBench calculates the displayed year-over-year percentage from the official CPI index observations.'
+                  : 'India inflation is the annual percentage change in consumer prices reported through World Development Indicators.',
+              ],
               ['Use', 'Compare trends and economic context for education and AI verification—not personalized investment decisions.'],
             ].map(([title, text], index) => (
               <div key={title} className="flex gap-3">

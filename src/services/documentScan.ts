@@ -10,8 +10,17 @@
 import type { MoneyCheckInputs } from './moneyCheck';
 
 export type ScanField = 'annualSalary' | 'monthlyExpenses' | 'monthlyEmi' | 'section80C' | 'section80D';
-export interface ScanSuggestion { field: ScanField; value: number; label: string; evidence: string }
-export interface ScanResult { kind: 'payslip' | 'form16' | 'statement' | 'unknown'; suggestions: ScanSuggestion[]; notes: string[] }
+export interface ScanSuggestion {
+  field: ScanField;
+  value: number;
+  label: string;
+  evidence: string;
+}
+export interface ScanResult {
+  kind: 'payslip' | 'form16' | 'statement' | 'unknown';
+  suggestions: ScanSuggestion[];
+  notes: string[];
+}
 
 const AMOUNT = String.raw`(?:rs\.?|inr|₹)?\s*([0-9]{1,3}(?:,[0-9]{2,3})+(?:\.[0-9]{1,2})?|[0-9]+(?:\.[0-9]{1,2})?)`;
 const toNumber = (raw: string) => Number(raw.replace(/,/g, ''));
@@ -34,7 +43,10 @@ function findAmount(lines: string[], labels: RegExp): { value: number; line: str
 
 /** Payslip / Form 16 / free text. */
 export function scanText(text: string): ScanResult {
-  const lines = text.split(/\r?\n/).map((line) => line.replace(/\s+/g, ' ').trim()).filter(Boolean);
+  const lines = text
+    .split(/\r?\n/)
+    .map((line) => line.replace(/\s+/g, ' ').trim())
+    .filter(Boolean);
   const lower = text.toLowerCase();
   const isForm16 = /form\s*no\.?\s*16|form\s*16|part\s*b/.test(lower) && /(gross salary|section 17)/.test(lower);
   const isPayslip = !isForm16 && /(pay\s*slip|salary slip|earnings|net pay|take home)/.test(lower);
@@ -53,7 +65,12 @@ export function scanText(text: string): ScanResult {
     if (gross) {
       // A payslip is monthly; a figure above ₹20,00,000 is almost certainly already annual.
       const annual = gross.value > 2_000_000 ? gross.value : gross.value * 12;
-      suggestions.push({ field: 'annualSalary', value: annual, label: gross.value > 2_000_000 ? 'Annual gross salary' : 'Annual salary (monthly gross × 12)', evidence: gross.line });
+      suggestions.push({
+        field: 'annualSalary',
+        value: annual,
+        label: gross.value > 2_000_000 ? 'Annual gross salary' : 'Annual salary (monthly gross × 12)',
+        evidence: gross.line,
+      });
     }
     const loan = findAmount(lines, /loan (recovery|emi|deduction)|emi\b/i);
     if (loan) suggestions.push({ field: 'monthlyEmi', value: loan.value, label: 'EMI deducted from salary', evidence: loan.line });
@@ -62,16 +79,28 @@ export function scanText(text: string): ScanResult {
   return { kind: isForm16 ? 'form16' : isPayslip ? 'payslip' : 'unknown', suggestions, notes };
 }
 
-interface Txn { date: Date | null; description: string; debit: number; credit: number }
+interface Txn {
+  date: Date | null;
+  description: string;
+  debit: number;
+  credit: number;
+}
 
 function splitCsvLine(line: string): string[] {
   const out: string[] = [];
-  let cur = '', quoted = false;
+  let cur = '',
+    quoted = false;
   for (let i = 0; i < line.length; i += 1) {
     const ch = line[i];
-    if (ch === '"') { if (quoted && line[i + 1] === '"') { cur += '"'; i += 1; } else quoted = !quoted; }
-    else if (ch === ',' && !quoted) { out.push(cur); cur = ''; }
-    else cur += ch;
+    if (ch === '"') {
+      if (quoted && line[i + 1] === '"') {
+        cur += '"';
+        i += 1;
+      } else quoted = !quoted;
+    } else if (ch === ',' && !quoted) {
+      out.push(cur);
+      cur = '';
+    } else cur += ch;
   }
   out.push(cur);
   return out.map((cell) => cell.trim());
@@ -80,7 +109,10 @@ function splitCsvLine(line: string): string[] {
 function parseDate(raw: string): Date | null {
   const s = raw.trim();
   let m = s.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})$/);
-  if (m) { const y = Number(m[3].length === 2 ? `20${m[3]}` : m[3]); return new Date(y, Number(m[2]) - 1, Number(m[1])); }
+  if (m) {
+    const y = Number(m[3].length === 2 ? `20${m[3]}` : m[3]);
+    return new Date(y, Number(m[2]) - 1, Number(m[1]));
+  }
   m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
   if (m) return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
   const d = new Date(s);
@@ -98,18 +130,24 @@ export function scanStatementCsv(csv: string): ScanResult {
   if (headerIndex < 0) return { kind: 'unknown', suggestions: [], notes: ['Could not find Date and Debit/Credit columns in this CSV.'] };
   const header = splitCsvLine(rows[headerIndex]).map((h) => h.toLowerCase());
   const col = (re: RegExp) => header.findIndex((h) => re.test(h));
-  const iDate = col(/date/), iDesc = col(/narration|description|particulars|details|remarks/);
-  const iDebit = col(/debit|withdrawal|dr\b/), iCredit = col(/credit|deposit|cr\b/), iAmount = col(/^amount/), iType = col(/type|dr\/cr/);
+  const iDate = col(/date/),
+    iDesc = col(/narration|description|particulars|details|remarks/);
+  const iDebit = col(/debit|withdrawal|dr\b/),
+    iCredit = col(/credit|deposit|cr\b/),
+    iAmount = col(/^amount/),
+    iType = col(/type|dr\/cr/);
 
   const txns: Txn[] = [];
   for (const line of rows.slice(headerIndex + 1)) {
     const cells = splitCsvLine(line);
     const num = (i: number) => (i >= 0 && cells[i] ? Math.abs(toNumber(cells[i].replace(/[^0-9.,-]/g, ''))) || 0 : 0);
-    let debit = num(iDebit), credit = num(iCredit);
+    let debit = num(iDebit),
+      credit = num(iCredit);
     if (iDebit < 0 && iAmount >= 0) {
       const amount = toNumber((cells[iAmount] || '').replace(/[^0-9.,-]/g, ''));
       const isDebit = iType >= 0 ? /dr|debit/i.test(cells[iType] || '') : amount < 0;
-      if (isDebit) debit = Math.abs(amount); else credit = Math.abs(amount);
+      if (isDebit) debit = Math.abs(amount);
+      else credit = Math.abs(amount);
     }
     if (!debit && !credit) continue;
     txns.push({ date: iDate >= 0 ? parseDate(cells[iDate] || '') : null, description: iDesc >= 0 ? cells[iDesc] || '' : '', debit, credit });
@@ -125,12 +163,26 @@ export function scanStatementCsv(csv: string): ScanResult {
   const suggestions: ScanSuggestion[] = [];
   const notes: string[] = [`Read ${txns.length} transactions across ${monthCount} month${monthCount === 1 ? '' : 's'}.`];
   const spendTotal = spend.reduce((s, t) => s + t.debit, 0);
-  if (spendTotal > 0) suggestions.push({ field: 'monthlyExpenses', value: Math.round(spendTotal / monthCount), label: 'Average monthly spending', evidence: `${spend.length} debits, excluding EMIs, investments and self-transfers` });
+  if (spendTotal > 0)
+    suggestions.push({
+      field: 'monthlyExpenses',
+      value: Math.round(spendTotal / monthCount),
+      label: 'Average monthly spending',
+      evidence: `${spend.length} debits, excluding EMIs, investments and self-transfers`,
+    });
   const emiTotal = emiDebits.reduce((s, t) => s + t.debit, 0);
-  if (emiTotal > 0) suggestions.push({ field: 'monthlyEmi', value: Math.round(emiTotal / monthCount), label: 'Average monthly EMIs', evidence: `${emiDebits.length} loan / NACH debits` });
+  if (emiTotal > 0)
+    suggestions.push({
+      field: 'monthlyEmi',
+      value: Math.round(emiTotal / monthCount),
+      label: 'Average monthly EMIs',
+      evidence: `${emiDebits.length} loan / NACH debits`,
+    });
   const salaryTotal = salaryCredits.reduce((s, t) => s + t.credit, 0);
   if (salaryTotal > 0) {
-    notes.push(`Salary credits average ${Math.round(salaryTotal / monthCount).toLocaleString('en-IN')} a month. That is take-home pay; enter your gross salary from a payslip or Form 16 for tax.`);
+    notes.push(
+      `Salary credits average ${Math.round(salaryTotal / monthCount).toLocaleString('en-IN')} a month. That is take-home pay; enter your gross salary from a payslip or Form 16 for tax.`,
+    );
   }
   return { kind: 'statement', suggestions, notes };
 }
@@ -138,7 +190,10 @@ export function scanStatementCsv(csv: string): ScanResult {
 /** Extracts text from a text-based PDF using pdf.js, loaded on demand. */
 /** Thrown when a PDF needs a password (or the one given is wrong). */
 export class PdfPasswordError extends Error {
-  constructor(public readonly wrong: boolean) { super(wrong ? 'That password did not open the file.' : 'This PDF is password-protected.'); this.name = 'PdfPasswordError'; }
+  constructor(public readonly wrong: boolean) {
+    super(wrong ? 'That password did not open the file.' : 'This PDF is password-protected.');
+    this.name = 'PdfPasswordError';
+  }
 }
 
 export async function pdfToText(file: File, options: { password?: string; maxPages?: number } = {}): Promise<string> {
@@ -164,7 +219,16 @@ export async function pdfToText(file: File, options: { password?: string; maxPag
       row.push({ x: item.transform[4], s: item.str });
       rows.set(y, row);
     }
-    [...rows.entries()].sort((a, b) => b[0] - a[0]).forEach(([, row]) => pages.push(row.sort((a, b) => a.x - b.x).map((r) => r.s).join(' ')));
+    [...rows.entries()]
+      .sort((a, b) => b[0] - a[0])
+      .forEach(([, row]) =>
+        pages.push(
+          row
+            .sort((a, b) => a.x - b.x)
+            .map((r) => r.s)
+            .join(' '),
+        ),
+      );
   }
   return pages.join('\n');
 }
@@ -176,7 +240,8 @@ export async function scanFile(file: File): Promise<ScanResult> {
   if (name.endsWith('.txt')) return scanText(await file.text());
   if (name.endsWith('.pdf') || file.type === 'application/pdf') {
     const text = await pdfToText(file);
-    if (!text.trim()) return { kind: 'unknown', suggestions: [], notes: ['This PDF has no readable text (it may be a scanned image). Please type the amounts in.'] };
+    if (!text.trim())
+      return { kind: 'unknown', suggestions: [], notes: ['This PDF has no readable text (it may be a scanned image). Please type the amounts in.'] };
     return scanText(text);
   }
   return { kind: 'unknown', suggestions: [], notes: ['Upload a PDF payslip or Form 16, or a CSV bank statement.'] };

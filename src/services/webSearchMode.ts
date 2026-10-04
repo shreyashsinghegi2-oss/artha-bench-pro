@@ -9,9 +9,18 @@ const KEY = 'artha.ai.webSearch';
 export const WEB_SEARCH_EVENT = 'artha:web-search-mode';
 
 export function getWebSearchMode(): WebSearchMode {
-  try { const v = localStorage.getItem(KEY); return v === 'on' || v === 'off' ? v : 'auto'; } catch { return 'auto'; }
+  try {
+    const v = localStorage.getItem(KEY);
+    return v === 'on' || v === 'off' ? v : 'auto';
+  } catch {
+    return 'auto';
+  }
 }
 export function setWebSearchMode(mode: WebSearchMode) {
-  try { localStorage.setItem(KEY, mode); } catch { /* storage unavailable: keep for this page only */ }
+  try {
+    localStorage.setItem(KEY, mode);
+  } catch {
+    /* storage unavailable: keep for this page only */
+  }
   window.dispatchEvent(new CustomEvent(WEB_SEARCH_EVENT, { detail: mode }));
 }

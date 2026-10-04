@@ -1,48 +1,442 @@
-export type NavigationDestination = 'overview'|'income'|'expenses'|'budgeting'|'decision-replay'|'crypto'|'quick-check'|'tutor'|'evaluation-lab'|'comparison'|'scenarios'|'learning'|'news'|'markets'|'economy'|'batch'|'reports'|'methodology'|'connections'|'settings'|'account'|'dashboard';
-export type ConnectionStatus = 'connected'|'not_configured'|'invalid_credentials'|'invalid_request'|'rate_limited'|'timeout'|'provider_unavailable'|'invalid_response'|'stale_data'|'error';
-export interface ProviderDiagnostic { id:string; name:string; role:string; status:ConnectionStatus; lastChecked:string; message?:string; latencyMs?:number; }
-export interface QuickCheckResponse { safe:boolean; answer:string; explanation:string; disclaimer:string; }
-export interface ReliabilityMetrics { formulaAccuracyScore:number; dualModelConsensusScore:number; evidenceVerificationScore:number; safetyComplianceScore:number; overallReliabilityScore:number; }
-export interface VerificationReport { id:string; verificationCode:string; createdAt:string; query:string; primaryResponse:string; secondaryResponse?:string; metrics:ReliabilityMetrics; evidenceSources:{url:string;title:string;verified:boolean}[]; riskFlags:string[]; verdict:'HIGHLY_RELIABLE'|'MODERATE_RELIABILITY'|'LOW_RELIABILITY'|'REJECTED'; isVerified:boolean; demoMode?:boolean; }
-export interface TutorMessage { id:string; sender:'user'|'tutor'; text:string; timestamp:string; suggestedFollowUps?:string[]; mathProof?:string; disclaimer?:string; }
-export interface SavedTutorConversation { id:string; title:string; updatedAt:string; messages:TutorMessage[]; }
-export type LearningTrackId='personal-finance'|'stock-market'|'trading-risk'|'crypto-web3'|'business-entrepreneurship'|'business-analyst'|'financial-analyst'|'earning-skills';
-export type LearnerLevel='beginner'|'intermediate'|'advanced';
-export type LearningLanguage='english'|'hindi'|'hinglish'|'marathi'|'gujarati'|'bengali'|'tamil'|'telugu'|'kannada'|'malayalam'|'punjabi'|'urdu'|'odia'|'assamese'|'spanish'|'french'|'german'|'arabic'|'portuguese';
-export type LearningMode='explain'|'step-by-step'|'socratic'|'worked-example'|'quiz'|'revision'|'flashcards'|'compare';
-export interface LessonKnowledgeCheck { id:string; question:string; options:string[]; correctIndex:number; explanation:string; }
-export interface Lesson { id:string; trackId:LearningTrackId; moduleId:string; title:string; objective:string; explanationSeed:string; keyConcepts:string[]; examplePrompt:string; practiceActivity:string; knowledgeCheck:LessonKnowledgeCheck; riskAndLimitationNotes:string[]; estimatedMinutes:number; prerequisites:string[]; requiresCurrentSources?:boolean; }
-export interface Module { id:string; trackId:LearningTrackId; title:string; description:string; lessons:Lesson[]; }
-export interface LearningTrack { id:LearningTrackId; title:string; description:string; iconName:string; colorToken:string; riskLabel:string; estimatedHours:number; prerequisites:string[]; outcomes:string[]; modules:Module[]; }
-export interface LearningProgress { completedLessonIds:string[]; quizScores:Record<string,number>; savedNotes:Record<string,string>; bookmarkedLessonIds:string[]; lastActiveLessonId?:string; streakDays:number; lastActiveDate:string; }
-export interface PaperPosition { symbol:string; name:string; assetType:string; quantity:number; averageCost:number; currentPrice:number; }
-export interface PaperTrade { id:string; timestamp:string; symbol:string; side:'buy'|'sell'; quantity:number; price:number; totalAmount:number; }
-export interface PaperPortfolio { cashBalance:number; initialBalance:number; positions:PaperPosition[]; trades:PaperTrade[]; }
-export interface NormalizedNewsItem { id:string; title:string; summary:string; sourceName:string; sourceUrl:string; publishedAt:string|null; retrievedAt:string; category:string; region:string; imageUrl:string|null; }
-export interface NormalizedMarketQuote { symbol:string; name:string; assetType:string; exchange:string|null; currency:string; price:number; open:number|null; high:number|null; low:number|null; previousClose:number|null; change:number|null; changePercent:number|null; volume:number|null; providerTimestamp:string|null; retrievedAt:string; freshness:'real_time'|'delayed'|'end_of_day'|'stale'|'demo'; providerName:string; }
-export type IndiaMarketTickerItemStatus='available'|'unavailable';
-export interface IndiaMarketTickerItem { id:string; label:string; yahooSymbol:string; status:IndiaMarketTickerItemStatus; price:number|null; change:number|null; changePercent:number|null; currency:string|null; freshness:NormalizedMarketQuote['freshness']|null; providerTimestamp:string|null; }
-export interface IndiaMarketTickerResponse { status:'available'|'partial'|'unavailable'; sourceLabel:string; retrievedAt:string; items:IndiaMarketTickerItem[]; }
-export interface MarketHistoryPoint { date:string; price:number; open?:number; high?:number; low?:number; close?:number; volume?:number; }
-export interface CompanyIntelligence { symbol:string; status:ConnectionStatus; providerName:'Finnhub'; retrievedAt:string; message:string; profile:any; metrics:any; earnings:any[]; recommendations:any[]; }
-export interface EconomicIndicator { id:string; seriesId:string; label:string; value:number|null; unit:string; date:string|null; status:ConnectionStatus; sourceName:'FRED'|'World Bank'; sourceUrl:string; }
-export interface EconomicObservation { date:string; value:number; }
-export interface EconomicSeriesResponse { seriesId:string; observations:EconomicObservation[]; status:ConnectionStatus; message:string; }
-export interface DashboardAssistantSnapshot { capturedAt:string; selectedSymbol:string; selectedRange:string; selectedCountry:'us'|'india'; quotes:any[]; marketHistory:any; economicIndicators:any[]; providerHealth:any; latestEvaluation:any; }
-export type FinancialExampleDataStatus='live'|'latest_available'|'delayed'|'illustrative'|'not_applicable';
-export interface StructuredFinancialAnswer { title:string; directAnswer:string; steps:Array<{title:string;explanation:string}>; formula:{expression:string;variables:Array<{symbol:string;meaning:string}>;whenToUse:string}; example:{title:string;dataStatus:FinancialExampleDataStatus;dataAsOf:string;inputs:string[];calculation:string[];result:string}; interpretation:string[]; risks:string[]; keyTakeaways:string[]; sources:Array<{name:string;dataDate:string;freshness:string}>; }
-export type TutorCountry='US'|'India'|'Global';
-export type TutorCurrency='USD'|'INR'|'EUR'|'GBP';
-export type TutorActivity='lesson'|'quiz'|'calculation'|'scenario'|'flashcards'|'revision'|'mock-test';
-export type TutorQuizType='mcq'|'mixed'|'true-false'|'fill-blank'|'short-answer'|'scenario'|'calculation';
-export interface TutorPreferences { country:TutorCountry; currency:TutorCurrency; language:LearningLanguage; level:LearnerLevel; mode:'explain'|'quiz'|'calc'|'revision'|'flashcards'; detail:'short'|'standard'|'detailed'; useOfficialSources:boolean; highContrast?:boolean; reducedMotion?:boolean; learningGoal?:string; learningStyle?:'visual'|'practical'|'reading'|'socratic'|'example-first'|'step-by-step'|'challenge-based'|'deep-dive'; activityType?:TutorActivity; quizType?:TutorQuizType; quizLength?:5|10|20|50; adaptiveDifficulty?:boolean; sessionLength?:2|5|10|15|20|30|45|60; learnerProfile?:string; }
-export interface QuizQuestion { id:string; topic:string; difficulty:'beginner'|'intermediate'|'advanced'; question:string; options:string[]; correctAnswer:number; explanation:string; formula?:string; source?:string; tags:string[]; }
-export interface QuizSession { id:string; questions:QuizQuestion[]; currentIndex:number; answers:Record<string,number>; score:number; startedAt:string; completedAt?:string; }
-export interface DashboardAssistantResponse { answer:string; structuredAnswer:StructuredFinancialAnswer; provider:'groq'|'demo'; model:string|null; groundedAt:string; sourceLabels:string[]; suggestedQuestions:string[]; disclaimer:string; requestId:string; }
-export interface CompanyAssistantResponse { symbol:string; answer:string; structuredAnswer:StructuredFinancialAnswer; provider:'groq'|'demo'; model:string|null; groundedAt:string; disclaimer:string; suggestedQuestions:string[]; requestId:string; }
-export interface NewsExplanationResponse { explanation:string; structuredAnswer:StructuredFinancialAnswer; keyTakeaways:string[]; disclaimer:string; }
-export interface BenchmarkScenario { scenarioId:string; category:string; query:string; expectedNumericalAnswer?:number; tolerancePercent?:number; requiredFormulaName?:string; regionProfile?:'India'|'US'|'Global'; }
-export interface IndividualBatchResult { scenarioId:string; category:string; query:string; passed:boolean; overallScore:number; groundTruthPassed:boolean; consensusScore:number; safetyScore:number; primaryModel:string; secondaryModel:string; }
-export interface AggregateBatchStats { totalCount:number; passedCount:number; passRatePercent:number; overallAverageScore:number; averageNumericalAccuracy:number; averageConsensusScore:number; averageSafetyScore:number; primaryModel:string; secondaryModel:string; regionProfile:string; }
-export interface BatchProgress { status:'IDLE'|'RUNNING'|'COMPLETED'|'FAILED'; totalScenarios:number; completedScenarios:number; currentScenarioId?:string; results:IndividualBatchResult[]; aggregate?:AggregateBatchStats; runId?:string; startedAt?:string; completedAt?:string; error?:string; }
-export interface StoredEvaluationRecord { verificationCode:string; timestamp:string; query:string; verdict:string; metrics:ReliabilityMetrics; primaryResponse:string; secondaryResponse?:string; }
+export type NavigationDestination =
+  | 'overview'
+  | 'income'
+  | 'expenses'
+  | 'budgeting'
+  | 'decision-replay'
+  | 'crypto'
+  | 'quick-check'
+  | 'tutor'
+  | 'evaluation-lab'
+  | 'comparison'
+  | 'scenarios'
+  | 'learning'
+  | 'news'
+  | 'markets'
+  | 'economy'
+  | 'batch'
+  | 'reports'
+  | 'methodology'
+  | 'connections'
+  | 'settings'
+  | 'account'
+  | 'dashboard';
+export type ConnectionStatus =
+  | 'connected'
+  | 'not_configured'
+  | 'invalid_credentials'
+  | 'invalid_request'
+  | 'rate_limited'
+  | 'timeout'
+  | 'provider_unavailable'
+  | 'invalid_response'
+  | 'stale_data'
+  | 'error';
+export interface ProviderDiagnostic {
+  id: string;
+  name: string;
+  role: string;
+  status: ConnectionStatus;
+  lastChecked: string;
+  message?: string;
+  latencyMs?: number;
+}
+export interface QuickCheckResponse {
+  safe: boolean;
+  answer: string;
+  explanation: string;
+  disclaimer: string;
+}
+export interface ReliabilityMetrics {
+  formulaAccuracyScore: number;
+  dualModelConsensusScore: number;
+  evidenceVerificationScore: number;
+  safetyComplianceScore: number;
+  overallReliabilityScore: number;
+}
+export interface VerificationReport {
+  id: string;
+  verificationCode: string;
+  createdAt: string;
+  query: string;
+  primaryResponse: string;
+  secondaryResponse?: string;
+  metrics: ReliabilityMetrics;
+  evidenceSources: { url: string; title: string; verified: boolean }[];
+  riskFlags: string[];
+  verdict: 'HIGHLY_RELIABLE' | 'MODERATE_RELIABILITY' | 'LOW_RELIABILITY' | 'REJECTED';
+  isVerified: boolean;
+  demoMode?: boolean;
+}
+export interface TutorMessage {
+  id: string;
+  sender: 'user' | 'tutor';
+  text: string;
+  timestamp: string;
+  suggestedFollowUps?: string[];
+  mathProof?: string;
+  disclaimer?: string;
+}
+export interface SavedTutorConversation {
+  id: string;
+  title: string;
+  updatedAt: string;
+  messages: TutorMessage[];
+}
+export type LearningTrackId =
+  | 'personal-finance'
+  | 'stock-market'
+  | 'trading-risk'
+  | 'crypto-web3'
+  | 'business-entrepreneurship'
+  | 'business-analyst'
+  | 'financial-analyst'
+  | 'earning-skills';
+export type LearnerLevel = 'beginner' | 'intermediate' | 'advanced';
+export type LearningLanguage =
+  | 'english'
+  | 'hindi'
+  | 'hinglish'
+  | 'marathi'
+  | 'gujarati'
+  | 'bengali'
+  | 'tamil'
+  | 'telugu'
+  | 'kannada'
+  | 'malayalam'
+  | 'punjabi'
+  | 'urdu'
+  | 'odia'
+  | 'assamese'
+  | 'spanish'
+  | 'french'
+  | 'german'
+  | 'arabic'
+  | 'portuguese';
+export type LearningMode = 'explain' | 'step-by-step' | 'socratic' | 'worked-example' | 'quiz' | 'revision' | 'flashcards' | 'compare';
+export interface LessonKnowledgeCheck {
+  id: string;
+  question: string;
+  options: string[];
+  correctIndex: number;
+  explanation: string;
+}
+export interface Lesson {
+  id: string;
+  trackId: LearningTrackId;
+  moduleId: string;
+  title: string;
+  objective: string;
+  explanationSeed: string;
+  keyConcepts: string[];
+  examplePrompt: string;
+  practiceActivity: string;
+  knowledgeCheck: LessonKnowledgeCheck;
+  riskAndLimitationNotes: string[];
+  estimatedMinutes: number;
+  prerequisites: string[];
+  requiresCurrentSources?: boolean;
+}
+export interface Module {
+  id: string;
+  trackId: LearningTrackId;
+  title: string;
+  description: string;
+  lessons: Lesson[];
+}
+export interface LearningTrack {
+  id: LearningTrackId;
+  title: string;
+  description: string;
+  iconName: string;
+  colorToken: string;
+  riskLabel: string;
+  estimatedHours: number;
+  prerequisites: string[];
+  outcomes: string[];
+  modules: Module[];
+}
+export interface LearningProgress {
+  completedLessonIds: string[];
+  quizScores: Record<string, number>;
+  savedNotes: Record<string, string>;
+  bookmarkedLessonIds: string[];
+  lastActiveLessonId?: string;
+  streakDays: number;
+  lastActiveDate: string;
+}
+export interface PaperPosition {
+  symbol: string;
+  name: string;
+  assetType: string;
+  quantity: number;
+  averageCost: number;
+  currentPrice: number;
+}
+export interface PaperTrade {
+  id: string;
+  timestamp: string;
+  symbol: string;
+  side: 'buy' | 'sell';
+  quantity: number;
+  price: number;
+  totalAmount: number;
+}
+export interface PaperPortfolio {
+  cashBalance: number;
+  initialBalance: number;
+  positions: PaperPosition[];
+  trades: PaperTrade[];
+}
+export interface NormalizedNewsItem {
+  id: string;
+  title: string;
+  summary: string;
+  sourceName: string;
+  sourceUrl: string;
+  publishedAt: string | null;
+  retrievedAt: string;
+  category: string;
+  region: string;
+  imageUrl: string | null;
+}
+export interface NormalizedMarketQuote {
+  symbol: string;
+  name: string;
+  assetType: string;
+  exchange: string | null;
+  currency: string;
+  price: number;
+  open: number | null;
+  high: number | null;
+  low: number | null;
+  previousClose: number | null;
+  change: number | null;
+  changePercent: number | null;
+  volume: number | null;
+  providerTimestamp: string | null;
+  retrievedAt: string;
+  freshness: 'real_time' | 'delayed' | 'end_of_day' | 'stale' | 'demo';
+  providerName: string;
+}
+export type IndiaMarketTickerItemStatus = 'available' | 'unavailable';
+export interface IndiaMarketTickerItem {
+  id: string;
+  label: string;
+  yahooSymbol: string;
+  status: IndiaMarketTickerItemStatus;
+  price: number | null;
+  change: number | null;
+  changePercent: number | null;
+  currency: string | null;
+  freshness: NormalizedMarketQuote['freshness'] | null;
+  providerTimestamp: string | null;
+}
+export interface IndiaMarketTickerResponse {
+  status: 'available' | 'partial' | 'unavailable';
+  sourceLabel: string;
+  retrievedAt: string;
+  items: IndiaMarketTickerItem[];
+}
+export interface MarketHistoryPoint {
+  date: string;
+  price: number;
+  open?: number;
+  high?: number;
+  low?: number;
+  close?: number;
+  volume?: number;
+}
+export interface CompanyIntelligence {
+  symbol: string;
+  status: ConnectionStatus;
+  providerName: 'Finnhub';
+  retrievedAt: string;
+  message: string;
+  profile: any;
+  metrics: any;
+  earnings: any[];
+  recommendations: any[];
+}
+export interface EconomicIndicator {
+  id: string;
+  seriesId: string;
+  label: string;
+  value: number | null;
+  unit: string;
+  date: string | null;
+  status: ConnectionStatus;
+  sourceName: 'FRED' | 'World Bank';
+  sourceUrl: string;
+}
+export interface EconomicObservation {
+  date: string;
+  value: number;
+}
+export interface EconomicSeriesResponse {
+  seriesId: string;
+  observations: EconomicObservation[];
+  status: ConnectionStatus;
+  message: string;
+}
+export interface DashboardAssistantSnapshot {
+  capturedAt: string;
+  selectedSymbol: string;
+  selectedRange: string;
+  selectedCountry: 'us' | 'india';
+  quotes: any[];
+  marketHistory: any;
+  economicIndicators: any[];
+  providerHealth: any;
+  latestEvaluation: any;
+}
+export type FinancialExampleDataStatus = 'live' | 'latest_available' | 'delayed' | 'illustrative' | 'not_applicable';
+export interface StructuredFinancialAnswer {
+  title: string;
+  directAnswer: string;
+  steps: Array<{ title: string; explanation: string }>;
+  formula: { expression: string; variables: Array<{ symbol: string; meaning: string }>; whenToUse: string };
+  example: { title: string; dataStatus: FinancialExampleDataStatus; dataAsOf: string; inputs: string[]; calculation: string[]; result: string };
+  interpretation: string[];
+  risks: string[];
+  keyTakeaways: string[];
+  sources: Array<{ name: string; dataDate: string; freshness: string; url?: string }>;
+  verifiedNumbers?: VerifiedAnswerNumber[];
+}
+/** A number the app computed itself (not the model). certified = proven by the precision engine. */
+export interface VerifiedAnswerNumber {
+  id: string;
+  label: string;
+  display: string;
+  value: string;
+  certified: boolean;
+  method: 'precision-engine' | 'app-calculator';
+  badge?: string;
+  assumptions: string[];
+}
+export type TutorCountry = 'US' | 'India' | 'Global';
+export type TutorCurrency = 'USD' | 'INR' | 'EUR' | 'GBP';
+export type TutorActivity = 'lesson' | 'quiz' | 'calculation' | 'scenario' | 'flashcards' | 'revision' | 'mock-test';
+export type TutorQuizType = 'mcq' | 'mixed' | 'true-false' | 'fill-blank' | 'short-answer' | 'scenario' | 'calculation';
+export interface TutorPreferences {
+  country: TutorCountry;
+  currency: TutorCurrency;
+  language: LearningLanguage;
+  level: LearnerLevel;
+  mode: 'explain' | 'quiz' | 'calc' | 'revision' | 'flashcards';
+  detail: 'short' | 'standard' | 'detailed';
+  useOfficialSources: boolean;
+  highContrast?: boolean;
+  reducedMotion?: boolean;
+  learningGoal?: string;
+  learningStyle?: 'visual' | 'practical' | 'reading' | 'socratic' | 'example-first' | 'step-by-step' | 'challenge-based' | 'deep-dive';
+  activityType?: TutorActivity;
+  quizType?: TutorQuizType;
+  quizLength?: 5 | 10 | 20 | 50;
+  adaptiveDifficulty?: boolean;
+  sessionLength?: 2 | 5 | 10 | 15 | 20 | 30 | 45 | 60;
+  learnerProfile?: string;
+}
+export interface QuizQuestion {
+  id: string;
+  topic: string;
+  difficulty: 'beginner' | 'intermediate' | 'advanced';
+  question: string;
+  options: string[];
+  correctAnswer: number;
+  explanation: string;
+  formula?: string;
+  source?: string;
+  tags: string[];
+}
+export interface QuizSession {
+  id: string;
+  questions: QuizQuestion[];
+  currentIndex: number;
+  answers: Record<string, number>;
+  score: number;
+  startedAt: string;
+  completedAt?: string;
+}
+export interface DashboardAssistantResponse {
+  answer: string;
+  structuredAnswer: StructuredFinancialAnswer;
+  provider: 'groq' | 'demo';
+  model: string | null;
+  groundedAt: string;
+  sourceLabels: string[];
+  suggestedQuestions: string[];
+  disclaimer: string;
+  requestId: string;
+}
+export interface CompanyAssistantResponse {
+  symbol: string;
+  answer: string;
+  structuredAnswer: StructuredFinancialAnswer;
+  provider: 'groq' | 'demo';
+  model: string | null;
+  groundedAt: string;
+  disclaimer: string;
+  suggestedQuestions: string[];
+  requestId: string;
+}
+export interface NewsExplanationResponse {
+  explanation: string;
+  structuredAnswer: StructuredFinancialAnswer;
+  keyTakeaways: string[];
+  disclaimer: string;
+}
+export interface BenchmarkScenario {
+  scenarioId: string;
+  category: string;
+  query: string;
+  expectedNumericalAnswer?: number;
+  tolerancePercent?: number;
+  requiredFormulaName?: string;
+  regionProfile?: 'India' | 'US' | 'Global';
+}
+export interface IndividualBatchResult {
+  scenarioId: string;
+  category: string;
+  query: string;
+  passed: boolean;
+  overallScore: number;
+  groundTruthPassed: boolean;
+  consensusScore: number;
+  safetyScore: number;
+  primaryModel: string;
+  secondaryModel: string;
+}
+export interface AggregateBatchStats {
+  totalCount: number;
+  passedCount: number;
+  passRatePercent: number;
+  overallAverageScore: number;
+  averageNumericalAccuracy: number;
+  averageConsensusScore: number;
+  averageSafetyScore: number;
+  primaryModel: string;
+  secondaryModel: string;
+  regionProfile: string;
+}
+export interface BatchProgress {
+  status: 'IDLE' | 'RUNNING' | 'COMPLETED' | 'FAILED';
+  totalScenarios: number;
+  completedScenarios: number;
+  currentScenarioId?: string;
+  results: IndividualBatchResult[];
+  aggregate?: AggregateBatchStats;
+  runId?: string;
+  startedAt?: string;
+  completedAt?: string;
+  error?: string;
+}
+export interface StoredEvaluationRecord {
+  verificationCode: string;
+  timestamp: string;
+  query: string;
+  verdict: string;
+  metrics: ReliabilityMetrics;
+  primaryResponse: string;
+  secondaryResponse?: string;
+}

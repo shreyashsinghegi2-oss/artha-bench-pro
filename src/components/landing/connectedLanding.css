@@ -162,9 +162,9 @@
 .cl-score-arc{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg)}
 .cl-score-track,.cl-score-progress{fill:none;stroke-width:3}
 .cl-score-progress{stroke-dasharray:1;stroke-dashoffset:1;stroke-linecap:round;transition:stroke-dashoffset 2.4s cubic-bezier(.2,.8,.2,1)}
-.cl-score-ring.is-complete .cl-score-progress{stroke-dashoffset:0}
+
 .cl-score-value{position:relative;z-index:1}
 @media(prefers-reduced-motion:reduce){
  .cl-module-grid.sh,.cl-ty::after{animation:none!important}
- .cl-score-progress{transition:none!important;stroke-dashoffset:0!important}
+ .cl-score-progress{transition:none!important}
 }

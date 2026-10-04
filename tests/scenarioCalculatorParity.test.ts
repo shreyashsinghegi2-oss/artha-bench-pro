@@ -1,11 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  calculateBreakEven,
-  calculateCAGR,
-  calculateCompoundInterest,
-  calculateDTI,
-  calculateQuickRatio,
-} from '../server/financeEngine';
+import { calculateBreakEven, calculateCAGR, calculateCompoundInterest, calculateDTI, calculateQuickRatio } from '../server/financeEngine';
 import { calculateScenarioLocally } from '../src/services/scenarioCalculator';
 
 describe('Scenario Studio browser/server Decimal.js parity', () => {
@@ -18,7 +12,13 @@ describe('Scenario Studio browser/server Decimal.js parity', () => {
       compoundingFrequencyPerYear: 12,
     };
     const local = calculateScenarioLocally('compound', inputs);
-    const server = calculateCompoundInterest(inputs.principal, inputs.annualRatePercent, inputs.years, inputs.monthlyContribution, inputs.compoundingFrequencyPerYear);
+    const server = calculateCompoundInterest(
+      inputs.principal,
+      inputs.annualRatePercent,
+      inputs.years,
+      inputs.monthlyContribution,
+      inputs.compoundingFrequencyPerYear,
+    );
     expect(local.finalBalance).toBe(server.finalBalance);
     expect(local.totalContributions).toBe(server.totalContributions);
     expect(local.totalInterestEarned).toBe(server.totalInterestEarned);
@@ -57,6 +57,8 @@ describe('Scenario Studio browser/server Decimal.js parity', () => {
   });
 
   it('rejects invalid break-even assumptions', () => {
-    expect(() => calculateScenarioLocally('break-even', { fixedCosts: 1000, pricePerUnit: 50, variableCostPerUnit: 50 })).toThrow(/greater than variable cost/i);
+    expect(() => calculateScenarioLocally('break-even', { fixedCosts: 1000, pricePerUnit: 50, variableCostPerUnit: 50 })).toThrow(
+      /greater than variable cost/i,
+    );
   });
 });

@@ -1,10 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import {
-  buildCryptoAssistantFallback,
-  getCryptoKlines,
-  getCryptoMarkets,
-  resetCryptoCachesForTests,
-} from '../server/cryptoService';
+import { buildCryptoAssistantFallback, getCryptoKlines, getCryptoMarkets, resetCryptoCachesForTests } from '../server/cryptoService';
 import { normalizeKlineMessage, normalizeTickerMessage } from '../src/components/crypto/useCryptoMarketData';
 import { CRYPTO_SYMBOLS, CryptoAssistantContext } from '../src/components/crypto/cryptoTypes';
 
@@ -53,7 +48,8 @@ describe('Binance crypto market service', () => {
   });
 
   it('tries the next official REST endpoint when the first one is unavailable', async () => {
-    const fetchMock = vi.fn()
+    const fetchMock = vi
+      .fn()
       .mockResolvedValueOnce(new Response('Unavailable', { status: 503 }))
       .mockResolvedValueOnce(new Response(JSON.stringify(CRYPTO_SYMBOLS.map(ticker)), { status: 200, headers: { 'Content-Type': 'application/json' } }));
     vi.stubGlobal('fetch', fetchMock);
@@ -67,12 +63,15 @@ describe('Binance crypto market service', () => {
   });
 
   it('normalizes Binance kline arrays and preserves trade counts', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
-      new Response(JSON.stringify([[1_777_000_000_000, '100', '110', '90', '105', '250', 1_777_000_059_999, '25000', 423]]), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      }),
-    ));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify([[1_777_000_000_000, '100', '110', '90', '105', '250', 1_777_000_059_999, '25000', 423]]), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      ),
+    );
 
     const result = await getCryptoKlines('BTCUSDT', '1m');
 
@@ -83,7 +82,19 @@ describe('Binance crypto market service', () => {
 
 describe('crypto stream validation and assistant safety', () => {
   it('accepts valid tracked stream messages and rejects malformed or untracked data', () => {
-    const quote = normalizeTickerMessage({ s: 'BTCUSDT', c: '100', p: '2', P: '2', h: '105', l: '95', v: '1000', q: '100000', b: '99', a: '101', E: 1_777_000_000_000 });
+    const quote = normalizeTickerMessage({
+      s: 'BTCUSDT',
+      c: '100',
+      p: '2',
+      P: '2',
+      h: '105',
+      l: '95',
+      v: '1000',
+      q: '100000',
+      b: '99',
+      a: '101',
+      E: 1_777_000_000_000,
+    });
     expect(quote).toMatchObject({ symbol: 'BTCUSDT', price: 100 });
     expect(normalizeTickerMessage({ s: 'UNKNOWNUSDT', c: '100' })).toBeNull();
     expect(normalizeTickerMessage({ s: 'BTCUSDT', c: 'not-a-number' })).toBeNull();
@@ -116,10 +127,12 @@ describe('crypto stream validation and assistant safety', () => {
 
     const answer = buildCryptoAssistantFallback('Should I buy this?', context);
 
-    expect(answer).toContain('## Selected Data');
-    expect(answer).toContain('## Purchase Decision Framework');
-    expect(answer).toContain('## Scenario Analysis');
-    expect(answer).toContain('does not issue a buy, sell, hold');
+    expect(answer).toContain('## Direct answer');
+    expect(answer).toContain('## Formula or rule');
+    expect(answer).toContain('## Limitations and verification');
+    expect(answer).toContain('+5.00%');
+    expect(answer).toContain('not a forecast or a buy/sell/hold signal');
+    expect(answer).toContain('does not issue personalized buy, sell, hold');
     expect(answer).toContain('Binance Public Market Data');
   });
 });

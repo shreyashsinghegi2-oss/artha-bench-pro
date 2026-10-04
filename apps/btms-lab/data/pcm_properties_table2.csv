@@ -1,0 +1,4 @@
+pcm,first_deviation_c,onset_c,latent_j_per_g,rho_liquid,rho_solid,cp_liquid,cp_solid,k_liquid,k_solid
+om42,43.0,44.64,223.41,863,903,2.78,2.71,0.1,0.19
+om48,48.0,49.3,267.95,875,960,2.35,2.02,0.1,0.2
+paraffin,59.03,61.46,278.43,778,861,2.38,1.85,0.15,0.4

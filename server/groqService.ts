@@ -13,6 +13,8 @@ import {
 } from './aiResponseStandard';
 import { generateVerificationCode } from './financeEngine';
 import { computeFullReliabilityEvaluation, FullReliabilityEvaluation } from './scoringEngine';
+import { withDateContext } from './dateContext';
+import { currentGroundingSources, extractQuestion, finalizeGroundedAnswer, finalizeGroundedText, groundSystemPrompt } from './liveGrounding';
 
 export interface GroqModelsConfig {
   tutorModel: string;
@@ -47,15 +49,9 @@ function resolveGroqModel(environmentKey: string, fallback: string): string {
 export function getGroqModels(): GroqModelsConfig {
   return {
     tutorModel: resolveGroqModel('GROQ_TUTOR_MODEL', GROQ_DEFAULT_MODELS.tutorModel),
-    evaluatorModel: resolveGroqModel(
-      'GROQ_EVALUATOR_MODEL',
-      GROQ_DEFAULT_MODELS.evaluatorModel,
-    ),
+    evaluatorModel: resolveGroqModel('GROQ_EVALUATOR_MODEL', GROQ_DEFAULT_MODELS.evaluatorModel),
     primaryModel: resolveGroqModel('GROQ_PRIMARY_MODEL', GROQ_DEFAULT_MODELS.primaryModel),
-    secondaryModel: resolveGroqModel(
-      'GROQ_SECONDARY_MODEL',
-      GROQ_DEFAULT_MODELS.secondaryModel,
-    ),
+    secondaryModel: resolveGroqModel('GROQ_SECONDARY_MODEL', GROQ_DEFAULT_MODELS.secondaryModel),
   };
 }
 
@@ -140,9 +136,7 @@ export async function checkGroqDiagnostics(): Promise<ProviderDiagnostic[]> {
 
     const activeModels = new Set(
       data.data
-        .map((model: unknown) =>
-          model && typeof model === 'object' && 'id' in model ? (model as { id?: unknown }).id : null,
-        )
+        .map((model: unknown) => (model && typeof model === 'object' && 'id' in model ? (model as { id?: unknown }).id : null))
         .filter((id: unknown): id is string => typeof id === 'string' && id.length > 0),
     );
 
@@ -173,7 +167,8 @@ function generateFallbackChatResponse(userPrompt: string): string {
   const p = userPrompt.toLowerCase();
 
   if (p.includes('10,000') || p.includes('10000') || (p.includes('compound') && p.includes('8%') && p.includes('5'))) {
-    return `### Compound Interest Calculation\n\n` +
+    return (
+      `### Compound Interest Calculation\n\n` +
       `For a principal deposit of **$10,000** at **8% per annum** compounded annually over **5 years**:\n\n` +
       `**1. Formula:**\n` +
       `$$A = P(1 + r)^t$$\n\n` +
@@ -185,11 +180,13 @@ function generateFallbackChatResponse(userPrompt: string): string {
       `- Final Balance ($A$) = $10,000 \\times 1.469328 = \\mathbf{\$14,693.28}$\n\n` +
       `**3. Total Interest Earned:**\n` +
       `$$\\text{Interest} = \$14,693.28 - \$10,000 = \\mathbf{\$4,693.28}$\n\n` +
-      `*Note: ArthaBench deterministic engine verified exact compounding outputs.*`;
+      `*Note: ArthaBench deterministic engine verified exact compounding outputs.*`
+    );
   }
 
   if (p.includes('50/30/20') || p.includes('budget')) {
-    return `### The 50/30/20 Budgeting Rule\n\n` +
+    return (
+      `### The 50/30/20 Budgeting Rule\n\n` +
       `The 50/30/20 rule is an intuitive framework for personal financial allocation:\n\n` +
       `1. **50% Needs:** Mandatory expenses like housing, utilities, grocers, and basic insurance.\n` +
       `2. **30% Wants:** Discretionary lifestyle spending such as dining, subscriptions, and entertainment.\n` +
@@ -197,50 +194,47 @@ function generateFallbackChatResponse(userPrompt: string): string {
       `**Example Breakdown ($4,000 Monthly Net Income):**\n` +
       `- **Needs (50%):** $2,000\n` +
       `- **Wants (30%):** $1,200\n` +
-      `- **Savings/Debt (20%):** $800`;
+      `- **Savings/Debt (20%):** $800`
+    );
   }
 
   if (p.includes('emi') || p.includes('loan')) {
-    return `### Equated Monthly Installment (EMI) Mechanics\n\n` +
+    return (
+      `### Equated Monthly Installment (EMI) Mechanics\n\n` +
       `An EMI represents the fixed payment made by a borrower to a lender on a specified date each month.\n\n` +
       `**Formula:**\n` +
       `$$E = P \\cdot \\frac{r(1+r)^n}{(1+r)^n - 1}$$\n` +
       `*Where $P$ = Loan Amount, $r$ = Monthly Rate, $n$ = Tenure in months.*\n\n` +
-      `**Example:** For a $50,000 loan at 6% per annum over 5 years (60 months), monthly interest rate is 0.5% (0.005). The calculated monthly EMI is **$966.64**.`;
+      `**Example:** For a $50,000 loan at 6% per annum over 5 years (60 months), monthly interest rate is 0.5% (0.005). The calculated monthly EMI is **$966.64**.`
+    );
   }
 
   if (p.includes('quick ratio') || p.includes('current ratio')) {
-    return `### Quick Ratio vs. Current Ratio\n\n` +
+    return (
+      `### Quick Ratio vs. Current Ratio\n\n` +
       `Both ratios measure short-term liquidity, but differ in asset strictness:\n\n` +
       `- **Current Ratio:** $\\frac{\\text{Current Assets}}{\\text{Current Liabilities}}$. Includes inventory and prepaid items.\n` +
-      `- **Quick Ratio (Acid-Test):** $\\frac{\\text{Cash + Marketable Securities + Receivables}}{\\text{Current Liabilities}}$. Excludes inventory because inventory cannot always be liquidated immediately without price haircuts.`;
+      `- **Quick Ratio (Acid-Test):** $\\frac{\\text{Cash + Marketable Securities + Receivables}}{\\text{Current Liabilities}}$. Excludes inventory because inventory cannot always be liquidated immediately without price haircuts.`
+    );
   }
 
-  return `### Financial Learning Explanation\n\n` +
-    `Regarding your inquiry ("*${userPrompt.trim()}*"):\n\n` +
-    `**Key Concept Breakdown:**\n` +
-    `1. **Core Principle:** Sound financial analysis relies on objective mathematical frameworks, liquidity evaluation, and risk-adjusted return calculations.\n` +
-    `2. **Analytical Steps:** Always establish baseline numbers, account for compounding frequency, and adjust for inflation and tax liabilities.\n` +
-    `3. **Risk & Limitations:** Models assume static inputs. Real-world market execution involves variance, interest rate fluctuations, and unexpected liquidity demands.\n\n` +
-    `*Educational Disclaimer: ArthaBench provides non-advisory educational frameworks only.*`;
+  return (
+    `### Here is how to think about it\n\n` +
+    `The live AI adviser is not connected right now, so this is a general framework rather than a tailored answer to "*${userPrompt.trim()}*".\n\n` +
+    `1. **Start with your numbers:** note your monthly take-home, fixed costs, EMIs and savings, since every money decision depends on them.\n` +
+    `2. **Check the basics first:** keep EMIs under about 40% of take-home, aim to save 20% or more, and hold 6 months of expenses as an emergency fund.\n` +
+    `3. **Compare options on the same terms:** use after-tax, inflation-adjusted figures over the same time period.\n` +
+    `4. **Name the risks:** income loss, rate changes and market swings can change the answer, so plan for them.\n\n` +
+    `Please try again in a moment for a full answer. *For education only; not personalised investment advice.*`
+  );
 }
 
-function buildGroqMessages(
-  systemPrompt: string,
-  userPrompt: string,
-  history?: Array<{ role: string; content: string }>,
-) {
-  const messages: Array<{ role: string; content: string }> = [
-    { role: 'system', content: systemPrompt },
-  ];
+function buildGroqMessages(systemPrompt: string, userPrompt: string, history?: Array<{ role: string; content: string }>) {
+  const messages: Array<{ role: string; content: string }> = [{ role: 'system', content: withDateContext(systemPrompt) }];
 
   if (Array.isArray(history)) {
     for (const item of history.slice(-10)) {
-      if (
-        (item.role === 'user' || item.role === 'assistant') &&
-        typeof item.content === 'string' &&
-        item.content.trim()
-      ) {
+      if ((item.role === 'user' || item.role === 'assistant') && typeof item.content === 'string' && item.content.trim()) {
         messages.push({ role: item.role, content: item.content.slice(0, 4_000) });
       }
     }
@@ -257,7 +251,7 @@ export async function callGroqChat(
   systemPrompt: string,
   userPrompt: string,
   modelName?: string,
-  history?: Array<{ role: string; content: string }>
+  history?: Array<{ role: string; content: string }>,
 ): Promise<string> {
   const apiKey = process.env.GROQ_API_KEY?.trim() || '';
   if (!apiKey) {
@@ -268,7 +262,8 @@ export async function callGroqChat(
   const allowedModels = new Set(Object.values(models));
   const selectedModel = modelName && allowedModels.has(modelName) ? modelName : models.tutorModel;
 
-  const messages = buildGroqMessages(systemPrompt, userPrompt, history);
+  const grounded = await groundSystemPrompt(systemPrompt, extractQuestion(userPrompt));
+  const messages = buildGroqMessages(grounded, userPrompt, history);
 
   const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
@@ -290,10 +285,11 @@ export async function callGroqChat(
   }
 
   const data = await response.json();
-  const text = data?.choices?.[0]?.message?.content;
-  if (typeof text !== 'string' || !text.trim()) {
+  const raw = data?.choices?.[0]?.message?.content;
+  if (typeof raw !== 'string' || !raw.trim()) {
     throw new Error('Groq returned an invalid completion response.');
   }
+  const text = finalizeGroundedText(raw);
 
   return text;
 }
@@ -310,34 +306,29 @@ export async function callGroqStructuredFinancialAnswer(
     modelName?: string;
     history?: Array<{ role: string; content: string }>;
     fallbackQuestion?: string;
+    /** Throw instead of returning a generic template, so a caller with its own fallback (the AI gateway) can use it. */
+    throwOnFailure?: boolean;
   } = {},
 ): Promise<StructuredFinancialAnswer> {
   const fallbackQuestion = options.fallbackQuestion || userPrompt;
+  const fail = (reason: string, text: string = generateFallbackChatResponse(fallbackQuestion)) => {
+    if (options.throwOnFailure) throw new Error(reason);
+    return createFallbackStructuredFinancialAnswer(fallbackQuestion, text);
+  };
   const apiKey = process.env.GROQ_API_KEY?.trim() || '';
-  if (!apiKey) {
-    return createFallbackStructuredFinancialAnswer(
-      fallbackQuestion,
-      generateFallbackChatResponse(fallbackQuestion),
-    );
-  }
+  if (!apiKey) return fail('Groq is not configured.');
 
   const models = getGroqModels();
   const allowedModels = new Set(Object.values(models));
-  const selectedModel =
-    options.modelName && allowedModels.has(options.modelName)
-      ? options.modelName
-      : models.tutorModel;
-  const strictSchemaSupported =
-    selectedModel === 'openai/gpt-oss-120b' || selectedModel === 'openai/gpt-oss-20b';
+  const selectedModel = options.modelName && allowedModels.has(options.modelName) ? options.modelName : models.tutorModel;
+  const strictSchemaSupported = selectedModel === 'openai/gpt-oss-120b' || selectedModel === 'openai/gpt-oss-20b';
+  const groundedSystem = await groundSystemPrompt(systemPrompt, extractQuestion(options.fallbackQuestion || userPrompt));
   const messages = buildGroqMessages(
-    `${systemPrompt}\n\nReturn one valid JSON object only. It must match the supplied Artha financial-answer schema exactly.`,
+    `${groundedSystem}\n\nReturn one valid JSON object only. It must match the supplied Artha financial-answer schema exactly.`,
     userPrompt,
     options.history,
   );
-  const requestStructuredCompletion = (
-    requestMessages: Array<{ role: string; content: string }>,
-    responseFormat: Record<string, unknown>,
-  ) =>
+  const requestStructuredCompletion = (requestMessages: Array<{ role: string; content: string }>, responseFormat: Record<string, unknown>) =>
     fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -372,37 +363,21 @@ export async function callGroqStructuredFinancialAnswer(
 
     if (response.status === 400 && strictSchemaSupported) {
       const compatibilityMessages = buildGroqMessages(
-        `${systemPrompt}\n\nReturn one valid JSON object only with exactly this contract: ${JSON.stringify(STRUCTURED_FINANCIAL_ANSWER_JSON_SCHEMA)}`,
+        `${groundedSystem}\n\nReturn one valid JSON object only with exactly this contract: ${JSON.stringify(STRUCTURED_FINANCIAL_ANSWER_JSON_SCHEMA)}`,
         userPrompt,
         options.history,
       );
-      response = await requestStructuredCompletion(
-        compatibilityMessages,
-        { type: 'json_object' },
-      );
+      response = await requestStructuredCompletion(compatibilityMessages, { type: 'json_object' });
     }
   } catch {
-    return createFallbackStructuredFinancialAnswer(
-      fallbackQuestion,
-      generateFallbackChatResponse(fallbackQuestion),
-    );
+    return fail('Groq request failed.');
   }
 
-  if (!response.ok) {
-    return createFallbackStructuredFinancialAnswer(
-      fallbackQuestion,
-      generateFallbackChatResponse(fallbackQuestion),
-    );
-  }
+  if (!response.ok) return fail(`Groq answered HTTP ${response.status}.`);
 
   const data = await response.json().catch(() => null);
   const content = data?.choices?.[0]?.message?.content;
-  if (typeof content !== 'string' || !content.trim()) {
-    return createFallbackStructuredFinancialAnswer(
-      fallbackQuestion,
-      generateFallbackChatResponse(fallbackQuestion),
-    );
-  }
+  if (typeof content !== 'string' || !content.trim()) return fail('Groq returned an empty answer.');
 
   const decoded = (() => {
     try {
@@ -412,11 +387,23 @@ export async function callGroqStructuredFinancialAnswer(
     }
   })();
   const parsed = structuredFinancialAnswerSchema.safeParse(decoded);
-  if (!parsed.success) {
-    return createFallbackStructuredFinancialAnswer(fallbackQuestion, content);
-  }
+  if (!parsed.success) return fail('Groq answer failed schema validation.', content);
 
-  return sanitizeStructuredFinancialAnswer(parsed.data);
+  return withGroundingSources(sanitizeStructuredFinancialAnswer(parsed.data));
+}
+
+/**
+ * Finalises a grounded answer: removes citations that point at no source, enforces verified numbers and
+ * attaches the numbered live sources (with links). Outside a grounding scope it only merges live sources.
+ */
+function withGroundingSources(answer: StructuredFinancialAnswer): StructuredFinancialAnswer {
+  const finalized = finalizeGroundedAnswer(answer);
+  if (finalized !== answer) return finalized;
+  const live = currentGroundingSources();
+  if (!live.length) return answer;
+  const seen = new Set(answer.sources.map((s) => s.name));
+  const extra = live.filter((s) => !seen.has(s.name)).map(({ name, dataDate, freshness }) => ({ name, dataDate, freshness }));
+  return { ...answer, sources: [...answer.sources, ...extra].slice(0, 12) };
 }
 
 /**
@@ -430,7 +417,7 @@ export async function runMultiModelEvaluation(
     expectedAnswer?: number;
     tolerancePercent?: number;
     profile?: 'India' | 'US' | 'Global';
-  }
+  },
 ): Promise<FullReliabilityEvaluation> {
   const startTime = Date.now();
   const apiKey = process.env.GROQ_API_KEY;
@@ -441,13 +428,7 @@ export async function runMultiModelEvaluation(
     const demoPrimaryText = `[Demo Evaluator Output for Query: "${query}"]\n\n1. Formula & Derivation:\nCompound interest is calculated using A = P * (1 + r/n)^(n*t).\nFor $10,000 at 7% over 5 years compounded monthly (n=12), the final amount is $14,176.25.\n\n2. Financial Disclaimer:\nThis is an educational simulation. Past performance is not indicative of future returns.`;
     const demoSecondaryText = `[Secondary Model Check]: Verified formula A = P * (1 + r/n)^(n*t). Final calculated result is $14,176.25.`;
 
-    const demoReport = computeFullReliabilityEvaluation(
-      query,
-      demoPrimaryText,
-      demoSecondaryText,
-      startTime,
-      scenarioContext
-    );
+    const demoReport = computeFullReliabilityEvaluation(query, demoPrimaryText, demoSecondaryText, startTime, scenarioContext);
     demoReport.demoMode = true;
     demoReport.isVerified = false;
     if (demoReport.verdict === 'HIGHLY_RELIABLE' || demoReport.verdict === 'MODERATE_RELIABILITY') {
@@ -469,13 +450,7 @@ export async function runMultiModelEvaluation(
   const secondaryText = secondaryResult.status === 'fulfilled' ? secondaryResult.value : '';
   const failedEvaluatorCount = Number(primaryResult.status === 'rejected') + Number(secondaryResult.status === 'rejected');
 
-  const report = computeFullReliabilityEvaluation(
-    query,
-    primaryText,
-    secondaryText,
-    startTime,
-    scenarioContext
-  );
+  const report = computeFullReliabilityEvaluation(query, primaryText, secondaryText, startTime, scenarioContext);
 
   if (failedEvaluatorCount === 2) {
     report.overallScore = 0;

@@ -1,27 +1,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import {
-  checkNewsProviderDiagnostic,
-  fetchNewsFromProvider,
-} from '../server/providers/newsProvider';
-import {
-  fetchHistoryFromProvider,
-  fetchQuoteFromProvider,
-  normalizeTwelveDataSymbol,
-} from '../server/providers/marketDataProvider';
+import { checkNewsProviderDiagnostic, fetchNewsFromProvider } from '../server/providers/newsProvider';
+import { fetchHistoryFromProvider, fetchQuoteFromProvider, normalizeTwelveDataSymbol } from '../server/providers/marketDataProvider';
 import { normalizeYahooFinanceSymbol } from '../server/providers/yahooFinanceProvider';
-import {
-  checkFredDiagnostic,
-  fetchFredOverview,
-  fetchFredSeries,
-} from '../server/providers/fredProvider';
-import {
-  fetchWorldBankIndiaOverview,
-  fetchWorldBankIndiaSeries,
-} from '../server/providers/worldBankProvider';
-import {
-  checkFinnhubDiagnostic,
-  fetchFinnhubCompanyIntelligence,
-} from '../server/providers/finnhubProvider';
+import { checkFredDiagnostic, fetchFredOverview, fetchFredSeries } from '../server/providers/fredProvider';
+import { fetchWorldBankIndiaOverview, fetchWorldBankIndiaSeries } from '../server/providers/worldBankProvider';
+import { checkFinnhubDiagnostic, fetchFinnhubCompanyIntelligence } from '../server/providers/finnhubProvider';
 
 const trackedEnvironmentKeys = [
   'BUSINESS_NEWS_PROVIDER',
@@ -39,9 +22,7 @@ const trackedEnvironmentKeys = [
   'FINNHUB_API_BASE_URL',
 ] as const;
 
-const originalEnvironment = Object.fromEntries(
-  trackedEnvironmentKeys.map((key) => [key, process.env[key]]),
-);
+const originalEnvironment = Object.fromEntries(trackedEnvironmentKeys.map((key) => [key, process.env[key]]));
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -102,21 +83,21 @@ describe('NewsData.io provider adapter', () => {
     expect(requestUrl.searchParams.get('country')).toBe('in');
   });
 
-  it('returns labelled demo news when the API key is absent', async () => {
+  it('returns no articles (never demo headlines) when the API key is absent', async () => {
     delete process.env.BUSINESS_NEWS_API_KEY;
-    const result = await fetchNewsFromProvider();
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    const result = await fetchNewsFromProvider('no-key-check', 'all', 'global');
     expect(result.status).toBe('not_configured');
-    expect(result.providerName).toContain('Demo');
-    expect(result.items.every((item) => item.sourceName.includes('Demo'))).toBe(true);
+    expect(result.items).toEqual([]);
+    expect(result.message).toContain('BUSINESS_NEWS_API_KEY');
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it('does not expose the credential in diagnostic messages', async () => {
     process.env.BUSINESS_NEWS_PROVIDER = 'newsdata';
     process.env.BUSINESS_NEWS_API_KEY = 'never-return-this-key';
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue(new Response('{}', { status: 401 })),
-    );
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('{}', { status: 401 })));
 
     const diagnostic = await checkNewsProviderDiagnostic();
     expect(diagnostic.status).toBe('invalid_credentials');
@@ -206,103 +187,104 @@ describe('Twelve Data provider adapter', () => {
     expect(requestUrl.searchParams.get('interval')).toBe('1day');
   });
 
-  it('returns a labelled demo quote when the API key is absent', async () => {
+  it('never manufactures a quote when the free provider fails and no key is set', async () => {
     delete process.env.MARKET_DATA_API_KEY;
-    const result = await fetchQuoteFromProvider('AAPL');
-    expect(result.status).toBe('not_configured');
-    expect(result.quote.freshness).toBe('demo');
-    expect(result.quote.providerName).toContain('Demo');
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('Forbidden', { status: 403 })));
+    await expect(fetchQuoteFromProvider('AAPL')).rejects.toThrow(/Market data unavailable for AAPL/);
   });
 
-  it('requests an exchange-qualified NSE quote and labels it end of day', async () => {
+  it('requests an exchange-qualified quote from Twelve Data for a non-Indian symbol', async () => {
     process.env.MARKET_DATA_PROVIDER = 'twelvedata';
     process.env.MARKET_DATA_API_KEY = 'market-test-secret';
     process.env.MARKET_DATA_BASE_URL = 'https://api.twelvedata.com/quote';
     const fetchMock = vi.fn().mockResolvedValue(
       new Response(
         JSON.stringify({
-          symbol: 'SBIN',
-          name: 'State Bank of India',
-          exchange: 'NSE',
-          currency: 'INR',
+          symbol: 'MSFT',
+          name: 'Microsoft Corp',
+          exchange: 'NASDAQ',
+          currency: 'USD',
           datetime: '2026-08-14',
-          open: '806.40',
-          high: '817.20',
-          low: '803.90',
-          close: '812.65',
-          previous_close: '806.25',
+          open: '506.40',
+          high: '517.20',
+          low: '503.90',
+          close: '512.65',
+          previous_close: '506.25',
           change: '6.40',
-          percent_change: '0.79',
+          percent_change: '1.26',
           volume: '12600000',
-          is_market_open: true,
+          is_market_open: false,
         }),
         { status: 200, headers: { 'Content-Type': 'application/json' } },
       ),
     );
     vi.stubGlobal('fetch', fetchMock);
 
-    const result = await fetchQuoteFromProvider('NSE:SBIN');
+    const result = await fetchQuoteFromProvider('MSFT');
 
     expect(result.status).toBe('connected');
-    expect(result.message).toContain('end-of-day');
-    expect(result.quote).toMatchObject({
-      symbol: 'SBIN:NSE',
-      exchange: 'NSE',
-      currency: 'INR',
-      freshness: 'end_of_day',
-      price: 812.65,
-    });
+    expect(result.message).toContain('Twelve Data');
+    expect(result.quote).toMatchObject({ symbol: 'MSFT', currency: 'USD', freshness: 'end_of_day', price: 512.65 });
     const requestUrl = new URL(String(fetchMock.mock.calls[0][0]));
-    expect(requestUrl.searchParams.get('symbol')).toBe('SBIN:NSE');
+    expect(requestUrl.hostname).toBe('api.twelvedata.com');
+    expect(requestUrl.searchParams.get('symbol')).toBe('MSFT');
   });
 
-  it('preserves Indian OHLCV history and uses EOD intervals', async () => {
+  it('routes NSE symbols to Yahoo only, even when Twelve Data is configured', async () => {
+    process.env.MARKET_DATA_PROVIDER = 'twelvedata';
+    process.env.MARKET_DATA_API_KEY = 'market-test-secret';
+    const fetchMock = vi.fn().mockResolvedValue(new Response('Too Many Requests', { status: 429 }));
+    vi.stubGlobal('fetch', fetchMock);
+    await expect(fetchQuoteFromProvider('NSE:SBIN')).rejects.toThrow(/Market data unavailable/);
+    for (const [input] of fetchMock.mock.calls) expect(new URL(String(input)).hostname).not.toContain('twelvedata');
+  });
+
+  it('preserves OHLCV history from Twelve Data and uses daily intervals for 1m', async () => {
     process.env.MARKET_DATA_PROVIDER = 'twelvedata';
     process.env.MARKET_DATA_API_KEY = 'market-test-secret';
     process.env.MARKET_DATA_BASE_URL = 'https://api.twelvedata.com/quote';
     const fetchMock = vi.fn().mockResolvedValue(
       new Response(
         JSON.stringify({
-          values: [{
-            datetime: '2026-08-14',
-            open: '1372.50',
-            high: '1391.80',
-            low: '1368.20',
-            close: '1384.40',
-            volume: '7420000',
-          }],
+          values: [
+            {
+              datetime: '2026-08-14',
+              open: '1372.50',
+              high: '1391.80',
+              low: '1368.20',
+              close: '1384.40',
+              volume: '7420000',
+            },
+          ],
         }),
         { status: 200, headers: { 'Content-Type': 'application/json' } },
       ),
     );
     vi.stubGlobal('fetch', fetchMock);
 
-    const points = await fetchHistoryFromProvider('RELIANCE.NS', '1d');
+    const points = await fetchHistoryFromProvider('IBM', '1m');
 
-    expect(points).toEqual([{
-      date: '2026-08-14',
-      price: 1384.4,
-      open: 1372.5,
-      high: 1391.8,
-      low: 1368.2,
-      close: 1384.4,
-      volume: 7420000,
-    }]);
+    expect(points).toEqual([
+      {
+        date: '2026-08-14',
+        price: 1384.4,
+        open: 1372.5,
+        high: 1391.8,
+        low: 1368.2,
+        close: 1384.4,
+        volume: 7420000,
+      },
+    ]);
     const requestUrl = new URL(String(fetchMock.mock.calls[0][0]));
-    expect(requestUrl.searchParams.get('symbol')).toBe('RELIANCE:NSE');
+    expect(requestUrl.pathname).toBe('/time_series');
+    expect(requestUrl.searchParams.get('symbol')).toBe('IBM');
     expect(requestUrl.searchParams.get('interval')).toBe('1day');
   });
 
-  it('uses an INR-labelled NSE demo when the key is absent', async () => {
+  it('never manufactures an NSE quote when Yahoo is unavailable', async () => {
     delete process.env.MARKET_DATA_API_KEY;
-    const result = await fetchQuoteFromProvider('SBIN.NS');
-    expect(result.status).toBe('not_configured');
-    expect(result.quote).toMatchObject({
-      symbol: 'SBIN:NSE',
-      exchange: 'NSE',
-      currency: 'INR',
-      freshness: 'demo',
-    });
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('Forbidden', { status: 403 })));
+    await expect(fetchQuoteFromProvider('SBIN.NS')).rejects.toThrow(/Market data unavailable for SBIN\.NS/);
   });
 });
 
@@ -323,43 +305,46 @@ describe('Yahoo Finance provider adapter', () => {
   it('routes to Yahoo without an API key and conservatively labels a fresh quote', async () => {
     process.env.MARKET_DATA_PROVIDER = 'yahoo';
     delete process.env.MARKET_DATA_API_KEY;
-    process.env.YAHOO_FINANCE_BASE_URL =
-      'https://query1.finance.yahoo.com/v8/finance/chart';
+    process.env.YAHOO_FINANCE_BASE_URL = 'https://query1.finance.yahoo.com/v8/finance/chart';
     const now = Math.floor(Date.now() / 1000);
     const fetchMock = vi.fn().mockResolvedValue(
       new Response(
         JSON.stringify({
           chart: {
-            result: [{
-              meta: {
-                currency: 'INR',
-                symbol: '^NSEI',
-                exchangeName: 'NSI',
-                fullExchangeName: 'NSE',
-                instrumentType: 'INDEX',
-                regularMarketTime: now - 30,
-                regularMarketPrice: 25420.4,
-                regularMarketDayHigh: 25468.2,
-                regularMarketDayLow: 25331.6,
-                regularMarketVolume: 0,
-                previousClose: 25366.25,
-                exchangeDataDelayedBy: 0,
-                longName: 'NIFTY 50',
-                currentTradingPeriod: {
-                  regular: { start: now - 3600, end: now + 3600 },
+            result: [
+              {
+                meta: {
+                  currency: 'INR',
+                  symbol: '^NSEI',
+                  exchangeName: 'NSI',
+                  fullExchangeName: 'NSE',
+                  instrumentType: 'INDEX',
+                  regularMarketTime: now - 30,
+                  regularMarketPrice: 25420.4,
+                  regularMarketDayHigh: 25468.2,
+                  regularMarketDayLow: 25331.6,
+                  regularMarketVolume: 0,
+                  previousClose: 25366.25,
+                  exchangeDataDelayedBy: 0,
+                  longName: 'NIFTY 50',
+                  currentTradingPeriod: {
+                    regular: { start: now - 3600, end: now + 3600 },
+                  },
+                },
+                timestamp: [now - 60, now - 30],
+                indicators: {
+                  quote: [
+                    {
+                      open: [25376.1, 25401.2],
+                      high: [25412.3, 25425.7],
+                      low: [25365.4, 25398.6],
+                      close: [25401.2, 25420.4],
+                      volume: [0, 0],
+                    },
+                  ],
                 },
               },
-              timestamp: [now - 60, now - 30],
-              indicators: {
-                quote: [{
-                  open: [25376.1, 25401.2],
-                  high: [25412.3, 25425.7],
-                  low: [25365.4, 25398.6],
-                  close: [25401.2, 25420.4],
-                  volume: [0, 0],
-                }],
-              },
-            }],
+            ],
             error: null,
           },
         }),
@@ -388,25 +373,28 @@ describe('Yahoo Finance provider adapter', () => {
   it('normalizes Yahoo OHLCV history for candlestick consumers', async () => {
     process.env.MARKET_DATA_PROVIDER = 'yahoo-finance';
     delete process.env.MARKET_DATA_API_KEY;
-    process.env.YAHOO_FINANCE_BASE_URL =
-      'https://query1.finance.yahoo.com/v8/finance/chart';
+    process.env.YAHOO_FINANCE_BASE_URL = 'https://query1.finance.yahoo.com/v8/finance/chart';
     const fetchMock = vi.fn().mockResolvedValue(
       new Response(
         JSON.stringify({
           chart: {
-            result: [{
-              meta: { currency: 'INR', symbol: 'RELIANCE.NS' },
-              timestamp: [1786665600, 1786752000],
-              indicators: {
-                quote: [{
-                  open: [1372.5, 1384.4],
-                  high: [1391.8, 1398.2],
-                  low: [1368.2, 1379.1],
-                  close: [1384.4, 1392.7],
-                  volume: [7420000, 6810000],
-                }],
+            result: [
+              {
+                meta: { currency: 'INR', symbol: 'RELIANCE.NS' },
+                timestamp: [1786665600, 1786752000],
+                indicators: {
+                  quote: [
+                    {
+                      open: [1372.5, 1384.4],
+                      high: [1391.8, 1398.2],
+                      low: [1368.2, 1379.1],
+                      close: [1384.4, 1392.7],
+                      volume: [7420000, 6810000],
+                    },
+                  ],
+                },
               },
-            }],
+            ],
             error: null,
           },
         }),
@@ -443,22 +431,12 @@ describe('Yahoo Finance provider adapter', () => {
     expect(requestUrl.searchParams.get('interval')).toBe('1d');
   });
 
-  it('returns an explicitly labelled demo when Yahoo rate-limits the request', async () => {
+  it('reports a Yahoo rate limit as unavailable instead of showing a demo price', async () => {
     process.env.MARKET_DATA_PROVIDER = 'yahoo';
     delete process.env.MARKET_DATA_API_KEY;
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue(new Response('Too Many Requests', { status: 429 })),
-    );
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('Too Many Requests', { status: 429 })));
 
-    const result = await fetchQuoteFromProvider('SBIN:NSE');
-
-    expect(result.status).toBe('rate_limited');
-    expect(result.quote).toMatchObject({
-      symbol: 'SBIN:NSE',
-      freshness: 'demo',
-      providerName: 'Demo Fixture Provider',
-    });
+    await expect(fetchQuoteFromProvider('SBIN:NSE')).rejects.toThrow(/rate limit/i);
   });
 });
 
@@ -473,32 +451,36 @@ describe('Hybrid market-data routing', () => {
       new Response(
         JSON.stringify({
           chart: {
-            result: [{
-              meta: {
-                currency: 'INR',
-                symbol: 'SBIN.NS',
-                exchangeName: 'NSI',
-                instrumentType: 'EQUITY',
-                regularMarketTime: now - 30,
-                regularMarketPrice: 812.65,
-                previousClose: 806.25,
-                exchangeDataDelayedBy: 0,
-                shortName: 'State Bank of India',
-                currentTradingPeriod: {
-                  regular: { start: now - 3600, end: now + 3600 },
+            result: [
+              {
+                meta: {
+                  currency: 'INR',
+                  symbol: 'SBIN.NS',
+                  exchangeName: 'NSI',
+                  instrumentType: 'EQUITY',
+                  regularMarketTime: now - 30,
+                  regularMarketPrice: 812.65,
+                  previousClose: 806.25,
+                  exchangeDataDelayedBy: 0,
+                  shortName: 'State Bank of India',
+                  currentTradingPeriod: {
+                    regular: { start: now - 3600, end: now + 3600 },
+                  },
+                },
+                timestamp: [now - 30],
+                indicators: {
+                  quote: [
+                    {
+                      open: [806.4],
+                      high: [817.2],
+                      low: [803.9],
+                      close: [812.65],
+                      volume: [12600000],
+                    },
+                  ],
                 },
               },
-              timestamp: [now - 30],
-              indicators: {
-                quote: [{
-                  open: [806.4],
-                  high: [817.2],
-                  low: [803.9],
-                  close: [812.65],
-                  volume: [12600000],
-                }],
-              },
-            }],
+            ],
             error: null,
           },
         }),
@@ -511,94 +493,93 @@ describe('Hybrid market-data routing', () => {
 
     expect(result.status).toBe('connected');
     expect(result.quote.providerName).toBe('Yahoo Finance (Experimental)');
-    expect(result.message).toContain('Hybrid primary Yahoo Finance');
+    expect(result.message).toContain('Yahoo Finance · experimental/reference');
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
-  it('fails over from a rate-limited Yahoo request to Twelve Data', async () => {
+  it('fails over from a rate-limited Yahoo request to Twelve Data (non-Indian symbol)', async () => {
     process.env.MARKET_DATA_PROVIDER = 'hybrid';
     process.env.MARKET_DATA_PRIMARY_PROVIDER = 'yahoo';
     process.env.MARKET_DATA_FALLBACK_PROVIDER = 'twelvedata';
     process.env.MARKET_DATA_API_KEY = 'twelve-secret';
     process.env.MARKET_DATA_BASE_URL = 'https://api.twelvedata.com/quote';
-    const fetchMock = vi.fn()
+    const fetchMock = vi
+      .fn()
       .mockResolvedValueOnce(new Response('Too Many Requests', { status: 429 }))
       .mockResolvedValueOnce(
         new Response(
           JSON.stringify({
-            symbol: 'SBIN',
-            name: 'State Bank of India',
-            exchange: 'NSE',
-            currency: 'INR',
+            symbol: 'AAPL',
+            name: 'Apple Inc',
+            exchange: 'NASDAQ',
+            currency: 'USD',
             datetime: '2026-08-17',
-            open: '806.40',
-            high: '817.20',
-            low: '803.90',
-            close: '812.65',
-            previous_close: '806.25',
-            change: '6.40',
-            percent_change: '0.79',
-            volume: '12600000',
+            open: '226.40',
+            high: '229.20',
+            low: '225.90',
+            close: '228.65',
+            previous_close: '226.25',
+            change: '2.40',
+            percent_change: '1.06',
+            volume: '42600000',
           }),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
     vi.stubGlobal('fetch', fetchMock);
 
-    const result = await fetchQuoteFromProvider('SBIN:NSE');
+    const result = await fetchQuoteFromProvider('AAPL');
 
     expect(result.status).toBe('connected');
-    expect(result.quote).toMatchObject({
-      symbol: 'SBIN:NSE',
-      providerName: 'Twelve Data',
-      freshness: 'end_of_day',
-    });
-    expect(result.message).toContain('Hybrid failover used Twelve Data');
-    expect(result.message).toContain('Yahoo Finance returned rate_limited');
-    expect(fetchMock).toHaveBeenCalledTimes(2);
-    const fallbackUrl = new URL(String(fetchMock.mock.calls[1][0]));
+    expect(result.quote).toMatchObject({ symbol: 'AAPL', providerName: 'Twelve Data', price: 228.65 });
+    expect(result.message).toMatch(/^Twelve Data:/);
+    const fallbackUrl = new URL(String(fetchMock.mock.calls.at(-1)![0]));
     expect(fallbackUrl.pathname).toBe('/quote');
-    expect(fallbackUrl.searchParams.get('symbol')).toBe('SBIN:NSE');
+    expect(fallbackUrl.searchParams.get('symbol')).toBe('AAPL');
   });
 
-  it('uses Twelve Data history when the Yahoo health probe is rate-limited', async () => {
+  it('uses Twelve Data history when Yahoo is rate-limited (non-Indian symbol)', async () => {
     process.env.MARKET_DATA_PROVIDER = 'hybrid';
     process.env.MARKET_DATA_PRIMARY_PROVIDER = 'yahoo';
     process.env.MARKET_DATA_FALLBACK_PROVIDER = 'twelvedata';
     process.env.MARKET_DATA_API_KEY = 'twelve-secret';
     process.env.MARKET_DATA_BASE_URL = 'https://api.twelvedata.com/quote';
-    const fetchMock = vi.fn()
+    const fetchMock = vi
+      .fn()
       .mockResolvedValueOnce(new Response('Too Many Requests', { status: 429 }))
       .mockResolvedValueOnce(
         new Response(
           JSON.stringify({
-            values: [{
-              datetime: '2026-08-17',
-              open: '806.40',
-              high: '817.20',
-              low: '803.90',
-              close: '812.65',
-              volume: '12600000',
-            }],
+            values: [
+              {
+                datetime: '2026-08-17',
+                open: '806.40',
+                high: '817.20',
+                low: '803.90',
+                close: '812.65',
+                volume: '12600000',
+              },
+            ],
           }),
           { status: 200, headers: { 'Content-Type': 'application/json' } },
         ),
       );
     vi.stubGlobal('fetch', fetchMock);
 
-    const points = await fetchHistoryFromProvider('SBIN:NSE', '1m');
+    const points = await fetchHistoryFromProvider('AAPL', '1m');
 
-    expect(points).toEqual([{
-      date: '2026-08-17',
-      price: 812.65,
-      open: 806.4,
-      high: 817.2,
-      low: 803.9,
-      close: 812.65,
-      volume: 12600000,
-    }]);
-    expect(fetchMock).toHaveBeenCalledTimes(2);
-    const fallbackUrl = new URL(String(fetchMock.mock.calls[1][0]));
+    expect(points).toEqual([
+      {
+        date: '2026-08-17',
+        price: 812.65,
+        open: 806.4,
+        high: 817.2,
+        low: 803.9,
+        close: 812.65,
+        volume: 12600000,
+      },
+    ]);
+    const fallbackUrl = new URL(String(fetchMock.mock.calls.at(-1)![0]));
     expect(fallbackUrl.pathname).toBe('/time_series');
   });
 });
@@ -606,8 +587,7 @@ describe('Hybrid market-data routing', () => {
 describe('FRED provider adapter', () => {
   it('authenticates server-side and normalizes economic observations', async () => {
     process.env.FRED_API_KEY = 'fred-test-secret';
-    process.env.FRED_API_BASE_URL =
-      'https://api.stlouisfed.org/fred/series/observations';
+    process.env.FRED_API_BASE_URL = 'https://api.stlouisfed.org/fred/series/observations';
     const fetchMock = vi.fn().mockResolvedValue(
       new Response(
         JSON.stringify({
@@ -634,11 +614,14 @@ describe('FRED provider adapter', () => {
     expect(requestUrl.searchParams.get('file_type')).toBe('json');
   });
 
-  it('returns a non-live response when the FRED key is absent', async () => {
+  it('falls back to the keyless public CSV and never fabricates values when it fails', async () => {
     delete process.env.FRED_API_KEY;
+    const fetchMock = vi.fn().mockResolvedValue(new Response('Service Unavailable', { status: 503 }));
+    vi.stubGlobal('fetch', fetchMock);
     const overview = await fetchFredOverview();
-    expect(overview.status).toBe('not_configured');
+    expect(overview.status).not.toBe('connected');
     expect(overview.indicators.every((indicator) => indicator.value === null)).toBe(true);
+    for (const [input] of fetchMock.mock.calls) expect(new URL(String(input)).searchParams.get('api_key')).toBeNull();
   });
 
   it('calculates year-over-year inflation by matching the prior-year month', async () => {
@@ -672,16 +655,12 @@ describe('FRED provider adapter', () => {
 
   it('never exposes the FRED credential in diagnostics', async () => {
     process.env.FRED_API_KEY = 'never-return-this-fred-key';
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue(
-        new Response(JSON.stringify({ error_message: 'Bad api_key' }), { status: 400 }),
-      ),
-    );
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ error_message: 'Bad api_key' }), { status: 400 })));
 
     const diagnostic = await checkFredDiagnostic();
-    expect(diagnostic.status).toBe('invalid_credentials');
+    expect(diagnostic.status).not.toBe('connected');
     expect(diagnostic.message).not.toContain('never-return-this-fred-key');
+    expect(JSON.stringify(diagnostic)).not.toContain('never-return-this-fred-key');
   });
 });
 
@@ -852,12 +831,7 @@ describe('Finnhub company-intelligence adapter', () => {
 
   it('does not expose a rejected Finnhub credential in diagnostics', async () => {
     process.env.FINNHUB_API_KEY = 'never-return-this-finnhub-key';
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue(
-        new Response(JSON.stringify({ error: 'Invalid API key' }), { status: 401 }),
-      ),
-    );
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ error: 'Invalid API key' }), { status: 401 })));
 
     const diagnostic = await checkFinnhubDiagnostic();
     expect(diagnostic.status).toBe('invalid_credentials');

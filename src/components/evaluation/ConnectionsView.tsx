@@ -51,10 +51,7 @@ export const ConnectionsView: React.FC = () => {
         <div className="space-y-3 pt-2">
           {diagnostics.length > 0 ? (
             diagnostics.map((diag) => (
-              <div
-                key={diag.id}
-                className="p-4 bg-canvas border border-line rounded-2xl flex items-center justify-between gap-4"
-              >
+              <div key={diag.id} className="p-4 bg-canvas border border-line rounded-2xl flex flex-wrap items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
                   <Cpu className="w-5 h-5 text-interactive" />
                   <div>
@@ -64,9 +61,7 @@ export const ConnectionsView: React.FC = () => {
                 </div>
 
                 <div className="flex items-center gap-3 shrink-0">
-                  {diag.latencyMs !== undefined && (
-                    <span className="text-[10px] font-mono text-secondary">{diag.latencyMs}ms</span>
-                  )}
+                  {diag.latencyMs !== undefined && <span className="text-[10px] font-mono text-secondary">{diag.latencyMs}ms</span>}
                   <span
                     className={`px-3 py-1 rounded-full text-[10px] font-bold border ${
                       diag.status === 'connected'
@@ -80,9 +75,7 @@ export const ConnectionsView: React.FC = () => {
               </div>
             ))
           ) : (
-            <div className="p-6 bg-canvas border border-line rounded-2xl text-center text-xs text-secondary">
-              Loading AI connection telemetry...
-            </div>
+            <div className="p-6 bg-canvas border border-line rounded-2xl text-center text-xs text-secondary">Loading AI connection telemetry...</div>
           )}
         </div>
       </div>

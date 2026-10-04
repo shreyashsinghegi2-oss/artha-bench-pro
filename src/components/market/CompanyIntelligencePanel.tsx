@@ -1,4 +1,8 @@
+import { MicButton } from '../ai/MicButton';
+import { AssistantLogo } from '../ai/AssistantLogo';
+import { ThinkingSteps } from '../ai/ThinkingSteps';
 import React, { useEffect, useMemo, useState } from 'react';
+import { WebSearchToggle } from '../ai/WebSearchToggle';
 import {
   BarChart3,
   Bot,
@@ -13,23 +17,9 @@ import {
   Sparkles,
   Users,
 } from 'lucide-react';
-import {
-  Area,
-  AreaChart,
-  Bar,
-  BarChart as RechartsBarChart,
-  CartesianGrid,
-  Legend,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from 'recharts';
+import { Area, AreaChart, Bar, BarChart as RechartsBarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { CompanyIntelligence, StructuredFinancialAnswer } from '../../types';
-import {
-  askCompanyIntelligenceAI,
-  fetchMarketHistory,
-} from '../../services/learningApi';
+import { askCompanyIntelligenceAI, fetchMarketHistory } from '../../services/learningApi';
 import { StructuredFinancialAnswerView } from '../ai/StructuredFinancialAnswer';
 
 interface CompanyIntelligencePanelProps {
@@ -64,10 +54,7 @@ function formatMarketCap(value: number | null | undefined, currency: string | nu
     : `${prefix}${value.toLocaleString(undefined, { maximumFractionDigits: 2 })}M`;
 }
 
-export const CompanyIntelligencePanel: React.FC<CompanyIntelligencePanelProps> = ({
-  data,
-  loading,
-}) => {
+export const CompanyIntelligencePanel: React.FC<CompanyIntelligencePanelProps> = ({ data, loading }) => {
   const [historyRange, setHistoryRange] = useState('1y');
   const [historyPoints, setHistoryPoints] = useState<Array<{ date: string; price: number }>>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
@@ -105,25 +92,21 @@ export const CompanyIntelligencePanel: React.FC<CompanyIntelligencePanelProps> =
 
   const earningsChartData = useMemo(
     () =>
-      [...(data?.earnings || [])]
-        .reverse()
-        .map((earning) => ({
-          period: earning.period?.slice(0, 7) || 'Period',
-          actual: earning.actual,
-          estimate: earning.estimate,
-          surprise: earning.surprise,
-        })),
+      [...(data?.earnings || [])].reverse().map((earning) => ({
+        period: earning.period?.slice(0, 7) || 'Period',
+        actual: earning.actual,
+        estimate: earning.estimate,
+        surprise: earning.surprise,
+      })),
     [data?.earnings],
   );
 
   const recommendationChartData = useMemo(
     () =>
-      [...(data?.recommendations || [])]
-        .reverse()
-        .map((recommendation) => ({
-          ...recommendation,
-          period: recommendation.period?.slice(0, 7) || 'Period',
-        })),
+      [...(data?.recommendations || [])].reverse().map((recommendation) => ({
+        ...recommendation,
+        period: recommendation.period?.slice(0, 7) || 'Period',
+      })),
     [data?.recommendations],
   );
 
@@ -132,10 +115,7 @@ export const CompanyIntelligencePanel: React.FC<CompanyIntelligencePanelProps> =
     if (!data || data.status !== 'connected' || !normalizedQuestion || assistantLoading) return;
 
     const priorHistory = chatMessages.slice(-8).map(({ role, content }) => ({ role, content }));
-    setChatMessages((current) => [
-      ...current,
-      { role: 'user', content: normalizedQuestion },
-    ]);
+    setChatMessages((current) => [...current, { role: 'user', content: normalizedQuestion }]);
     setAssistantQuestion('');
     setAssistantError(null);
     setAssistantLoading(true);
@@ -158,10 +138,7 @@ export const CompanyIntelligencePanel: React.FC<CompanyIntelligencePanelProps> =
         setSuggestedQuestions(response.suggestedQuestions);
       }
     } catch (requestError) {
-      const message =
-        requestError instanceof Error
-          ? requestError.message
-          : 'The company assistant is temporarily unavailable.';
+      const message = requestError instanceof Error ? requestError.message : 'The company assistant is temporarily unavailable.';
       setAssistantError(message);
     } finally {
       setAssistantLoading(false);
@@ -248,12 +225,8 @@ export const CompanyIntelligencePanel: React.FC<CompanyIntelligencePanelProps> =
           )}
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <h2 className="text-base font-bold text-ink truncate">
-                {profile?.name || data.symbol}
-              </h2>
-              <span className="text-[10px] font-mono text-interactive bg-interactive-soft px-2 py-0.5 rounded">
-                {data.symbol}
-              </span>
+              <h2 className="text-base font-bold text-ink truncate">{profile?.name || data.symbol}</h2>
+              <span className="text-[10px] font-mono text-interactive bg-interactive-soft px-2 py-0.5 rounded">{data.symbol}</span>
             </div>
             <p className="text-[11px] text-secondary mt-1">
               {[profile?.exchange, profile?.industry, profile?.country].filter(Boolean).join(' · ') || 'Company intelligence'}
@@ -263,9 +236,7 @@ export const CompanyIntelligencePanel: React.FC<CompanyIntelligencePanelProps> =
         <div className="flex items-center gap-3">
           <div className="text-right">
             <p className="text-[10px] text-secondary">Market capitalization</p>
-            <p className="text-sm font-bold text-success">
-              {formatMarketCap(profile?.marketCapitalization, profile?.currency)}
-            </p>
+            <p className="text-sm font-bold text-success">{formatMarketCap(profile?.marketCapitalization, profile?.currency)}</p>
           </div>
           {companyUrl && (
             <a
@@ -369,7 +340,13 @@ export const CompanyIntelligencePanel: React.FC<CompanyIntelligencePanelProps> =
                 />
                 <Tooltip
                   formatter={(value) => [`$${Number(value).toFixed(2)}`, 'Price']}
-                  contentStyle={{ background: 'var(--chart-tooltip)', border: '1px solid var(--border-strong)', borderRadius: 12, color: 'var(--chart-tooltip-foreground)', fontSize: 11 }}
+                  contentStyle={{
+                    background: 'var(--chart-tooltip)',
+                    border: '1px solid var(--border-strong)',
+                    borderRadius: 12,
+                    color: 'var(--chart-tooltip-foreground)',
+                    fontSize: 11,
+                  }}
                 />
                 <Area type="monotone" dataKey="price" stroke="var(--chart-primary)" strokeWidth={2.5} fill="url(#companyPriceGradient)" />
               </AreaChart>
@@ -397,7 +374,15 @@ export const CompanyIntelligencePanel: React.FC<CompanyIntelligencePanelProps> =
                     <CartesianGrid stroke="var(--chart-grid)" strokeDasharray="3 3" vertical={false} />
                     <XAxis dataKey="period" tick={{ fill: 'var(--text-secondary)', fontSize: 9 }} stroke="var(--border-subtle)" />
                     <YAxis tick={{ fill: 'var(--text-secondary)', fontSize: 9 }} stroke="var(--border-subtle)" />
-                    <Tooltip contentStyle={{ background: 'var(--chart-tooltip)', border: '1px solid var(--border-strong)', borderRadius: 12, color: 'var(--chart-tooltip-foreground)', fontSize: 11 }} />
+                    <Tooltip
+                      contentStyle={{
+                        background: 'var(--chart-tooltip)',
+                        border: '1px solid var(--border-strong)',
+                        borderRadius: 12,
+                        color: 'var(--chart-tooltip-foreground)',
+                        fontSize: 11,
+                      }}
+                    />
                     <Legend wrapperStyle={{ fontSize: 10 }} />
                     <Bar dataKey="actual" name="Actual EPS" fill="var(--success)" radius={[4, 4, 0, 0]} />
                     <Bar dataKey="estimate" name="Estimated EPS" fill="var(--chart-primary)" radius={[4, 4, 0, 0]} />
@@ -435,7 +420,15 @@ export const CompanyIntelligencePanel: React.FC<CompanyIntelligencePanelProps> =
                   <CartesianGrid stroke="var(--chart-grid)" strokeDasharray="3 3" vertical={false} />
                   <XAxis dataKey="period" tick={{ fill: 'var(--text-secondary)', fontSize: 9 }} stroke="var(--border-subtle)" />
                   <YAxis allowDecimals={false} tick={{ fill: 'var(--text-secondary)', fontSize: 9 }} stroke="var(--border-subtle)" />
-                  <Tooltip contentStyle={{ background: 'var(--chart-tooltip)', border: '1px solid var(--border-strong)', borderRadius: 12, color: 'var(--chart-tooltip-foreground)', fontSize: 11 }} />
+                  <Tooltip
+                    contentStyle={{
+                      background: 'var(--chart-tooltip)',
+                      border: '1px solid var(--border-strong)',
+                      borderRadius: 12,
+                      color: 'var(--chart-tooltip-foreground)',
+                      fontSize: 11,
+                    }}
+                  />
                   <Legend wrapperStyle={{ fontSize: 9 }} />
                   <Bar dataKey="strongBuy" name="Strong buy" stackId="recommendations" fill="var(--brand-primary)" />
                   <Bar dataKey="buy" name="Buy" stackId="recommendations" fill="var(--success)" />
@@ -454,9 +447,7 @@ export const CompanyIntelligencePanel: React.FC<CompanyIntelligencePanelProps> =
       <section className="bg-surface border border-line rounded-2xl p-4 sm:p-6 shadow-sm">
         <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4 mb-5">
           <div className="flex items-start gap-3">
-            <div className="p-2.5 rounded-xl bg-interactive-soft border border-interactive text-interactive">
-              <Bot className="w-5 h-5" />
-            </div>
+            <AssistantLogo size={40} />
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="text-base font-bold text-ink">ArthaBench Company AI Assistant</h3>
@@ -465,11 +456,16 @@ export const CompanyIntelligencePanel: React.FC<CompanyIntelligencePanelProps> =
                 </span>
               </div>
               <p className="text-[11px] text-secondary mt-1 max-w-3xl leading-relaxed">
-                Ask for educational explanations of {data.symbol}’s loaded Finnhub fundamentals, earnings, analyst history, and market quote. Company-specific answers are grounded in the current dashboard data.
+                Ask for educational explanations of {data.symbol}’s loaded Finnhub fundamentals, earnings, analyst history, and market quote. Company-specific
+                answers are grounded in the current dashboard data.
               </p>
             </div>
           </div>
-          <span className="text-[9px] text-secondary lg:text-right">No buy/sell/hold advice<br />No guaranteed forecasts</span>
+          <span className="text-[9px] text-secondary lg:text-right">
+            No buy/sell/hold advice
+            <br />
+            No guaranteed forecasts
+          </span>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
@@ -479,7 +475,9 @@ export const CompanyIntelligencePanel: React.FC<CompanyIntelligencePanelProps> =
                 <div className="h-full min-h-44 flex flex-col items-center justify-center text-center px-4">
                   <MessageSquareText className="w-8 h-8 text-interactive mb-3" />
                   <p className="text-sm font-bold text-ink">Ask a grounded company-analysis question</p>
-                  <p className="text-[11px] text-secondary mt-1 max-w-md leading-relaxed">Each response is organized into a direct answer, numbered steps, formula or method, worked example, interpretation, risks, and sources.</p>
+                  <p className="text-[11px] text-secondary mt-1 max-w-md leading-relaxed">
+                    Each response is organized into a direct answer, numbered steps, formula or method, worked example, interpretation, risks, and sources.
+                  </p>
                 </div>
               ) : (
                 chatMessages.map((message, index) => {
@@ -506,17 +504,14 @@ export const CompanyIntelligencePanel: React.FC<CompanyIntelligencePanelProps> =
                   );
                 })
               )}
-              {assistantLoading && (
-                <div className="flex items-center text-[11px] font-medium text-interactive">
-                  <RefreshCw className="w-3 h-3 animate-spin mr-2" /> Analyzing the loaded company evidence…
-                </div>
-              )}
+              <ThinkingSteps active={assistantLoading} compact />
             </div>
 
-            {assistantError && (
-              <div className="mt-3 p-2.5 rounded-lg bg-danger-soft/40 border border-danger text-[10px] text-danger">{assistantError}</div>
-            )}
+            {assistantError && <div className="mt-3 p-2.5 rounded-lg bg-danger-soft/40 border border-danger text-[10px] text-danger">{assistantError}</div>}
 
+            <div className="mt-4">
+              <WebSearchToggle />
+            </div>
             <form onSubmit={handleAssistantSubmit} className="flex gap-2 mt-4 pt-4 border-t border-line">
               <input
                 value={assistantQuestion}
@@ -525,6 +520,7 @@ export const CompanyIntelligencePanel: React.FC<CompanyIntelligencePanelProps> =
                 maxLength={1200}
                 className="min-w-0 flex-1 bg-surface border border-line-strong rounded-xl px-3.5 py-3 text-xs text-ink placeholder:text-secondary focus:outline-none focus:border-interactive focus:ring-2 focus:ring-interactive"
               />
+              <MicButton onText={setAssistantQuestion} disabled={assistantLoading} />
               <button
                 type="submit"
                 disabled={assistantLoading || !assistantQuestion.trim()}
@@ -544,7 +540,7 @@ export const CompanyIntelligencePanel: React.FC<CompanyIntelligencePanelProps> =
                   key={question}
                   onClick={() => submitAssistantQuestion(question)}
                   disabled={assistantLoading}
-                  className="w-full text-left p-3 rounded-xl bg-surface border border-line hover:border-interactive hover:bg-interactive-soft text-[10px] text-secondary leading-relaxed transition-all disabled:opacity-50"
+                  className="w-full text-left p-3 rounded-xl bg-surface border border-line hover:bg-interactive-soft text-[10px] text-secondary leading-relaxed transition-all disabled:opacity-50"
                 >
                   {question}
                 </button>

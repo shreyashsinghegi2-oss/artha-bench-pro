@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BTMS Physics-Informed ML Lab</title>
+  <meta name="description" content="Physics-informed neural network for a PCM + pulsating heat pipe battery thermal management system: predictions, unseen-material test and PCM design explorer." />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%232a78d6'/%3E%3Crect x='22' y='12' width='20' height='40' rx='4' fill='none' stroke='white' stroke-width='5'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <nav class="site" aria-label="Site"><div class="wrap"><a class="brand" href="/">BTMS PINN Lab</a><a href="/" aria-current="page">Live model</a><a href="/learn.html">How it works</a><a href="/downloads.html">Data &amp; code</a><a href="/selftest.html">Self-test</a></div></nav>
+  <div class="wrap">
+    <header class="top">
+      <p class="eyebrow">Research lab · Battery thermal management</p>
+      <h1>Physics-informed ML for PCM + heat-pipe battery cooling</h1>
+      <p class="lede">A neural network that learns cell temperature from data while obeying the energy balance
+        <em>heat in = heat stored + heat removed</em>. It extends Mane et al., <cite>Journal of Energy Storage</cite> 180 (2026) 124313,
+        with honest testing on unseen materials and a PCM design explorer.</p>
+      <div class="banner" id="data-note"><b>Demonstration data.</b> Loading…</div>
+    </header>
+
+    <main>
+      <section class="card" aria-labelledby="h-predict">
+        <h2 id="h-predict">1 · Predict a cell's temperature</h2>
+        <p class="sub">Choose the phase change material (PCM), the cooling at the heat-pipe condenser and the cell. The PINN runs in your browser; the physics line is the energy balance with the constants the PINN learned from the data.</p>
+        <div class="controls">
+          <label>PCM <select id="p-pcm"><option value="om42">OM42</option><option value="om48">OM48</option><option value="paraffin">Paraffin</option><option value="none">No PCM</option></select></label>
+          <label>Cooling <select id="p-cool"><option value="natural">Natural (still air)</option><option value="forced">Forced (fan)</option></select></label>
+          <label>Cell <select id="p-cell"><option value="1">C1 (outer)</option><option value="2" selected>C2 (core)</option><option value="3">C3 (outer)</option><option value="4">C4 (outer)</option><option value="5">C5 (core)</option><option value="6">C6 (outer)</option></select></label>
+        </div>
+        <div class="tiles" id="p-tiles"></div>
+        <div class="chart" id="p-chart"></div>
+      </section>
+
+      <section class="card" aria-labelledby="h-unseen">
+        <h2 id="h-unseen">2 · Does it work on a material it has never seen?</h2>
+        <p class="sub">Both networks below were trained <b>without any OM42 data</b>. The plain network only learned from data; the PINN also had to satisfy the energy balance, where OM42 enters through its measured properties. This is the test a random train/test split cannot do.</p>
+        <div class="controls">
+          <label>Cooling <select id="u-cool"><option value="natural">Natural</option><option value="forced">Forced</option></select></label>
+          <label>Cell <select id="u-cell"><option value="1">C1</option><option value="2" selected>C2</option><option value="3">C3</option><option value="4">C4</option><option value="5">C5</option><option value="6">C6</option></select></label>
+        </div>
+        <div class="tiles" id="u-tiles"></div>
+        <div class="chart" id="u-chart"></div>
+      </section>
+
+      <section class="card" aria-labelledby="h-design">
+        <h2 id="h-design">3 · PCM design explorer</h2>
+        <p class="sub">Which melting point keeps the hottest cell coolest? Change the material and the conditions; every curve is a fresh simulation of the calibrated energy balance. On a hot day a PCM that melts too low is already liquid before the ride starts.</p>
+        <div class="controls">
+          <label>Melting point <span><input type="range" id="d-melt" min="30" max="66" step="1" value="44" /> <output id="d-melt-o">44 °C</output></span></label>
+          <label>Latent heat <span><input type="range" id="d-lat" min="150" max="300" step="10" value="250" /> <output id="d-lat-o">250 J/g</output></span></label>
+          <label>Ambient <select id="d-amb"><option value="27">27 °C (lab)</option><option value="35">35 °C</option><option value="40">40 °C (hot day)</option></select></label>
+          <label>Ride length <select id="d-dur"><option value="1200">20 min</option><option value="3600">60 min</option></select></label>
+          <label>Cooling <select id="d-cool"><option value="natural">Natural</option><option value="forced">Forced</option></select></label>
+        </div>
+        <div class="tiles" id="d-tiles"></div>
+        <div class="grid2">
+          <div><p class="eyebrow">Core-cell temperature over the ride</p><div class="chart" id="d-curve"></div></div>
+          <div><p class="eyebrow">Peak temperature vs melting point</p><div class="chart" id="d-sweep"></div></div>
+        </div>
+      </section>
+
+      <section class="card" aria-labelledby="h-results">
+        <h2 id="h-results">4 · Experiment results</h2>
+        <p class="sub">The paper's five models rebuilt in Python, then tested honestly. E1 uses the paper's random split; E2–E4 hold out one PCM at a time; E5 checks whether 90% uncertainty intervals really cover 90% of unseen-material cases. Errors are in °C.</p>
+        <div class="scroll" id="r-table"></div>
+        <h3 style="font-size:1rem;margin:18px 0 6px">90% conformal intervals on a held-out PCM</h3>
+        <div class="scroll" id="r-conf"></div>
+        <h3 style="font-size:1rem;margin:18px 0 6px">Physical constants the PINN learned from the data</h3>
+        <div class="scroll" id="r-const"></div>
+      </section>
+    </main>
+
+    <footer>
+      <p><b>Method.</b> Lumped energy balance <span style="font-family:var(--mono)">C_eff(T)·dT/dt = Q − G·(T − T_amb)</span>, with the PCM's latent heat
+        as an apparent heat capacity over its melting range. Network: 9 inputs → 64 → 64 → 1, tanh. Loss = data error + energy-balance residual + initial condition.
+        Full explanation on <a href="/learn.html">How it works</a>; data and code on <a href="/downloads.html">Data &amp; code</a>.</p>
+      <p><b>Status.</b> Built by Shreyash Singh (Ajeenkya DY Patil University) on the experimental setup of Mane et al. (2026). Results here are a methods
+        demonstration; they become research findings only after retraining on the experimental dataset.</p>
+      <p><a href="https://doi.org/10.1016/j.est.2026.124313">Original paper (DOI)</a> · <a href="https://github.com/HEAresearch/Phase_Change_Material-Based_BTMS">Authors' public data sample</a></p>
+    </footer>
+  </div>
+  <script type="module" src="/app.js"></script>
+</body>
+</html>

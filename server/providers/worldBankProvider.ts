@@ -6,33 +6,26 @@
  */
 
 import { z } from 'zod';
-import {
-  ConnectionStatus,
-  EconomicIndicator,
-  EconomicObservation,
-  ProviderDiagnostic,
-} from '../../src/types';
+import { ConnectionStatus, EconomicIndicator, EconomicObservation, ProviderDiagnostic } from '../../src/types';
 
-const DEFAULT_WORLD_BANK_BASE_URL =
-  'https://api.worldbank.org/v2/country/IND/indicator';
+const DEFAULT_WORLD_BANK_BASE_URL = 'https://api.worldbank.org/v2/country/IND/indicator';
 
-const worldBankObservationSchema = z.object({
-  indicator: z.object({ id: z.string(), value: z.string().nullable().optional() }).passthrough(),
-  country: z.object({ id: z.string(), value: z.string() }).passthrough(),
-  countryiso3code: z.string().optional(),
-  date: z.string(),
-  value: z.number().nullable(),
-}).passthrough();
+const worldBankObservationSchema = z
+  .object({
+    indicator: z.object({ id: z.string(), value: z.string().nullable().optional() }).passthrough(),
+    country: z.object({ id: z.string(), value: z.string() }).passthrough(),
+    countryiso3code: z.string().optional(),
+    date: z.string(),
+    value: z.number().nullable(),
+  })
+  .passthrough();
 
 const worldBankResponseSchema = z.tuple([
   z.object({ page: z.number().optional(), pages: z.number().optional() }).passthrough(),
   z.array(worldBankObservationSchema),
 ]);
 
-type WorldBankStatus = Extract<
-  ConnectionStatus,
-  'connected' | 'invalid_response' | 'rate_limited' | 'error'
->;
+type WorldBankStatus = Extract<ConnectionStatus, 'connected' | 'invalid_response' | 'rate_limited' | 'error'>;
 
 interface WorldBankSeriesResult {
   seriesId: string;
@@ -98,8 +91,7 @@ function safeIndicatorId(indicatorId: string) {
 }
 
 function getBaseUrl() {
-  const baseUrl =
-    process.env.WORLD_BANK_API_BASE_URL?.trim() || DEFAULT_WORLD_BANK_BASE_URL;
+  const baseUrl = process.env.WORLD_BANK_API_BASE_URL?.trim() || DEFAULT_WORLD_BANK_BASE_URL;
   const parsed = new URL(baseUrl);
   if (parsed.protocol !== 'https:') {
     throw new Error('World Bank provider URL must use HTTPS.');
@@ -107,10 +99,7 @@ function getBaseUrl() {
   return parsed.toString().replace(/\/$/, '');
 }
 
-export async function fetchWorldBankIndiaSeries(
-  indicatorId: string,
-  limit = 60,
-): Promise<WorldBankSeriesResult> {
+export async function fetchWorldBankIndiaSeries(indicatorId: string, limit = 60): Promise<WorldBankSeriesResult> {
   const normalizedIndicatorId = safeIndicatorId(indicatorId);
   const safeLimit = Math.min(Math.max(Math.trunc(limit), 1), 240);
 
@@ -130,9 +119,7 @@ export async function fetchWorldBankIndiaSeries(
         observations: [],
         status: response.status === 429 ? 'rate_limited' : 'error',
         message:
-          response.status === 429
-            ? 'World Bank request limit reached. Please retry shortly.'
-            : `World Bank request failed with HTTP ${response.status}.`,
+          response.status === 429 ? 'World Bank request limit reached. Please retry shortly.' : `World Bank request failed with HTTP ${response.status}.`,
       };
     }
 
@@ -181,10 +168,7 @@ function round(value: number, decimals = 2) {
   return Math.round(value * multiplier) / multiplier;
 }
 
-function toIndicator(
-  definition: IndiaIndicatorDefinition,
-  result: WorldBankSeriesResult,
-): EconomicIndicator {
+function toIndicator(definition: IndiaIndicatorDefinition, result: WorldBankSeriesResult): EconomicIndicator {
   const latest = result.observations.at(-1);
   let value: number | null = latest?.value ?? null;
   if (value !== null && definition.transform === 'usd_to_trillions') {
@@ -205,17 +189,9 @@ function toIndicator(
 }
 
 export async function fetchWorldBankIndiaOverview() {
-  const results = await Promise.all(
-    INDIA_INDICATORS.map((indicator) =>
-      fetchWorldBankIndiaSeries(indicator.seriesId, 20),
-    ),
-  );
-  const indicators = INDIA_INDICATORS.map((indicator, index) =>
-    toIndicator(indicator, results[index]),
-  );
-  const connectedCount = indicators.filter(
-    (indicator) => indicator.status === 'connected',
-  ).length;
+  const results = await Promise.all(INDIA_INDICATORS.map((indicator) => fetchWorldBankIndiaSeries(indicator.seriesId, 20)));
+  const indicators = INDIA_INDICATORS.map((indicator, index) => toIndicator(indicator, results[index]));
+  const connectedCount = indicators.filter((indicator) => indicator.status === 'connected').length;
 
   return {
     indicators,
@@ -224,10 +200,7 @@ export async function fetchWorldBankIndiaOverview() {
     country: 'India',
     countryCode: 'IND',
     retrievedAt: new Date().toISOString(),
-    message:
-      connectedCount > 0
-        ? `${connectedCount} live India economic indicators loaded.`
-        : results[0]?.message || 'India economic data is unavailable.',
+    message: connectedCount > 0 ? `${connectedCount} live India economic indicators loaded.` : results[0]?.message || 'India economic data is unavailable.',
   };
 }
 

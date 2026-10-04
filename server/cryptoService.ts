@@ -9,11 +9,7 @@ import type {
 } from '../src/components/crypto/cryptoTypes';
 import { CRYPTO_SYMBOLS } from '../src/components/crypto/cryptoTypes';
 
-const BINANCE_REST_BASES = [
-  'https://data-api.binance.vision',
-  'https://api.binance.com',
-  'https://api1.binance.com',
-] as const;
+const BINANCE_REST_BASES = ['https://data-api.binance.vision', 'https://api.binance.com', 'https://api1.binance.com'] as const;
 const SOURCE_LABEL = 'Binance Public Market Data' as const;
 const QUOTE_CACHE_MS = 5_000;
 const KLINE_CACHE_MS = 10_000;
@@ -120,7 +116,7 @@ function formattedNumber(value: number, maximumFractionDigits = 6) {
 export function buildCryptoAssistantFallback(question: string, context: CryptoAssistantContext): string {
   const direction = context.absoluteChange > 0 ? 'up' : context.absoluteChange < 0 ? 'down' : 'flat';
   const range = context.high - context.low;
-  const bodyToRange = range ? Math.abs(context.absoluteChange) / range * 100 : 0;
+  const bodyToRange = range ? (Math.abs(context.absoluteChange) / range) * 100 : 0;
   const direct = `${context.symbol.replace('USDT', '/USDT')} is ${direction} by ${context.absoluteChange >= 0 ? '+' : ''}${formattedNumber(context.absoluteChange)} USDT (${context.percentChange >= 0 ? '+' : ''}${context.percentChange.toFixed(2)}%) in the selected ${context.interval} ${context.candleStatus.toLowerCase()} candle.`;
   return `## Direct answer
 ${direct}
@@ -171,7 +167,14 @@ Verified Binance candle context:
 ${JSON.stringify(context)}`,
       getGroqModels().tutorModel,
     );
-    const required = ['## Direct answer', '## Assumptions and context', '## Formula or rule', '## Step-by-step calculation or reasoning', '## Final result and interpretation', '## Limitations and verification'];
+    const required = [
+      '## Direct answer',
+      '## Assumptions and context',
+      '## Formula or rule',
+      '## Step-by-step calculation or reasoning',
+      '## Final result and interpretation',
+      '## Limitations and verification',
+    ];
     return { answer: required.every((heading) => answer.includes(heading)) ? answer : fallback, provider: 'groq' as const, model: getGroqModels().tutorModel };
   } catch {
     return { answer: fallback, provider: 'deterministic' as const, model: null };

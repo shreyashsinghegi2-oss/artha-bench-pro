@@ -14,18 +14,8 @@ export const IncomeWorkspaceView: React.FC = () => {
     const sources = loadIncomeSources();
     const taxWorkspace = loadTaxWorkspace();
     const summaries = summarizeIncomeByCurrency(sources);
-    const taxComparison = compareTaxRegimes(
-      sources,
-      taxWorkspace.profile,
-      taxWorkspace.deductions,
-      taxWorkspace.credits,
-    );
-    const taxEstimate = calculateIndiaTaxEstimate(
-      sources,
-      taxWorkspace.profile,
-      taxWorkspace.deductions,
-      taxWorkspace.credits,
-    );
+    const taxComparison = compareTaxRegimes(sources, taxWorkspace.profile, taxWorkspace.deductions, taxWorkspace.credits);
+    const taxEstimate = calculateIndiaTaxEstimate(sources, taxWorkspace.profile, taxWorkspace.deductions, taxWorkspace.credits);
 
     return { sources, taxWorkspace, summaries, taxComparison, taxEstimate };
   }, [revision]);
@@ -37,9 +27,8 @@ export const IncomeWorkspaceView: React.FC = () => {
   const openIncomeForm = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
     window.setTimeout(() => {
-      const button = Array.from(document.querySelectorAll('button')).find((candidate) =>
-        /add income source/i.test(candidate.textContent || ''),
-      ) as HTMLButtonElement | undefined;
+      const button = Array.from(document.querySelectorAll('button')).find((candidate) => /add income source/i.test(candidate.textContent || '')) as
+        HTMLButtonElement | undefined;
       button?.click();
     }, 350);
   };
@@ -62,7 +51,7 @@ export const IncomeWorkspaceView: React.FC = () => {
       <button
         type="button"
         onClick={() => assistantRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-        className="fixed bottom-5 right-5 z-40 inline-flex min-h-12 items-center gap-2 rounded-2xl border border-interactive/25 bg-interactive px-4 py-3 text-sm font-black text-white shadow-lg transition-transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-interactive focus:ring-offset-2 focus:ring-offset-canvas"
+        className="fixed bottom-5 right-5 z-40 inline-flex min-h-12 items-center gap-2 rounded-2xl border border-interactive/25 bg-interactive px-4 py-3 text-sm font-black text-white shadow-lg transition-transform focus:outline-none focus:ring-2 focus:ring-interactive focus:ring-offset-2 focus:ring-offset-canvas"
         aria-label="Open Artha Income AI assistant"
       >
         <Bot className="h-5 w-5" />

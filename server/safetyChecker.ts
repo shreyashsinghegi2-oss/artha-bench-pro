@@ -101,12 +101,7 @@ export function checkPromptSafety(prompt: string): PromptSafetyResult {
   }
 
   // 4. Secret / API Credential Leak Detection
-  if (
-    lower.includes('gsk_') ||
-    lower.includes('sk-') ||
-    (lower.includes('api_key') && lower.includes('=')) ||
-    lower.includes('bearer ')
-  ) {
+  if (lower.includes('gsk_') || lower.includes('sk-') || (lower.includes('api_key') && lower.includes('=')) || lower.includes('bearer ')) {
     riskFlags.push('Secret API Credential Pattern Detected');
     return {
       safe: false,

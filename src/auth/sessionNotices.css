@@ -1,0 +1,16 @@
+.sn-toast{position:fixed;top:84px;left:50%;transform:translateX(-50%);z-index:200;display:flex;gap:12px;align-items:flex-start;width:min(480px,calc(100vw - 24px));padding:14px 16px;border-radius:16px;border:1px solid #fde68a;background:#fffbeb;color:#78350f;box-shadow:0 24px 60px -24px rgba(15,23,42,.45);animation:sn-in .3s ease-out}
+.sn-toast b{display:block;font-size:14px;color:#78350f}
+.sn-toast p{margin:3px 0 0;font-size:12.5px;line-height:1.5;color:#92400e}
+.sn-ico{display:grid;place-items:center;flex:none;width:34px;height:34px;border-radius:10px;background:#fef3c7;color:#b45309}
+.sn-toast>button{margin-left:auto;border:0;background:transparent;color:#92400e;cursor:pointer}
+.sn-overlay{position:fixed;inset:0;z-index:210;display:grid;place-items:center;padding:16px;background:rgba(15,23,42,.45);backdrop-filter:blur(6px)}
+.sn-card{width:min(400px,100%);padding:26px 24px;border-radius:22px;background:#fff;color:#0f172a;text-align:center;box-shadow:0 40px 100px -30px rgba(15,23,42,.5);animation:sn-in .25s ease-out}
+.sn-card h2{margin:14px 0 6px;font-size:20px}
+.sn-card p{margin:0;font-size:14px;line-height:1.55;color:#475569}
+.sn-ring{--p:1;display:inline-grid;place-items:center;width:78px;height:78px;border-radius:50%;background:radial-gradient(closest-side,#fff 78%,transparent 80%),conic-gradient(#d97706 calc(var(--p)*1turn),#fde68a 0)}
+.sn-ring b{font-size:24px;color:#b45309;font-variant-numeric:tabular-nums}
+.sn-actions{display:flex;gap:10px;justify-content:center;margin-top:18px;flex-wrap:wrap}
+.sn-actions button{display:inline-flex;align-items:center;gap:6px;height:42px;padding:0 16px;border-radius:12px;border:1px solid #cbd5e1;background:#fff;color:#0f172a;font-size:14px;font-weight:700;cursor:pointer}
+.sn-actions button.primary{background:#059669;border-color:#059669;color:#fff}
+@keyframes sn-in{from{opacity:0;transform:translate(-50%,-8px)}}
+.sn-card{animation-name:sn-pop}@keyframes sn-pop{from{opacity:0;transform:scale(.96)}}

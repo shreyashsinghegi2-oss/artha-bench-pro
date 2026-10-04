@@ -1,0 +1,22 @@
+{
+  "country": "PH",
+  "name": "Philippines (individual income tax, graduated rates)",
+  "currency": "PHP",
+  "year": "2026",
+  "year_label": "Taxable year 2026",
+  "last_verified": "2026-09-30",
+  "sources": [
+    "https://www.bir.gov.ph/income-tax",
+    "https://www.officialgazette.gov.ph/2017/12/19/republic-act-no-10963/"
+  ],
+  "notes": [
+    "Graduated rates under the TRAIN law (RA 10963) schedule that applies from 1 January 2023.",
+    "Income means taxable compensation or business income after exclusions (13th-month pay up to ₱90,000, mandatory SSS/PhilHealth/Pag-IBIG contributions).",
+    "The optional 8% flat rate for eligible self-employed individuals is not modelled."
+  ],
+  "schedules": {
+    "default": { "allowance": 0, "brackets": [
+      { "up_to": 250000, "rate": 0 }, { "up_to": 400000, "rate": 0.15 }, { "up_to": 800000, "rate": 0.20 },
+      { "up_to": 2000000, "rate": 0.25 }, { "up_to": 8000000, "rate": 0.30 }, { "up_to": null, "rate": 0.35 } ] }
+  }
+}

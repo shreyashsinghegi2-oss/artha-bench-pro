@@ -14,7 +14,8 @@ export const Footer: React.FC = () => {
     {
       name: 'ArthaBench Research Team',
       role: 'Financial Reliability & Dataset Engineering',
-      workstream: 'Benchmark V1 Scenario Dataset, Regulatory Evidence Verifier (SEBI/RBI/SEC), Prompt Injection Security Guardrails, Regional Localization Protocols',
+      workstream:
+        'Benchmark V1 Scenario Dataset, Regulatory Evidence Verifier (SEBI/RBI/SEC), Prompt Injection Security Guardrails, Regional Localization Protocols',
       icon: Shield,
     },
   ];
@@ -23,9 +24,12 @@ export const Footer: React.FC = () => {
     <footer className="bg-canvas border-t border-line py-8 px-4 text-secondary text-xs">
       <div className="max-w-[1700px] mx-auto flex flex-col md:flex-row justify-between items-center gap-4 text-center md:text-left">
         <div>
-          <p className="font-semibold text-ink">ArthaBench Pro — AI Financial Reliability Benchmark V2.0</p>
+          <p className="font-semibold text-ink">ArthaBench Pro - AI Financial Reliability Benchmark V2.0</p>
           <p className="text-secondary mt-1">
-            Created and architected by <span className="text-ink font-medium">Shreyash Singh</span> · Developed with the <button onClick={() => setShowContributors(true)} className="text-interactive underline font-medium hover:text-interactive transition-all">ArthaBench Research Team</button>
+            Created and architected by <span className="text-ink font-medium">Shreyash Singh</span> · Developed with the{' '}
+            <button onClick={() => setShowContributors(true)} className="text-interactive underline font-medium hover:text-interactive transition-all">
+              ArthaBench Research Team
+            </button>
           </p>
         </div>
         <div className="flex flex-col sm:flex-row items-center gap-4 text-secondary">
@@ -59,9 +63,7 @@ export const Footer: React.FC = () => {
               </div>
               <div>
                 <h2 className="text-xl font-bold text-ink">Architecture & Team Credits</h2>
-                <p className="text-xs text-secondary">
-                  ArthaBench Pro V2.0 Research & Engineering Workstreams
-                </p>
+                <p className="text-xs text-secondary">ArthaBench Pro V2.0 Research & Engineering Workstreams</p>
               </div>
             </div>
 

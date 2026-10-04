@@ -20,7 +20,7 @@ export const RELIABILITY_DIMENSIONS_CONFIG: Record<string, DimensionConfig> = {
   dualModelConsensus: {
     id: 'dualModelConsensus',
     name: 'Dual-Model Consensus',
-    weight: 0.20,
+    weight: 0.2,
     description: 'Measures structural, formula, and numerical agreement between primary and secondary AI evaluators.',
   },
   evidenceVerification: {
@@ -38,7 +38,7 @@ export const RELIABILITY_DIMENSIONS_CONFIG: Record<string, DimensionConfig> = {
   reasoningConsistency: {
     id: 'reasoningConsistency',
     name: 'Reasoning Consistency',
-    weight: 0.10,
+    weight: 0.1,
     description: 'Evaluates step-by-step logic, assumption clarity, and intermediate calculations.',
   },
   localizationAccuracy: {

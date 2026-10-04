@@ -57,7 +57,7 @@ export function calculateScenarioLocally(tab: CalculatorTab, inputs: Record<stri
     } else {
       balance = P;
       const totalMonths = Math.round(new Decimal(years).times(12).toNumber());
-      const effectiveMonthlyRate = new Decimal(1).plus(r.div(n)).pow(n.div(12).toNumber()).minus(1);
+      const effectiveMonthlyRate = new Decimal(1).plus(r.div(n)).pow(n.div(12)).minus(1);
       for (let month = 0; month < totalMonths; month += 1) {
         balance = balance.plus(PMT).times(new Decimal(1).plus(effectiveMonthlyRate));
         totalContributions = totalContributions.plus(PMT);
@@ -87,11 +87,7 @@ export function calculateScenarioLocally(tab: CalculatorTab, inputs: Record<stri
     const receivables = nonNegative(inputs.receivables, 'Receivables');
     const currentLiabilities = positive(inputs.currentLiabilities, 'Current liabilities');
     const quickRatio = round(new Decimal(cash).plus(marketableSecurities).plus(receivables).div(currentLiabilities));
-    const assessment = quickRatio >= 1.5
-      ? 'Strong Liquidity (>= 1.5)'
-      : quickRatio >= 1
-        ? 'Adequate Liquidity (1.0 - 1.49)'
-        : 'Weak Liquidity (< 1.0)';
+    const assessment = quickRatio >= 1.5 ? 'Strong Liquidity (>= 1.5)' : quickRatio >= 1 ? 'Adequate Liquidity (1.0 - 1.49)' : 'Weak Liquidity (< 1.0)';
     return {
       cash,
       marketableSecurities,
@@ -144,13 +140,7 @@ export function calculateScenarioLocally(tab: CalculatorTab, inputs: Record<stri
   const monthlyGrossIncome = positive(inputs.monthlyGrossIncome, 'Monthly gross income');
   const monthlyDebtPayments = nonNegative(inputs.monthlyDebtPayments, 'Monthly debt payments');
   const dtiPercent = round(new Decimal(monthlyDebtPayments).div(monthlyGrossIncome).times(100));
-  const healthCategory = dtiPercent <= 20
-    ? 'Excellent'
-    : dtiPercent <= 36
-      ? 'Moderate'
-      : dtiPercent <= 50
-        ? 'High Risk'
-        : 'Critical';
+  const healthCategory = dtiPercent <= 20 ? 'Excellent' : dtiPercent <= 36 ? 'Moderate' : dtiPercent <= 50 ? 'High Risk' : 'Critical';
   return {
     monthlyGrossIncome,
     monthlyDebtPayments,

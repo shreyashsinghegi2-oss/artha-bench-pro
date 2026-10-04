@@ -186,3 +186,11 @@
   .dashboard-product-shell .dashboard-hero{border-radius:18px}
   .dashboard-product-shell .dashboard-chart-panel{min-height:340px}
 }
+/* Folded AI reliability lab group */
+.dashboard-nav-lab{border-top:1px solid var(--border-subtle);padding-top:8px}
+.dashboard-nav-lab>summary{list-style:none;cursor:pointer;padding:6px 10px;border-radius:10px;font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--text-secondary);display:flex;justify-content:space-between;align-items:center}
+.dashboard-nav-lab>summary::-webkit-details-marker{display:none}
+.dashboard-nav-lab>summary::after{content:"+";font-size:14px;font-weight:700}
+.dashboard-nav-lab[open]>summary::after{content:"–"}
+.dashboard-nav-lab>summary:hover{background:var(--bg-hover);color:var(--text-primary)}
+.dashboard-nav-lab .dashboard-nav-label{display:none}

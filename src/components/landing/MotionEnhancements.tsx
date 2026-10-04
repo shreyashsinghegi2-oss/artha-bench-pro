@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 
-// ADDITIVE MOTION ENHANCEMENT — existing behavior preserved
+// ADDITIVE MOTION ENHANCEMENT - existing behavior preserved
 export function useReducedMotionPreference() {
   const [reduced, setReduced] = useState(false);
 
@@ -15,12 +15,8 @@ export function useReducedMotionPreference() {
   return reduced;
 }
 
-// ADDITIVE MOTION ENHANCEMENT — existing behavior preserved
-export const ScrollRevealOnce: React.FC<React.PropsWithChildren<{ className?: string; delay?: number }>> = ({
-  children,
-  className = '',
-  delay = 0,
-}) => {
+// ADDITIVE MOTION ENHANCEMENT - existing behavior preserved
+export const ScrollRevealOnce: React.FC<React.PropsWithChildren<{ className?: string; delay?: number }>> = ({ children, className = '', delay = 0 }) => {
   const ref = useRef<HTMLDivElement | null>(null);
   const [shown, setShown] = useState(false);
   const reduced = useReducedMotionPreference();
@@ -35,12 +31,15 @@ export const ScrollRevealOnce: React.FC<React.PropsWithChildren<{ className?: st
       setShown(true);
       return;
     }
-    const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) {
-        setShown(true);
-        observer.disconnect();
-      }
-    }, { threshold: 0.16, rootMargin: '0px 0px -8% 0px' });
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setShown(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.16, rootMargin: '0px 0px -8% 0px' },
+    );
     observer.observe(node);
     return () => observer.disconnect();
   }, [reduced]);
@@ -52,17 +51,17 @@ export const ScrollRevealOnce: React.FC<React.PropsWithChildren<{ className?: st
   );
 };
 
-// ADDITIVE MOTION ENHANCEMENT — existing behavior preserved
+// ADDITIVE MOTION ENHANCEMENT - existing behavior preserved
 export const EvidenceFlow: React.FC<React.PropsWithChildren<{ className?: string }>> = ({ children, className = '' }) => (
   <div className={`additive-evidence-flow ${className}`}>{children}</div>
 );
 
-// ADDITIVE MOTION ENHANCEMENT — existing behavior preserved
+// ADDITIVE MOTION ENHANCEMENT - existing behavior preserved
 export const AnimatedFeatureSurface: React.FC<React.PropsWithChildren<{ className?: string }>> = ({ children, className = '' }) => (
   <div className={`additive-feature-surface ${className}`}>{children}</div>
 );
 
-// ADDITIVE MOTION ENHANCEMENT — existing behavior preserved
+// ADDITIVE MOTION ENHANCEMENT - existing behavior preserved
 export const HeroCinematicReveal: React.FC<React.PropsWithChildren<{ className?: string }>> = ({ children, className = '' }) => {
   const [ready, setReady] = useState(false);
 
@@ -93,12 +92,12 @@ export const HeroCinematicReveal: React.FC<React.PropsWithChildren<{ className?:
   return <div className={`additive-hero-cinematic ${ready ? 'is-ready' : ''} ${className}`}>{children}</div>;
 };
 
-// ADDITIVE MOTION ENHANCEMENT — existing behavior preserved
+// ADDITIVE MOTION ENHANCEMENT - existing behavior preserved
 export const ProductTiltShell: React.FC<React.PropsWithChildren<{ className?: string }>> = ({ children, className = '' }) => (
   <div className={`additive-product-tilt-shell ${className}`}>{children}</div>
 );
 
-// ADDITIVE MOTION ENHANCEMENT — existing behavior preserved
+// ADDITIVE MOTION ENHANCEMENT - existing behavior preserved
 export const ChartHoverOverlay: React.FC<{ visible: boolean; x: number; y: number; children?: React.ReactNode }> = ({ visible, x, y, children }) => (
   <div className={`additive-chart-tooltip ${visible ? 'is-visible' : ''}`} style={{ left: `${x}px`, top: `${y}px` }} role="status" aria-live="polite">
     {children}

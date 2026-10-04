@@ -1,22 +1,6 @@
 import React from 'react';
-import {
-  AlertTriangle,
-  Calculator,
-  CheckCircle2,
-  CircleHelp,
-  Lightbulb,
-  ShieldCheck,
-  Sparkles,
-} from 'lucide-react';
-import {
-  PolarAngleAxis,
-  PolarGrid,
-  PolarRadiusAxis,
-  Radar,
-  RadarChart,
-  ResponsiveContainer,
-  Tooltip,
-} from 'recharts';
+import { AlertTriangle, Calculator, CheckCircle2, CircleHelp, Lightbulb, ShieldCheck, Sparkles } from 'lucide-react';
+import { PolarAngleAxis, PolarGrid, PolarRadiusAxis, Radar, RadarChart, ResponsiveContainer, Tooltip } from 'recharts';
 
 export interface EvaluationDimension {
   id: string;
@@ -74,7 +58,10 @@ function scoreTone(score: number) {
 
 function verdictLabel(verdict: string | undefined) {
   if (!verdict) return 'Evaluation complete';
-  return verdict.replaceAll('_', ' ').toLowerCase().replace(/\b\w/g, (letter) => letter.toUpperCase());
+  return verdict
+    .replaceAll('_', ' ')
+    .toLowerCase()
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
 export const ReliabilityRadar: React.FC<{
@@ -116,7 +103,14 @@ export const ReliabilityRadar: React.FC<{
           />
           <Radar name={primaryLabel} dataKey="primary" stroke="var(--chart-primary)" fill="var(--chart-primary)" fillOpacity={0.22} strokeWidth={2} />
           {secondary && secondary.length > 0 && (
-            <Radar name={secondaryLabel} dataKey="secondary" stroke="var(--chart-comparison)" fill="var(--chart-comparison)" fillOpacity={0.12} strokeWidth={2} />
+            <Radar
+              name={secondaryLabel}
+              dataKey="secondary"
+              stroke="var(--chart-comparison)"
+              fill="var(--chart-comparison)"
+              fillOpacity={0.12}
+              strokeWidth={2}
+            />
           )}
         </RadarChart>
       </ResponsiveContainer>
@@ -134,7 +128,10 @@ export const ReliabilityReportPanel: React.FC<{
   const score = clampScore(report.overallScore ?? report.metrics?.overallReliabilityScore);
   const strengths = dimensions.filter((dimension) => dimension.rawScore >= 80).sort((a, b) => b.rawScore - a.rawScore);
   const issues = dimensions.filter((dimension) => dimension.rawScore < 70).sort((a, b) => a.rawScore - b.rawScore);
-  const suggestions = [...dimensions].sort((a, b) => a.rawScore - b.rawScore).filter((dimension) => dimension.rawScore < 85).slice(0, 4);
+  const suggestions = [...dimensions]
+    .sort((a, b) => a.rawScore - b.rawScore)
+    .filter((dimension) => dimension.rawScore < 85)
+    .slice(0, 4);
   const risks = Array.isArray(report.riskFlags) ? report.riskFlags : [];
 
   return (
@@ -147,7 +144,9 @@ export const ReliabilityReportPanel: React.FC<{
             {report.verificationCode && <span className="font-mono">{report.verificationCode}</span>}
             {report.createdAt && <span>· {new Date(report.createdAt).toLocaleString()}</span>}
             {report.executionDurationMs !== undefined && <span>· {report.executionDurationMs} ms</span>}
-            {report.demoMode && <span className="rounded-full border border-warning-fill/30 bg-warning-soft px-2 py-0.5 font-bold text-warning">Demo / fallback model mode</span>}
+            {report.demoMode && (
+              <span className="rounded-full border border-warning-fill/30 bg-warning-soft px-2 py-0.5 font-bold text-warning">Demo / fallback model mode</span>
+            )}
           </div>
         </div>
         <div className={`min-w-36 rounded-2xl border px-4 py-3 text-right ${scoreTone(score)}`}>
@@ -177,7 +176,9 @@ export const ReliabilityReportPanel: React.FC<{
                 <details key={dimension.id} className="group rounded-xl border border-line bg-canvas px-3.5 py-3 open:border-interactive/30">
                   <summary className="flex cursor-pointer list-none items-center justify-between gap-3">
                     <span className="min-w-0 text-xs font-bold text-ink">{dimension.name}</span>
-                    <span className={`shrink-0 rounded-lg border px-2 py-1 font-mono text-[11px] font-black ${scoreTone(currentScore)}`}>{currentScore} / 100</span>
+                    <span className={`shrink-0 rounded-lg border px-2 py-1 font-mono text-[11px] font-black ${scoreTone(currentScore)}`}>
+                      {currentScore} / 100
+                    </span>
                   </summary>
                   <div className="mt-3 border-t border-line pt-3 text-[10px] leading-5 text-secondary">
                     <p>{dimension.reason}</p>
@@ -194,34 +195,69 @@ export const ReliabilityReportPanel: React.FC<{
 
       <div className="grid gap-4 lg:grid-cols-3">
         <div className="rounded-2xl border border-success-fill/25 bg-success-soft/60 p-4">
-          <h3 className="flex items-center gap-2 text-xs font-black text-success"><CheckCircle2 className="h-4 w-4" /> Key strengths</h3>
+          <h3 className="flex items-center gap-2 text-xs font-black text-success">
+            <CheckCircle2 className="h-4 w-4" /> Key strengths
+          </h3>
           <div className="mt-3 space-y-2 text-[11px] leading-5 text-secondary">
-            {strengths.length ? strengths.slice(0, 4).map((dimension) => <p key={dimension.id}><span className="font-bold text-ink">{dimension.name}:</span> {dimension.rawScore}/100 — {dimension.reason}</p>) : <p>No dimension reached the strong-score threshold yet.</p>}
+            {strengths.length ? (
+              strengths.slice(0, 4).map((dimension) => (
+                <p key={dimension.id}>
+                  <span className="font-bold text-ink">{dimension.name}:</span> {dimension.rawScore}/100 - {dimension.reason}
+                </p>
+              ))
+            ) : (
+              <p>No dimension reached the strong-score threshold yet.</p>
+            )}
           </div>
         </div>
         <div className="rounded-2xl border border-warning-fill/25 bg-warning-soft/50 p-4">
-          <h3 className="flex items-center gap-2 text-xs font-black text-warning"><CircleHelp className="h-4 w-4" /> Needs review</h3>
+          <h3 className="flex items-center gap-2 text-xs font-black text-warning">
+            <CircleHelp className="h-4 w-4" /> Needs review
+          </h3>
           <div className="mt-3 space-y-2 text-[11px] leading-5 text-secondary">
-            {issues.length ? issues.slice(0, 4).map((dimension) => <p key={dimension.id}><span className="font-bold text-ink">{dimension.name}:</span> {dimension.reason}</p>) : <p>No dimension is below the review threshold.</p>}
+            {issues.length ? (
+              issues.slice(0, 4).map((dimension) => (
+                <p key={dimension.id}>
+                  <span className="font-bold text-ink">{dimension.name}:</span> {dimension.reason}
+                </p>
+              ))
+            ) : (
+              <p>No dimension is below the review threshold.</p>
+            )}
           </div>
         </div>
         <div className="rounded-2xl border border-interactive/25 bg-interactive-soft/70 p-4">
-          <h3 className="flex items-center gap-2 text-xs font-black text-interactive"><Lightbulb className="h-4 w-4" /> Suggested improvements</h3>
+          <h3 className="flex items-center gap-2 text-xs font-black text-interactive">
+            <Lightbulb className="h-4 w-4" /> Suggested improvements
+          </h3>
           <div className="mt-3 space-y-2 text-[11px] leading-5 text-secondary">
-            {suggestions.length ? suggestions.map((dimension) => <p key={dimension.id}>Improve <span className="font-bold text-ink">{dimension.name}</span>: {dimension.limitations || dimension.reason}</p>) : <p>The evaluated response is strong across all seven measured dimensions.</p>}
+            {suggestions.length ? (
+              suggestions.map((dimension) => (
+                <p key={dimension.id}>
+                  Improve <span className="font-bold text-ink">{dimension.name}</span>: {dimension.limitations || dimension.reason}
+                </p>
+              ))
+            ) : (
+              <p>The evaluated response is strong across all seven measured dimensions.</p>
+            )}
           </div>
         </div>
       </div>
 
       {report.groundTruth && (
         <div className="rounded-2xl border border-line bg-canvas p-4">
-          <h3 className="flex items-center gap-2 text-xs font-black text-ink"><Calculator className="h-4 w-4 text-interactive" /> Deterministic calculation check</h3>
+          <h3 className="flex items-center gap-2 text-xs font-black text-ink">
+            <Calculator className="h-4 w-4 text-interactive" /> Deterministic calculation check
+          </h3>
           {report.groundTruth.hasNumericalCheck ? (
             <div className="mt-3 grid gap-3 sm:grid-cols-4">
               <Metric label="Status" value={report.groundTruth.pass ? 'Verified' : 'Needs review'} tone={report.groundTruth.pass ? 'success' : 'danger'} />
               <Metric label="Expected result" value={report.groundTruth.expectedResult ?? '—'} />
               <Metric label="Response result" value={report.groundTruth.aiResult ?? 'Not detected'} />
-              <Metric label="Error / tolerance" value={`${report.groundTruth.numericalErrorPercent ?? '—'}% / ${report.groundTruth.allowedTolerancePercent}%`} />
+              <Metric
+                label="Error / tolerance"
+                value={`${report.groundTruth.numericalErrorPercent ?? '—'}% / ${report.groundTruth.allowedTolerancePercent}%`}
+              />
               <p className="sm:col-span-4 text-[11px] leading-5 text-secondary">{report.groundTruth.explanation}</p>
             </div>
           ) : (
@@ -232,9 +268,13 @@ export const ReliabilityReportPanel: React.FC<{
 
       {risks.length > 0 && (
         <div className="rounded-2xl border border-danger/25 bg-danger-soft p-4">
-          <h3 className="flex items-center gap-2 text-xs font-black text-danger"><AlertTriangle className="h-4 w-4" /> Risk & reliability flags</h3>
+          <h3 className="flex items-center gap-2 text-xs font-black text-danger">
+            <AlertTriangle className="h-4 w-4" /> Risk & reliability flags
+          </h3>
           <ul className="mt-2 space-y-1.5 text-[11px] leading-5 text-secondary">
-            {risks.map((risk, index) => <li key={`${risk}-${index}`}>• {risk}</li>)}
+            {risks.map((risk, index) => (
+              <li key={`${risk}-${index}`}>• {risk}</li>
+            ))}
           </ul>
         </div>
       )}
@@ -242,7 +282,9 @@ export const ReliabilityReportPanel: React.FC<{
       {showResponses && report.primaryResponse && (
         <div className="space-y-3">
           <div className="rounded-2xl border border-interactive/25 bg-interactive-soft/35 p-4">
-            <h3 className="flex items-center gap-2 text-xs font-black text-interactive"><Sparkles className="h-4 w-4" /> {responseLabel}</h3>
+            <h3 className="flex items-center gap-2 text-xs font-black text-interactive">
+              <Sparkles className="h-4 w-4" /> {responseLabel}
+            </h3>
             <div className="mt-2 whitespace-pre-wrap text-xs leading-6 text-ink">{report.primaryResponse}</div>
           </div>
           {report.secondaryResponse && (
@@ -254,7 +296,10 @@ export const ReliabilityReportPanel: React.FC<{
         </div>
       )}
 
-      <p className="text-[10px] leading-5 text-secondary">Educational and research evaluation only. Scores describe the supplied response under the Artha Bench methodology; they are not financial, investment, tax, or legal advice.</p>
+      <p className="text-[10px] leading-5 text-secondary">
+        Educational and research evaluation only. Scores describe the supplied response under the Artha Bench methodology; they are not financial, investment,
+        tax, or legal advice.
+      </p>
     </section>
   );
 };

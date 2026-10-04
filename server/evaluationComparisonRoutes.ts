@@ -28,11 +28,7 @@ function buildSuggestions(report: FullReliabilityEvaluation) {
     .map((dimension) => `${dimension.name}: ${dimension.limitations || dimension.reason}`);
 }
 
-function buildComparisonReasons(
-  winner: 'A' | 'B' | 'tie',
-  reportA: FullReliabilityEvaluation,
-  reportB: FullReliabilityEvaluation,
-) {
+function buildComparisonReasons(winner: 'A' | 'B' | 'tie', reportA: FullReliabilityEvaluation, reportB: FullReliabilityEvaluation) {
   if (winner === 'tie') {
     return ['The overall reliability scores are effectively equal; review the seven dimension scores and evidence before preferring one response.'];
   }
@@ -49,14 +45,21 @@ function buildComparisonReasons(
     .filter(({ difference }) => difference >= 3)
     .sort((a, b) => b.difference - a.difference)
     .slice(0, 4)
-    .map(({ dimension, difference }) => `${dimension.name} is ${Math.round(difference)} points stronger (${Math.round(dimension.rawScore)}/100): ${dimension.reason}`);
+    .map(
+      ({ dimension, difference }) =>
+        `${dimension.name} is ${Math.round(difference)} points stronger (${Math.round(dimension.rawScore)}/100): ${dimension.reason}`,
+    );
 
   if (preferred.groundTruth.hasNumericalCheck && preferred.groundTruth.pass && !other.groundTruth.pass) {
-    reasons.unshift(`Its numerical result matches the deterministic ground truth within the configured ${preferred.groundTruth.allowedTolerancePercent}% tolerance, while the other response does not.`);
+    reasons.unshift(
+      `Its numerical result matches the deterministic ground truth within the configured ${preferred.groundTruth.allowedTolerancePercent}% tolerance, while the other response does not.`,
+    );
   }
 
   if (!reasons.length) {
-    reasons.push(`Response ${winner} has the higher weighted reliability score (${preferred.overallScore}/100 versus ${other.overallScore}/100) under the current seven-dimension methodology.`);
+    reasons.push(
+      `Response ${winner} has the higher weighted reliability score (${preferred.overallScore}/100 versus ${other.overallScore}/100) under the current seven-dimension methodology.`,
+    );
   }
   return reasons.slice(0, 5);
 }
@@ -79,13 +82,7 @@ evaluationComparisonRouter.post('/evaluate-response', async (req: Request, res: 
     const profile = parsed.data.profile || 'US';
     const startedAt = Date.now();
     const independentReference = await buildIndependentReference(query, profile);
-    const report = computeFullReliabilityEvaluation(
-      query,
-      response,
-      independentReference,
-      startedAt,
-      { profile },
-    );
+    const report = computeFullReliabilityEvaluation(query, response, independentReference, startedAt, { profile });
 
     res.json({
       report,

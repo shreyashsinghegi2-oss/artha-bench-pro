@@ -21,10 +21,7 @@ export interface EvidenceVerificationResult {
   sources: Array<{ url: string; title: string; verified: boolean; statusLabel: string }>;
 }
 
-export function evaluateEvidenceVerification(
-  text: string,
-  profile: 'India' | 'US' | 'Global' = 'US'
-): EvidenceVerificationResult {
+export function evaluateEvidenceVerification(text: string, profile: 'India' | 'US' | 'Global' = 'US'): EvidenceVerificationResult {
   if (!text) {
     return {
       score: 0,

@@ -1,16 +1,9 @@
+import { MicButton } from '../ai/MicButton';
+import { AssistantLogo } from '../ai/AssistantLogo';
+import { ThinkingSteps } from '../ai/ThinkingSteps';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import {
-  BrainCircuit,
-  CheckCircle2,
-  CircleAlert,
-  Lightbulb,
-  MessageSquareText,
-  RefreshCw,
-  Send,
-  ShieldCheck,
-  Sparkles,
-  Trash2,
-} from 'lucide-react';
+import { WebSearchToggle } from '../ai/WebSearchToggle';
+import { BrainCircuit, CheckCircle2, CircleAlert, Lightbulb, MessageSquareText, RefreshCw, Send, ShieldCheck, Sparkles, Trash2 } from 'lucide-react';
 import { askTutorAI } from '../../services/learningApi';
 import { CurrencyIncomeSummary, IncomeSource } from '../../services/incomeStorage';
 import { StructuredFinancialAnswer } from '../../types';
@@ -52,19 +45,17 @@ function buildAdaptiveQuestions(sources: IncomeSource[], summaries: CurrencyInco
 
   const questions: string[] = [];
   const types = new Set(sources.map((source) => source.type));
-  const hasIrregularIncome = sources.some(
-    (source) => source.frequency === 'One-time' || source.type === 'Freelance' || source.type === 'Business',
-  );
+  const hasIrregularIncome = sources.some((source) => source.frequency === 'One-time' || source.type === 'Freelance' || source.type === 'Business');
   const hasPreTaxIncome = sources.some((source) => source.taxStatus === 'Pre-tax');
-  const recurringTypes = new Set(
-    sources.filter((source) => source.frequency !== 'One-time').map((source) => source.type),
-  );
+  const recurringTypes = new Set(sources.filter((source) => source.frequency !== 'One-time').map((source) => source.type));
 
   if (hasIrregularIncome) {
     questions.push('Is your freelance, business, or one-time income complete for the period, including unusually high or low months?');
   }
   if (types.has('Investment Returns')) {
-    questions.push('Are Investment Returns recorded as realised income such as interest, dividends, or realised gains rather than unrealised portfolio changes?');
+    questions.push(
+      'Are Investment Returns recorded as realised income such as interest, dividends, or realised gains rather than unrealised portfolio changes?',
+    );
   }
   if (hasPreTaxIncome) {
     questions.push('For each pre-tax source, are you consistently recording gross amounts rather than mixing gross and net receipts?');
@@ -134,14 +125,7 @@ Snapshot: ${JSON.stringify(context)}`;
   return prompt.slice(0, 1950);
 }
 
-export const IncomeAIAssistant: React.FC<IncomeAIAssistantProps> = ({
-  sources,
-  summaries,
-  taxWorkspace,
-  taxEstimate,
-  taxComparison,
-  onAddIncomeSource,
-}) => {
+export const IncomeAIAssistant: React.FC<IncomeAIAssistantProps> = ({ sources, summaries, taxWorkspace, taxEstimate, taxComparison, onAddIncomeSource }) => {
   const [mode, setMode] = useState<AssistantMode>('income-health');
   const [messages, setMessages] = useState<IncomeAIMessage[]>([]);
   const [input, setInput] = useState('');
@@ -181,19 +165,15 @@ export const IncomeAIAssistant: React.FC<IncomeAIAssistantProps> = ({
     setIsThinking(true);
 
     try {
-      const response = await askTutorAI(
-        buildIncomePrompt(question, mode, sources, summaries, taxWorkspace, taxEstimate, taxComparison),
-        history,
-        {
-          country: 'India',
-          currency: 'INR',
-          language: 'english',
-          level: 'advanced',
-          mode: 'explain',
-          detail: 'detailed',
-          useOfficialSources: false,
-        },
-      );
+      const response = await askTutorAI(buildIncomePrompt(question, mode, sources, summaries, taxWorkspace, taxEstimate, taxComparison), history, {
+        country: 'India',
+        currency: 'INR',
+        language: 'english',
+        level: 'advanced',
+        mode: 'explain',
+        detail: 'detailed',
+        useOfficialSources: false,
+      });
 
       setMessages((current) => [
         ...current,
@@ -219,15 +199,18 @@ export const IncomeAIAssistant: React.FC<IncomeAIAssistantProps> = ({
           <div className="max-w-3xl">
             <div className="flex flex-wrap items-center gap-2">
               <span className="inline-flex items-center gap-1.5 rounded-full border border-interactive/25 bg-surface px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-interactive">
-                <BrainCircuit className="h-3.5 w-3.5" /> Artha AI · Income Intelligence
+                <AssistantLogo size={18} /> ArthaMind Income &amp; Tax Intelligence
               </span>
               <span className="inline-flex items-center gap-1.5 rounded-full border border-success-fill/25 bg-success-soft px-2.5 py-1 text-[10px] font-bold text-success">
                 <ShieldCheck className="h-3.5 w-3.5" /> Workspace-grounded
               </span>
             </div>
-            <h2 id="income-ai-heading" className="mt-3 text-2xl font-black tracking-tight text-ink">Advanced personal income assistant</h2>
+            <h2 id="income-ai-heading" className="mt-3 text-2xl font-black tracking-tight text-ink">
+              Advanced personal income assistant
+            </h2>
             <p className="mt-2 text-sm leading-6 text-secondary">
-              Ask about income stability, missing records, tax-readiness, or planning. It reasons over a compact snapshot of this workspace and cannot silently edit your records.
+              Ask about income stability, missing records, tax-readiness, or planning. It reasons over a compact snapshot of this workspace and cannot silently
+              edit your records.
             </p>
           </div>
 
@@ -238,9 +221,7 @@ export const IncomeAIAssistant: React.FC<IncomeAIAssistantProps> = ({
                 type="button"
                 onClick={() => setMode(value as AssistantMode)}
                 className={`min-h-11 rounded-xl border px-3 py-2 text-xs font-bold transition-all ${
-                  mode === value
-                    ? 'border-interactive bg-interactive text-white shadow-sm'
-                    : 'border-line bg-surface text-secondary hover:border-interactive/40 hover:text-ink'
+                  mode === value ? 'border-interactive bg-interactive text-white shadow-sm' : 'border-line bg-surface text-secondary hover:text-ink'
                 }`}
               >
                 {label}
@@ -260,7 +241,8 @@ export const IncomeAIAssistant: React.FC<IncomeAIAssistantProps> = ({
                 </div>
                 <h3 className="mt-5 text-xl font-black text-ink">Ask Artha about your recorded income</h3>
                 <p className="mt-2 max-w-xl text-sm leading-6 text-secondary">
-                  It can explain deterministic outputs, spot data-quality gaps, reason about income concentration, and ask targeted questions before giving a conclusion.
+                  It can explain deterministic outputs, spot data-quality gaps, reason about income concentration, and ask targeted questions before giving a
+                  conclusion.
                 </p>
                 <div className="mt-5 grid w-full gap-2 sm:grid-cols-2">
                   {starterPrompts.map((prompt) => (
@@ -268,14 +250,18 @@ export const IncomeAIAssistant: React.FC<IncomeAIAssistantProps> = ({
                       key={prompt}
                       type="button"
                       onClick={() => void sendQuestion(prompt)}
-                      className="rounded-xl border border-line bg-surface p-3 text-left text-xs font-semibold leading-5 text-secondary transition-all hover:border-interactive/40 hover:text-ink"
+                      className="rounded-xl border border-line bg-surface p-3 text-left text-xs font-semibold leading-5 text-secondary transition-all hover:text-ink"
                     >
                       {prompt}
                     </button>
                   ))}
                 </div>
                 {!sources.length ? (
-                  <button type="button" onClick={onAddIncomeSource} className="mt-4 rounded-xl bg-brand px-4 py-2.5 text-sm font-black text-white hover:bg-brand-hover">
+                  <button
+                    type="button"
+                    onClick={onAddIncomeSource}
+                    className="mt-4 rounded-xl bg-brand px-4 py-2.5 text-sm font-black text-white hover:bg-brand-hover"
+                  >
                     Add an income source first
                   </button>
                 ) : null}
@@ -284,9 +270,7 @@ export const IncomeAIAssistant: React.FC<IncomeAIAssistantProps> = ({
               messages.map((message) => (
                 <article key={message.id} className={message.role === 'user' ? 'ml-auto max-w-[85%]' : 'mr-auto w-full max-w-4xl'}>
                   {message.role === 'user' ? (
-                    <div className="rounded-2xl rounded-br-md bg-interactive px-4 py-3 text-sm leading-6 text-white shadow-sm">
-                      {message.content}
-                    </div>
+                    <div className="rounded-2xl rounded-br-md bg-interactive px-4 py-3 text-sm leading-6 text-white shadow-sm">{message.content}</div>
                   ) : message.structuredAnswer ? (
                     <StructuredFinancialAnswerView
                       answer={message.structuredAnswer}
@@ -302,11 +286,7 @@ export const IncomeAIAssistant: React.FC<IncomeAIAssistantProps> = ({
               ))
             )}
 
-            {isThinking ? (
-              <div className="mr-auto inline-flex items-center gap-2 rounded-2xl border border-line bg-surface px-4 py-3 text-sm font-semibold text-secondary shadow-sm">
-                <RefreshCw className="h-4 w-4 animate-spin text-interactive" /> Reviewing the recorded income context…
-              </div>
-            ) : null}
+            <ThinkingSteps active={isThinking} />
             {error ? (
               <div className="flex items-start gap-2 rounded-xl border border-danger/25 bg-danger-soft p-3 text-sm text-danger">
                 <CircleAlert className="mt-0.5 h-4 w-4 shrink-0" /> {error}
@@ -316,6 +296,9 @@ export const IncomeAIAssistant: React.FC<IncomeAIAssistantProps> = ({
           </div>
 
           <div className="border-t border-line bg-surface p-4">
+            <div className="mb-2">
+              <WebSearchToggle />
+            </div>
             <div className="flex items-end gap-2 rounded-2xl border border-line bg-canvas p-2 focus-within:border-interactive/50">
               <textarea
                 value={input}
@@ -332,6 +315,7 @@ export const IncomeAIAssistant: React.FC<IncomeAIAssistantProps> = ({
                 className="min-h-[52px] flex-1 resize-none bg-transparent px-2 py-2 text-sm text-ink outline-none placeholder:text-secondary/70"
                 aria-label="Ask Artha Income AI"
               />
+              <MicButton onText={setInput} disabled={isThinking} />
               <button
                 type="button"
                 onClick={() => void sendQuestion()}
@@ -343,9 +327,18 @@ export const IncomeAIAssistant: React.FC<IncomeAIAssistantProps> = ({
               </button>
             </div>
             <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-[10px] text-secondary">
-              <span>{sources.length} income record{sources.length === 1 ? '' : 's'} available to this session · currencies stay separate</span>
+              <span>
+                {sources.length} income record{sources.length === 1 ? '' : 's'} available to this session · currencies stay separate
+              </span>
               {messages.length ? (
-                <button type="button" onClick={() => { setMessages([]); setError(null); }} className="inline-flex items-center gap-1 font-bold hover:text-danger">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMessages([]);
+                    setError(null);
+                  }}
+                  className="inline-flex items-center gap-1 font-bold hover:text-danger"
+                >
                   <Trash2 className="h-3 w-3" /> Clear conversation
                 </button>
               ) : null}
@@ -354,7 +347,10 @@ export const IncomeAIAssistant: React.FC<IncomeAIAssistantProps> = ({
         </div>
 
         <aside className="border-t border-line bg-surface p-5 xl:border-l xl:border-t-0">
-          <div className="flex items-center gap-2"><MessageSquareText className="h-4 w-4 text-interactive" /><h3 className="font-black text-ink">AI review queue</h3></div>
+          <div className="flex items-center gap-2">
+            <MessageSquareText className="h-4 w-4 text-interactive" />
+            <h3 className="font-black text-ink">AI review queue</h3>
+          </div>
           <p className="mt-2 text-xs leading-5 text-secondary">These follow-up questions come from gaps or patterns in the records already present.</p>
           <div className="mt-4 space-y-2">
             {adaptiveQuestions.map((question) => (
@@ -362,7 +358,7 @@ export const IncomeAIAssistant: React.FC<IncomeAIAssistantProps> = ({
                 key={question}
                 type="button"
                 onClick={() => void sendQuestion(question)}
-                className="w-full rounded-xl border border-line bg-canvas p-3 text-left text-xs font-semibold leading-5 text-secondary hover:border-interactive/40 hover:text-ink"
+                className="w-full rounded-xl border border-line bg-canvas p-3 text-left text-xs font-semibold leading-5 text-secondary hover:text-ink"
               >
                 {question}
               </button>
@@ -370,11 +366,20 @@ export const IncomeAIAssistant: React.FC<IncomeAIAssistantProps> = ({
           </div>
 
           <div className="mt-5 rounded-2xl border border-brand/20 bg-brand-soft/60 p-4">
-            <div className="flex items-center gap-2 text-sm font-black text-ink"><CheckCircle2 className="h-4 w-4 text-brand" /> Intelligence boundaries</div>
+            <div className="flex items-center gap-2 text-sm font-black text-ink">
+              <CheckCircle2 className="h-4 w-4 text-brand" /> Intelligence boundaries
+            </div>
             <ul className="mt-3 space-y-2 text-xs leading-5 text-secondary">
-              <li className="flex gap-2"><Lightbulb className="mt-0.5 h-3.5 w-3.5 shrink-0 text-premium" /> User-entered amounts are not independently verified bank data.</li>
-              <li className="flex gap-2"><Lightbulb className="mt-0.5 h-3.5 w-3.5 shrink-0 text-premium" /> Tax estimates remain deterministic engine outputs; AI explains but does not overwrite them.</li>
-              <li className="flex gap-2"><Lightbulb className="mt-0.5 h-3.5 w-3.5 shrink-0 text-premium" /> AI cannot save, delete, or silently reclassify income records.</li>
+              <li className="flex gap-2">
+                <Lightbulb className="mt-0.5 h-3.5 w-3.5 shrink-0 text-premium" /> User-entered amounts are not independently verified bank data.
+              </li>
+              <li className="flex gap-2">
+                <Lightbulb className="mt-0.5 h-3.5 w-3.5 shrink-0 text-premium" /> Tax estimates remain deterministic engine outputs; AI explains but does not
+                overwrite them.
+              </li>
+              <li className="flex gap-2">
+                <Lightbulb className="mt-0.5 h-3.5 w-3.5 shrink-0 text-premium" /> AI cannot save, delete, or silently reclassify income records.
+              </li>
             </ul>
           </div>
         </aside>

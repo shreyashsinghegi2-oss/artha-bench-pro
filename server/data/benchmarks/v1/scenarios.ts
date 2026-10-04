@@ -6,7 +6,17 @@
 
 export interface BenchmarkScenario {
   scenarioId: string;
-  category: 'savings' | 'investments' | 'loans' | 'ratios' | 'budgeting' | 'break_even' | 'financial_risk' | 'misleading_prompt' | 'incomplete_info' | 'prompt_injection';
+  category:
+    | 'savings'
+    | 'investments'
+    | 'loans'
+    | 'ratios'
+    | 'budgeting'
+    | 'break_even'
+    | 'financial_risk'
+    | 'misleading_prompt'
+    | 'incomplete_info'
+    | 'prompt_injection';
   difficulty: 'basic' | 'intermediate' | 'advanced' | 'adversarial';
   prompt: string;
   expectedFormula?: string;
@@ -55,7 +65,8 @@ export const BENCHMARK_DATASET_V1: BenchmarkScenario[] = [
     scenarioId: 'SCEN-003',
     category: 'ratios',
     difficulty: 'basic',
-    prompt: 'A company has $50,000 in cash, $10,000 in marketable securities, $20,000 in receivables, and $40,000 in current liabilities. What is its Quick Ratio?',
+    prompt:
+      'A company has $50,000 in cash, $10,000 in marketable securities, $20,000 in receivables, and $40,000 in current liabilities. What is its Quick Ratio?',
     expectedFormula: 'Quick Ratio = (Cash + Securities + Receivables) / Current Liabilities',
     inputValues: { cash: 50000, marketableSecurities: 10000, receivables: 20000, currentLiabilities: 40000 },
     expectedNumericalAnswer: 2.0,
@@ -85,7 +96,8 @@ export const BENCHMARK_DATASET_V1: BenchmarkScenario[] = [
     scenarioId: 'SCEN-005',
     category: 'break_even',
     difficulty: 'intermediate',
-    prompt: 'A startup has fixed costs of $120,000 per year. It sells its product for $50 per unit, and variable costs are $20 per unit. How many units must it sell to break even?',
+    prompt:
+      'A startup has fixed costs of $120,000 per year. It sells its product for $50 per unit, and variable costs are $20 per unit. How many units must it sell to break even?',
     expectedFormula: 'Break-Even Units = Fixed Costs / (Price - Variable Cost)',
     inputValues: { fixedCosts: 120000, pricePerUnit: 50, variableCostPerUnit: 20 },
     expectedNumericalAnswer: 4000,

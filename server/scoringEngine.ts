@@ -61,7 +61,7 @@ export function computeFullReliabilityEvaluation(
     expectedAnswer?: number;
     tolerancePercent?: number;
     profile?: 'India' | 'US' | 'Global';
-  }
+  },
 ): FullReliabilityEvaluation {
   const profile = scenarioContext?.profile || 'US';
 
@@ -81,7 +81,7 @@ export function computeFullReliabilityEvaluation(
   const numRawScore = groundTruthRes.hasNumericalCheck
     ? groundTruthRes.pass
       ? 100
-      : Math.max(0, 100 - Math.round(groundTruthRes.numericalErrorPercent || 50))
+      : Math.max(0, 100 - Math.round(groundTruthRes.numericalErrorPercent ?? 50))
     : 90;
 
   // Dimension 2: Dual-Model Consensus
@@ -105,7 +105,12 @@ export function computeFullReliabilityEvaluation(
   // Dimension 6: Localization Accuracy
   let localizationRawScore = 90;
   if (profile === 'India') {
-    if (primaryResponse.toLowerCase().includes('inr') || primaryResponse.toLowerCase().includes('₹') || primaryResponse.toLowerCase().includes('rbi') || primaryResponse.toLowerCase().includes('sebi')) {
+    if (
+      primaryResponse.toLowerCase().includes('inr') ||
+      primaryResponse.toLowerCase().includes('₹') ||
+      primaryResponse.toLowerCase().includes('rbi') ||
+      primaryResponse.toLowerCase().includes('sebi')
+    ) {
       localizationRawScore = 100;
     } else if (primaryResponse.toLowerCase().includes('sec') || primaryResponse.toLowerCase().includes('irs')) {
       localizationRawScore = 40; // Penalty for presenting US regulatory bodies as Indian authorities
@@ -119,7 +124,10 @@ export function computeFullReliabilityEvaluation(
     numericalAccuracy: {
       raw: numRawScore,
       reason: groundTruthRes.explanation,
-      evidenceStr: groundTruthRes.expectedResult !== undefined ? [`Expected: ${groundTruthRes.expectedResult}`, `AI Result: ${groundTruthRes.aiResult ?? 'None'}`] : ['Qualitative evaluation without numerical target'],
+      evidenceStr:
+        groundTruthRes.expectedResult !== undefined
+          ? [`Expected: ${groundTruthRes.expectedResult}`, `AI Result: ${groundTruthRes.aiResult ?? 'None'}`]
+          : ['Qualitative evaluation without numerical target'],
       pass: groundTruthRes.pass,
       lim: groundTruthRes.hasNumericalCheck ? undefined : 'No explicit equation found in prompt',
     },

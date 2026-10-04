@@ -1,20 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { getCryptoKlines, getCryptoMarkets } from '../../services/cryptoApi';
-import {
-  CRYPTO_SYMBOLS,
-  CryptoCandle,
-  CryptoDiagnostics,
-  CryptoFeedStatus,
-  CryptoInterval,
-  CryptoQuote,
-  CryptoSymbol,
-} from './cryptoTypes';
+import { CRYPTO_SYMBOLS, CryptoCandle, CryptoDiagnostics, CryptoFeedStatus, CryptoInterval, CryptoQuote, CryptoSymbol } from './cryptoTypes';
 
-const BINANCE_SOCKET_BASES = [
-  'wss://data-stream.binance.vision/ws',
-  'wss://stream.binance.com:9443/ws',
-  'wss://stream.binance.com:443/ws',
-] as const;
+const BINANCE_SOCKET_BASES = ['wss://data-stream.binance.vision/ws', 'wss://stream.binance.com:9443/ws', 'wss://stream.binance.com:443/ws'] as const;
 const STALE_THRESHOLD_MS = 60_000;
 const TRACKED_SYMBOLS = new Set<string>(CRYPTO_SYMBOLS);
 
@@ -106,12 +94,12 @@ export function useCryptoMarkets() {
         if (!active) return;
         hasVerifiedData = true;
         setQuotes(response.markets);
-        setStatus((current) => current === 'live' ? 'live' : 'cached');
+        setStatus((current) => (current === 'live' ? 'live' : 'cached'));
         setDiagnostics((current) => ({ ...current, restSnapshotAt: response.retrievedAt, lastError: null }));
       })
       .catch(() => {
         if (!active) return;
-        setStatus((current) => current === 'live' ? 'live' : 'unavailable');
+        setStatus((current) => (current === 'live' ? 'live' : 'unavailable'));
         setDiagnostics((current) => ({ ...current, lastError: 'Binance market snapshot unavailable' }));
       });
 
@@ -139,9 +127,7 @@ export function useCryptoMarkets() {
           const nextQuotes = payload.map(normalizeTickerMessage).filter((quote): quote is CryptoQuote => Boolean(quote));
           if (!nextQuotes.length) return;
           setQuotes((currentQuotes) => {
-            const bySymbol = new Map<CryptoSymbol, CryptoQuote>(
-              currentQuotes.map((quote) => [quote.symbol, quote] as const),
-            );
+            const bySymbol = new Map<CryptoSymbol, CryptoQuote>(currentQuotes.map((quote) => [quote.symbol, quote] as const));
             nextQuotes.forEach((quote) => bySymbol.set(quote.symbol, quote));
             return [...bySymbol.values()].sort((a, b) => CRYPTO_SYMBOLS.indexOf(a.symbol) - CRYPTO_SYMBOLS.indexOf(b.symbol));
           });
@@ -215,12 +201,12 @@ export function useCryptoKlines(symbol: CryptoSymbol, interval: CryptoInterval) 
         if (!active) return;
         hasVerifiedData = true;
         setCandles(response.candles);
-        setStatus((current) => current === 'live' ? 'live' : 'cached');
+        setStatus((current) => (current === 'live' ? 'live' : 'cached'));
         setDiagnostics((current) => ({ ...current, restSnapshotAt: response.retrievedAt }));
       })
       .catch(() => {
         if (!active) return;
-        setStatus((current) => current === 'live' ? 'live' : 'unavailable');
+        setStatus((current) => (current === 'live' ? 'live' : 'unavailable'));
         setDiagnostics((current) => ({ ...current, lastError: 'Binance candle snapshot unavailable' }));
       });
 
@@ -241,9 +227,7 @@ export function useCryptoKlines(symbol: CryptoSymbol, interval: CryptoInterval) 
           if (!candle) return;
           setCandles((currentCandles) => {
             const latest = currentCandles.at(-1);
-            return latest?.openTime === candle.openTime
-              ? [...currentCandles.slice(0, -1), candle]
-              : [...currentCandles.slice(-499), candle];
+            return latest?.openTime === candle.openTime ? [...currentCandles.slice(0, -1), candle] : [...currentCandles.slice(-499), candle];
           });
           hasVerifiedData = true;
           retryAttempt = 0;

@@ -1,0 +1,6 @@
+# Python packages for the Vercel Python functions (api/precision_engine.py, api/rag_engine.py).
+# The precision engine and RAG sidecar also keep their own requirements files for Docker and CI.
+fastapi==0.141.1
+mpmath==1.3.0
+sympy==1.14.0
+numpy>=1.26,<3

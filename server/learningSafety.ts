@@ -66,28 +66,18 @@ export function inspectInputSafety(input: string): SafetyCheckResult {
   }
 
   // Refuse specific illegal / dangerous requests
-  if (
-    lower.includes('insider trading') ||
-    lower.includes('tax evasion') ||
-    lower.includes('seed phrase') ||
-    lower.includes('private key')
-  ) {
+  if (lower.includes('insider trading') || lower.includes('tax evasion') || lower.includes('seed phrase') || lower.includes('private key')) {
     return {
       isSafe: false,
       requiresReview: false,
-      refusalReason:
-        'Refused: Request touches prohibited illegal activities, credentials, or private keys.',
+      refusalReason: 'Refused: Request touches prohibited illegal activities, credentials, or private keys.',
       detectedCategories,
     };
   }
 
   // High risk trading/options/crypto requires safety framing/review
   const requiresReview =
-    lower.includes('options') ||
-    lower.includes('futures') ||
-    lower.includes('leverage') ||
-    lower.includes('short sell') ||
-    lower.includes('crypto');
+    lower.includes('options') || lower.includes('futures') || lower.includes('leverage') || lower.includes('short sell') || lower.includes('crypto');
 
   return {
     isSafe: true,

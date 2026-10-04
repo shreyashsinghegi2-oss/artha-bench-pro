@@ -1,0 +1,26 @@
+name: Market alert webhooks
+
+# Vercel Hobby crons run once a day, so this schedule checks alert conditions every 15 minutes during
+# Indian market hours (09:00-16:00 IST, Monday-Friday) and hourly otherwise. Needs the CRON_SECRET repository
+# secret (same value as the Vercel environment variable); without it the job does nothing.
+on:
+  schedule:
+    - cron: '*/15 3-10 * * 1-5'
+    - cron: '0 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Trigger webhook check
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          APP_URL: ${{ vars.APP_URL || 'https://artha-bench-pro.vercel.app' }}
+        run: |
+          if [ -z "$CRON_SECRET" ]; then echo "CRON_SECRET is not set; skipping."; exit 0; fi
+          curl -fsS -H "Authorization: Bearer $CRON_SECRET" "$APP_URL/api/v1/webhooks/run"

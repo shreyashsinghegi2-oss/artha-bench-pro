@@ -46,7 +46,9 @@ export const SocialAuthButtons: React.FC = () => {
             ) : provider.id === 'github' ? (
               <Github className="h-4 w-4" />
             ) : (
-              <span aria-hidden="true" className="flex h-4 min-w-4 items-center justify-center text-[11px] font-black">{provider.monogram}</span>
+              <span aria-hidden="true" className="flex h-4 min-w-4 items-center justify-center text-[11px] font-black">
+                {provider.monogram}
+              </span>
             )}
             {provider.label}
           </button>

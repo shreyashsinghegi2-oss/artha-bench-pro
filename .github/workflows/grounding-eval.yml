@@ -1,0 +1,35 @@
+name: Grounding evaluation
+# Runs scripts/eval-grounding.ts (30 India finance questions) against a deployment and uploads the report.
+# Run once on the current production ("before") and again after a deploy ("after"), then compare:
+#   npx tsx scripts/eval-grounding.ts --compare reports/grounding-eval-before.json reports/grounding-eval-after.json
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: Deployment to evaluate
+        default: https://artha-bench-pro.vercel.app
+        required: true
+      label:
+        description: Report label (before / after / anything)
+        default: after
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx tsx scripts/eval-grounding.ts --base "${{ inputs.base_url }}" --label "${{ inputs.label }}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: grounding-eval-${{ inputs.label }}
+          path: reports/

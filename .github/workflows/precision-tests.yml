@@ -1,0 +1,45 @@
+name: Precision engine
+on:
+  push:
+    branches: [main]
+    paths: ['precision-engine/**', '.github/workflows/precision-tests.yml']
+  pull_request:
+    paths: ['precision-engine/**', '.github/workflows/precision-tests.yml']
+
+permissions:
+  contents: read
+
+jobs:
+  property-tests:
+    name: ${{ matrix.suite }} (full Hypothesis counts)
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        suite:
+          - tests/test_emi_sip_hypothesis.py
+          - tests/test_rates_hypothesis.py
+          - tests/test_tax_hypothesis.py
+          - tests/test_interval_bounds.py tests/test_certificates.py
+    defaults:
+      run:
+        working-directory: precision-engine
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: precision-engine/requirements*.txt
+      - run: pip install -r requirements-dev.txt
+      # 10,000 cases per closed-form calculator and per tax regime, 5,000 per root-finder, fresh random seed each run.
+      # Any case where the true value falls outside the certified interval, or the error exceeds 1e-8, fails the job.
+      - name: Property tests
+        env:
+          HYPOTHESIS_PROFILE: ci
+        run: python -m pytest ${{ matrix.suite }} -q --hypothesis-seed=random --hypothesis-show-statistics
+      - name: Report
+        if: failure()
+        run: |
+          echo "::error::PRECISION VIOLATION or verification failure. The Hypothesis output above contains the falsifying input and a reproduce_failure line."

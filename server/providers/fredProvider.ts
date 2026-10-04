@@ -12,9 +12,11 @@ import type { ConnectionStatus, EconomicIndicator, EconomicObservation, Provider
 const DEFAULT_FRED_OBSERVATIONS_URL = 'https://api.stlouisfed.org/fred/series/observations';
 const DEFAULT_FRED_CSV_URL = 'https://fred.stlouisfed.org/graph/fredgraph.csv';
 
-const fredResponseSchema = z.object({
-  observations: z.array(z.object({ date: z.string(), value: z.union([z.string(), z.number()]) }).passthrough()).default([]),
-}).passthrough();
+const fredResponseSchema = z
+  .object({
+    observations: z.array(z.object({ date: z.string(), value: z.union([z.string(), z.number()]) }).passthrough()).default([]),
+  })
+  .passthrough();
 
 type FredStatus = Extract<ConnectionStatus, 'connected' | 'not_configured' | 'invalid_credentials' | 'invalid_response' | 'rate_limited' | 'error'>;
 
@@ -75,11 +77,24 @@ async function fetchFredApi(seriesId: string, limit: number, apiKey: string, bas
   if (!response.ok) {
     const rawMessage = raw && typeof raw === 'object' && 'error_message' in raw ? String((raw as { error_message?: unknown }).error_message || '') : '';
     const status = classifyError(response.status, rawMessage);
-    return { seriesId, observations: [], status, message: status === 'invalid_credentials' ? 'FRED rejected the configured credential.' : status === 'rate_limited' ? 'FRED request limit reached.' : `FRED request failed with HTTP ${response.status}.` };
+    return {
+      seriesId,
+      observations: [],
+      status,
+      message:
+        status === 'invalid_credentials'
+          ? 'FRED rejected the configured credential.'
+          : status === 'rate_limited'
+            ? 'FRED request limit reached.'
+            : `FRED request failed with HTTP ${response.status}.`,
+    };
   }
   const parsed = fredResponseSchema.safeParse(raw);
   if (!parsed.success) return { seriesId, observations: [], status: 'invalid_response', message: 'FRED returned an unexpected response.' };
-  const observations = parsed.data.observations.map((row) => ({ date: row.date, value: Number(row.value) })).filter((row) => Number.isFinite(row.value)).sort((a, b) => a.date.localeCompare(b.date));
+  const observations = parsed.data.observations
+    .map((row) => ({ date: row.date, value: Number(row.value) }))
+    .filter((row) => Number.isFinite(row.value))
+    .sort((a, b) => a.date.localeCompare(b.date));
   return observations.length
     ? { seriesId, observations, status: 'connected', message: 'Latest official FRED observations loaded through the FRED API.' }
     : { seriesId, observations: [], status: 'invalid_response', message: 'FRED returned no usable observations.' };
@@ -105,7 +120,13 @@ async function fetchFredCsv(seriesId: string, limit: number, csvUrl: string): Pr
     if (url.protocol !== 'https:') throw new Error('FRED CSV URL must use HTTPS.');
     url.searchParams.set('id', seriesId);
     const response = await fetch(url, { headers: { Accept: 'text/csv,text/plain' }, signal: AbortSignal.timeout(8_000) });
-    if (!response.ok) return { seriesId, observations: [], status: response.status === 429 ? 'rate_limited' : 'error', message: `FRED public CSV request failed with HTTP ${response.status}.` };
+    if (!response.ok)
+      return {
+        seriesId,
+        observations: [],
+        status: response.status === 429 ? 'rate_limited' : 'error',
+        message: `FRED public CSV request failed with HTTP ${response.status}.`,
+      };
     const observations = parseFredCsv(await response.text(), seriesId, limit);
     return observations.length
       ? { seriesId, observations, status: 'connected', message: 'Latest official FRED observations loaded through the public FRED CSV endpoint.' }

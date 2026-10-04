@@ -1,7 +1,4 @@
-import type {
-  IndiaMarketTickerItem,
-  IndiaMarketTickerResponse,
-} from '../src/types';
+import type { IndiaMarketTickerItem, IndiaMarketTickerResponse } from '../src/types';
 import { fetchYahooFinanceQuote } from './providers/yahooFinanceProvider';
 
 const TICKER_CACHE_MS = 45_000;
@@ -22,9 +19,7 @@ const INDIA_MARKET_INSTRUMENTS = [
 let cache: { expiresAt: number; payload: IndiaMarketTickerResponse } | undefined;
 let inFlightRequest: Promise<IndiaMarketTickerResponse> | undefined;
 
-function unavailableItem(
-  instrument: (typeof INDIA_MARKET_INSTRUMENTS)[number],
-): IndiaMarketTickerItem {
+function unavailableItem(instrument: (typeof INDIA_MARKET_INSTRUMENTS)[number]): IndiaMarketTickerItem {
   return {
     id: instrument.id,
     label: instrument.label,
@@ -39,20 +34,11 @@ function unavailableItem(
   };
 }
 
-async function fetchTickerItem(
-  instrument: (typeof INDIA_MARKET_INSTRUMENTS)[number],
-): Promise<IndiaMarketTickerItem> {
+async function fetchTickerItem(instrument: (typeof INDIA_MARKET_INSTRUMENTS)[number]): Promise<IndiaMarketTickerItem> {
   try {
-    const result = await fetchYahooFinanceQuote(
-      instrument.yahooSymbol,
-      instrument.assetType,
-    );
+    const result = await fetchYahooFinanceQuote(instrument.yahooSymbol, instrument.assetType);
     const { quote } = result;
-    const isUsable =
-      result.status === 'connected' &&
-      quote.freshness !== 'demo' &&
-      quote.freshness !== 'stale' &&
-      Number.isFinite(quote.price);
+    const isUsable = result.status === 'connected' && quote.freshness !== 'demo' && quote.freshness !== 'stale' && Number.isFinite(quote.price);
 
     if (!isUsable) return unavailableItem(instrument);
 
@@ -63,9 +49,7 @@ async function fetchTickerItem(
       status: 'available',
       price: quote.price,
       change: Number.isFinite(quote.change) ? quote.change : null,
-      changePercent: Number.isFinite(quote.changePercent)
-        ? quote.changePercent
-        : null,
+      changePercent: Number.isFinite(quote.changePercent) ? quote.changePercent : null,
       currency: quote.currency || null,
       freshness: quote.freshness,
       providerTimestamp: quote.providerTimestamp,
@@ -75,41 +59,26 @@ async function fetchTickerItem(
   }
 }
 
-async function mapWithConcurrency<T, R>(
-  values: readonly T[],
-  concurrency: number,
-  mapper: (value: T) => Promise<R>,
-): Promise<R[]> {
+async function mapWithConcurrency<T, R>(values: readonly T[], concurrency: number, mapper: (value: T) => Promise<R>): Promise<R[]> {
   const results = new Array<R>(values.length);
   let nextIndex = 0;
 
-  const workers = Array.from(
-    { length: Math.min(concurrency, values.length) },
-    async () => {
-      while (nextIndex < values.length) {
-        const currentIndex = nextIndex;
-        nextIndex += 1;
-        results[currentIndex] = await mapper(values[currentIndex]);
-      }
-    },
-  );
+  const workers = Array.from({ length: Math.min(concurrency, values.length) }, async () => {
+    while (nextIndex < values.length) {
+      const currentIndex = nextIndex;
+      nextIndex += 1;
+      results[currentIndex] = await mapper(values[currentIndex]);
+    }
+  });
 
   await Promise.all(workers);
   return results;
 }
 
 async function loadIndiaMarketTicker(): Promise<IndiaMarketTickerResponse> {
-  const items = await mapWithConcurrency(
-    INDIA_MARKET_INSTRUMENTS,
-    MAX_CONCURRENT_REQUESTS,
-    fetchTickerItem,
-  );
+  const items = await mapWithConcurrency(INDIA_MARKET_INSTRUMENTS, MAX_CONCURRENT_REQUESTS, fetchTickerItem);
   const availableCount = items.filter((item) => item.status === 'available').length;
-  const status = availableCount === items.length
-    ? 'available'
-    : availableCount > 0
-      ? 'partial'
-      : 'unavailable';
+  const status = availableCount === items.length ? 'available' : availableCount > 0 ? 'partial' : 'unavailable';
 
   return {
     status,

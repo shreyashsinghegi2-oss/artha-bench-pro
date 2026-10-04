@@ -11,7 +11,10 @@ function formatDate(value: string | null) {
 
 function NewsGroup({ items, onOpenFeed, duplicate = false }: { items: NormalizedNewsItem[]; onOpenFeed: () => void; duplicate?: boolean }) {
   return (
-    <div className={`business-news-ticker-group flex shrink-0 items-center ${duplicate ? 'business-news-ticker-duplicate' : ''}`} aria-hidden={duplicate || undefined}>
+    <div
+      className={`business-news-ticker-group flex shrink-0 items-center ${duplicate ? 'business-news-ticker-duplicate' : ''}`}
+      aria-hidden={duplicate || undefined}
+    >
       {items.map((item) => (
         <button
           key={`${duplicate ? 'dup-' : ''}${item.id}`}
@@ -32,7 +35,10 @@ function NewsGroup({ items, onOpenFeed, duplicate = false }: { items: Normalized
 
 export const BusinessNewsTicker: React.FC<{ items: NormalizedNewsItem[]; onOpenFeed: () => void }> = ({ items, onOpenFeed }) => {
   return (
-    <section className="business-news-ticker-shell flex min-h-10 overflow-hidden rounded-xl bg-[#101A2E] shadow-sm ring-1 ring-slate-900/10" aria-label="Latest business headlines">
+    <section
+      className="business-news-ticker-shell flex min-h-10 overflow-hidden rounded-xl bg-[#101A2E] shadow-sm ring-1 ring-slate-900/10"
+      aria-label="Latest business headlines"
+    >
       <button
         type="button"
         onClick={onOpenFeed}

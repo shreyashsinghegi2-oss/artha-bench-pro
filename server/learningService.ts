@@ -6,11 +6,7 @@ import { LEARNING_TRACKS } from '../src/data/learningTracks';
 import { StructuredFinancialAnswer } from '../src/types';
 import { callGroqStructuredFinancialAnswer } from './groqService';
 import { inspectInputSafety } from './learningSafety';
-import {
-  buildStructuredFinancialAnswerInstructions,
-  createFallbackStructuredFinancialAnswer,
-  serializeStructuredFinancialAnswer,
-} from './aiResponseStandard';
+import { buildStructuredFinancialAnswerInstructions, createFallbackStructuredFinancialAnswer, serializeStructuredFinancialAnswer } from './aiResponseStandard';
 
 export async function generateLessonContent(params: {
   trackId: string;
@@ -75,16 +71,11 @@ Please provide:
   const fallbackQuestion = `${canonicalTitle}: ${canonicalObjective}. ${lessonObj?.examplePrompt || ''}`;
   let structuredAnswer: StructuredFinancialAnswer;
   try {
-    structuredAnswer = await callGroqStructuredFinancialAnswer(
-      systemPrompt,
-      userPrompt,
-      { fallbackQuestion },
-    );
+    structuredAnswer = await callGroqStructuredFinancialAnswer(systemPrompt, userPrompt, { fallbackQuestion });
   } catch (err: any) {
     structuredAnswer = createFallbackStructuredFinancialAnswer(
       fallbackQuestion,
-      lessonObj?.explanationSeed ||
-        'Financial concepts require understanding inputs, assumptions, opportunity costs, and risk factors.',
+      lessonObj?.explanationSeed || 'Financial concepts require understanding inputs, assumptions, opportunity costs, and risk factors.',
     );
   }
   const aiExplanation = serializeStructuredFinancialAnswer(structuredAnswer);
@@ -95,28 +86,20 @@ Please provide:
     directExplanation: aiExplanation,
     structuredAnswer,
     keyConcepts: canonicalKeyConcepts,
-    stepByStepLesson: structuredAnswer.steps.map(
-      (step) => `${step.title}: ${step.explanation}`,
-    ),
+    stepByStepLesson: structuredAnswer.steps.map((step) => `${step.title}: ${step.explanation}`),
     formula: structuredAnswer.formula.expression,
     workedExample: `${structuredAnswer.example.title}: ${structuredAnswer.example.result}`,
     assumptions: structuredAnswer.example.inputs,
     risksAndLimitations:
       structuredAnswer.risks.length > 0
         ? structuredAnswer.risks
-        : lessonObj?.riskAndLimitationNotes || [
-            'Educational material only; past performance is not indicative of future returns.',
-          ],
-    commonMistakes: [
-      'Confusing revenue with net profit',
-      'Ignoring inflation and taxes when projecting long-term growth',
-    ],
+        : lessonObj?.riskAndLimitationNotes || ['Educational material only; past performance is not indicative of future returns.'],
+    commonMistakes: ['Confusing revenue with net profit', 'Ignoring inflation and taxes when projecting long-term growth'],
     practiceActivity: lessonObj?.practiceActivity || 'Calculate your personal numbers using this framework.',
     knowledgeCheck: canonicalKnowledgeCheck,
     suggestedNextLesson: 'Continue to the next lesson in this module.',
     sourceStatus: 'Verified Educational Curriculum Data',
-    educationalDisclaimer:
-      'Artha Bench content is strictly educational and does not constitute personalized financial or investment advice.',
+    educationalDisclaimer: 'Artha Bench content is strictly educational and does not constitute personalized financial or investment advice.',
     providerMetadata: {
       model: 'Groq Llama-3.3-70b-Versatile',
       requestId: `req-${Date.now()}`,
@@ -125,9 +108,7 @@ Please provide:
 
   return {
     lesson: structuredLesson,
-    safetyNotice: safetyCheck.requiresReview
-      ? 'Note: High-risk subject matter detected. Content framed with strict risk disclosures.'
-      : undefined,
+    safetyNotice: safetyCheck.requiresReview ? 'Note: High-risk subject matter detected. Content framed with strict risk disclosures.' : undefined,
   };
 }
 

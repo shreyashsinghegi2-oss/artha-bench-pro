@@ -15,33 +15,39 @@ afterEach(() => {
 function yahooReliancePayload(now: number) {
   return {
     chart: {
-      result: [{
-        meta: {
-          currency: 'INR',
-          symbol: 'RELIANCE.NS',
-          exchangeName: 'NSI',
-          fullExchangeName: 'NSE',
-          instrumentType: 'EQUITY',
-          regularMarketTime: now - 30,
-          regularMarketPrice: 1392.7,
-          regularMarketDayHigh: 1398.2,
-          regularMarketDayLow: 1379.1,
-          regularMarketVolume: 6810000,
-          regularMarketOpen: 1384.4,
-          previousClose: 1384.4,
-          marketState: 'REGULAR',
-          longName: 'Reliance Industries Limited',
-          currentTradingPeriod: { regular: { start: now - 3600, end: now + 3600 } },
+      result: [
+        {
+          meta: {
+            currency: 'INR',
+            symbol: 'RELIANCE.NS',
+            exchangeName: 'NSI',
+            fullExchangeName: 'NSE',
+            instrumentType: 'EQUITY',
+            regularMarketTime: now - 30,
+            regularMarketPrice: 1392.7,
+            regularMarketDayHigh: 1398.2,
+            regularMarketDayLow: 1379.1,
+            regularMarketVolume: 6810000,
+            regularMarketOpen: 1384.4,
+            previousClose: 1384.4,
+            marketState: 'REGULAR',
+            longName: 'Reliance Industries Limited',
+            currentTradingPeriod: { regular: { start: now - 3600, end: now + 3600 } },
+          },
+          timestamp: [now - 60, now - 30],
+          indicators: {
+            quote: [
+              {
+                open: [1384.4, 1389.2],
+                high: [1391.8, 1398.2],
+                low: [1379.1, 1388.1],
+                close: [1389.2, 1392.7],
+                volume: [7420000, 6810000],
+              },
+            ],
+          },
         },
-        timestamp: [now - 60, now - 30],
-        indicators: { quote: [{
-          open: [1384.4, 1389.2],
-          high: [1391.8, 1398.2],
-          low: [1379.1, 1388.1],
-          close: [1389.2, 1392.7],
-          volume: [7420000, 6810000],
-        }] },
-      }],
+      ],
       error: null,
     },
   };
@@ -53,10 +59,12 @@ describe('free India market routing', () => {
     process.env.MARKET_DATA_API_KEY = 'unused-for-india';
     process.env.YAHOO_FINANCE_BASE_URL = 'https://query1.finance.yahoo.com/v8/finance/chart';
     const now = Math.floor(Date.now() / 1000);
-    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify(yahooReliancePayload(now)), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    }));
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify(yahooReliancePayload(now)), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    );
     vi.stubGlobal('fetch', fetchMock);
 
     const result = await fetchQuoteFromProvider('RELIANCE.NS');

@@ -7,5 +7,4 @@ export const INDIA_TAX_RULES: Record<FinancialYear, IndiaTaxRuleConfig> = {
   'FY2026-27': FY2026_27_RULES,
 };
 
-export const getIndiaTaxRules = (financialYear: FinancialYear): IndiaTaxRuleConfig =>
-  INDIA_TAX_RULES[financialYear];
+export const getIndiaTaxRules = (financialYear: FinancialYear): IndiaTaxRuleConfig => INDIA_TAX_RULES[financialYear];

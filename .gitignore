@@ -7,3 +7,12 @@ coverage/
 *.log
 .env*
 !.env.example
+__pycache__/
+.pytest_cache/
+rag/*.json
+!rag/sources.json
+coverage/
+playwright-report/
+test-results/
+.coverage
+.hypothesis/

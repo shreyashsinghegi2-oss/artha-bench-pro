@@ -2,23 +2,9 @@ import type { MarketHistoryPoint, NormalizedMarketQuote } from '../types';
 import { EmiDetectionCandidate, EmiDocument } from './emiCentre';
 
 export type ProviderConnectionState =
-  | 'not_connected'
-  | 'consent_required'
-  | 'connected'
-  | 'sync_in_progress'
-  | 'needs_attention'
-  | 'disconnected'
-  | 'unavailable';
+  'not_connected' | 'consent_required' | 'connected' | 'sync_in_progress' | 'needs_attention' | 'disconnected' | 'unavailable';
 
-export type MarketDataState =
-  | 'live_verified'
-  | 'recently_refreshed'
-  | 'delayed'
-  | 'end_of_day'
-  | 'cached'
-  | 'stale'
-  | 'unavailable'
-  | 'demo';
+export type MarketDataState = 'live_verified' | 'recently_refreshed' | 'delayed' | 'end_of_day' | 'cached' | 'stale' | 'unavailable' | 'demo';
 
 export interface MarketDataAttribution {
   providerName: string;
@@ -147,7 +133,12 @@ export interface StatementImportProvider {
 export interface LoanDocumentExtractionProvider {
   readonly id: string;
   supports(file: File): boolean;
-  extract(file: File): Promise<{ status: 'review_required' | 'unavailable' | 'failed'; fields: Record<string, unknown>; uncertainFields: string[]; attribution: ProviderAttribution }>;
+  extract(file: File): Promise<{
+    status: 'review_required' | 'unavailable' | 'failed';
+    fields: Record<string, unknown>;
+    uncertainFields: string[];
+    attribution: ProviderAttribution;
+  }>;
 }
 
 export interface RbiPolicyRateProvider {
@@ -155,7 +146,12 @@ export interface RbiPolicyRateProvider {
 }
 
 export interface LenderRateProvider {
-  searchReferences(query: { lender?: string; productCategory?: string }): Promise<Array<{ lender: string; productCategory: string; rateMin: number | null; rateMax: number | null; rateType?: string; attribution: ProviderAttribution }>>;
+  searchReferences(query: {
+    lender?: string;
+    productCategory?: string;
+  }): Promise<
+    Array<{ lender: string; productCategory: string; rateMin: number | null; rateMax: number | null; rateType?: string; attribution: ProviderAttribution }>
+  >;
 }
 
 export interface FxRateProvider {

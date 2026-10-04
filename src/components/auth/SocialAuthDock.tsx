@@ -31,7 +31,9 @@ export const SocialAuthDock: React.FC = () => {
           </button>
         ))}
       </div>
-      <p className="mt-2 text-[9px] leading-4 text-secondary">A provider must also be enabled with its own OAuth client credentials in Supabase before authentication can complete.</p>
+      <p className="mt-2 text-[9px] leading-4 text-secondary">
+        A provider must also be enabled with its own OAuth client credentials in Supabase before authentication can complete.
+      </p>
     </div>
   );
 };

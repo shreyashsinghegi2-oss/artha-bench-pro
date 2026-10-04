@@ -72,9 +72,7 @@ export const LearningView: React.FC = () => {
               <BookOpen className="w-3.5 h-3.5" />
               <span>Structured Finance Curriculum</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-ink tracking-tight">
-              Financial AI Learning Workspace
-            </h1>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-ink tracking-tight">Financial AI Learning Workspace</h1>
             <p className="text-xs sm:text-sm text-secondary max-w-2xl leading-relaxed">
               Interactive educational modules covering financial reasoning, valuation, reporting, corporate finance and risk.
             </p>
@@ -131,9 +129,7 @@ export const LearningView: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {LEARNING_TRACKS.map((track) => {
             const total = track.modules.reduce((acc, m) => acc + m.lessons.length, 0);
-            const completed = progressState.completedLessonIds.filter((id) =>
-              track.modules.some((m) => m.lessons.some((l) => l.id === id))
-            ).length;
+            const completed = progressState.completedLessonIds.filter((id) => track.modules.some((m) => m.lessons.some((l) => l.id === id))).length;
 
             return (
               <LearningTrackCard
@@ -165,9 +161,7 @@ export const LearningView: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Sidebar: Module Lessons */}
           <div className="lg:col-span-1 bg-surface border border-line rounded-2xl p-4 h-fit space-y-3">
-            <h3 className="text-xs font-bold text-secondary uppercase tracking-wider">
-              {selectedModule.title} Lessons
-            </h3>
+            <h3 className="text-xs font-bold text-secondary uppercase tracking-wider">{selectedModule.title} Lessons</h3>
             <div className="space-y-1">
               {selectedModule.lessons.map((lesson, idx) => {
                 const isActive = lesson.id === selectedLesson.id;

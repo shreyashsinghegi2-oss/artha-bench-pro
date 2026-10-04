@@ -4,12 +4,9 @@
 
 import { NormalizedNewsItem, StructuredFinancialAnswer } from '../src/types';
 import { fetchNewsFromProvider } from './providers/newsProvider';
-import { callGroqStructuredFinancialAnswer } from './groqService';
-import {
-  buildStructuredFinancialAnswerInstructions,
-  createFallbackStructuredFinancialAnswer,
-  serializeStructuredFinancialAnswer,
-} from './aiResponseStandard';
+import { callGroqChat, callGroqStructuredFinancialAnswer } from './groqService';
+import { buildRuleBasedNewsBrief, mergeAiNewsBrief, parseJsonObject, type NewsResearchBrief } from '../src/services/newsBrief';
+import { buildStructuredFinancialAnswerInstructions, createFallbackStructuredFinancialAnswer, serializeStructuredFinancialAnswer } from './aiResponseStandard';
 
 function decodeXml(value: string) {
   return value
@@ -23,7 +20,10 @@ function decodeXml(value: string) {
 }
 
 function stripHtml(value: string) {
-  return decodeXml(value).replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+  return decodeXml(value)
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 function extractTag(block: string, tag: string) {
@@ -56,10 +56,7 @@ async function fetchRssFeed(feedUrl: string, sourceName: string, category = 'Bus
     });
     if (!response.ok) return [];
     const xml = await response.text();
-    const blocks = [
-      ...(xml.match(/<item\b[\s\S]*?<\/item>/gi) || []),
-      ...(xml.match(/<entry\b[\s\S]*?<\/entry>/gi) || []),
-    ];
+    const blocks = [...(xml.match(/<item\b[\s\S]*?<\/item>/gi) || []), ...(xml.match(/<entry\b[\s\S]*?<\/entry>/gi) || [])];
     const retrievedAt = new Date().toISOString();
 
     return blocks.slice(0, 16).flatMap((block, index) => {
@@ -74,18 +71,20 @@ async function fetchRssFeed(feedUrl: string, sourceName: string, category = 'Bus
         safeHttpUrl(extractAttribute(block, 'enclosure', 'url'));
       if (!title || !url) return [];
       const timestamp = Date.parse(publishedAt);
-      return [{
-        id: `rss-${itemSource.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${timestamp || retrievedAt}-${index}`,
-        title,
-        summary: description || 'Open the original publisher article for the full report.',
-        sourceName: itemSource,
-        sourceUrl: url,
-        publishedAt: Number.isFinite(timestamp) ? new Date(timestamp).toISOString() : null,
-        retrievedAt,
-        category,
-        region: 'global',
-        imageUrl: imageUrl || null,
-      }];
+      return [
+        {
+          id: `rss-${itemSource.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${timestamp || retrievedAt}-${index}`,
+          title,
+          summary: description || 'Open the original publisher article for the full report.',
+          sourceName: itemSource,
+          sourceUrl: url,
+          publishedAt: Number.isFinite(timestamp) ? new Date(timestamp).toISOString() : null,
+          retrievedAt,
+          category,
+          region: 'global',
+          imageUrl: imageUrl || null,
+        },
+      ];
     });
   } catch {
     return [];
@@ -93,20 +92,21 @@ async function fetchRssFeed(feedUrl: string, sourceName: string, category = 'Bus
 }
 
 async function fetchPublicNewsFallback(category = 'business'): Promise<NormalizedNewsItem[]> {
-  const feeds = category.trim().toLowerCase() === 'all'
-    ? [
-        ['https://news.google.com/rss/search?q=business%20markets%20finance%20economy&hl=en-US&gl=US&ceid=US:en', 'Google News Business'],
-        ['https://news.google.com/rss/search?q=technology%20AI%20semiconductor%20companies&hl=en-US&gl=US&ceid=US:en', 'Google News Technology'],
-        ['https://feeds.bbci.co.uk/news/rss.xml', 'BBC News'],
-        ['https://finance.yahoo.com/rss/topstories', 'Yahoo Finance'],
-        ['https://www.cnbc.com/id/100003114/device/rss/rss.html', 'CNBC'],
-      ] as const
-    : [
-        ['https://news.google.com/rss/search?q=business%20markets%20finance%20companies%20earnings&hl=en-US&gl=US&ceid=US:en', 'Google News Business'],
-        ['https://news.google.com/rss/search?q=markets%20economy%20stocks%20finance&hl=en-US&gl=US&ceid=US:en', 'Google News Markets'],
-        ['https://finance.yahoo.com/rss/topstories', 'Yahoo Finance'],
-        ['https://www.cnbc.com/id/100003114/device/rss/rss.html', 'CNBC'],
-      ] as const;
+  const feeds =
+    category.trim().toLowerCase() === 'all'
+      ? ([
+          ['https://news.google.com/rss/search?q=business%20markets%20finance%20economy&hl=en-US&gl=US&ceid=US:en', 'Google News Business'],
+          ['https://news.google.com/rss/search?q=technology%20AI%20semiconductor%20companies&hl=en-US&gl=US&ceid=US:en', 'Google News Technology'],
+          ['https://feeds.bbci.co.uk/news/rss.xml', 'BBC News'],
+          ['https://finance.yahoo.com/rss/topstories', 'Yahoo Finance'],
+          ['https://www.cnbc.com/id/100003114/device/rss/rss.html', 'CNBC'],
+        ] as const)
+      : ([
+          ['https://news.google.com/rss/search?q=business%20markets%20finance%20companies%20earnings&hl=en-US&gl=US&ceid=US:en', 'Google News Business'],
+          ['https://news.google.com/rss/search?q=markets%20economy%20stocks%20finance&hl=en-US&gl=US&ceid=US:en', 'Google News Markets'],
+          ['https://finance.yahoo.com/rss/topstories', 'Yahoo Finance'],
+          ['https://www.cnbc.com/id/100003114/device/rss/rss.html', 'CNBC'],
+        ] as const);
   const results = await Promise.all(feeds.map(([url, source]) => fetchRssFeed(url, source, category)));
   const seen = new Set<string>();
   return results
@@ -121,12 +121,7 @@ async function fetchPublicNewsFallback(category = 'business'): Promise<Normalize
     .slice(0, 10);
 }
 
-export async function getBusinessNews(
-  query = '',
-  category = 'business',
-  region = 'global',
-  page = 1,
-) {
+export async function getBusinessNews(query = '', category = 'business', region = 'global', page = 1) {
   const providerResult = await fetchNewsFromProvider(query, category, region, page);
   if (providerResult.items.length) return providerResult;
 
@@ -183,11 +178,7 @@ Please explain:
 
   let structuredAnswer: StructuredFinancialAnswer;
   try {
-    structuredAnswer = await callGroqStructuredFinancialAnswer(
-      systemPrompt,
-      userPrompt,
-      { fallbackQuestion: article.title },
-    );
+    structuredAnswer = await callGroqStructuredFinancialAnswer(systemPrompt, userPrompt, { fallbackQuestion: article.title });
   } catch {
     structuredAnswer = createFallbackStructuredFinancialAnswer(
       article.title,
@@ -199,7 +190,45 @@ Please explain:
     explanation: serializeStructuredFinancialAnswer(structuredAnswer),
     structuredAnswer,
     keyTakeaways: structuredAnswer.keyTakeaways,
-    disclaimer:
-      'AI explanation generated from the supplied headline and summary for educational analysis only. Not investment advice.',
+    disclaimer: 'AI explanation generated from the supplied headline and summary for educational analysis only. Not investment advice.',
   };
+}
+
+/**
+ * Structured research brief for one article. The rule-based brief is always built first; when an AI
+ * key is configured, the model rewrites the narrative fields and the result is validated and merged.
+ */
+export async function buildNewsResearchBrief(
+  article: {
+    title: string;
+    summary?: string;
+    sourceName: string;
+    sourceUrl?: string;
+    publishedAt?: string | null;
+  },
+  now: Date = new Date(),
+): Promise<NewsResearchBrief> {
+  const rules = buildRuleBasedNewsBrief(article, now);
+  if (!process.env.GROQ_API_KEY?.trim()) return rules;
+  const today = now.toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Kolkata' });
+  const system = `You are ArthaMind's research desk. Today is ${today} (India time). Write a concise, professional research brief on ONE business-news item for Indian retail investors.
+Rules:
+- Use only facts in the supplied headline and summary. Never invent numbers, names, dates or quotes.
+- No buy/sell/hold advice and no price targets.
+- Plain, precise English; each bullet one sentence.
+- If the summary is thin, say what is unknown instead of guessing.
+Reply with JSON only, no prose, in exactly this shape:
+{"summary":"2 sentences: what happened","keyPoints":["3-5 bullets"],"whyItMatters":"1-2 sentences","sentiment":"positive|negative|mixed|unclear","confidence":"low|medium|high","impact":[{"area":"e.g. Banks, Rupee, IT services","direction":"positive|negative|mixed|unclear","note":"one sentence"}],"whatToWatch":["2-4 items"],"verify":["1-3 checks a reader should do"]}`;
+  const user = `Headline: ${article.title}
+Summary: ${article.summary || 'Not supplied'}
+Source: ${article.sourceName}
+Published: ${article.publishedAt || 'unknown'}
+Detected topics: ${rules.topics.join(', ') || 'none'}
+Named in text: ${rules.entities.map((e) => e.name).join(', ') || 'none'}`;
+  try {
+    const reply = await callGroqChat(system, user);
+    return mergeAiNewsBrief(rules, parseJsonObject(reply));
+  } catch {
+    return rules;
+  }
 }

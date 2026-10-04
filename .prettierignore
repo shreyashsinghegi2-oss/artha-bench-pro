@@ -1,0 +1,6 @@
+# Files Prettier skips (build output and generated files).
+dist
+api
+coverage
+node_modules
+package-lock.json

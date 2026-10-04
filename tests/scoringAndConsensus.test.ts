@@ -51,13 +51,7 @@ describe('Scoring & Consensus Engine Tests', () => {
       const primary = 'Formula A = P * (1 + r/n)^(n*t). The step-by-step result is $14,176.25.';
       const secondary = 'Result is $14,176.25 using standard monthly compound interest formula.';
 
-      const evalResult = computeFullReliabilityEvaluation(
-        query,
-        primary,
-        secondary,
-        Date.now(),
-        { expectedAnswer: 14176.25, tolerancePercent: 1.0 }
-      );
+      const evalResult = computeFullReliabilityEvaluation(query, primary, secondary, Date.now(), { expectedAnswer: 14176.25, tolerancePercent: 1.0 });
 
       expect(evalResult.dimensions).toHaveLength(7);
       expect(evalResult.overallScore).toBeGreaterThanOrEqual(85);
@@ -70,13 +64,7 @@ describe('Scoring & Consensus Engine Tests', () => {
       const primary = 'The result is $99,000.00.';
       const secondary = 'The result is $99,000.00.';
 
-      const evalResult = computeFullReliabilityEvaluation(
-        query,
-        primary,
-        secondary,
-        Date.now(),
-        { expectedAnswer: 14176.25, tolerancePercent: 1.0 }
-      );
+      const evalResult = computeFullReliabilityEvaluation(query, primary, secondary, Date.now(), { expectedAnswer: 14176.25, tolerancePercent: 1.0 });
 
       expect(evalResult.groundTruth.pass).toBe(false);
       expect(evalResult.overallScore).toBeLessThan(70);

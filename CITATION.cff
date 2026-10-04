@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+message: "If you use ArthaBench Pro or its technical reports, please cite it as below."
+title: "ArthaBench Pro: Reliability-Focused Financial Intelligence"
+type: software
+authors:
+  - family-names: Singh
+    given-names: Shreyash
+    affiliation: "Ajeenkya DY Patil University, Pune"
+repository-code: "https://github.com/shreyashsinghegi2-oss/artha-bench-pro"
+url: "https://artha-bench-pro.vercel.app"
+abstract: >-
+  An educational financial intelligence platform in which deterministic, tested code owns every number
+  and language models only explain them. Includes a certified-arithmetic engine (EMI, SIP, CAGR, XIRR,
+  bond YTM, Indian income tax) that returns a proven error bound or no number, a grounded A–H advisory
+  pipeline with number checking, hybrid retrieval over regulatory text, and a seeded Monte Carlo engine.
+keywords:
+  - financial AI
+  - reliability
+  - interval arithmetic
+  - retrieval-augmented generation
+  - Monte Carlo simulation
+  - India
+date-released: "2026-10-01"

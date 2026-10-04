@@ -26,9 +26,7 @@ function extractNumbers(text: string): number[] {
   if (!text) return [];
   const matches = text.match(/(?:[\$\₹]\s*)?(-?\d{1,3}(?:,\d{3})*(?:\.\d+)?|-?\d+(?:\.\d+)?)/g);
   if (!matches) return [];
-  return matches
-    .map((m) => parseFloat(m.replace(/[\$\₹\s,]/g, '')))
-    .filter((n) => !isNaN(n) && isFinite(n));
+  return matches.map((m) => parseFloat(m.replace(/[\$\₹\s,]/g, ''))).filter((n) => !isNaN(n) && isFinite(n));
 }
 
 function findBestNumericValue(numbers: number[], expected?: number): number | undefined {
@@ -55,8 +53,18 @@ function findBestNumericValue(numbers: number[], expected?: number): number | un
  */
 function calculateJaccardSimilarity(textA: string, textB: string): number {
   if (!textA || !textB) return 0;
-  const wordsA = new Set(textA.toLowerCase().split(/\s+/).filter((w) => w.length > 2));
-  const wordsB = new Set(textB.toLowerCase().split(/\s+/).filter((w) => w.length > 2));
+  const wordsA = new Set(
+    textA
+      .toLowerCase()
+      .split(/\s+/)
+      .filter((w) => w.length > 2),
+  );
+  const wordsB = new Set(
+    textB
+      .toLowerCase()
+      .split(/\s+/)
+      .filter((w) => w.length > 2),
+  );
   if (wordsA.size === 0 && wordsB.size === 0) return 1.0;
   if (wordsA.size === 0 || wordsB.size === 0) return 0;
 
@@ -68,11 +76,7 @@ function calculateJaccardSimilarity(textA: string, textB: string): number {
 /**
  * Evaluates real consensus between two model outputs and compares against ground truth.
  */
-export function evaluateDualModelConsensus(
-  modelAOutput: string,
-  modelBOutput: string,
-  expectedNumericalAnswer?: number
-): ConsensusEvaluationResult {
+export function evaluateDualModelConsensus(modelAOutput: string, modelBOutput: string, expectedNumericalAnswer?: number): ConsensusEvaluationResult {
   if (!modelAOutput || !modelBOutput) {
     return {
       score: 0,

@@ -1,42 +1,43 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import {
-  getIndiaMarketTicker,
-  resetIndiaMarketTickerCacheForTests,
-} from '../server/indiaMarketTickerService';
+import { getIndiaMarketTicker, resetIndiaMarketTickerCacheForTests } from '../server/indiaMarketTickerService';
 
 function yahooResponse(symbol: string, price = 25000) {
   const now = Math.floor(Date.now() / 1000);
   return new Response(
     JSON.stringify({
       chart: {
-        result: [{
-          meta: {
-            currency: 'INR',
-            symbol,
-            exchangeName: symbol.endsWith('.NS') ? 'NSI' : 'NSE',
-            instrumentType: symbol.startsWith('^') ? 'INDEX' : 'EQUITY',
-            regularMarketTime: now - 30,
-            regularMarketPrice: price,
-            regularMarketDayHigh: price + 25,
-            regularMarketDayLow: price - 25,
-            regularMarketVolume: 100000,
-            previousClose: price - 100,
-            exchangeDataDelayedBy: 15,
-            currentTradingPeriod: {
-              regular: { start: now - 3600, end: now + 3600 },
+        result: [
+          {
+            meta: {
+              currency: 'INR',
+              symbol,
+              exchangeName: symbol.endsWith('.NS') ? 'NSI' : 'NSE',
+              instrumentType: symbol.startsWith('^') ? 'INDEX' : 'EQUITY',
+              regularMarketTime: now - 30,
+              regularMarketPrice: price,
+              regularMarketDayHigh: price + 25,
+              regularMarketDayLow: price - 25,
+              regularMarketVolume: 100000,
+              previousClose: price - 100,
+              exchangeDataDelayedBy: 15,
+              currentTradingPeriod: {
+                regular: { start: now - 3600, end: now + 3600 },
+              },
+            },
+            timestamp: [now - 30],
+            indicators: {
+              quote: [
+                {
+                  open: [price - 50],
+                  high: [price + 25],
+                  low: [price - 25],
+                  close: [price],
+                  volume: [100000],
+                },
+              ],
             },
           },
-          timestamp: [now - 30],
-          indicators: {
-            quote: [{
-              open: [price - 50],
-              high: [price + 25],
-              low: [price - 25],
-              close: [price],
-              volume: [100000],
-            }],
-          },
-        }],
+        ],
         error: null,
       },
     }),
@@ -105,10 +106,7 @@ describe('India market ticker service', () => {
   });
 
   it('keeps the ticker response usable when Yahoo is entirely unavailable', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue(new Response('Unavailable', { status: 503 })),
-    );
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('Unavailable', { status: 503 })));
 
     const result = await getIndiaMarketTicker();
 

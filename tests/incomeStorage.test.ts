@@ -69,10 +69,7 @@ describe('income calculations', () => {
   });
 
   it('excludes recurring sources that are not active as of the summary date', () => {
-    const result = summarizeIncomeByCurrency(
-      [source({ endDate: '2026-06-30' })],
-      new Date('2026-08-27T00:00:00.000Z'),
-    );
+    const result = summarizeIncomeByCurrency([source({ endDate: '2026-06-30' })], new Date('2026-08-27T00:00:00.000Z'));
 
     expect(result[0].monthlyRecurring).toBe(0);
     expect(result[0].annualProjected).toBe(0);

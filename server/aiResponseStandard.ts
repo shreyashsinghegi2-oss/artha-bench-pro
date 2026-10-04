@@ -20,6 +20,21 @@ const sourceSchema = z
     name: z.string().min(1).max(160),
     dataDate: z.string().max(80),
     freshness: z.string().min(1).max(120),
+    // Added by the grounding pipeline after generation (never requested from the model).
+    url: z.string().max(2000).optional(),
+  })
+  .strict();
+
+const verifiedNumberSchema = z
+  .object({
+    id: z.string().max(20),
+    label: z.string().max(300),
+    display: z.string().max(60),
+    value: z.string().max(80),
+    certified: z.boolean(),
+    method: z.enum(['precision-engine', 'app-calculator']),
+    badge: z.string().max(160).optional(),
+    assumptions: z.array(z.string().max(300)).max(6),
   })
   .strict();
 
@@ -38,13 +53,7 @@ export const structuredFinancialAnswerSchema = z
     example: z
       .object({
         title: z.string().min(1).max(160),
-        dataStatus: z.enum([
-          'live',
-          'latest_available',
-          'delayed',
-          'illustrative',
-          'not_applicable',
-        ]),
+        dataStatus: z.enum(['live', 'latest_available', 'delayed', 'illustrative', 'not_applicable']),
         dataAsOf: z.string().max(100),
         inputs: z.array(z.string().min(1).max(300)).max(10),
         calculation: z.array(z.string().min(1).max(500)).max(10),
@@ -55,6 +64,7 @@ export const structuredFinancialAnswerSchema = z
     risks: z.array(z.string().min(1).max(600)).max(8),
     keyTakeaways: z.array(z.string().min(1).max(500)).max(8),
     sources: z.array(sourceSchema).max(12),
+    verifiedNumbers: z.array(verifiedNumberSchema).max(6).optional(),
   })
   .strict();
 
@@ -130,17 +140,7 @@ export const STRUCTURED_FINANCIAL_ANSWER_JSON_SCHEMA = {
       },
     },
   },
-  required: [
-    'title',
-    'directAnswer',
-    'steps',
-    'formula',
-    'example',
-    'interpretation',
-    'risks',
-    'keyTakeaways',
-    'sources',
-  ],
+  required: ['title', 'directAnswer', 'steps', 'formula', 'example', 'interpretation', 'risks', 'keyTakeaways', 'sources'],
 } as const;
 
 export function buildStructuredFinancialAnswerInstructions(options: {
@@ -162,23 +162,23 @@ ${audienceGuidance}
 
 Response mode:
 - If the user explicitly requests Quick answer, Step-by-step, Detailed, Professional report, or Teach me, honor that mode.
-- Otherwise infer the mode: very simple lookup -> Quick answer; short factual/calculation question -> Step-by-step; conceptual/educational question -> Teach me; complex multi-part question -> Detailed.
-- Mode changes depth and wording only. It never changes mathematical correctness, evidence standards, or the section order below.
+- Otherwise infer the mode from the question and the page/module it came from. Mode changes depth and wording only, never mathematical correctness or evidence standards.
 
-Map the JSON fields to these sections in this exact conceptual order:
-A. directAnswer = one sentence in plain language with the key result or conclusion. If a numeric result is supported, include the number and currency/unit here.
-B. Assumptions and context: example.inputs = 2 to 6 short assumptions/context items. Include amount or income, rate/percentage, time/compounding, currency, jurisdiction/regime/year, pre/post-tax basis, or simplifications when relevant. If the prompt is ambiguous, state the default assumption here.
-C. formula = the formula or governing rule. Put the simple formula/rule matching the assumptions first in expression. Add an optional general formula after "General:" only when it adds clarity. Explain every symbol in variables. For tax/policy/legal topics, state the jurisdiction, applicable year/regime, rule, and important conditions instead of inventing an equation.
-D. steps = 2 to 7 ordered calculation/reasoning steps. Each step should contain one main claim, a short explanation, and small readable math where relevant. example.calculation contains concrete substitutions/intermediate arithmetic only; it may be empty for conceptual questions.
-E. example.result = an explicit final result line, preferably beginning "Final result:" for quantitative questions. Include currency/units and sensible rounding. interpretation = a concise explanation of what the result means; distinguish measured facts from interpretation.
-F. keyTakeaways = optional "If needed" variations, edge cases, alternative regimes/compounding frequencies, or a genuinely necessary clarifying question. Return [] when no variation is useful.
-G. risks = 1 to 3 concise limitations and verification notes. State omitted fees, inflation, deductions, taxes, timing, data gaps, or uncertainty where relevant. sources = only supplied/verified sources with exact date/freshness; never fabricate a citation or provider.
+ANSWER SHAPE: first decide which kind of question this is, then fill the JSON fields for that kind. Do not force a formula or a calculation onto a question that does not need one.
+1. CONCEPT ("what is", "how does", "explain"): directAnswer = a clear 2 to 4 sentence explanation. steps = 2 to 4 key ideas with titles such as "How it works", "Why it matters", "A quick rupee example". formula.expression = "N/A" unless the concept is itself a formula. example = one small illustration. keyTakeaways = 2 or 3 memorable points.
+2. CALCULATION (amounts, EMI, SIP, tax, returns, "how much"): directAnswer states the number. formula = the governing formula with every symbol explained. steps = the working with substitutions. example.inputs = Assumptions (amount, rate, time, regime and jurisdiction), example.calculation = arithmetic, example.result = "Final result: ...".
+3. MARKET, STOCK, FUND, CRYPTO OR NEWS (anything current): directAnswer = the latest figure with its date from the live context. steps = "What happened", "Why it happened", "What it means for you" (and "What to watch next" when useful). formula.expression = "N/A" unless a ratio is being computed. sources = the live sources used, with dates. Never invent a price or move.
+4. DECISION OR PLAN ("should I", "how do I", "plan", "where to invest"): directAnswer = the recommended approach in one or two sentences. steps = prioritised actions, each with an amount, a timeline and the reason. example = the numbers behind the plan. formula only if a calculation drives the decision.
+5. COMPARISON ("A vs B", "which is better"): steps = one step per option with its numbers, strengths and drawbacks; keyTakeaways = which option suits which person. directAnswer = the bottom line.
+6. PERSONAL DATA ANALYSIS (dashboard or the user's own records): steps = issues ranked by urgency, each title starting with a status word (At risk, Watch, Healthy) followed by the finding and its number; directAnswer = the overall verdict; keyTakeaways = the next three actions.
+7. GENERAL MATHS OR SCENARIO: show the method and the working like a calculation, in plain words.
+Always: directAnswer carries the key conclusion; example.result carries the final line (for non-numeric answers, a one-line conclusion); risks = 1 to 3 specific limitations; keyTakeaways may be []; sources = only supplied, verified sources with exact dates, never fabricated.
 
 Claim and calculation discipline:
 1. Keep independent factual claims in separate sentences so automated evaluators can extract them cleanly.
 2. Never hide the main numeric answer inside a paragraph. Put it in directAnswer and example.result.
 3. Do not omit calculation steps to sound concise. Convert percentages to decimals where relevant, substitute values, show intermediate values, and then compute the result.
-4. Use a real formula only when it applies. If no equation is relevant, set expression to "No calculation is required; Rule: ..." and explain the decision method in whenToUse.
+4. Use a real formula only when it applies. If no equation is relevant, set formula.expression to "N/A", variables to [] and whenToUse to one short line on the decision method.
 5. Never invent a current price, market move, interest rate, tax threshold, policy rule, date, provider, or source. Verified current/latest data may be used only when supplied in context.
 6. Current-data context is ${options.hasVerifiedCurrentData ? 'available; use only the exact provider/date/freshness supplied' : 'not verified; do not present current figures or rules as confirmed and label examples illustrative'}.
 
@@ -209,9 +209,7 @@ function cleanPlainText(value: string) {
     .trim();
 }
 
-export function sanitizeStructuredFinancialAnswer(
-  answer: StructuredFinancialAnswer,
-): StructuredFinancialAnswer {
+export function sanitizeStructuredFinancialAnswer(answer: StructuredFinancialAnswer): StructuredFinancialAnswer {
   return {
     title: cleanPlainText(answer.title),
     directAnswer: cleanPlainText(answer.directAnswer),
@@ -247,9 +245,7 @@ export function sanitizeStructuredFinancialAnswer(
 }
 
 function firstUsefulParagraph(rawText: string) {
-  const jsonDirectAnswer = rawText.match(
-    /"directAnswer"\s*:\s*"((?:\\.|[^"\\])*)"/s,
-  );
+  const jsonDirectAnswer = rawText.match(/"directAnswer"\s*:\s*"((?:\\.|[^"\\])*)"/s);
   if (jsonDirectAnswer) {
     try {
       return cleanPlainText(JSON.parse(`"${jsonDirectAnswer[1]}"`)).slice(0, 2200);
@@ -269,7 +265,6 @@ function firstUsefulParagraph(rawText: string) {
   return (paragraph || cleaned || 'A structured financial explanation is available.').slice(0, 2200);
 }
 
-
 function oneSentenceDirectAnswer(rawText: string) {
   const text = firstUsefulParagraph(rawText).replace(/\s+/g, ' ').trim();
   const sentence = text.match(/^(.+?[.!?])(?:\s|$)/)?.[1] || text;
@@ -277,10 +272,7 @@ function oneSentenceDirectAnswer(rawText: string) {
   return `${normalized || 'A structured financial explanation is available'}.`.slice(0, 2200);
 }
 
-export function createFallbackStructuredFinancialAnswer(
-  question: string,
-  rawText: string,
-): StructuredFinancialAnswer {
+export function createFallbackStructuredFinancialAnswer(question: string, rawText: string): StructuredFinancialAnswer {
   const normalizedQuestion = question.toLowerCase();
   const isCompoundInterest = /compound|future value/.test(normalizedQuestion);
   const isLoan = /\bemi\b|loan|mortgage/.test(normalizedQuestion);
@@ -288,9 +280,7 @@ export function createFallbackStructuredFinancialAnswer(
   const isRatio = /valuation|p\/?e\b|price[- ]to[- ](earnings|book|sales)|current ratio|quick ratio|return on equity|\broe\b|fundamental ratio/.test(
     normalizedQuestion,
   );
-  const isMarketReturn = /\b(range return|market return|price return|performance|market chart|dashboard signal|price change)\b/.test(
-    normalizedQuestion,
-  );
+  const isMarketReturn = /\b(range return|market return|price return|performance|market chart|dashboard signal|price change)\b/.test(normalizedQuestion);
 
   let expression = 'No calculation is required for this concept';
   let variables: StructuredFinancialAnswer['formula']['variables'] = [];
@@ -366,13 +356,9 @@ export function createFallbackStructuredFinancialAnswer(
         `Market price = ${price.toLocaleString(undefined, { maximumFractionDigits: 2 })}`,
         `Reported P/E = ${pe.toLocaleString(undefined, { maximumFractionDigits: 2 })}×`,
       ];
-      calculation = [
-        `Implied earnings per share = ${price.toFixed(2)} ÷ ${pe.toFixed(2)} = ${impliedEps.toFixed(2)}`,
-      ];
+      calculation = [`Implied earnings per share = ${price.toFixed(2)} ÷ ${pe.toFixed(2)} = ${impliedEps.toFixed(2)}`];
       result = `The reported P/E implies earnings per share of approximately ${impliedEps.toFixed(2)} for the ratio's measurement basis.`;
-      exampleDataStatus = /delayed|end_of_day|stale|demo/i.test(quoteFreshness)
-        ? 'delayed'
-        : 'latest_available';
+      exampleDataStatus = /delayed|end_of_day|stale|demo/i.test(quoteFreshness) ? 'delayed' : 'latest_available';
       dataAsOf = retrievedAt;
     }
 
@@ -381,9 +367,7 @@ export function createFallbackStructuredFinancialAnswer(
         {
           name: 'Finnhub company fundamentals',
           dataDate: retrievedAt,
-          freshness: quoteFreshness
-            ? `Company context with ${quoteFreshness.replaceAll('_', ' ')} quote`
-            : 'Latest company context supplied to the assistant',
+          freshness: quoteFreshness ? `Company context with ${quoteFreshness.replaceAll('_', ' ')} quote` : 'Latest company context supplied to the assistant',
         },
       ];
     }
@@ -398,19 +382,12 @@ export function createFallbackStructuredFinancialAnswer(
     const observedReturn = rawText.match(/range return is\s+(-?[\d.]+)%/i);
     const observedDates = rawText.match(/\(([^()]+)\s+to\s+([^()]+)\)/i);
     if (observedPrices) {
-      inputs = [
-        `Starting price = ${observedPrices[1]}`,
-        `Latest price = ${observedPrices[2]}`,
-      ];
-      calculation = [
-        `(${observedPrices[2]} − ${observedPrices[1]}) / ${observedPrices[1]} × 100`,
-      ];
+      inputs = [`Starting price = ${observedPrices[1]}`, `Latest price = ${observedPrices[2]}`];
+      calculation = [`(${observedPrices[2]} − ${observedPrices[1]}) / ${observedPrices[1]} × 100`];
       result = observedReturn
         ? `Measured range return = ${observedReturn[1]}%.`
         : 'Calculate the measured percentage change from the two displayed observations.';
-      exampleDataStatus = /\b(delayed|demo|stale|end-of-day)\b/i.test(rawText)
-        ? 'delayed'
-        : 'latest_available';
+      exampleDataStatus = /\b(delayed|demo|stale|end-of-day)\b/i.test(rawText) ? 'delayed' : 'latest_available';
       dataAsOf = observedDates?.[2]?.trim() || '';
       exampleTitle = 'Verified dashboard range calculation';
     }
@@ -462,21 +439,21 @@ export function serializeStructuredFinancialAnswer(answer: StructuredFinancialAn
     '',
     '## Step-by-step calculation or reasoning',
     ...answer.steps.map((step, index) => `${index + 1}. ${step.title}: ${step.explanation}`),
-    ...(answer.example.calculation.length
-      ? ['', 'Calculation details:', ...answer.example.calculation.map((item, index) => `${index + 1}. ${item}`)]
-      : []),
+    ...(answer.example.calculation.length ? ['', 'Calculation details:', ...answer.example.calculation.map((item, index) => `${index + 1}. ${item}`)] : []),
     '',
     '## Final result and interpretation',
     answer.example.result,
     ...answer.interpretation.map((item) => `- ${item}`),
-    ...(answer.keyTakeaways.length
-      ? ['', '## If needed', ...answer.keyTakeaways.map((item) => `- ${item}`)]
-      : []),
+    ...(answer.keyTakeaways.length ? ['', '## If needed', ...answer.keyTakeaways.map((item) => `- ${item}`)] : []),
     '',
     '## Limitations and verification',
     ...(answer.risks.length ? answer.risks.map((item) => `- ${item}`) : ['- No additional limitation was identified from the supplied context.']),
     ...(answer.sources.length
-      ? ['', 'Sources and freshness:', ...answer.sources.map((source) => `- ${source.name}${source.dataDate ? ` · ${source.dataDate}` : ''} · ${source.freshness}`)]
+      ? [
+          '',
+          'Sources and freshness:',
+          ...answer.sources.map((source) => `- ${source.name}${source.dataDate ? ` · ${source.dataDate}` : ''} · ${source.freshness}`),
+        ]
       : []),
   ];
   return lines.join('\n').trim();

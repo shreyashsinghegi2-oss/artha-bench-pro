@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Self-Test · BTMS PINN Lab</title>
+  <meta name="description" content="Runs the model checks in your browser: JavaScript networks against PyTorch outputs, and physics checks against known results." />
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <nav class="site" aria-label="Site"><div class="wrap"><a class="brand" href="/">BTMS PINN Lab</a><a href="/">Live model</a><a href="/learn.html">How it works</a><a href="/downloads.html">Data &amp; code</a><a href="/selftest.html" aria-current="page">Self-test</a></div></nav>
+  <div class="wrap">
+    <header class="top">
+      <p class="eyebrow">Verification</p>
+      <h1>Self-test: does the model run correctly here?</h1>
+      <p class="lede">These checks run in your browser right now. They compare the networks running on this page with the outputs of the original
+        PyTorch models, and check the physics against results that must hold.</p>
+    </header>
+    <main>
+      <section class="card">
+        <div class="tiles" id="summary"></div>
+        <div class="scroll" style="max-height:none"><table><thead><tr><th>Check</th><th>Detail</th><th>Result</th></tr></thead><tbody id="rows"></tbody></table></div>
+      </section>
+    </main>
+    <footer><p>The same checks run as automated tests in the source code (<code>tests/</code>).</p></footer>
+  </div>
+  <script type="module">
+    import { hypotheticalPcm, paramsFromConstants, predictTemperature, simulateCell } from '/btms-model.js';
+    const rows = [];
+    const add = (name, detail, ok) => rows.push({ name, detail, ok });
+    const [model, results, parity] = await Promise.all(['/model.json', '/results.json', '/data/parity.json'].map((u) => fetch(u).then((r) => r.json())));
+    for (const net of Object.keys(parity)) {
+      const { rows: inputs, temp_c: expected } = parity[net];
+      let worst = 0;
+      inputs.forEach((r, i) => {
+        const got = predictTemperature(model, net, model.pcm_codes[String(r.pcm)], model.cooling_codes[String(r.cooling)], r.location, r.time);
+        worst = Math.max(worst, Math.abs(got - expected[i]));
+      });
+      add(`Network ${net} matches PyTorch`, `${inputs.length} points, largest difference ${worst.toExponential(2)} °C (limit 1e-3)`, worst < 1e-3);
+    }
+    const prm = paramsFromConstants(model.constants);
+    const noCool = { ...prm, g_pipe: { natural: 0, forced: 0 }, g_per_k: 0 };
+    const rise = simulateCell(noCool, null, 'natural', 1)[1200] - 27;
+    const expectRise = (2 * 1200) / prm.c_cell;
+    add('Energy conservation without cooling', `rise ${rise.toFixed(6)} °C, Q·t/C = ${expectRise.toFixed(6)} °C`, Math.abs(rise - expectRise) < 1e-9);
+    const none = simulateCell(prm, null, 'natural', 2)[1200];
+    const nat = simulateCell(prm, model.pcm_table.om42, 'natural', 2)[1200];
+    const forced = simulateCell(prm, model.pcm_table.om42, 'forced', 2)[1200];
+    add('PCM cools better than no PCM', `no PCM ${none.toFixed(2)} °C, OM42 ${nat.toFixed(2)} °C`, nat < none);
+    add('Fan cools better than still air', `natural ${nat.toFixed(2)} °C, forced ${forced.toFixed(2)} °C`, forced < nat);
+    const low = hypotheticalPcm(model.pcm_table.om42, 34, 250);
+    const mild = Math.max(...simulateCell(prm, low, 'natural', 2, { tAmb: 27 })) - 27;
+    const hot = Math.max(...simulateCell(prm, low, 'natural', 2, { tAmb: 40 })) - 40;
+    add('Hot day melts a low-melting PCM before the ride', `rise ${mild.toFixed(2)} °C at 27 °C vs ${hot.toFixed(2)} °C at 40 °C`, hot > mild);
+    const row = results.design_grid.find((g) => g.duration_s === 1200 && g.ambient_c === 27 && g.melt_centre_c === 44);
+    const peak = Math.max(...simulateCell(prm, hypotheticalPcm(model.pcm_table.om42, 44, 250), 'natural', 2, { durationS: 1200, tAmb: 27 }));
+    add('Browser physics matches the Python design sweep', `browser ${peak.toFixed(3)} °C, Python ${row.peak_temp_c.toFixed(3)} °C`, Math.abs(peak - row.peak_temp_c) < 0.01);
+    const passed = rows.filter((r) => r.ok).length;
+    document.getElementById('summary').innerHTML = `<div class="tile"><div class="k">Checks passed</div><div class="v ${passed === rows.length ? 'pass' : 'fail'}">${passed} / ${rows.length}</div><div class="n">run in this browser just now</div></div>`;
+    document.getElementById('rows').innerHTML = rows.map((r) => `<tr><td>${r.name}</td><td>${r.detail}</td><td class="${r.ok ? 'pass' : 'fail'}">${r.ok ? '✓ Pass' : '✗ Fail'}</td></tr>`).join('');
+    document.body.dataset.selftest = passed === rows.length ? 'pass' : 'fail';
+  </script>
+</body>
+</html>

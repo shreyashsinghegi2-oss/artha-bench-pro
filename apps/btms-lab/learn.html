@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>How It Works · BTMS PINN Lab</title>
+  <meta name="description" content="Step-by-step explanation of every algorithm in the BTMS physics-informed ML lab: data, cooling efficiency, five ML models, honest splits, energy balance, PINN, conformal intervals, importance and design." />
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <nav class="site" aria-label="Site"><div class="wrap"><a class="brand" href="/">BTMS PINN Lab</a><a href="/">Live model</a><a href="/learn.html" aria-current="page">How it works</a><a href="/downloads.html">Data &amp; code</a><a href="/selftest.html">Self-test</a></div></nav>
+  <div class="wrap">
+    <header class="top">
+      <p class="eyebrow">Study guide</p>
+      <h1>How every algorithm works, step by step</h1>
+      <p class="lede">Read top to bottom. Each step says what it does, the formula, a small example where it helps, and the code that runs it.
+        The Python files named here are in <a href="/downloads.html">btms-ml.zip</a>.</p>
+      <div class="banner"><b>About the numbers.</b> Results quoted on this page come from the simulated dataset, because the full experimental dataset of
+        Mane et al. is not public yet. They show how the method behaves; they are not experimental findings.</div>
+    </header>
+
+    <main>
+      <section class="card">
+        <h2>Contents</h2>
+        <ol class="toc">
+          <li><a href="#s1">The problem</a></li>
+          <li><a href="#s2">The experiment and the data</a></li>
+          <li><a href="#s3">Cooling efficiency η</a></li>
+          <li><a href="#s4">The paper's five ML models</a></li>
+          <li><a href="#s5">Honest testing: three ways to split</a></li>
+          <li><a href="#s6">Metrics: R² and RMSE</a></li>
+          <li><a href="#s7">Physics features</a></li>
+          <li><a href="#s8">The energy balance (physics model)</a></li>
+          <li><a href="#s9">The PINN</a></li>
+          <li><a href="#s10">Uncertainty: conformal intervals</a></li>
+          <li><a href="#s11">What drives predictions: permutation importance</a></li>
+          <li><a href="#s12">PCM design explorer</a></li>
+          <li><a href="#s13">Run it yourself</a></li>
+          <li><a href="#s14">Limits and honesty</a></li>
+        </ol>
+      </section>
+
+      <article class="card study" id="s1">
+        <h2>1 · The problem</h2>
+        <p>An electric-vehicle battery heats up while it works. Too hot means faster ageing and, at worst, thermal runaway. Mane et al. (Journal of
+          Energy Storage, 2026) built a cooler with two parts: a <b>phase change material (PCM)</b>, a wax that soaks up heat while it melts, and a
+          <b>pulsating heat pipe (PHP)</b>, a thin tube that carries heat to the air. They tested three waxes and two cooling modes, then trained
+          machine-learning models to predict how well the module cools.</p>
+        <p>This lab asks three things the paper leaves open: <b>does the model work for a wax it has never seen</b>, does adding <b>physics</b> help, and
+          <b>which wax would be best</b> on a hot day or a longer ride?</p>
+      </article>
+
+      <article class="card study" id="s2">
+        <h2>2 · The experiment and the data</h2>
+        <ul>
+          <li>Six substitute 18650 cells (aluminium with a 2 W heater each, the heat of a real cell at 3C discharge), arranged in two offset rows.</li>
+          <li>PCM options: none, OM42, OM48, paraffin. Cooling at the heat-pipe condenser: natural (still air, 27 °C) or forced (fan).</li>
+          <li>Temperature recorded every second for 1,200 s (a 3C discharge lasts 20 minutes).</li>
+        </ul>
+        <div class="formula">rows = 1201 time steps × 6 cells × 2 cooling modes × 4 PCM options = 57,648</div>
+        <p>Each row has four inputs, <code>PCM, Cooling, Time, Location</code>, and one output, the cooling efficiency η. The wax properties measured by DSC
+          (paper, Table 2) are in <a href="/downloads.html">pcm_properties_table2.csv</a>.</p>
+        <p>Code: <code>btms/data.py</code> (loading and checks) and <code>btms/physics.py → simulated_dataset()</code> (the simulated stand-in with the same shape).</p>
+      </article>
+
+      <article class="card study" id="s3">
+        <h2>3 · Cooling efficiency η</h2>
+        <p>Instead of predicting temperature directly, the paper predicts a 0-to-1 score:</p>
+        <div class="formula">η = (T_max − T) / (T_max − T_min)        T_max = 59.86 °C, T_min = 27.06 °C (hottest and coldest readings)</div>
+        <p><b>Example:</b> a cell at 43.46 °C has η = (59.86 − 43.46) / 32.8 = 0.50. η = 1 means as cold as the coldest reading; η = 0 as hot as the hottest.
+          Because the formula is linear, any error in η converts back to degrees: <code>error_°C = error_η × 32.8</code>. This lab reports errors in °C
+          because that is what an engineer needs.</p>
+        <pre class="code">def eta_to_temperature(eta, t_max=59.86, t_min=27.06):
+    return t_max - eta * (t_max - t_min)</pre>
+      </article>
+
+      <article class="card study" id="s4">
+        <h2>4 · The paper's five ML models</h2>
+        <table>
+          <thead><tr><th>Model</th><th>Idea in one line</th><th>Setting used here</th></tr></thead>
+          <tbody>
+            <tr><td>Linear regression</td><td>Fits a straight-line rule: η = a·PCM + b·Cooling + c·Time + d·Location + e</td><td>standardised inputs</td></tr>
+            <tr><td>Random forest</td><td>Averages many decision trees, each trained on a random sample</td><td>100 trees</td></tr>
+            <tr><td>SVR (RBF kernel)</td><td>Fits a smooth curve that ignores errors smaller than ε</td><td>C = 10, ε = 0.005, 8,000-row subsample</td></tr>
+            <tr><td>Gradient boosting</td><td>Adds trees one by one, each correcting the last one's mistakes</td><td>200 trees, learning rate 0.1</td></tr>
+            <tr><td>ANN</td><td>Small neural network: 4 inputs → 10 hidden neurons (tanh) → 1 output</td><td>L-BFGS training (the paper used MATLAB's Levenberg–Marquardt)</td></tr>
+          </tbody>
+        </table>
+        <p>Code: <code>btms/models.py → make_models()</code>.</p>
+      </article>
+
+      <article class="card study" id="s5">
+        <h2>5 · Honest testing: three ways to split</h2>
+        <p>A model is scored on data it did not train on. <i>How</i> that data is chosen decides what the score means.</p>
+        <table>
+          <thead><tr><th>Protocol</th><th>How</th><th>Question it answers</th></tr></thead>
+          <tbody>
+            <tr><td>Random (paper)</td><td>shuffle all rows, 80% train, 20% test</td><td>Can it fill gaps inside curves it has already seen?</td></tr>
+            <tr><td>Leave-one-PCM-out</td><td>train on all waxes but one, test on the held-out wax; repeat for each</td><td>Does it work for a <b>new material</b>?</td></tr>
+            <tr><td>Future time</td><td>train on t ≤ 900 s, test on t &gt; 900 s</td><td>Can it extrapolate forward in time?</td></tr>
+          </tbody>
+        </table>
+        <p><b>Why random splitting flatters the model.</b> The reading at second 500 and the reading at second 501 are almost identical. A random split puts
+          one in training and the other in testing, so the test is like an exam where you have seen the answers. On the simulated data, gradient boosting
+          scores R² 0.999 with a random split and R² −0.82 when the wax is new: worse than predicting the average.</p>
+        <pre class="code">def leave_one_pcm(df):
+    for pcm in df.pcm.unique():          # 'none' is kept in training by default
+        test  = indices where df.pcm == pcm
+        train = indices where df.pcm != pcm
+        yield train, test</pre>
+        <p>Code: <code>btms/splits.py</code>.</p>
+      </article>
+
+      <article class="card study" id="s6">
+        <h2>6 · Metrics: R² and RMSE</h2>
+        <div class="formula">R²   = 1 − Σ(y − ŷ)² / Σ(y − ȳ)²        1 = perfect, 0 = no better than the average, &lt; 0 = worse than the average
+RMSE = √( mean((y − ŷ)²) )                 typical error, in the same unit as y</div>
+        <p>On one fixed test set a lower RMSE always means a higher R² (both depend on the same squared errors). That is why a pair like
+          "ANN: R² 0.9981, RMSE 0.0012; GB: R² 0.9991, RMSE 0.0059" cannot come from a single test set: it is worth asking how each was computed.</p>
+        <p>Code: <code>btms/metrics.py</code>.</p>
+      </article>
+
+      <article class="card study" id="s7">
+        <h2>7 · Physics features</h2>
+        <p>The paper gives the wax as a code (OM42 = 3, say). A new wax is just an unseen number, so the model cannot reason about it. Here each wax is
+          described by what it <i>is</i>:</p>
+        <div class="formula">time, forced (0/1), core_cell (0/1), has_pcm (0/1),
+first_deviation_°C, onset_°C, latent_heat_J/g, k_solid_W/mK, cp_solid_kJ/kgK, rho_solid_kg/m³</div>
+        <p>A new wax becomes a new point in property space that the model can place. On the simulated data, gradient boosting on a held-out wax goes from
+          R² −0.82 (codes) to R² 0.88 (properties). With only three waxes, though, the properties are perfectly correlated with each other, so the data
+          cannot say <i>which</i> property matters: that needs more materials.</p>
+        <p>Code: <code>btms/features.py</code>.</p>
+      </article>
+
+      <article class="card study" id="s8">
+        <h2>8 · The energy balance (physics model)</h2>
+        <p>Treat one cell and its share of wax as a single lump with one temperature T:</p>
+        <div class="formula">C_eff(T) · dT/dt = Q − G · (T − T_amb)
+
+heat stored   = heat made − heat removed
+Q     = 2 W (+ extra for core cells C2, C5, which receive heat from neighbours)
+G     = G_pipe(natural or forced) + g_k · k_PCM      heat-pipe path + conduction through the wax
+C_eff = C_cell + m_PCM · [cp + L · melt(T)]          "apparent heat capacity"</div>
+        <p><b>Melting as extra heat capacity.</b> While wax melts it absorbs its latent heat L without warming. We spread L over the melting range
+          with a bell curve centred between the DSC first-deviation and onset temperatures:</p>
+        <div class="formula">melt(T) = exp(−½ ((T − T_c)/w)²) / (w √(2π))       integrates to 1, so the total extra heat is exactly m·L</div>
+        <p><b>Solving it.</b> Step forward one second at a time (explicit Euler):</p>
+        <pre class="code">T[0] = T_amb
+for i in range(1200):
+    C = C_cell + m_pcm * (cp + L * melt(T[i]))
+    T[i+1] = T[i] + (Q - G * (T[i] - T_amb)) / C</pre>
+        <p>Checks in the tests: with no cooling the rise equals Q·t/C exactly; a PCM keeps the cell cooler than none; the fan lowers the temperature further.
+          Code: <code>btms/physics.py</code>; browser version <code>btms-model.js → simulateCell()</code>.</p>
+      </article>
+
+      <article class="card study" id="s9">
+        <h2>9 · The PINN (physics-informed neural network)</h2>
+        <p><b>Network.</b> Input: time (scaled to 0–1) and the 8 configuration features; two hidden layers of 64 tanh neurons; output: temperature.</p>
+        <div class="formula">T̂(t, x) = T_amb + 30 · NN(t/1200, x/scale)</div>
+        <p><b>Loss: three parts.</b></p>
+        <div class="formula">L = w_data · mean( (T̂ − T_measured)² )                       fit the measurements
+  + w_phys · mean( r² ),  r = [C_eff(T̂)·dT̂/dt − (Q − G·(T̂ − T_amb))] / Q   obey the energy balance
+  + w_ic   · mean( T̂(0, x)² in scaled units )                    start at room temperature</div>
+        <p><b>Automatic differentiation</b> gives dT̂/dt exactly from the network, so the residual r can be computed at any time point, called a
+          <i>collocation point</i>, even where there is no measurement.</p>
+        <p><b>Learnable physics.</b> The constants C_cell, m_PCM, G_natural, G_forced, g_k, the core-cell factors and the melt width are trained
+          together with the network weights. They are shared by all waxes; each wax enters only through its measured properties.</p>
+        <p><b>Why it generalises.</b> The physics term is evaluated for <i>every</i> configuration, including a held-out wax whose temperatures were never
+          used. The network must produce a curve for that wax that obeys the energy balance with the constants learned from the other waxes. That is the
+          information a plain network does not have.</p>
+        <pre class="code">for step in range(3000):                      # Adam, learning rate 3e-3, cosine schedule
+    loss = mse(net(t_batch, x_batch), T_batch)                       # data
+    t_c  = uniform(0, 1, 2048).requires_grad_()                       # collocation times
+    T    = T_amb + 30 * net(t_c, x_all_configs)
+    dTdt = autograd.grad(T.sum(), t_c, create_graph=True)[0] / 1200
+    r    = phys.residual(T, dTdt, raw_features)                      # energy balance
+    loss = loss + w_phys * mean(r**2) + w_ic * mean(net(0, x)**2)
+    loss.backward(); optimizer.step()</pre>
+        <p><b>Fair comparison.</b> Setting w_phys = 0 gives the <i>same</i> network without physics. On the simulated data, trained without any OM42 data
+          and tested on OM42: PINN R² 0.989 (error 0.39 °C) against R² 0.54 (2.55 °C) for the plain network. The constants it learned (for example
+          C_cell 42.1 J/K against the true 40) are close to the values that generated the data, which shows the inverse problem is solved, not just fitted.</p>
+        <p>Code: <code>btms/pinn.py</code>; browser forward pass <code>btms-model.js → predictTemperature()</code>.</p>
+      </article>
+
+      <article class="card study" id="s10">
+        <h2>10 · Uncertainty: conformal intervals</h2>
+        <p>Turn any model's single prediction into a range with a coverage guarantee:</p>
+        <ol>
+          <li>Keep a <b>calibration set</b> the model did not train on and compute its errors |y − ŷ|.</li>
+          <li>Let q be the ⌈(n+1)·0.9⌉-th smallest error.</li>
+          <li>Report <b>ŷ ± q</b>. If new data resembles the calibration data, the range contains the truth at least 90% of the time.</li>
+        </ol>
+        <p><b>The catch:</b> the guarantee is only as honest as the calibration set. Calibrated on random rows, the intervals were ±0.27 °C and covered
+          only 31% of a new wax; calibrated on a different wax, ±2.28 °C and 64%. With only three waxes, even that falls short of 90%. More materials
+          are needed for trustworthy intervals.</p>
+        <p>Code: <code>btms/conformal.py</code>.</p>
+      </article>
+
+      <article class="card study" id="s11">
+        <h2>11 · What drives predictions: permutation importance</h2>
+        <p>Shuffle one input column in the test data and measure how much the error grows. Big growth means the model relies on that input. It is
+          measured on held-out data and works the same for every model.</p>
+        <p><b>Pitfall found while building this:</b> if the test set contains one wax only, every wax property is constant there, so shuffling it changes
+          nothing and its importance reads zero by construction. The lab therefore measures importance on the end of every run (all waxes present).</p>
+        <p>Code: <code>btms/explain.py</code>, run by <code>run_design.py</code>.</p>
+      </article>
+
+      <article class="card study" id="s12">
+        <h2>12 · PCM design explorer</h2>
+        <ol>
+          <li>Learn the physical constants from the data with the PINN.</li>
+          <li>Put them into the energy balance.</li>
+          <li>Simulate hypothetical waxes: melting point 30–66 °C, latent heat 150–300 J/g, ambient 27 °C or 40 °C, ride 20 or 60 minutes.</li>
+          <li>Pick the melting point whose <b>worst</b> peak temperature over the ambient conditions is lowest (a robust choice).</li>
+        </ol>
+        <p><b>Why a hot day matters.</b> The module starts at ambient temperature. A wax melting at 34 °C is already liquid on a 40 °C day, so its latent
+          heat is used up before the ride starts. On the simulated, calibrated model the robust best melting point is about 42 °C for a 20-minute ride
+          and about 48 °C for a 60-minute ride. These are hypotheses for the lab to test, not results.</p>
+        <p>Code: <code>btms/design.py</code>; try it on the <a href="/">live model</a>.</p>
+      </article>
+
+      <article class="card study" id="s13">
+        <h2>13 · Run it yourself</h2>
+        <pre class="code">unzip btms-ml.zip && cd btms-ml
+pip install numpy pandas scikit-learn torch matplotlib openpyxl tabulate pytest
+python -m pytest -q tests                        # 12 tests
+python run_experiments.py --simulated            # E1–E5 → results/RESULTS.md
+python run_design.py --simulated                 # E6–E7 → results/DESIGN.md
+python export_web.py --simulated --out web       # models for this website
+
+# with the experimental dataset (57,648 rows) from the authors:
+python run_experiments.py --data data/full.xlsx</pre>
+        <p>Before using physics features on real data, confirm what each numeric PCM and cooling code means; the mapping in <code>btms/data.py</code> is a
+          placeholder until then.</p>
+      </article>
+
+      <article class="card study" id="s14">
+        <h2>14 · Limits and honesty</h2>
+        <ul>
+          <li>All results here come from simulated data generated by the same kind of model the PINN uses, which makes the PINN's job easier than it will
+            be on real measurements.</li>
+          <li>The lumped model ignores temperature differences inside a cell and the pulsating behaviour of the heat pipe.</li>
+          <li>Three waxes are too few to separate the effect of each property or to calibrate uncertainty well.</li>
+          <li>The authors' public repository contains a 100-row sample; the study needs their full dataset.</li>
+        </ul>
+      </article>
+    </main>
+    <footer><p>BTMS PINN Lab · Shreyash Singh, Ajeenkya DY Patil University · extends Mane et al., <a href="https://doi.org/10.1016/j.est.2026.124313">J. Energy Storage 180 (2026) 124313</a></p></footer>
+  </div>
+</body>
+</html>

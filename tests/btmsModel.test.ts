@@ -1,9 +1,9 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { hypotheticalPcm, paramsFromConstants, predictTemperature, simulateCell } from '../public/research/btms/btms-model.js';
+import { hypotheticalPcm, paramsFromConstants, predictTemperature, simulateCell } from '../apps/btms-lab/btms-model.js';
 
-const model = JSON.parse(readFileSync('public/research/btms/model.json', 'utf8'));
-const parity = JSON.parse(readFileSync('tests/fixtures/btms-parity.json', 'utf8'));
+const model = JSON.parse(readFileSync('apps/btms-lab/model.json', 'utf8'));
+const parity = JSON.parse(readFileSync('apps/btms-lab/data/parity.json', 'utf8'));
 const pcmName = (code: number) => model.pcm_codes[String(code)] as string;
 const coolName = (code: number) => model.cooling_codes[String(code)] as string;
 
@@ -41,7 +41,7 @@ describe('BTMS web model', () => {
   });
 
   it('matches the Python design sweep', () => {
-    const results = JSON.parse(readFileSync('public/research/btms/results.json', 'utf8'));
+    const results = JSON.parse(readFileSync('apps/btms-lab/results.json', 'utf8'));
     const prm = paramsFromConstants(model.constants);
     const row = results.design_grid.find((g: { duration_s: number; ambient_c: number; melt_centre_c: number }) =>
       g.duration_s === 1200 && g.ambient_c === 27 && g.melt_centre_c === 44);

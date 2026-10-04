@@ -131,7 +131,7 @@ function table(container, cols, rows) {
 }
 
 async function main() {
-  const [model, results] = await Promise.all([fetch('/research/btms/model.json').then((r) => r.json()), fetch('/research/btms/results.json').then((r) => r.json())]);
+  const [model, results] = await Promise.all([fetch('/model.json').then((r) => r.json()), fetch('/results.json').then((r) => r.json())]);
   const simulated = /SIMULATED/.test(model.data_note);
   $('data-note').innerHTML = simulated
     ? '<b>Demonstration data.</b> These models are trained on simulated data from a lumped energy-balance model, because the full experimental dataset is not yet public. They demonstrate the method; they are not experimental findings.'

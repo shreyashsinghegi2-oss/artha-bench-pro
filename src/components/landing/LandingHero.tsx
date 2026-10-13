@@ -9,7 +9,7 @@ import { HERO_REPORT } from './heroSample';
 import { useLanguageCycle } from './heroLanguage';
 import { ArthaMindLogoMark } from '../branding/ArthaMindBrand';
 import './landingHero.css';
-import { HeroSlideshow } from './HeroSlideshow';
+import { HeroVideo } from './HeroVideo';
 
 /** The ecosystem at a glance: every chip is a real part of the product. */
 const ECOSYSTEM: Array<[string, React.ComponentType<{ size?: number }>]> = [
@@ -64,7 +64,7 @@ export const LandingHero: React.FC<{ onSample: () => void; onExplore: () => void
 
   return <section className="hx hx-nature hx-photo" aria-labelledby="hx-title">
     <div className="hx-scene">
-    <HeroSlideshow/>
+    <HeroVideo/>
     <div className="hx-wrap">
       <div className="hx-copy">
         <h1 id="hx-title" {...cls("hx-one hx-short", 0)}>Financial intelligence <span>that grows your money and secures your future.</span></h1>

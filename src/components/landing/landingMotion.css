@@ -343,3 +343,6 @@ html:has(.connected-landing){scroll-behavior:smooth;scroll-padding-top:80px}
 .rv-feature{color:#047857}
 .rv-avatar{background:linear-gradient(135deg,#047857,#10b981)}
 @media (prefers-reduced-motion:reduce){.rv-card:hover{transform:none}}
+/* Header buttons: links and buttons share one centred height; on phones Ask Advisor moves to the menu so the brand never collides with the controls. */
+.cl-signin{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;white-space:nowrap}
+@media (max-width:560px){.cl-right .cl-advisor-link{display:none}}

@@ -21,23 +21,6 @@ const ECOSYSTEM: Array<[string, React.ComponentType<{ size?: number }>]> = [
   ['Learn with lessons', GraduationCap],
 ];
 
-const OFFER = [
-  { kicker: 'For your money', name: 'ArthaMind AI', line: 'Plan, check and understand your own finances.', items: [
-    'Money health score and a step-by-step plan',
-    'Old vs new tax regime, with the working shown',
-    'Freedom number, goal SIPs and 14 calculators',
-    'Insurance and emergency-fund gaps',
-    'AI CFO in English, Hindi and Hinglish',
-  ] },
-  { kicker: 'For research', name: 'Artha Bench Pro', line: 'Look at markets and test AI answers before you trust them.', items: [
-    'India, US, forex and crypto market pages',
-    'Business news explained in plain language',
-    'AI answer reliability lab and model comparison',
-    'Financial tutor and short lessons',
-    'Sources and data freshness on every page',
-  ] },
-];
-
 const inr = (v: number) => `₹${Math.round(v).toLocaleString('en-IN')}`;
 
 /** Live language badge: the count and the language name keep changing. */
@@ -89,14 +72,5 @@ export const LandingHero: React.FC<{ onSample: () => void; onExplore: () => void
 
     </div>
 
-    <div className="hx-offer" aria-labelledby="hx-offer-title">
-      <h2 id="hx-offer-title" className="hx-offer-title">What you get</h2>
-      <div className="hx-offer-grid">
-        {OFFER.map((o, i) => <article key={o.name} {...cls('hx-offer-card', i + 3)}>
-          <header><small>{o.kicker}</small><b>{o.name}</b><span>{o.line}</span></header>
-          <ul>{o.items.map((it) => <li key={it}><Check size={14} aria-hidden="true"/>{it}</li>)}</ul>
-        </article>)}
-      </div>
-    </div>
   </section>;
 };

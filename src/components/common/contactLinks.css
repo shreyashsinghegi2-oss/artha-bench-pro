@@ -10,3 +10,6 @@
 .ct-dark a{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14);color:#e8f5f0}
 .ct-dark small{color:#9fb8ae}
 .ct-dark .ct-brand{background:#fff}
+.ct-ico{background:#fff;border:1px solid #edf1f4;width:38px;height:38px}
+.ct-ico svg{display:block}
+.ct-links{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}.ct-links a>span:last-child{overflow-wrap:normal;word-break:normal}@media (max-width:360px){.ct-links a>span:last-child{overflow-wrap:anywhere}}

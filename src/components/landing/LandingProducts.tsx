@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowRight, BarChart3, BookOpen, Calculator, FlaskConical, Landmark, LineChart, MessageSquareText, ShieldCheck, Sparkles, Target, Wallet } from 'lucide-react';
+import { ArrowRight, BarChart3, BookOpen, Calculator, FlaskConical, Landmark, LineChart, MessageSquareText, Sparkles, Target, Wallet } from 'lucide-react';
 import { ArthaMindMark } from './ArthaMindMark';
 import './landingProducts.css';
 
@@ -52,7 +52,7 @@ export const LandingProducts: React.FC<{ onTryMind: () => void; onOpenBench: () 
 
         <article className="lpd-bench" aria-labelledby="lpd-bench-title">
           <header>
-            <span className="lpd-logo lpd-logo-bench"><ShieldCheck size={20} aria-hidden="true" /></span>
+            <span className="lpd-logo lpd-logo-bench"><img src="/brand/artha-bench-mark.webp" alt="" width={34} height={34} /></span>
             <div>
               <small>Your workspace</small>
               <h3 id="lpd-bench-title">Artha Bench Pro</h3>
@@ -68,7 +68,7 @@ export const LandingProducts: React.FC<{ onTryMind: () => void; onOpenBench: () 
               </li>
             ))}
           </ul>
-          <button type="button" className="lpd-btn lpd-btn-dark" onClick={onOpenBench}>
+          <button type="button" className="lpd-btn lpd-btn-light" onClick={onOpenBench}>
             Open Artha Bench Pro <ArrowRight size={16} aria-hidden="true" />
           </button>
         </article>

@@ -390,3 +390,11 @@ html:has(.connected-landing){scroll-behavior:smooth;scroll-padding-top:80px}
 .cl-reveal-section .cl-eyebrow:after{transition-duration:.4s;transition-delay:.05s}
 .ps-section.is-pinned{height:140vh}
 html:has(.connected-landing){scroll-padding-top:72px}
+/* Five rows that keep moving under the cursor */
+.rv-row:hover .rv-track{animation-play-state:running}
+.rv-card:hover{transform:none}
+.rv-row-3 .rv-track{animation-duration:60s}
+.rv-row-4 .rv-track{animation-duration:70s}
+.rv-half{position:relative;display:inline-flex}
+.rv-half svg:first-child{color:#d6dde3}
+.rv-half svg.on{position:absolute;inset:0;color:#f5a524;fill:#f5a524}

@@ -1,13 +1,13 @@
 import React from 'react';
-import { Star } from 'lucide-react';
+import { Star, StarHalf } from 'lucide-react';
 import { LANDING_REVIEWS, type LandingReview } from '../../data/landingReviews';
 
 const ReviewCard: React.FC<{ review: LandingReview; hidden?: boolean }> = ({ review, hidden }) => (
   <figure className="rv-card" aria-hidden={hidden || undefined}>
     <div className="rv-top">
       <span className="rv-stars" aria-label={`${review.rating} out of 5`}>
-        {Array.from({ length: 5 }, (_, i) => <Star key={i} size={13} className={i < review.rating ? 'on' : ''} aria-hidden="true" />)}
-        <b>{review.rating}.0</b>
+        {Array.from({ length: 5 }, (_, i) => (i + 1 <= review.rating ? <Star key={i} size={13} className="on" aria-hidden="true" /> : <span key={i} className="rv-half" aria-hidden="true"><Star size={13} /><StarHalf size={13} className="on" /></span>))}
+        <b>{review.rating.toFixed(1)}</b>
       </span>
       <span className="rv-feature">{review.feature}</span>
     </div>
@@ -19,12 +19,13 @@ const ReviewCard: React.FC<{ review: LandingReview; hidden?: boolean }> = ({ rev
   </figure>
 );
 
-/** Reviews: three compact rows drifting in alternating directions; a static grid for reduced motion. */
+/** Reviews: five compact rows drifting in alternating directions; a static grid for reduced motion. */
 export const LandingReviews: React.FC = () => {
   const reviews = LANDING_REVIEWS;
   if (!reviews.length) return null;
-  const size = Math.ceil(reviews.length / 3);
-  const rows = [0, 1, 2].map((r) => reviews.slice(r * size, r * size + size)).filter((row) => row.length);
+  const ROWS = 5;
+  const size = Math.ceil(reviews.length / ROWS);
+  const rows = Array.from({ length: ROWS }, (_, r) => r).map((r) => reviews.slice(r * size, r * size + size)).filter((row) => row.length);
   const anyIllustrative = reviews.some((review) => review.illustrative);
   return (
     <section id="reviews" className="cl-section rv-section cl-reveal-section" aria-labelledby="reviews-title">

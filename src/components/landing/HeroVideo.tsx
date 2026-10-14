@@ -1,13 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react';
 import './heroSlideshow.css';
 
-// Coin stacks rising with a growth chart, graded to the brand green. They grow, hold, then fade back to the start.
+// Coin stacks rising slowly with a growth chart, graded to the brand green. One ~22 s loop (about one cycle of the
+// hero phone), with a 2.5 s crossfade at the loop point so it never stops or jumps.
 // Landscape screens get the 1080p cut; tall phone screens get a portrait crop, so neither is stretched or
 // shows a tiny letterboxed strip. Each cut ships as H.264 MP4 (every browser) and VP9 WebM (browsers built
 // without H.264).
 const SOURCES = {
-  wide: { video: '/hero/coins-1080', poster: '/hero/coins-poster.webp' },
-  tall: { video: '/hero/coins-portrait', poster: '/hero/coins-poster-m.webp' },
+  wide: { video: '/hero/grow-1080', poster: '/hero/grow-poster.webp' },
+  tall: { video: '/hero/grow-portrait', poster: '/hero/grow-poster-m.webp' },
 };
 const TALL = '(max-aspect-ratio: 4/5)';
 

@@ -34,3 +34,13 @@
 .lpd-btn-dark:hover{background:#1e293b}
 @media (max-width:960px){.lpd-grid{grid-template-columns:1fr}}
 @media (max-width:560px){.lpd-mind,.lpd-bench{padding:22px 18px}.lpd-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}.lpd-btn{align-self:stretch}}
+/* Artha Bench Pro in the same brand green as ArthaMind */
+.lpd-bench{background:radial-gradient(120% 90% at 100% 0%,#14532d 0%,#0b2a22 55%,#081c17 100%);border:0;color:#e8f5f0}
+.lpd-bench small{color:#d9a441}
+.lpd-bench .lpd-lead{color:#c7ddd5}
+.lpd-logo-bench{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.14)}
+.lpd-logo-bench img{display:block;width:34px;height:34px;object-fit:contain}
+.lpd-tiles li{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.12)}
+.lpd-tiles li svg{color:#34d399}
+.lpd-tiles b{color:#fff}
+.lpd-tiles span{color:#b9d3ca}

@@ -1,7 +1,6 @@
 import React,{useEffect,useRef,useState}from'react';
 import { installTilt } from '../../lib/tilt3d';
 import { lazyOnView } from './lazyOnView';
-const LandingModulePipeline=lazyOnView(()=>import('./LandingModulePipeline').then(m=>({default:m.LandingModulePipeline})),{minHeight:700});
 const PhoneShowcase=lazyOnView(()=>import('./PhoneShowcase').then(m=>({default:m.PhoneShowcase})),{minHeight:900,anchorId:'phone-tour'});
 const MoneyCheck=lazyOnView(()=>import('./MoneyCheck').then(m=>({default:m.MoneyCheck})),{minHeight:900,anchorId:'money-check'});
 import{ArrowDown,ArrowRight,ArrowUp,CheckCircle2,Menu,Sparkles,X}from'lucide-react';
@@ -22,11 +21,12 @@ import'./landingMotion.css';
 import{useLandingMotion}from'./useLandingMotion';
 const LandingAiCfo=lazyOnView(()=>import('./LandingAiCfo').then(m=>({default:m.LandingAiCfo})),{minHeight:900,anchorId:'ai-cfo'});
 const LandingPurpose=lazyOnView(()=>import('./LandingPurpose').then(m=>({default:m.LandingPurpose})),{minHeight:700,anchorId:'purpose'});
+const LanguagesStory=lazyOnView(()=>import('./LanguagesStory').then(m=>({default:m.LanguagesStory})),{minHeight:700,anchorId:'languages'});
 const ReviewsStory=lazyOnView(()=>import('./ReviewsStory').then(m=>({default:m.ReviewsStory})),{minHeight:700});
 
 type Props={signedIn:boolean;onEnter:(destination?:AppNavigationDestination)=>void;onSignIn:()=>void;onSignUp?:()=>void};
 type MacroCard={label:string;value:string;delta:string;direction:'up'|'down'|'flat'|'none'};
-const NAV_LINKS=[['purpose','Why ArthaMind'],['money-check','Money check'],['modules','Modules'],['pricing','Pricing'],['data-protection','Data protection']] as const;
+const NAV_LINKS=[['purpose','Why ArthaMind'],['money-check','Money check'],['languages','Languages'],['pricing','Pricing'],['data-protection','Data protection']] as const;
 const CAPABILITIES=['Old vs new tax regime','80C · 80D · NPS room','EMI prepayment vs invest','6-month emergency runway','SIP for every goal','Retirement corpus','Term & health cover gap','Home-loan affordability','Business cash flow','Credit-card debt payoff','Hindi & Hinglish answers','Verified ₹ calculations'];
 /** Cycles hero phrases with a slide-up transition; shows the first phrase only for reduced motion. */
 /** Formats a provider quote for a macro card. A missing or non-finite change is shown as unavailable, never as +0.00%. */
@@ -34,23 +34,6 @@ export function macroCardFromQuote(label:string,quote:NormalizedMarketQuote|unde
 /** Share of the ring to leave unfilled for `passed` of `total` checks (0 = full ring). */
 export function scoreRingOffset(passed:number,total:number):number{if(!(total>0))return 1;return 1-Math.min(Math.max(passed,0),total)/total;}
 // Target is a workspace, or `ask:<question>` to hand the question to the AI CFO on this page.
-const modules=[
- ['SD','Smart Dashboard','Income, expenses, savings rate and EMI burden in one live view.','Plan','dashboard'],
- ['GP','Goal Planner','The monthly SIP each goal needs, adjusted for inflation.','Plan','financial-twin'],
- ['HS','Financial Health Score','A 0 to 100 score with personal tips to improve it.','Plan','financial-health'],
- ['RP','Retirement Planner','The corpus you need, three scenarios and the gap to close.','Plan','ask:I am 32, earn ₹1,20,000 a month take-home and spend ₹70,000. How big a retirement corpus do I need at 60 and what monthly SIP gets me there? Show three scenarios.'],
- ['EC','Education Cost Planner','Future education costs with inflation and the SIP to reach them.','Plan','ask:My child is 4. An engineering degree costs ₹20,00,000 today. What will it cost in 14 years at 10% education inflation, and what monthly SIP do I need?'],
- ['CI','Career Income Projection','Ten-year salary and wealth paths: stay, switch or grow.','Plan','ask:I earn ₹18,00,000 a year. Compare my 10-year income and wealth if I stay (8% raises), switch jobs now (30% hike, then 8%) or do an MBA costing ₹25,00,000.'],
- ['NW','Net Worth Tracker','Assets, liabilities and your wealth trajectory over time.','Plan','finance-reports'],
- ['PT','Portfolio Tracker','SIPs, funds, stocks, FDs, PPF and NPS with real returns.','Invest','market-watchlist'],
- ['MD','Market Data Dashboard','NIFTY 50, SENSEX, USD/INR and gold from available provider-backed market data.','Invest','markets'],
- ['TX','Tax Optimiser','Old versus new regime and unused 80C, 80D and NPS room.','Tax & Debt','income'],
- ['EM','EMI & Loan Manager','Amortisation, prepayment simulator and loan comparison.','Tax & Debt','emi-manager'],
- ['IN','Insurance Analyser','Human Life Value, cover gap and protection score.','Protect','ask:I am 35, earn ₹15,00,000 a year, have a ₹45,00,000 home loan and two kids. Estimate my Human Life Value, the term cover I need and my health cover gap.'],
- ['FA','Family Income Analyser','Dependency ratio and financial stress for each earner.','Protect','ask:Our family has two earners (₹90,000 and ₹45,000 a month take-home), three dependants and ₹38,000 in EMIs. Analyse our dependency ratio and financial stress per earner.'],
- ['RR','Financial Risk Radar','Five risk dimensions and three actions to reduce them.','Protect','quick-check'],
- ['AI','AI Financial Advisor','Ask in 13 Indian languages, including Hinglish, and get numbers-backed answers.','AI','ask:'],
-] as const;
 export const ConnectedLandingPage:React.FC<Props>=({signedIn,onEnter,onSignIn,onSignUp})=>{
  const[scrolled,setScrolled]=useState(false),[active,setActive]=useState('workspace'),[news,setNews]=useState<LandingNews>([]);
  const rootRef=useRef<HTMLDivElement>(null);const[menuOpen,setMenuOpen]=useState(false);useEffect(()=>{if(!menuOpen)return;const onKey=(e:KeyboardEvent)=>{if(e.key==='Escape')setMenuOpen(false)};window.addEventListener('keydown',onKey);return()=>window.removeEventListener('keydown',onKey)},[menuOpen]);const[cfoPrompt,setCfoPrompt]=useState<{id:number;text:string}|null>(null);const[showTop,setShowTop]=useState(false);useLandingMotion(rootRef);
@@ -82,11 +65,10 @@ export const ConnectedLandingPage:React.FC<Props>=({signedIn,onEnter,onSignIn,on
  <PhoneShowcase onTry={()=>scrollToId('money-check')}/>
  <MoneyCheck onAsk={askCfo}/>
  <LandingAiCfo onEnter={open} externalPrompt={cfoPrompt}/>
- <section id="modules" className="cl-section cl-reveal-section tone-night mp-section"><div className="cl-wrap"><div className="cl-eyebrow">How your money flows</div><h2>One pipeline from your numbers to a plan.</h2><p className="cl-sub">Fifteen modules work as four connected stages. Each stage uses what the one before it verified, and the AI CFO explains the result.</p><LandingModulePipeline modules={modules} onOpen={(target)=>open(target as AppNavigationDestination)} onAsk={askCfo}/></div></section>
  <LiveMarketTicker/><CryptoMarketPreview/><BusinessNewsTicker articles={news}/>
  <LandingPricing onStart={signedIn?()=>open('overview'):onSignIn} onSample={()=>scrollToId('money-check')}/>
- <section id="get-started" className="cl-section cl-trust cl-reveal-section tone-forest"><div className="cl-wrap"><div className="cl-final"><h2>Your AI CFO is ready.</h2><p>Run a free health check, ask about taxes, EMIs or goals, then take the plan into your private workspace. ArthaMind is not a brokerage and never executes trades.</p><div className="cl-actions"><button className="cl-primary cl-glow" onClick={scrollToCfo}><Sparkles size={16}/>Ask your AI CFO</button><button className="cl-secondary" onClick={()=>open('overview')}>Open Artha Bench Pro <ArrowRight size={16}/></button><button className="cl-secondary" onClick={()=>open('evaluation-lab')}>Test an AI answer</button></div></div></div></section>
- {signedIn?<ReviewsStory ctaLabel="Open your workspace" onCta={()=>open('overview')}/>:<ReviewsStory ctaLabel="Sign up free" onCta={onSignUp??onSignIn} autoPrompt/>}
+ <ReviewsStory/>
+ {signedIn?<LanguagesStory ctaLabel="Open your workspace" onCta={()=>open('overview')}/>:<LanguagesStory ctaLabel="Sign up free" onCta={onSignUp??onSignIn} autoPrompt/>}
  </main><button type="button" className={'cl-top '+(showTop?'show':'')} aria-label="Back to top" onClick={()=>window.scrollTo({top:0,behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'})}><ArrowUp size={17}/></button><footer className="cl-footer" id="contact"><div className="cl-wrap cl-footer-grid"><div className="cl-footer-brand"><b>ArthaMind AI</b><span>Your AI CFO for India and Indians abroad: tax, loans, goals and investments. App in 20 languages; AI CFO in 13 Indian languages.</span><nav className="cl-footer-links" aria-label="More"><a href="#pricing">Pricing</a><a href="/data-protection">Data protection</a><a href="/terms.html">Terms &amp; conditions</a><a href="/privacy.html">Privacy policy</a><button type="button" onClick={()=>open('evaluation-lab')}>Answer checker</button></nav></div><div className="cl-footer-contact"><h2>Talk to us</h2><ContactLinks/></div></div><div className="cl-wrap cl-footer-legal"><span>© {new Date().getFullYear()} ArthaMind AI. ArthaMind gives financial information and planning tools. It is not a SEBI-registered investment adviser, does not give personalised investment advice, and never places trades. By using ArthaMind you agree to our <a href="/terms.html">Terms &amp; conditions</a> and <a href="/privacy.html">Privacy policy</a>.</span></div></footer>
  </div>
 };

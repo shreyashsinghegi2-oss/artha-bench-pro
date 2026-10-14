@@ -15,17 +15,19 @@ import{LazyCryptoMarketPreview as CryptoMarketPreview}from'./LazyCryptoMarketPre
 const BusinessNewsTicker=lazyOnView(()=>import('./BusinessBrief').then(m=>({default:m.BusinessNewsTicker})),{minHeight:48});type LandingNews=ReturnType<typeof import('./BusinessBrief')['normalizeBusinessNews']>;
 import{LanguageSelector}from'../LanguageSelector';
 import{LandingPricing}from'./LandingPricing';
+import{LandingProducts}from'./LandingProducts';
 import'./connectedLanding.css';
 import'./landingMotion.css';
 import{useLandingMotion}from'./useLandingMotion';
 const LandingAiCfo=lazyOnView(()=>import('./LandingAiCfo').then(m=>({default:m.LandingAiCfo})),{minHeight:900,anchorId:'ai-cfo'});
 const LandingPurpose=lazyOnView(()=>import('./LandingPurpose').then(m=>({default:m.LandingPurpose})),{minHeight:700,anchorId:'purpose'});
 const LandingReviews=lazyOnView(()=>import('./LandingReviews').then(m=>({default:m.LandingReviews})),{minHeight:700});
-const LandingIntelligenceSection=lazyOnView(()=>import('./LandingIntelligenceSection').then(m=>({default:m.LandingIntelligenceSection})),{minHeight:900});
 
-type Props={signedIn:boolean;onEnter:(destination?:AppNavigationDestination)=>void;onSignIn:()=>void};
+/** Last block: scrolling into it opens sign-up once per visit; the button opens it any time. */
+const SignUpEnd:React.FC<{onSignUp:()=>void}>=({onSignUp})=>{const ref=useRef<HTMLElement>(null);useEffect(()=>{const el=ref.current;if(!el||typeof IntersectionObserver==='undefined')return;const key='am-signup-prompted';const io=new IntersectionObserver(([e])=>{if(!e.isIntersecting)return;let seen=false;try{seen=sessionStorage.getItem(key)==='1';sessionStorage.setItem(key,'1')}catch{/* storage blocked */}io.disconnect();if(!seen)onSignUp()},{threshold:.6});io.observe(el);return()=>io.disconnect()},[onSignUp]);return <section ref={ref} id="sign-up" className="cl-signup-end" aria-labelledby="cl-signup-title"><div className="cl-wrap"><h2 id="cl-signup-title">Create your free account</h2><p>Save your Money Check, track goals and ask your AI CFO anytime. Free to start, no card needed.</p><button type="button" className="cl-primary" onClick={onSignUp}>Sign up free <ArrowRight size={16}/></button></div></section>};
+type Props={signedIn:boolean;onEnter:(destination?:AppNavigationDestination)=>void;onSignIn:()=>void;onSignUp?:()=>void};
 type MacroCard={label:string;value:string;delta:string;direction:'up'|'down'|'flat'|'none'};
-const NAV_LINKS=[['purpose','Why ArthaMind'],['money-check','Money check'],['modules','Modules'],['pricing','Pricing']] as const;
+const NAV_LINKS=[['purpose','Why ArthaMind'],['money-check','Money check'],['modules','Modules'],['pricing','Pricing'],['data-protection','Data protection']] as const;
 const CAPABILITIES=['Old vs new tax regime','80C · 80D · NPS room','EMI prepayment vs invest','6-month emergency runway','SIP for every goal','Retirement corpus','Term & health cover gap','Home-loan affordability','Business cash flow','Credit-card debt payoff','Hindi & Hinglish answers','Verified ₹ calculations'];
 /** Cycles hero phrases with a slide-up transition; shows the first phrase only for reduced motion. */
 /** Formats a provider quote for a macro card. A missing or non-finite change is shown as unavailable, never as +0.00%. */
@@ -50,7 +52,7 @@ const modules=[
  ['RR','Financial Risk Radar','Five risk dimensions and three actions to reduce them.','Protect','quick-check'],
  ['AI','AI Financial Advisor','Ask in Hinglish or English and get numbers-backed answers.','AI','ask:'],
 ] as const;
-export const ConnectedLandingPage:React.FC<Props>=({signedIn,onEnter,onSignIn})=>{
+export const ConnectedLandingPage:React.FC<Props>=({signedIn,onEnter,onSignIn,onSignUp})=>{
  const[scrolled,setScrolled]=useState(false),[active,setActive]=useState('workspace'),[news,setNews]=useState<LandingNews>([]);
  const rootRef=useRef<HTMLDivElement>(null);const[menuOpen,setMenuOpen]=useState(false);useEffect(()=>{if(!menuOpen)return;const onKey=(e:KeyboardEvent)=>{if(e.key==='Escape')setMenuOpen(false)};window.addEventListener('keydown',onKey);return()=>window.removeEventListener('keydown',onKey)},[menuOpen]);const[cfoPrompt,setCfoPrompt]=useState<{id:number;text:string}|null>(null);const[showTop,setShowTop]=useState(false);useLandingMotion(rootRef);
  useEffect(()=>{const el=rootRef.current;if(!el)return;return installTilt(el,{selector:'.cl-card, .rv-card, .mk-card',maxWidth:560,maxDeg:7});},[]);
@@ -67,25 +69,26 @@ export const ConnectedLandingPage:React.FC<Props>=({signedIn,onEnter,onSignIn})=
  <div className="cl-progress" aria-hidden="true"/>
  <header className={'cl-header '+(scrolled?'is-scrolled':'')}><div className="cl-wrap cl-nav">
   <a href="#top" className="cl-brand" aria-label="ArthaMind AI by Artha Bench Pro, back to top"><ArthaMindMark size={34}/><span className="am-brand-text"><b>ArthaMind <em>AI</em></b><small>by Artha Bench Pro</small></span></a>
-  <nav className="cl-links" aria-label="Page sections">{NAV_LINKS.map(([id,label])=><a key={id} className={active===id?'on':''} href={'#'+id} aria-current={active===id?'true':undefined}>{label}</a>)}</nav>
+  <nav className="cl-links" aria-label="Page sections">{NAV_LINKS.map(([id,label])=><a key={id} className={active===id?'on':''} href={id==='data-protection'?'/data-protection':'#'+id} aria-current={active===id?'true':undefined}>{label}</a>)}</nav>
   <div className="cl-right"><span className="cl-lang"><LanguageSelector compact/></span><a className="cl-signin cl-advisor-link" href="/advisor">Ask Advisor</a>{!signedIn&&<button type="button" className="cl-signin" onClick={onSignIn}>Sign in</button>}<button type="button" className="cl-menu-button" aria-label={menuOpen?'Close menu':'Open menu'} aria-expanded={menuOpen} aria-controls="cl-mobile-menu" onClick={()=>setMenuOpen(v=>!v)}>{menuOpen?<X size={20}/>:<Menu size={20}/>}</button></div>
  </div>
- <div id="cl-mobile-menu" className={'cl-mobile-menu '+(menuOpen?'open':'')} hidden={!menuOpen}><nav aria-label="Page sections">{NAV_LINKS.map(([id,label])=><a key={id} href={'#'+id} onClick={()=>setMenuOpen(false)}>{label}</a>)}<a href="/advisor">Ask Advisor</a><a href="/simulation">Simulator</a></nav><div className="cl-menu-lang"><span>Language</span><LanguageSelector compact/></div></div>
+ <div id="cl-mobile-menu" className={'cl-mobile-menu '+(menuOpen?'open':'')} hidden={!menuOpen}><nav aria-label="Page sections">{NAV_LINKS.map(([id,label])=><a key={id} href={id==='data-protection'?'/data-protection':'#'+id} onClick={()=>setMenuOpen(false)}>{label}</a>)}<a href="/advisor">Ask Advisor</a><a href="/simulation">Simulator</a></nav><div className="cl-menu-lang"><span>Language</span><LanguageSelector compact/></div></div>
  </header>
  <main id="top">
  <LandingHero onSample={()=>scrollToId('money-check')} onExplore={()=>open('overview')}/>
+ <LandingProducts onTryMind={()=>scrollToId('money-check')} onOpenBench={()=>open('overview')}/>
  <div className="cl-stat-strip"><div className="cl-wrap cl-stats" data-stagger><div><b data-n="15">15</b><span>planning and research modules</span></div><div><b data-n="3">3</b><span>languages for CFO answers: English, Hindi and Hinglish</span></div><div><b>India</b><span>80C, 80D, NPS, PPF and SGB aware</span></div><div><b>Evidence</b><span>first: every answer shows what supports it</span></div></div></div>
  <div className="cl-marquee" aria-label="What the AI CFO covers"><div className="cl-marquee-track">{[...CAPABILITIES,...CAPABILITIES].map((c,i)=><span key={i} aria-hidden={i>=CAPABILITIES.length?true:undefined}><i/>{c}</span>)}</div></div>
  <LandingPurpose onSample={()=>scrollToId('money-check')} onExplore={()=>open('overview')}/>
  <PhoneShowcase onTry={()=>scrollToId('money-check')}/>
  <MoneyCheck onAsk={askCfo}/>
- <LandingIntelligenceSection/>
  <LandingAiCfo onEnter={open} externalPrompt={cfoPrompt}/>
  <section id="modules" className="cl-section cl-reveal-section tone-night mp-section"><div className="cl-wrap"><div className="cl-eyebrow">How your money flows</div><h2>One pipeline from your numbers to a plan.</h2><p className="cl-sub">Fifteen modules work as four connected stages. Each stage uses what the one before it verified, and the AI CFO explains the result.</p><LandingModulePipeline modules={modules} onOpen={(target)=>open(target as AppNavigationDestination)} onAsk={askCfo}/></div></section>
  <LiveMarketTicker/><CryptoMarketPreview/><BusinessNewsTicker articles={news}/>
  <LandingPricing onStart={signedIn?()=>open('overview'):onSignIn} onSample={()=>scrollToId('money-check')}/>
  <section id="get-started" className="cl-section cl-trust cl-reveal-section tone-forest"><div className="cl-wrap"><div className="cl-final"><h2>Your AI CFO is ready.</h2><p>Run a free health check, ask about taxes, EMIs or goals, then take the plan into your private workspace. ArthaMind is not a brokerage and never executes trades.</p><div className="cl-actions"><button className="cl-primary cl-glow" onClick={scrollToCfo}><Sparkles size={16}/>Ask your AI CFO</button><button className="cl-secondary" onClick={()=>open('overview')}>Open Artha Bench Pro <ArrowRight size={16}/></button><button className="cl-secondary" onClick={()=>open('evaluation-lab')}>Test an AI answer</button></div></div></div></section>
  <LandingReviews/>
- </main><button type="button" className={'cl-top '+(showTop?'show':'')} aria-label="Back to top" onClick={()=>window.scrollTo({top:0,behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'})}><ArrowUp size={17}/></button><footer className="cl-footer"><div className="cl-wrap"><b>ArthaMind AI × Artha Bench Pro</b><span>India-focused financial intelligence, education and AI reliability. Educational/research use only—not investment, tax, legal or lending advice.</span><nav className="cl-footer-links" aria-label="More"><button type="button" onClick={()=>open('evaluation-lab')}>AI Reliability Lab</button><a href="#modules">Markets &amp; modules</a><a href="#pricing">Pricing</a><a href="/privacy.html">Privacy</a><a href="/terms.html">Terms</a></nav></div></footer>
+ {!signedIn&&<SignUpEnd onSignUp={onSignUp??onSignIn}/>}
+ </main><button type="button" className={'cl-top '+(showTop?'show':'')} aria-label="Back to top" onClick={()=>window.scrollTo({top:0,behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'})}><ArrowUp size={17}/></button><footer className="cl-footer"><div className="cl-wrap"><b>ArthaMind AI × Artha Bench Pro</b><span>India-focused financial intelligence, education and AI reliability. Educational/research use only—not investment, tax, legal or lending advice.</span><nav className="cl-footer-links" aria-label="More"><button type="button" onClick={()=>open('evaluation-lab')}>AI Reliability Lab</button><a href="#modules">Markets &amp; modules</a><a href="/data-protection">Data protection</a><a href="#pricing">Pricing</a><a href="/privacy.html">Privacy</a><a href="/terms.html">Terms</a></nav></div></footer>
  </div>
 };

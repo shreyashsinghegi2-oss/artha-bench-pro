@@ -1,0 +1,19 @@
+.dp-page main{padding-top:72px}
+.dp-hero{padding-bottom:0}
+.dp-hero h1{margin:6px 0 0;max-width:22ch;font-size:clamp(30px,4.4vw,48px);line-height:1.08;font-weight:900;letter-spacing:-.03em;text-wrap:balance}
+.dp-hero .cl-sub{max-width:68ch}
+.dp-rights{background:#f6f8fa}
+.dp-grid{list-style:none;margin:28px 0 0;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.dp-grid li{display:flex;flex-direction:column;gap:6px;padding:18px;border-radius:16px;background:#fff;border:1px solid #e2e8ee}
+.dp-grid svg{color:#0f7b6c}
+.dp-grid b{font-size:15px}
+.dp-grid p{margin:0;font-size:13.5px;line-height:1.5;color:#5b6675}
+.dp-links{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
+.dp-links a{display:inline-flex;align-items:center;gap:8px;min-height:42px;padding:0 16px;border-radius:11px;border:1px solid #d6dde5;background:#fff;color:#0f172a;font-weight:800;font-size:14px;text-decoration:none}
+.dp-links a:hover{border-color:#0f7b6c}
+.dp-page .cl-right .cl-signin{gap:6px}
+@media (max-width:960px){.dp-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:520px){.dp-grid{grid-template-columns:1fr}.dp-links a{flex:1 1 100%;justify-content:center}}
+.dp-page .dp-hero{padding-top:48px;padding-bottom:56px}
+.dp-hero .cl-sub{margin-top:16px}
+@media (max-width:640px){.dp-page main{padding-top:64px}.dp-page .dp-hero{padding-top:28px;padding-bottom:40px}.dp-hero h1{font-size:30px}}

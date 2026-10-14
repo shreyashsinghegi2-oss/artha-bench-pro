@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
-import { ChevronDown } from 'lucide-react';
+import { ArrowDown, ChevronDown } from 'lucide-react';
+import { inr } from '../money/MoneyReport';
 import { buildMoneyCheck, validateMoneyCheck, type MoneyCheckInputs, type MoneyCheckReport } from '../../services/moneyCheck';
 import { MoneyReportView, moneyAskPrompt, parseMoney } from '../money/MoneyReport';
 import './moneyCheck.css';
@@ -76,9 +77,14 @@ export const MoneyCheck: React.FC<{ onAsk: (prompt: string) => void }> = ({ onAs
           <AnimatePresence initial={false}>{more && <motion.div className="mc-fields mc-fields-more" initial={reduced ? false : { opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={reduced ? undefined : { opacity: 0, height: 0 }}>{MORE.map(field)}</motion.div>}</AnimatePresence>
           {!touched && <p className="mc-example">Example values are filled in. Replace them with yours.</p>}
           {error && <p className="mc-error" role="alert">{error}</p>}
+          {report && <div className="mc-live" aria-hidden="true">
+            <span className="mc-live-ring" style={{ '--deg': `${report.health.score * 3.6}deg` } as React.CSSProperties}><b>{report.health.score}</b></span>
+            <span className="mc-live-text"><b>{report.health.status}</b><small>{report.tax.better === 'same' ? 'Tax same either way' : `${report.tax.better === 'new' ? 'New' : 'Old'} regime saves ${inr(report.tax.saving)}`} · {report.emergency.gap > 0 ? `Emergency gap ${inr(report.emergency.gap)}` : 'Emergency fund covered'}</small></span>
+            <button type="button" tabIndex={-1} onClick={() => document.getElementById('mc-report')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>Report <ArrowDown size={13}/></button>
+          </div>}
         </form>
 
-        <div className="mc-report">
+        <div className="mc-report" id="mc-report">
           {report ? <>
             <MoneyReportView report={report} onAsk={() => onAsk(moneyAskPrompt(inputs, report))}/>
           </> : <div className="mc-empty">Enter your numbers to see your report.</div>}

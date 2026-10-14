@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import { ChevronDown, Sparkles } from 'lucide-react';
+import { ChevronDown, Flag, HeartPulse, LifeBuoy, Receipt, Scale, ShieldCheck, Sparkles, Target, Wallet, type LucideIcon } from 'lucide-react';
 import { MONEY_CHECK_ASSUMPTIONS, type MoneyCheckInputs, type MoneyCheckReport } from '../../services/moneyCheck';
 import '../landing/moneyCheck.css';
 
@@ -26,13 +26,17 @@ export function moneyAskPrompt(inputs: MoneyCheckInputs, report: MoneyCheckRepor
   ].join(' ');
 }
 
+const TONE_LABEL = { pos: 'Healthy', neg: 'Act now', warn: 'Watch', info: 'Plan' } as const;
+const ICONS: Record<string, LucideIcon> = { 'Better tax regime': Receipt, 'Monthly take-home': Wallet, 'Freedom number': Flag, 'Emergency fund': LifeBuoy, 'Term insurance': ShieldCheck, 'Health insurance': HeartPulse, 'Net worth': Scale, 'Your goal': Target };
+
 const Tile: React.FC<{ label: string; value: string; sub?: string; tone?: 'neg' | 'pos' | 'info' | 'warn'; how: string; i: number }> = ({ label, value, sub, tone, how, i }) => {
   const [open, setOpen] = useState(false);
+  const Icon = ICONS[label] ?? Wallet;
   return <motion.div className={`mc-tile ${tone ?? ''}`} layout initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04, duration: 0.35 }}>
-    <small>{label}</small>
+    <div className="mc-tile-top"><span className="mc-tile-icon" aria-hidden="true"><Icon size={15}/></span><small>{label}</small>{tone && <em className="mc-chip">{TONE_LABEL[tone]}</em>}</div>
     <motion.b key={value} initial={{ opacity: 0.2, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>{value}</motion.b>
     {sub && <span className="mc-sub">{sub}</span>}
-    <button type="button" className="mc-how" aria-expanded={open} onClick={() => setOpen((v) => !v)}>How it’s calculated <ChevronDown size={12}/></button>
+    <button type="button" className="mc-how" aria-expanded={open} onClick={() => setOpen((v) => !v)}>How it’s worked out <ChevronDown size={12}/></button>
     {open && <p className="mc-how-text">{how}</p>}
   </motion.div>;
 };

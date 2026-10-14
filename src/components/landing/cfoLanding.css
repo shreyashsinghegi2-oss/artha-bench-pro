@@ -49,3 +49,45 @@
 @media (max-width:1000px){.cfo-land-grid{grid-template-columns:1fr}.cfo-chat-wrap{position:relative;top:0;height:620px}}
 @media (max-width:520px){.cfo-fields{grid-template-columns:1fr}.cfo-score b{font-size:36px}.cfo-score svg{width:92px;height:92px}}
 @media (prefers-reduced-motion:reduce){.cfo-land *{animation:none!important;transition:none!important}.cfo-actions li{opacity:1}}
+
+/* ---- Health check v2: inputs and results side by side, score inside its ring, ink-coloured numbers. ---- */
+.cfo-land-grid{grid-template-columns:1fr;gap:20px}
+.cfo-chat-wrap{position:relative;top:0;height:640px;min-height:0}
+.cfo-check-body{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:22px;align-items:start}
+.cfo-field>span{display:inline-flex;align-items:center;gap:6px}
+.cfo-field>span svg{color:#0f5c4a;padding:3px;box-sizing:content-box;border-radius:7px;background:#e8f5ee}
+.cfo-result{gap:14px;padding:16px;border-radius:18px;background:linear-gradient(160deg,#f6fbf8,#fff);border:1px solid #e3eee8}
+.cfo-score{gap:18px}
+.cfo-ring{position:relative;flex:none;width:118px;height:118px}
+.cfo-ring svg{width:100%;height:100%;transform:rotate(-90deg);filter:none}
+.cfo-ring-num{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1}
+.cfo-ring-num b{font-size:36px;font-weight:800;color:#0b1220!important;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.cfo-ring-num small{margin-top:3px;font-size:11px;font-weight:700;color:#64748b}
+.cfo-score-copy{display:flex;flex-direction:column;gap:8px;min-width:0}
+.cfo-score-copy p{margin:0;font-size:13px;line-height:1.55;color:#334155}
+.cfo-chip{align-self:flex-start;padding:4px 10px;border-radius:999px;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--tone);background:color-mix(in srgb,var(--tone) 12%,#fff)}
+.cfo-score>div:not(.cfo-ring){display:flex}
+.cfo-metric{grid-template-columns:auto minmax(0,1fr);align-items:start;gap:10px;padding:10px 12px;border-radius:14px;background:#fff;border:1px solid #edf2ef;transition:transform .25s,box-shadow .25s}
+.cfo-metric:hover{transform:translateY(-2px);box-shadow:0 12px 24px -18px rgba(15,42,34,.4)}
+.cfo-metric-icon{display:grid;place-items:center;width:30px;height:30px;border-radius:10px;color:var(--tone);background:color-mix(in srgb,var(--tone) 12%,#fff)}
+.cfo-metric-body{display:grid;gap:5px;min-width:0}
+.cfo-metric-body>div:first-child{display:flex;justify-content:space-between;gap:8px;font-size:13px;font-weight:700;color:#334155}
+.cfo-metric b{color:#0b1220;font-weight:800}
+.cfo-actions{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+.cfo-actions em{color:#0b1220}
+.cfo-horizon{color:#0f5c4a}
+@media (max-width:860px){
+  .cfo-check-body{grid-template-columns:1fr;gap:14px}
+  .cfo-fields{grid-template-columns:1fr 1fr;gap:10px}
+  .cfo-field small{display:none}
+  .cfo-input input{font-size:14px;padding:9px 8px 9px 4px}
+  .cfo-chat-wrap{height:600px}
+}
+@media (max-width:520px){.cfo-fields{grid-template-columns:1fr 1fr}.cfo-ring{width:96px;height:96px}.cfo-ring-num b{font-size:28px}.cfo-score svg{width:100%;height:100%}}
+.cfo-land-grid>*,.cfo-check-body>*,.cfo-field,.cfo-result,.cfo-metric,.cfo-metric-body,.cfo-score-copy{min-width:0}
+.cfo-check{min-width:0;overflow:hidden}
+.cfo-fields{grid-template-columns:repeat(2,minmax(0,1fr))}
+.cfo-input{min-width:0}
+.cfo-field>span{font-size:11.5px;line-height:1.25}
+@media (max-width:860px){.cfo-check{padding:16px}.cfo-result{padding:12px}}
+.cfo-actions{grid-template-columns:repeat(auto-fit,minmax(min(220px,100%),1fr))}.cfo-actions li{min-width:0}.cfo-actions b{flex-wrap:wrap}

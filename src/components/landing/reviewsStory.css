@@ -1,14 +1,14 @@
-/* Reviews scroll story. JS writes 0..1 progress values on .rs-stage: --drift (whole run),
-   --out (cards fly apart), --dark (stage turns dark), --split (headline opens), --head (headline fades),
+/* Reviews scroll story. JS writes 0..1 progress values on .rs-stage: --t (review columns rise),
+   --dark (stage turns dark), --split (headline opens), --head (headline fades),
    --orb (glowing mark grows), --final (sign-up copy). */
-.rs-section{position:relative;height:420vh;background:#f7f8f6}
-.rs-stage{--drift:0;--out:0;--dark:0;--split:0;--head:1;--orb:0;--final:0;position:sticky;top:0;height:100vh;height:100svh;overflow:hidden;isolation:isolate}
+.rs-section{position:relative;height:560vh;background:#f7f8f6}
+.rs-stage{--t:0;--dark:0;--split:0;--head:1;--orb:0;--final:0;position:sticky;top:0;height:100vh;height:100svh;overflow:hidden;isolation:isolate}
 .rs-dark{position:absolute;inset:0;z-index:0;opacity:var(--dark);background:radial-gradient(60% 50% at 50% 46%,#0c2a20 0%,#050a08 55%,#020403 100%)}
 
 .rs-cards{position:absolute;inset:0;z-index:1}
-.rs-card{position:absolute;left:var(--x);top:var(--y);margin:0;display:flex;flex-direction:column;gap:14px;padding:16px 18px;border-radius:16px;background:#fff;border:1px solid #e6e8e7;box-shadow:0 6px 20px rgba(20,30,25,.05);color:#2b3330;
-  transform:translate3d(calc(var(--ox) * var(--out) * 60vw),calc((.1 - var(--drift)) * var(--d) * 50vh + var(--oy) * var(--out) * 60vh),0) scale(calc(1 + var(--out) * .35));
-  opacity:calc(1 - var(--out) * 1.6);will-change:transform,opacity}
+.rs-card{position:absolute;margin:0;display:flex;flex-direction:column;gap:14px;padding:16px 18px;border-radius:16px;background:#fff;border:1px solid #e6e8e7;box-shadow:0 6px 20px rgba(20,30,25,.05);color:#2b3330;
+  transform:translate3d(0,calc(var(--t) * var(--travel) * -1vh),0);opacity:calc(1 - var(--dark) * 2);will-change:transform}
+.rs-mob{display:none}
 .rs-card blockquote{margin:0;line-height:1.5}
 .rs-sm{width:240px}.rs-sm blockquote{font-size:12.5px}
 .rs-md{width:330px}.rs-md blockquote{font-size:15px}
@@ -20,7 +20,7 @@
 .rs-place{flex:none;display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:#f1f3f2;border:1px solid #e3e6e4;color:#5b6560}
 .rs-lg .rs-place{width:38px;height:38px}
 
-.rs-headline{position:absolute;z-index:2;left:50%;top:50%;width:min(92vw,1100px);margin:0;transform:translate(-50%,-50%);text-align:center;font-size:clamp(30px,4.4vw,64px);font-weight:800;letter-spacing:-.03em;line-height:1.08;color:#0b1220;color:color-mix(in srgb,#eef4f0 calc(var(--dark) * 100%),#0b1220);pointer-events:none}
+.rs-headline{position:absolute;z-index:2;left:50%;top:50%;width:min(92vw,1100px);margin:0;transform:translate(-50%,-50%) scale(calc(.62 + var(--t) * .38));transform-origin:50% 50%;text-align:center;font-size:clamp(26px,3.6vw,52px);font-weight:800;letter-spacing:-.03em;line-height:1.08;color:#0b1220;text-shadow:0 0 18px rgba(247,248,246,calc(1 - var(--dark) * 1.6)),0 0 36px rgba(247,248,246,calc(1 - var(--dark) * 1.6)),0 0 4px rgba(247,248,246,calc(1 - var(--dark) * 1.6));color:color-mix(in srgb,#eef4f0 calc(var(--dark) * 100%),#0b1220);pointer-events:none}
 .rs-half-l,.rs-half-r{display:block;opacity:var(--head);will-change:transform}
 .rs-half-l{transform:translateY(calc(var(--split) * -18vh))}
 .rs-half-r{transform:translateY(calc(var(--split) * 18vh))}
@@ -46,15 +46,14 @@
 .rs-note{position:absolute;z-index:4;right:16px;bottom:12px;margin:0;font-size:10.5px;color:#9aa29e;opacity:calc(1 - var(--dark) * 1.5);pointer-events:none}
 
 @media (max-width:720px){
-  .rs-section{height:380vh}
+  .rs-section{height:520vh}
   .rs-card{padding:11px 13px;border-radius:13px;gap:9px}
-  .rs-sm{width:150px}.rs-sm blockquote{font-size:10.5px}
-  .rs-md{width:185px}.rs-md blockquote{font-size:11.5px}
-  .rs-lg{width:215px;padding:13px 15px}.rs-lg blockquote{font-size:12.5px}
+  .rs-sm,.rs-md,.rs-lg{width:46vw}.rs-sm blockquote{font-size:11px}.rs-md blockquote{font-size:12px}
+  .rs-lg{padding:13px 15px}.rs-lg blockquote{font-size:13px}
   .rs-card figcaption b,.rs-lg figcaption b{font-size:11px}
   .rs-card figcaption small,.rs-lg figcaption small{font-size:10px}
   .rs-place,.rs-lg .rs-place{width:24px;height:24px}
-  .rs-card:nth-child(7),.rs-card:nth-child(8),.rs-card:nth-child(9),.rs-card:nth-child(10),.rs-card:nth-child(11),.rs-card:nth-child(12),.rs-card:nth-child(14),.rs-card:nth-child(20){display:none}
+  .rs-desk{display:none}.rs-mob{display:flex}
   .rs-half-l{transform:translateY(calc(var(--split) * -15vh))}
   .rs-half-r{transform:translateY(calc(var(--split) * 15vh))}
   .rs-final{bottom:7vh}

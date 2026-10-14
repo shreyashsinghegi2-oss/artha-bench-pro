@@ -4,37 +4,42 @@ import { LANDING_REVIEWS, type LandingReview } from '../../data/landingReviews';
 import { ArthaMindLogoMark } from '../branding/ArthaMindBrand';
 import './reviewsStory.css';
 
-/** Where each floating card sits (percent of the stage), how big it is, and how fast it drifts.
- *  The centre band (roughly x 24–74%, y 36–62%) stays clear for the headline. */
-const SLOTS: { x: number; y: number; size: 'sm' | 'md' | 'lg'; depth: number }[] = [
-  { x: -3, y: 4, size: 'lg', depth: 1.2 },
-  { x: 19, y: 0, size: 'sm', depth: 0.6 },
-  { x: 25, y: 13, size: 'md', depth: 0.9 },
-  { x: 45, y: 1, size: 'sm', depth: 0.5 },
-  { x: 49, y: 12, size: 'lg', depth: 1.1 },
-  { x: 74, y: 2, size: 'md', depth: 0.8 },
-  { x: 87, y: 19, size: 'sm', depth: 0.7 },
-  { x: -5, y: 35, size: 'md', depth: 0.9 },
-  { x: 4, y: 50, size: 'sm', depth: 0.6 },
-  { x: 77, y: 37, size: 'lg', depth: 1.2 },
-  { x: 90, y: 54, size: 'sm', depth: 0.7 },
-  { x: -1, y: 66, size: 'sm', depth: 0.6 },
-  { x: 13, y: 77, size: 'md', depth: 1.0 },
-  { x: 29, y: 64, size: 'sm', depth: 0.55 },
-  { x: 35, y: 80, size: 'lg', depth: 1.25 },
-  { x: 57, y: 65, size: 'md', depth: 0.8 },
-  { x: 63, y: 87, size: 'sm', depth: 0.6 },
-  { x: 75, y: 72, size: 'lg', depth: 1.1 },
-  { x: 2, y: 92, size: 'md', depth: 0.9 },
-  { x: 90, y: 90, size: 'sm', depth: 0.7 },
-];
+type Slot = { x: number; y: number; size: 'sm' | 'md' | 'lg'; depth: number };
+
+/**
+ * Lays cards out in staggered columns over a tall strip (y in vh, from the top of the stage). Cards
+ * that would cover the headline at the start are pushed below it, so the first frame shows the
+ * headline clear; as the visitor scrolls, every column rises past it at its own speed.
+ */
+function layout(columns: number[], starts: number[], heights: Record<Slot['size'], number>, clearCols: number[], count: number): Slot[] {
+  const order: Slot['size'][] = ['lg', 'sm', 'md', 'md', 'sm', 'lg', 'sm', 'md'];
+  const perCol = columns.map((x, c) => {
+    const out: Slot[] = [];
+    let y = starts[c];
+    let k = c * 3;
+    while (y < 240) {
+      const size = order[k++ % order.length];
+      const h = heights[size];
+      if (clearCols.includes(c) && y < 64 && y + h > 34) y = 66;
+      out.push({ x, y, size, depth: 1 + (c % 2) * 0.22 + (c === 2 ? 0.1 : 0) });
+      y += h + 3;
+    }
+    return out;
+  });
+  // Interleave columns so the first reviews spread across the whole width.
+  const slots: Slot[] = [];
+  for (let i = 0; slots.length < count && i < 40; i += 1) for (const col of perCol) if (col[i] && slots.length < count) slots.push(col[i]);
+  return slots.sort((p, q) => p.y - q.y);
+}
+const DESKTOP = layout([-4, 15, 36, 57, 77], [6, 0, 12, 3, 9], { sm: 20, md: 25, lg: 31 }, [1, 2, 3], 30);
+const MOBILE = layout([2, 52], [3, 10], { sm: 19, md: 22, lg: 25 }, [0, 1], 20);
 
 const clamp = (v: number) => Math.min(1, Math.max(0, v));
 /** 0 before `a`, 1 after `b`, eased in between. */
 const ease = (p: number, a: number, b: number) => { const t = clamp((p - a) / (b - a)); return t * t * (3 - 2 * t); };
 
-const Card: React.FC<{ review: LandingReview; size?: string; style?: React.CSSProperties }> = ({ review, size = 'md', style }) => (
-  <figure className={`rs-card rs-${size}`} style={style}>
+const Card: React.FC<{ review: LandingReview; size?: string; style?: React.CSSProperties; className?: string }> = ({ review, size = 'md', style, className = '' }) => (
+  <figure className={`rs-card rs-${size} ${className}`.trim()} style={style}>
     <blockquote>{review.quote}</blockquote>
     <figcaption>
       <span className="rs-place" aria-hidden="true"><MapPin size={14} /></span>
@@ -73,13 +78,14 @@ export const ReviewsStory: React.FC = () => {
       const range = section.offsetHeight - window.innerHeight;
       const p = range > 0 ? clamp(-rect.top / range) : 0;
       const s = stage.style;
-      s.setProperty('--drift', p.toFixed(4));
-      s.setProperty('--out', ease(p, 0.3, 0.52).toFixed(4));
-      s.setProperty('--dark', ease(p, 0.3, 0.46).toFixed(4));
-      s.setProperty('--split', ease(p, 0.38, 0.58).toFixed(4));
-      s.setProperty('--head', (1 - ease(p, 0.52, 0.64)).toFixed(4));
-      s.setProperty('--orb', ease(p, 0.42, 0.74).toFixed(4));
-      s.setProperty('--final', ease(p, 0.74, 0.9).toFixed(4));
+      // Step 1: columns of reviews rise past the headline. Step 2: the stage turns dark and the
+      // headline opens. Step 3: the glowing mark grows. Step 4: the short pitch.
+      s.setProperty('--t', clamp(p / 0.5).toFixed(4));
+      s.setProperty('--dark', ease(p, 0.44, 0.56).toFixed(4));
+      s.setProperty('--split', ease(p, 0.5, 0.66).toFixed(4));
+      s.setProperty('--head', (1 - ease(p, 0.62, 0.72)).toFixed(4));
+      s.setProperty('--orb', ease(p, 0.52, 0.8).toFixed(4));
+      s.setProperty('--final', ease(p, 0.8, 0.93).toFixed(4));
     };
     const request = () => { if (!frame) frame = requestAnimationFrame(paint); };
     paint();
@@ -89,7 +95,6 @@ export const ReviewsStory: React.FC = () => {
   }, [reduced]);
 
   const reviews = LANDING_REVIEWS;
-  const floating = reviews.slice(0, SLOTS.length);
   const note = reviews.some((review) => review.illustrative) && <p className="rs-note">Illustrative quotes</p>;
   const finale = (
     <div className="rs-final-copy">
@@ -115,11 +120,11 @@ export const ReviewsStory: React.FC = () => {
       <div ref={stageRef} className="rs-stage">
         <div className="rs-dark" aria-hidden="true" />
         <div className="rs-cards">
-          {floating.map((review, i) => {
-            const slot = SLOTS[i];
-            const style = { '--x': `${slot.x}%`, '--y': `${slot.y}%`, '--d': slot.depth, '--ox': (slot.x + 10 - 50) / 50, '--oy': (slot.y - 50) / 50 } as React.CSSProperties;
-            return <Card key={review.name} review={review} size={slot.size} style={style} />;
-          })}
+          {([['rs-desk', DESKTOP], ['rs-mob', MOBILE]] as const).map(([cls, slots]) => slots.map((slot, i) => {
+            const review = reviews[i % reviews.length];
+            const style = { left: `${slot.x}%`, top: `${slot.y}vh`, '--travel': (slot.y + 45) * slot.depth } as React.CSSProperties;
+            return <Card key={`${cls}-${i}`} review={review} size={slot.size} style={style} className={cls} />;
+          }))}
         </div>
         <h2 id="rs-title" className="rs-headline">
           <span className="rs-half-l">One personal CFO</span>{' '}

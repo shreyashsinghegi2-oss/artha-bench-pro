@@ -478,7 +478,7 @@ export const HeroPhone: React.FC<{ photoSrc?: string }> = ({ photoSrc }) => {
                   <span className="hp-lang-bar"><i style={{ transform: `scaleX(${(lang.index + 1) / lang.total})` }}/></span>
                 </div>
                 <div className="hp-lang-grid" aria-hidden="true">{SUPPORTED_LANGUAGES.slice(0, 12).map(([code, name], i) => <span key={code} className={i === lang.index ? 'on' : i < lang.index ? 'done' : ''}>{name}</span>)}</div>
-                <p className="hp-note">AI CFO replies in 20 languages, including Hinglish.</p>
+                <p className="hp-note">AI CFO replies in 13 Indian languages and Hinglish.</p>
               </>}
 
               {screen === 'security' && <>

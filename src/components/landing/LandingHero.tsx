@@ -72,7 +72,7 @@ export const LandingHero: React.FC<{ onSample: () => void; onExplore: () => void
           <button type="button" className="hx-btn hx-btn-primary" onClick={onSample}>Try a sample analysis <ArrowRight size={16} aria-hidden="true"/></button>
           <button type="button" className="hx-btn hx-btn-secondary" onClick={onExplore}>Explore the workspace</button>
         </div>
-        <a {...cls("hx-why", 1.5)} href="#purpose">What is ArthaMind for? See how it works <ArrowRight size={14} aria-hidden="true"/></a>
+        <a {...cls("hx-why", 1.5)} href="#purpose">See how ArthaMind works <ArrowRight size={14} aria-hidden="true"/></a>
       </div>
 
       <div {...cls("hx-stage", 2)}>

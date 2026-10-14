@@ -54,7 +54,7 @@ const DataProtectionPage: React.FC<{ onHome: () => void; onSignIn: () => void; s
         </div>
       </section>
     </main>
-    <footer className="cl-footer"><div className="cl-wrap"><b>ArthaMind AI × Artha Bench Pro</b><span>Educational and research use only. Not investment, tax, legal or lending advice.</span></div></footer>
+    <footer className="cl-footer"><div className="cl-wrap"><b>ArthaMind AI</b><span>Not investment, tax, legal or lending advice. See our <a href="/terms.html">Terms &amp; conditions</a>.</span></div></footer>
   </div>
 );
 

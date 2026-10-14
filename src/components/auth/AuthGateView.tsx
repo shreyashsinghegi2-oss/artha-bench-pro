@@ -35,7 +35,7 @@ export const AuthGateView: React.FC<Props> = ({ returnTo, onCancel, onEmail }) =
             <li><span><Languages size={16}/></span><div><b>Same AI CFO, your language</b><small>Ask about your own records by text or voice.</small></div></li>
           </ul>
         </div>
-        <p className="am-brand-foot">Education only, not investment advice.</p>
+        <p className="am-brand-foot">For information only. Not investment advice.</p>
       </aside>
       <section className="am-form">
         <div className="am-form-body am-gate-body">

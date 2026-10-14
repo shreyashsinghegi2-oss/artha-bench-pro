@@ -164,6 +164,6 @@ export default function VoiceAssistantPanel({ initialLanguage, onClose }: { init
     </div>
     {voiceNote && <p className="va-note">{voiceNote}</p>}
     {!listenOk && <p className="va-note">Voice input works in Chrome or Edge. In this browser, please type your question.</p>}
-    <p className="va-fine">Education only, not investment advice. Speech is turned into text by your browser’s speech service; ArthaMind does not record your voice.</p>
+    <p className="va-fine">For information only. Not investment advice. Speech is turned into text by your browser’s speech service; ArthaMind does not record your voice.</p>
   </div>;
 }

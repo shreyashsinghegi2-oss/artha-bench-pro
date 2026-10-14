@@ -384,3 +384,9 @@ html:has(.connected-landing){scroll-behavior:smooth;scroll-padding-top:80px}
 .rv-feature{white-space:nowrap}
 .rv-card figcaption>span:not(.rv-avatar){min-width:0}
 .rv-card figcaption b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* Faster scrolling: quicker reveals, shorter pinned phone tour */
+.cl-reveal-section{transform:translateY(10px);transition:opacity .35s ease-out,transform .35s ease-out}
+[data-stagger].in>*{animation-duration:.35s;animation-delay:calc(var(--stagger,0) * 40ms)}
+.cl-reveal-section .cl-eyebrow:after{transition-duration:.4s;transition-delay:.05s}
+.ps-section.is-pinned{height:140vh}
+html:has(.connected-landing){scroll-padding-top:72px}

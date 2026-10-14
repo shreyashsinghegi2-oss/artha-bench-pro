@@ -4,7 +4,7 @@ import { ArthaMindMark } from './ArthaMindMark';
 import './landingProducts.css';
 
 const MIND_STEPS = [
-  { icon: MessageSquareText, title: 'You ask', text: '“Old or new tax regime?” “Prepay my home loan or invest?” In English, Hindi or Hinglish.' },
+  { icon: MessageSquareText, title: 'You ask', text: '“Old or new tax regime?” “Prepay my home loan or invest?” In 20 languages, including Hinglish.' },
   { icon: Calculator, title: 'It does the maths', text: 'Your income, loans and goals go through tested formulas: tax slabs, EMI, SIP, XIRR, runway.' },
   { icon: Target, title: 'You get a plan', text: 'A clear next step with the working shown, what it assumed, and what to verify.' },
 ];

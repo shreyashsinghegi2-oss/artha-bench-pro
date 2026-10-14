@@ -46,3 +46,14 @@
 .lp-card ul{align-content:start}
 .lp-card .lp-btn-primary{background:#10b981;border-color:#10b981;color:#04130d}
 .lp-card .lp-btn-primary:hover{background:#34d399;border-color:#34d399}
+.cl-footer{padding:44px 0 28px;background:#f7faf9}
+.cl-footer-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:28px;align-items:start}
+.cl-footer-brand b{font-size:17px}
+.cl-footer-brand>span{font-size:13.5px;line-height:1.55;max-width:42ch}
+.cl-footer-contact h2{margin:0 0 10px;font-size:15px;font-weight:900;color:#0b1220}
+.cl-footer .ct-links .ct-ico{display:grid}
+.cl-footer .ct-links a>span:last-child{display:flex}
+.cl-footer .ct-links small{display:block}
+.cl-footer-legal{margin-top:26px;padding-top:16px;border-top:1px solid #e3e8ec;font-size:11.5px;line-height:1.6}
+.cl-footer-legal a{color:#0f7b6c;font-weight:700}
+@media (max-width:860px){.cl-footer-grid{grid-template-columns:1fr}}

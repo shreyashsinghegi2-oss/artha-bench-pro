@@ -100,6 +100,6 @@ export const PageAssistant: React.FC<{ destination: AppNavigationDestination; sn
       <MicButton onText={setDraft} onFinal={(t) => void send(t)} disabled={busy}/>
       <button type="submit" disabled={!draft.trim() || busy}>Ask</button>
     </form>}
-    <div className="pa-foot"><WebSearchToggle compact/><small>Education only, not investment advice.</small></div>
+    <div className="pa-foot"><WebSearchToggle compact/><small>For information only. Not investment advice.</small></div>
   </section>;
 };

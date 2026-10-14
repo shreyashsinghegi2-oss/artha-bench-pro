@@ -110,7 +110,7 @@ export const ComparisonResultPanel: React.FC<{
         </div>
       )}
 
-      <p className="text-[10px] leading-5 text-secondary">Educational and research evaluation only. A higher reliability score does not make a response personalized financial, investment, legal, or tax advice.</p>
+      <p className="text-[10px] leading-5 text-secondary">Automated evaluation. A higher reliability score does not make a response personalized financial, investment, legal, or tax advice.</p>
     </section>
   );
 };

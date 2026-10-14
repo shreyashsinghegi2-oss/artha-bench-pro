@@ -121,7 +121,7 @@ export function evaluateAlert(alert: MarketAlertRecord, quote?: NormalizedMarket
   return 'Waiting for condition';
 }
 
-export const MARKET_SAFE_REDIRECT='I can help you inspect the current chart, compare timestamped market information, explain risk and terminology, or create an educational research checklist. I cannot provide personalised trade instructions, buy/sell calls, targets, stop-loss levels, or profit guarantees.';
+export const MARKET_SAFE_REDIRECT='I can help you inspect the current chart, compare timestamped market information, explain risk and terminology, or create a research checklist. I cannot provide personalised trade instructions, buy/sell calls, targets, stop-loss levels, or profit guarantees.';
 
 export function isUnsafeTradingAdviceRequest(question:string): boolean {
   return /\b(buy|sell|short|long|entry|exit|target\s*price|target|stop[- ]?loss|sure[- ]?shot|guarantee(?:d)?\s+(?:profit|return|trade)|which\s+(?:stock|pair).*(?:double|best|trade)|where\s+to\s+invest|what\s+should\s+i\s+(?:buy|sell))\b/i.test(question);

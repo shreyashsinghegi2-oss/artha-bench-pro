@@ -250,7 +250,7 @@ export default function DevelopersPage({ onHome }: { onHome: () => void }): Reac
           <p className="text-xs font-black uppercase tracking-[.14em] text-brand">ArthaBench public API</p>
           <h1 className="mt-2 text-3xl font-black sm:text-4xl">Financial calculators and market data, one GET away</h1>
           <p className="mt-3 max-w-3xl text-sm leading-7 text-secondary">
-            {`${calculators.length > 1 ? calculators.length : 19} deterministic calculators (India, US, UK, Philippines, Nigeria and Kenya tax included) and market data. No key needed for GET endpoints; every response says where the numbers came from and how reliable they are. Educational use only, not investment, tax or legal advice.`}
+            {`${calculators.length > 1 ? calculators.length : 19} deterministic calculators (India, US, UK, Philippines, Nigeria and Kenya tax included) and market data. No key needed for GET endpoints; every response says where the numbers came from and how reliable they are. For information only. Not investment, tax or legal advice.`}
           </p>
         </section>
 

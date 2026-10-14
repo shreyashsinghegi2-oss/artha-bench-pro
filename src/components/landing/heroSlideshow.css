@@ -24,3 +24,9 @@
 @media (max-width:980px){.hx-photo .hx-copy h1.hx-one.hx-short{font-size:clamp(32px,9.4vw,52px)}.hx-photo .hx-copy h1.hx-one.hx-short span{font-size:.56em}.hx-photo .hx-copy{min-width:0}}
 .hx-why{display:inline-flex;align-items:center;gap:6px;margin-top:18px;color:#d1fae5;font-size:14.5px;font-weight:700;text-decoration:none;border-bottom:1px solid rgba(209,250,229,.45);padding-bottom:2px;text-shadow:0 1px 10px rgba(0,0,0,.5)}
 .hx-why:hover{color:#fff;border-color:#fff}
+/* Coins video: green-tinted shade, darker on the text side */
+.hs{background:#05140f}
+.hs-shade{background:
+  linear-gradient(90deg,rgba(4,19,13,.82) 0%,rgba(4,19,13,.55) 42%,rgba(4,19,13,.22) 72%,rgba(4,19,13,.12) 100%),
+  linear-gradient(180deg,rgba(4,19,13,.35) 0%,rgba(4,19,13,0) 22%,rgba(4,19,13,0) 72%,rgba(4,19,13,.55) 100%)}
+@media (max-width:900px){.hs-shade{background:linear-gradient(180deg,rgba(4,19,13,.7) 0%,rgba(4,19,13,.5) 45%,rgba(4,19,13,.25) 72%,rgba(4,19,13,.6) 100%)}}

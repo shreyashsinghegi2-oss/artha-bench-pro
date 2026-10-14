@@ -103,7 +103,7 @@ export const ResearchBriefPanel: React.FC<{ brief: NewsResearchBrief; onClose?: 
     <footer className="rb-foot">
       <span>{brief.generatedBy === 'ai' ? 'AI analysis, limited to facts in the source text' : 'Rule-based analysis of the headline and summary'}</span>
       <span>Prepared {fmtWhen(brief.asOf)}</span>
-      <span><AlertTriangle size={12}/> Educational research, not investment advice</span>
+      <span><AlertTriangle size={12}/> Not investment advice</span>
     </footer>
   </article>;
 };

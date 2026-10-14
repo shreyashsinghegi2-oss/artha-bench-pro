@@ -225,7 +225,7 @@ export const AuthModal: React.FC = () => {
               <li><span><LockKeyhole size={16}/></span><div><b>Your data stays yours</b><small>Secure sign-in; personal records are visible only to your account.</small></div></li>
             </ul>
           </div>
-          <p className="am-brand-foot">{returnLabel ? `After sign-in we’ll take you to ${returnLabel}.` : 'Education only, not investment advice.'}</p>
+          <p className="am-brand-foot">{returnLabel ? `After sign-in we’ll take you to ${returnLabel}.` : 'For information only. Not investment advice.'}</p>
         </aside>
 
         <section className="am-form">

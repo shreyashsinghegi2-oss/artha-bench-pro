@@ -124,7 +124,7 @@ export async function performQuickCheck(query: string) {
   const isBuySellAdvice = /buy|sell|target price|guaranteed|trade signal/i.test(query);
   try {
     const res = await fetchJSON<{ answer: string; metrics: any; report: VerificationReport }>('/api/quick-check', { method: 'POST', body: JSON.stringify({ query }) });
-    return { safe: !isBuySellAdvice, answer: res.answer || 'The evaluation service returned no answer.', explanation: isBuySellAdvice ? 'Direct buy/sell trading queries are not supported.' : 'Query processed by the configured evaluation service.', disclaimer: 'Educational only. ArthaBench does not provide personalized investment advice.' };
+    return { safe: !isBuySellAdvice, answer: res.answer || 'The evaluation service returned no answer.', explanation: isBuySellAdvice ? 'Direct buy/sell trading queries are not supported.' : 'Query processed by the configured evaluation service.', disclaimer: 'ArthaMind does not provide personalized investment advice.' };
   } catch {
     return { safe: !isBuySellAdvice, answer: isBuySellAdvice ? 'I can explain the evidence, calculations, risks and assumptions, but I cannot give a personalized buy/sell instruction.' : 'The AI service is temporarily unavailable. Please retry; ArthaBench will not invent an unsupported answer.', explanation: isBuySellAdvice ? 'Direct trading advice is not supported.' : 'Provider unavailable; safe fallback shown.', disclaimer: 'Educational material only. Does not constitute investment advice.' };
   }

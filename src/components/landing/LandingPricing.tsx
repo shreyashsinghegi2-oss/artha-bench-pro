@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Check, X } from 'lucide-react';
 import './landingPricing.css';
+import { mailto } from '../common/ContactLinks';
 
 type Billing = 'monthly' | 'yearly';
 type Price = { amount: string; unit?: string; note?: string };
@@ -63,7 +64,7 @@ const PLANS: Plan[] = [
 // Pro at ₹359 a month is ₹4,308 a year. A ₹47,000 tax saving is 10.9 times that.
 const ROI = { saving: '₹47,000', cost: '₹4,308', multiple: '10.9×' };
 
-/** Launch pricing: monthly or yearly, four plans, Pro highlighted with a worked return-on-cost example. */
+/** Pricing: monthly or yearly, four plans, Pro highlighted with a worked return-on-cost example. */
 export const LandingPricing: React.FC<{ onStart: () => void; onSample: () => void }> = ({ onStart, onSample }) => {
   const [billing, setBilling] = useState<Billing>('monthly');
   return (
@@ -126,7 +127,7 @@ export const LandingPricing: React.FC<{ onStart: () => void; onSample: () => voi
                   </button>
                 )}
                 {p.cta === 'sales' && (
-                  <a className="lp-btn" href="/support">
+                  <a className="lp-btn" href={mailto('ArthaMind Business plan')}>
                     Contact sales
                   </a>
                 )}
@@ -135,8 +136,8 @@ export const LandingPricing: React.FC<{ onStart: () => void; onSample: () => voi
           })}
         </div>
         <p className="lp-fine">
-          Launch pricing in Indian rupees and US dollars, taxes extra. The return is an illustration, not a promise: your saving depends on your income and
-          deductions. Education and analysis only, not investment advice.
+          Prices in Indian rupees and US dollars, taxes extra. The return is an illustration, not a promise: your saving depends on your income and
+          deductions. Not investment advice. See our <a href="/terms.html">Terms &amp; conditions</a>.
         </p>
       </div>
     </section>

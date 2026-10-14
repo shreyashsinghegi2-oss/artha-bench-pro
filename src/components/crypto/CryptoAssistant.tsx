@@ -187,7 +187,7 @@ export const CryptoAssistant: React.FC<CryptoAssistantProps> = ({ candle, symbol
         {ASSISTANT_ACTIONS.map((action) => <button key={action} type="button" disabled={!context || Boolean(pendingAction)} onClick={() => void submitAction(action)} className="rounded-full border border-line bg-subtle px-3 py-1.5 text-xs font-bold text-secondary hover:text-interactive disabled:opacity-40">{pendingAction === action ? 'Loading…' : action}</button>)}
       </div>
       {answer ? <div className="mt-3 flex gap-3"><button type="button" onClick={() => void navigator.clipboard.writeText(answer)} className="inline-flex items-center gap-1 text-xs font-bold text-interactive"><Clipboard className="h-3.5 w-3.5" /> Copy response</button><button type="button" onClick={() => setAnswer('')} className="inline-flex items-center gap-1 text-xs font-bold text-secondary"><Trash2 className="h-3.5 w-3.5" /> Clear response</button></div> : null}
-      <p className="mt-3 border-t border-line pt-3 text-xs leading-5 text-secondary">Educational research guidance only — not personalized investment advice. The assistant will not issue a direct buy/sell order or promise returns.</p>
+      <p className="mt-3 border-t border-line pt-3 text-xs leading-5 text-secondary">General guidance only — not personalised investment advice. The assistant will not issue a direct buy/sell order or promise returns.</p>
     </section>
   );
 };

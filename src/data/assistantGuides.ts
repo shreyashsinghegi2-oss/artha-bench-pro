@@ -60,7 +60,7 @@ const GUIDES: Partial<Record<AppNavigationDestination, FeatureGuide>> = {
     questions: [goal(['Analyse a company', 'Index fund or stocks?', 'How to invest from India (LRS)', 'Currency risk']), market, horizon], starters: ['How can an Indian resident invest in US stocks?'] },
   'forex-markets': { title: 'Forex', intro: 'I can explain currency moves and how they affect you.', task: 'live_data',
     questions: [goal(['Why is the rupee moving?', 'Plan an overseas payment', 'Understand currency risk', 'Learn how forex works']), { id: 'pair', ask: 'Which currency?', options: ['USD/INR', 'EUR/INR', 'GBP/INR', 'JPY/INR'] }, horizon], starters: ['What moves USD/INR?'] },
-  'intraday-markets': { title: 'Intraday Lab', intro: 'I can explain intraday concepts and risks (education only).', task: 'education',
+  'intraday-markets': { title: 'Intraday Lab', intro: 'I can explain intraday concepts and risks.', task: 'education',
     questions: [goal(['Learn intraday basics', 'Understand the chart on screen', 'Risk and position sizing', 'Why most intraday traders lose']), market], starters: ['How should I size a position?'] },
   'market-watchlist': { title: 'Watchlist', intro: 'I can review your watchlist.', task: 'live_data', questions: [goal(['Summarise my watchlist', 'Check concentration', 'Research one stock']), market], starters: ['Is my watchlist too concentrated?'] },
   'market-alerts': { title: 'Alerts', intro: 'I can help you set sensible alerts.', task: 'general', questions: [goal(['Set useful alerts', 'Too many alerts firing']), market], starters: ['What alert levels make sense?'] },

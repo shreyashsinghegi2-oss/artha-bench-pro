@@ -559,7 +559,7 @@ export const CompanyIntelligencePanel: React.FC<CompanyIntelligencePanelProps> =
 
       <div className="flex items-center justify-between gap-4 text-[10px] text-secondary">
         <span>{data.message}</span>
-        <span>Source: Finnhub · Educational use only</span>
+        <span>Source: Finnhub</span>
       </div>
     </div>
   );

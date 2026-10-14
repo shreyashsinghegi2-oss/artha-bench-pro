@@ -180,7 +180,7 @@ export const PortfolioView: React.FC<{ onNavigate?: (d: AppNavigationDestination
     </section>
 
     <PageAssistant destination="portfolio" title="Portfolio & net worth" snapshot={snapshot}/>
-    <p className="pf-fine">Stored only in this browser. Prices: official AMFI NAVs (via mfapi.in) and delayed exchange quotes. XIRR uses the dated transactions in your statement. Education only, not investment advice.</p>
+    <p className="pf-fine">Stored only in this browser. Prices: official AMFI NAVs (via mfapi.in) and delayed exchange quotes. XIRR uses the dated transactions in your statement. For information only. Not investment advice.</p>
   </div>;
 };
 

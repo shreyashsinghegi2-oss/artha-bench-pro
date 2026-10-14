@@ -1,13 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
 import './heroSlideshow.css';
 
-// A night skyline with live market charts, looped seamlessly (the last second crossfades into the first).
+// Coin stacks rising with a growth chart, graded to the brand green. They grow, hold, then fade back to the start.
 // Landscape screens get the 1080p cut; tall phone screens get a portrait crop, so neither is stretched or
 // shows a tiny letterboxed strip. Each cut ships as H.264 MP4 (every browser) and VP9 WebM (browsers built
 // without H.264).
 const SOURCES = {
-  wide: { video: '/hero/city-1080', poster: '/hero/city-poster.webp' },
-  tall: { video: '/hero/city-portrait', poster: '/hero/city-poster-m.webp' },
+  wide: { video: '/hero/coins-1080', poster: '/hero/coins-poster.webp' },
+  tall: { video: '/hero/coins-portrait', poster: '/hero/coins-poster-m.webp' },
 };
 const TALL = '(max-aspect-ratio: 4/5)';
 

@@ -4,9 +4,7 @@ import { useReducedMotion } from './useReducedMotion';
 
 // The animated phone (and the animation library it uses) loads after the headline and buttons are on screen.
 const HeroPhone = lazy(() => import('./HeroPhone').then((r) => ({ default: r.HeroPhone })));
-import { ArrowRight, BadgeIndianRupee, BarChart3, Bot, Calculator, Check, GraduationCap, Languages, ShieldCheck } from 'lucide-react';
-import { HERO_REPORT } from './heroSample';
-import { useLanguageCycle } from './heroLanguage';
+import { ArrowRight, BadgeIndianRupee, BarChart3, Bot, Calculator, GraduationCap, ShieldCheck } from 'lucide-react';
 import { ArthaMindLogoMark } from '../branding/ArthaMindBrand';
 import './landingHero.css';
 import { HeroVideo } from './HeroVideo';
@@ -21,20 +19,7 @@ const ECOSYSTEM: Array<[string, React.ComponentType<{ size?: number }>]> = [
   ['Learn with lessons', GraduationCap],
 ];
 
-const inr = (v: number) => `₹${Math.round(v).toLocaleString('en-IN')}`;
 
-/** Live language badge: the count and the language name keep changing. */
-const LanguageBadge: React.FC = () => {
-  const reduced = Boolean(useReducedMotion());
-  const lang = useLanguageCycle(!reduced, 1100);
-  return <div className="hx-lang" aria-label={`Available in ${lang.total} languages`}>
-    <span className="hx-lang-icon" aria-hidden="true"><Languages size={12}/></span>
-    <span className="hx-lang-num" aria-hidden="true">{String(lang.index + 1).padStart(2, '0')}<small>/{lang.total}</small></span>
-    <span className="hx-lang-name" aria-hidden="true">
-      <span key={lang.code} className={reduced ? undefined : 'hx-lang-swap'}>{lang.name}</span>
-    </span>
-  </div>;
-};
 
 /**
  * Landing hero: what the product is in one line, the ecosystem at a glance, and a live phone tour.
@@ -62,11 +47,6 @@ export const LandingHero: React.FC<{ onSample: () => void; onExplore: () => void
         <span className="hx-glow" aria-hidden="true"/>
         <span className="hx-ring r1" aria-hidden="true"/><span className="hx-ring r2" aria-hidden="true"/>
         <Suspense fallback={<div className="hp" aria-hidden="true"><div className="hp-device"/></div>}><HeroPhone/></Suspense>
-        <div className="hx-float hx-float-a"><LanguageBadge/></div>
-        <div className="hx-float hx-float-b" aria-hidden="true">
-          <span className="hx-float-icon"><Check size={14}/></span>
-          <span><small>Example tax saved</small><b>{inr(HERO_REPORT.tax.saving)}</b></span>
-        </div>
       </div>
     </div>
 

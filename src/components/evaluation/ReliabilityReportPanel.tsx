@@ -254,7 +254,7 @@ export const ReliabilityReportPanel: React.FC<{
         </div>
       )}
 
-      <p className="text-[10px] leading-5 text-secondary">Educational and research evaluation only. Scores describe the supplied response under the Artha Bench methodology; they are not financial, investment, tax, or legal advice.</p>
+      <p className="text-[10px] leading-5 text-secondary">Automated evaluation. Scores describe the supplied response under the Artha Bench methodology; they are not financial, investment, tax, or legal advice.</p>
     </section>
   );
 };

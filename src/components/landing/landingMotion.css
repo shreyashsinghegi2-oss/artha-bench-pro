@@ -346,3 +346,4 @@ html:has(.connected-landing){scroll-behavior:smooth;scroll-padding-top:80px}
 /* Header buttons: links and buttons share one centred height; on phones Ask Advisor moves to the menu so the brand never collides with the controls. */
 .cl-signin{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;white-space:nowrap}
 @media (max-width:560px){.cl-right .cl-advisor-link{display:none}}
+.cl-right .cl-signin{height:40px;min-height:40px;padding:0 14px;font-size:13px;font-weight:800;line-height:1;color:#0f172a;box-sizing:border-box}

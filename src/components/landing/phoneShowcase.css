@@ -104,3 +104,7 @@
 .ps-tabs span.on{color:#1f8f4e}
 .ps-tabs span.on::after{background:#1f8f4e}
 .ps-signal i{background:var(--ps-ink)}
+/* Keep the tour inside the page's centred column (the grid's own width:100% used to override it), and the phone upright. */
+.ps-section .cl-wrap.ps-grid{width:min(1200px,calc(100% - 56px));margin-inline:auto}
+@media (max-width:640px){.ps-section .cl-wrap.ps-grid{width:calc(100% - 28px)}}
+.ps-phone{transform:none}

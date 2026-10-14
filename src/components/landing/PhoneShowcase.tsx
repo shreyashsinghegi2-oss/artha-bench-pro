@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { motion, useMotionValueEvent, useReducedMotion, useScroll, useSpring, useTransform } from 'motion/react';
+import { motion, useMotionValueEvent, useReducedMotion, useScroll } from 'motion/react';
 import { buildMoneyCheck, SAMPLE_MONEY_CHECK } from '../../services/moneyCheck';
 import './phoneShowcase.css';
 import { ArthaMindLogoMark } from '../branding/ArthaMindBrand';
@@ -27,9 +27,7 @@ export const PhoneShowcase: React.FC<{ onTry: () => void }> = ({ onTry }) => {
   }, []);
 
   const { scrollYProgress } = useScroll({ target: section, offset: ['start start', 'end end'] });
-  const smooth = useSpring(scrollYProgress, { stiffness: 120, damping: 26, mass: 0.4 });
   const SCREENS = 4;
-  const phoneRotate = useTransform(smooth, [0, 0.5, 1], [-6, 0, 6]);
   useMotionValueEvent(scrollYProgress, 'change', (v) => setActive(Math.min(SCREENS - 1, Math.max(0, Math.floor(v * SCREENS * 0.999)))));
 
   // Scroll picks the step and the screen snaps to it (one screen is 100 / SCREENS % of the strip).
@@ -102,7 +100,7 @@ export const PhoneShowcase: React.FC<{ onTry: () => void }> = ({ onTry }) => {
           <button type="button" className="ps-try" onClick={onTry}>Run it with your numbers →</button>
         </div>
         <div className="ps-stage">
-          <motion.div className="ps-phone" style={pinned ? { rotateY: phoneRotate } : undefined} aria-label="App preview with sample data">
+          <div className="ps-phone" aria-label="App preview with sample data">
             <div className="ps-notch" aria-hidden="true"/>
             <div className="ps-status" aria-hidden="true"><span>9:41</span><span className="ps-signal"><i/><i/><i/><i/></span></div>
             <div className="ps-viewport">
@@ -112,7 +110,7 @@ export const PhoneShowcase: React.FC<{ onTry: () => void }> = ({ onTry }) => {
               </motion.div>
             </div>
             <div className="ps-tabs" aria-hidden="true">{['Health', 'Tax', 'Freedom', 'Cover'].map((t, i) => <span key={t} className={i === active ? 'on' : ''}>{t}</span>)}</div>
-          </motion.div>
+          </div>
           <p className="ps-sample">Sample profile: age 29, ₹18,00,000 salary, one dependant. Figures are calculated, not illustrative guesses.</p>
         </div>
       </div>

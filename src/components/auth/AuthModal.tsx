@@ -106,7 +106,12 @@ export const AuthModal: React.FC = () => {
     try {
       await task();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
+      const message = err instanceof Error ? err.message : '';
+      // A network failure reaching the sign-in service (offline, or the auth server waking up) reads as
+      // "Failed to fetch" in browsers; say what it means instead.
+      setError(/failed to fetch|networkerror|load failed|network request failed/i.test(message)
+        ? 'We could not reach the sign-in service. Check your connection and try again in a minute.'
+        : message || 'Something went wrong. Please try again.');
     } finally {
       setBusy(false);
     }

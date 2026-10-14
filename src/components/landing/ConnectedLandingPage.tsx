@@ -10,10 +10,9 @@ import type{NormalizedMarketQuote}from'../../types';
 import{fetchBusinessNews}from'../../services/learningApi';
 import { ArthaMindMark } from './ArthaMindMark';
 import { LandingHero } from './LandingHero';
-const LandingSecurity=lazyOnView(()=>import('./LandingSecurity').then(m=>({default:m.LandingSecurity})),{minHeight:1100,anchorId:'security'});
 const LiveMarketTicker=lazyOnView(()=>import('./LiveMarketTicker').then(m=>({default:m.LiveMarketTicker})),{minHeight:120});
 import{LazyCryptoMarketPreview as CryptoMarketPreview}from'./LazyCryptoMarketPreview';
-const BusinessBrief=lazyOnView(()=>import('./BusinessBrief').then(m=>({default:m.BusinessBrief})),{minHeight:600,anchorId:'business-brief'});type LandingNews=ReturnType<typeof import('./BusinessBrief')['normalizeBusinessNews']>;
+const BusinessNewsTicker=lazyOnView(()=>import('./BusinessBrief').then(m=>({default:m.BusinessNewsTicker})),{minHeight:48});type LandingNews=ReturnType<typeof import('./BusinessBrief')['normalizeBusinessNews']>;
 import{LanguageSelector}from'../LanguageSelector';
 import{LandingPricing}from'./LandingPricing';
 import'./connectedLanding.css';
@@ -26,7 +25,7 @@ const LandingIntelligenceSection=lazyOnView(()=>import('./LandingIntelligenceSec
 
 type Props={signedIn:boolean;onEnter:(destination?:AppNavigationDestination)=>void;onSignIn:()=>void};
 type MacroCard={label:string;value:string;delta:string;direction:'up'|'down'|'flat'|'none'};
-const NAV_LINKS=[['purpose','Why ArthaMind'],['money-check','Money check'],['modules','Modules'],['pricing','Pricing'],['security','Data security']] as const;
+const NAV_LINKS=[['purpose','Why ArthaMind'],['money-check','Money check'],['modules','Modules'],['pricing','Pricing']] as const;
 const CAPABILITIES=['Old vs new tax regime','80C · 80D · NPS room','EMI prepayment vs invest','6-month emergency runway','SIP for every goal','Retirement corpus','Term & health cover gap','Home-loan affordability','Business cash flow','Credit-card debt payoff','Hindi & Hinglish answers','Verified ₹ calculations'];
 /** Cycles hero phrases with a slide-up transition; shows the first phrase only for reduced motion. */
 /** Formats a provider quote for a macro card. A missing or non-finite change is shown as unavailable, never as +0.00%. */
@@ -83,10 +82,8 @@ export const ConnectedLandingPage:React.FC<Props>=({signedIn,onEnter,onSignIn})=
  <LandingIntelligenceSection/>
  <LandingAiCfo onEnter={open} externalPrompt={cfoPrompt}/>
  <section id="modules" className="cl-section cl-reveal-section tone-night mp-section"><div className="cl-wrap"><div className="cl-eyebrow">How your money flows</div><h2>One pipeline from your numbers to a plan.</h2><p className="cl-sub">Fifteen modules work as four connected stages. Each stage uses what the one before it verified, and the AI CFO explains the result.</p><LandingModulePipeline modules={modules} onOpen={(target)=>open(target as AppNavigationDestination)} onAsk={askCfo}/></div></section>
- <LiveMarketTicker/><CryptoMarketPreview/><BusinessBrief articles={news} tickerArticles={news}/>
- <section id="how" className="cl-section cl-reveal-section tone-night"><div className="cl-wrap"><div className="cl-eyebrow">How it works</div><h2>From your numbers to a decision you can inspect.</h2><div className="cl-steps cl-step-animate">{[['1','Bring your details','Enter income, loans, investments and goals. You choose what to share.'],['2','Analyse','Everything is organised in one view using India-specific tax and product rules.'],['3','Inspect','See the sources, evidence and calculations behind every answer.'],['4','Decide','Get plans and next steps in English or Hinglish, then act on your own terms.']].map(s=><div key={s[0]}><span>{s[0]}</span><h4>{s[1]}</h4><p>{s[2]}</p></div>)}</div></div></section>
+ <LiveMarketTicker/><CryptoMarketPreview/><BusinessNewsTicker articles={news}/>
  <LandingPricing onStart={signedIn?()=>open('overview'):onSignIn} onSample={()=>scrollToId('money-check')}/>
- <LandingSecurity/>
  <section id="get-started" className="cl-section cl-trust cl-reveal-section tone-forest"><div className="cl-wrap"><div className="cl-final"><h2>Your AI CFO is ready.</h2><p>Run a free health check, ask about taxes, EMIs or goals, then take the plan into your private workspace. ArthaMind is not a brokerage and never executes trades.</p><div className="cl-actions"><button className="cl-primary cl-glow" onClick={scrollToCfo}><Sparkles size={16}/>Ask your AI CFO</button><button className="cl-secondary" onClick={()=>open('overview')}>Open Artha Bench Pro <ArrowRight size={16}/></button><button className="cl-secondary" onClick={()=>open('evaluation-lab')}>Test an AI answer</button></div></div></div></section>
  <LandingReviews/>
  </main><button type="button" className={'cl-top '+(showTop?'show':'')} aria-label="Back to top" onClick={()=>window.scrollTo({top:0,behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'})}><ArrowUp size={17}/></button><footer className="cl-footer"><div className="cl-wrap"><b>ArthaMind AI × Artha Bench Pro</b><span>India-focused financial intelligence, education and AI reliability. Educational/research use only—not investment, tax, legal or lending advice.</span><nav className="cl-footer-links" aria-label="More"><button type="button" onClick={()=>open('evaluation-lab')}>AI Reliability Lab</button><a href="#modules">Markets &amp; modules</a><a href="#pricing">Pricing</a><a href="/privacy.html">Privacy</a><a href="/terms.html">Terms</a></nav></div></footer>

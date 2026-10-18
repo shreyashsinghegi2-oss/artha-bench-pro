@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { CoinFace } from './GoldCoin';
 import { AnimatePresence, motion, useInView, useMotionValue, useReducedMotion, useSpring, useTransform } from 'motion/react';
 import { CompanyLogo, companyLogoSrc, hasMarketMark } from '../market/CompanyLogo';
 import { BarChart3, Bell, BookOpen, Bot, Calculator, Check, EyeOff, Home, KeyRound, LayoutGrid, LockKeyhole, Newspaper, ReceiptText, ShieldCheck, Sparkles, Star, Target, Wallet } from 'lucide-react';
@@ -110,7 +111,7 @@ const Price: React.FC<{ row: Row; run: boolean }> = ({ row, run }) => {
 // the AI CFO, news, tax, language and security. Kept short (about 28 s) so a visitor sees the whole loop.
 type Screen = 'splash' | 'home' | 'dashboard' | 'markets' | 'stock' | 'cfo' | 'tutor' | 'news' | 'tax' | 'language' | 'security' | 'people';
 const SCREENS: Screen[] = ['splash', 'home', 'dashboard', 'markets', 'stock', 'cfo', 'news', 'tax', 'language', 'security'];
-const DURATION: Record<Screen, number> = { splash: 5600, home: 2400, dashboard: 3600, markets: 2800, stock: 2300, cfo: 2500, tutor: 2600, news: 2200, tax: 2000, language: 2000, security: 2600, people: 2000 };
+const DURATION: Record<Screen, number> = { splash: 3000, home: 2400, dashboard: 3600, markets: 2800, stock: 2300, cfo: 2500, tutor: 2600, news: 2200, tax: 2000, language: 2000, security: 2600, people: 2000 };
 type TabId = 'home' | 'markets' | 'ai' | 'news' | 'more';
 const TAB_OF: Record<Screen, TabId> = { splash: 'home', home: 'home', dashboard: 'home', markets: 'markets', stock: 'markets', cfo: 'ai', tutor: 'ai', news: 'news', tax: 'more', language: 'more', security: 'more', people: 'more' };
 const TABS: Array<{ id: TabId; label: string; icon: React.ComponentType<{ size?: number }> }> = [
@@ -119,25 +120,7 @@ const TABS: Array<{ id: TabId; label: string; icon: React.ComponentType<{ size?:
 ];
 const QUICK: Array<[string, React.ComponentType<{ size?: number }>]> = [['Tax', ReceiptText], ['SIP', Target], ['Insure', ShieldCheck], ['Wallet', Wallet]];
 
-/** Gold coin face: polished metal with a bevelled rim, engraved brand name and a specular highlight. */
-const CoinFace: React.FC<{ id: string }> = ({ id }) => <svg viewBox="0 0 120 120" aria-hidden="true">
-  <defs>
-    <linearGradient id={`${id}-rim`} x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#fff4c2"/><stop offset=".22" stopColor="#f0c75a"/><stop offset=".5" stopColor="#9a6a12"/><stop offset=".72" stopColor="#f6d77a"/><stop offset="1" stopColor="#7a5410"/></linearGradient>
-    <radialGradient id={`${id}-g`} cx="36%" cy="30%" r="78%"><stop offset="0" stopColor="#fff1b8"/><stop offset=".35" stopColor="#f2c451"/><stop offset=".7" stopColor="#c8921f"/><stop offset="1" stopColor="#8f6310"/></radialGradient>
-    <radialGradient id={`${id}-c`} cx="42%" cy="36%" r="72%"><stop offset="0" stopColor="#ffe28a"/><stop offset=".6" stopColor="#dca63a"/><stop offset="1" stopColor="#b07c1c"/></radialGradient>
-    <radialGradient id={`${id}-spec`} cx="32%" cy="24%" r="38%"><stop offset="0" stopColor="#fffdf2" stopOpacity=".95"/><stop offset="1" stopColor="#fffdf2" stopOpacity="0"/></radialGradient>
-    <path id={`${id}-t`} d="M60 60 m-44 0 a44 44 0 1 1 88 0 a44 44 0 1 1 -88 0"/>
-  </defs>
-  <circle cx="60" cy="60" r="59" fill={`url(#${id}-rim)`}/>
-  <circle cx="60" cy="60" r="54.5" fill={`url(#${id}-g)`}/>
-  <circle cx="60" cy="60" r="53" fill="none" stroke="#7a5410" strokeWidth="1.1" strokeDasharray="1 2.1" opacity=".75"/>
-  <text fontSize="7" fontWeight="900" letterSpacing="2.1" fill="#6b4a0c" opacity=".9"><textPath href={`#${id}-t`}>ARTHAMIND AI · ARTHA BENCH PRO · INDIA ·</textPath></text>
-  <circle cx="60" cy="60" r="36" fill={`url(#${id}-c)`} stroke="#8f6310" strokeWidth="1.4"/>
-  <circle cx="60" cy="60" r="34.5" fill="none" stroke="#fff3c4" strokeWidth=".8" opacity=".55"/>
-  <ellipse cx="46" cy="36" rx="30" ry="18" fill={`url(#${id}-spec)`}/>
-</svg>;
-
-// Coin intro, 4.8 s: drop spinning, bounce twice and settle; rest while the app loads; flip once
+// Coin intro, 2.6 s: drop spinning, bounce twice and settle; rest while the app loads; flip once
 // more with a small lift and settle steady before Home opens.
 const COIN_TIMES = [0, 0.21, 0.29, 0.36, 0.43, 0.5, 0.773, 0.886, 1];
 const COIN_EASE = ['easeIn', 'easeOut', 'easeIn', 'easeOut', 'easeIn', 'linear', 'easeOut', 'easeIn'] as const;
@@ -154,19 +137,19 @@ const CoinDrop: React.FC<{ animate: boolean }> = ({ animate }) => { const coinRe
       }}
       ref={coinRef}
       animate={{ y: [-260, 0, -46, 0, -12, 0, 0, -26, 0], rotateY: [0, 1080, 1260, 1380, 1428, 1440, 1440, 1620, 1800] }}
-      transition={{ duration: 4.8, times: COIN_TIMES, ease: [...COIN_EASE] }}>
+      transition={{ duration: 2.6, times: COIN_TIMES, ease: [...COIN_EASE] }}>
       <span className="hp-coin-face"><CoinFace id="coin-f"/><span className="hp-coin-mark"><ArthaMindLogoMark size={46} tone="ink" cut="#e6bd5c"/></span><i className="hp-coin-sweep" aria-hidden="true"/><i className="hp-coin-glint" aria-hidden="true"/></span>
       <span className="hp-coin-face back"><CoinFace id="coin-b"/><span className="hp-coin-mark"><ArthaMindLogoMark size={46} tone="ink" cut="#e6bd5c"/></span><i className="hp-coin-sweep" aria-hidden="true"/></span>
     </motion.div>
     <motion.span className="hp-coin-shadow" initial={animate ? { scaleX: 0.2, opacity: 0 } : false}
       animate={{ scaleX: [0.2, 1, 0.55, 1, 0.85, 1, 1, 0.62, 1], opacity: [0, 0.55, 0.3, 0.55, 0.45, 0.55, 0.55, 0.32, 0.55] }}
-      transition={{ duration: 4.8, times: COIN_TIMES }}/>
+      transition={{ duration: 2.6, times: COIN_TIMES }}/>
   </div>
-  <motion.div className="hp-coin-title" initial={animate ? { opacity: 0, y: 10 } : false} animate={{ opacity: 1, y: 0 }} transition={{ delay: animate ? 2.45 : 0, duration: 0.45 }}>
+  <motion.div className="hp-coin-title" initial={animate ? { opacity: 0, y: 10 } : false} animate={{ opacity: 1, y: 0 }} transition={{ delay: animate ? 1.2 : 0, duration: 0.4 }}>
     <b>ArthaMind <em>AI</em></b><small>by Artha Bench Pro</small>
   </motion.div>
-  <motion.div className="hp-coin-load" initial={animate ? { opacity: 0 } : false} animate={{ opacity: animate ? [0, 1, 1, 0] : 1 }} transition={{ duration: 2.4, delay: animate ? 2.4 : 0, times: [0, 0.1, 0.8, 1] }}>
-    <span className="hp-coin-bar"><motion.i initial={animate ? { scaleX: 0 } : false} animate={{ scaleX: 1 }} transition={{ delay: animate ? 2.5 : 0, duration: 1.6, ease: [0.4, 0, 0.2, 1] }}/></span>
+  <motion.div className="hp-coin-load" initial={animate ? { opacity: 0 } : false} animate={{ opacity: animate ? [0, 1, 1, 0] : 1 }} transition={{ duration: 1.4, delay: animate ? 1.2 : 0, times: [0, 0.1, 0.8, 1] }}>
+    <span className="hp-coin-bar"><motion.i initial={animate ? { scaleX: 0 } : false} animate={{ scaleX: 1 }} transition={{ delay: animate ? 1.25 : 0, duration: 0.95, ease: [0.4, 0, 0.2, 1] }}/></span>
     <small>Loading your money dashboard…</small>
   </motion.div>
 </div>; };
@@ -328,8 +311,8 @@ export const HeroPhone: React.FC<{ photoSrc?: string }> = ({ photoSrc }) => {
   useEffect(() => {
     if (!running || introReady) return;
     const w = window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number; cancelIdleCallback?: (id: number) => void };
-    if (w.requestIdleCallback) { const id = w.requestIdleCallback(() => setIntroReady(true), { timeout: 1500 }); return () => w.cancelIdleCallback?.(id); }
-    const id = window.setTimeout(() => setIntroReady(true), 400);
+    if (w.requestIdleCallback) { const id = w.requestIdleCallback(() => setIntroReady(true), { timeout: 400 }); return () => w.cancelIdleCallback?.(id); }
+    const id = window.setTimeout(() => setIntroReady(true), 150);
     return () => window.clearTimeout(id);
   }, [running, introReady]);
   // Advance screens on a timer; the splash shows once, then the tour loops from Home.

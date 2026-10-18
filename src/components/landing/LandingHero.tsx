@@ -1,6 +1,7 @@
 import React, { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { ArthaMindLogoMark } from '../branding/ArthaMindBrand';
 import { HeroTicker, Tick, QUOTE_NAMES, formatPrice, useHeroMarket } from './HeroTicker';
+import { CoinFace } from './GoldCoin';
 import './landingHero.css';
 import './heroCity.css';
 
@@ -152,7 +153,7 @@ export const LandingHero: React.FC = () => {
             </div>
           </div>
 
-          {/* Plaza centrepiece: a glowing platform, a beam of light and the ArthaMind coin hovering above it */}
+          {/* Plaza centrepiece: a glowing platform, a beam of light and the gold ArthaMind coin spinning above it */}
           <div className="hc-monument" aria-hidden="true">
             <span className="hc-mon-glow" />
             <span className="hc-mon-beam" />
@@ -165,7 +166,19 @@ export const LandingHero: React.FC = () => {
               <ellipse cx="62" cy="22" rx="61" ry="21" fill="url(#hcTop)" stroke="#123b30" strokeWidth="1.4" />
               <ellipse cx="62" cy="22" rx="44" ry="14" fill="none" stroke="#34c46f" strokeWidth="2" opacity=".8" />
             </svg>
-            <span className="hc-mon-coin"><span className="hc-mon-face"><ArthaMindLogoMark size={64} tone="light" cut="transparent" /></span></span>
+            <span className="hc-mon-coin">
+              <span className="hc-coin3d">
+                {[-3, -2, -1, 0, 1, 2, 3].map((z) => <i key={z} className="hc-coin-edge" style={{ transform: `translateZ(${z * 1.1}px)` }} />)}
+                {(['front', 'back'] as const).map((side) => (
+                  <span key={side} className={`hc-coin-side ${side}`}>
+                    <CoinFace id={`hc-coin-${side}`} />
+                    <span className="hc-coin-mark"><ArthaMindLogoMark size={64} tone="ink" cut="#e6bd5c" /></span>
+                    <i className="hc-coin-shine" />
+                  </span>
+                ))}
+              </span>
+              <i className="hc-spark s1" /><i className="hc-spark s2" /><i className="hc-spark s3" />
+            </span>
           </div>
 
           {/* The phone on top of the market building: the live ArthaMind tour */}

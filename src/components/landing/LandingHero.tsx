@@ -9,8 +9,8 @@ const HeroPhone = lazy(() => import('./HeroPhone').then((r) => ({ default: r.Her
 
 /** Town picture size (px). Every overlay below is placed in % of it, so it scales with the picture. */
 const TOWN_W = 1376;
-/** Width of the phone drawn in the town (px) and of HeroPhone (px). */
-const DRAWN_PHONE_W = 88;
+/** Width (px of the picture) the phone takes on the plaza, and HeroPhone's own width (px). */
+const PLAZA_PHONE_W = 124;
 const PHONE_W = 300;
 
 /** What the billboard says, one message at a time. */
@@ -38,13 +38,13 @@ const Spark: React.FC<{ points: number[]; up: boolean }> = ({ points, up }) => {
  * Landing hero: live index ticker, one line, then ArthaMind City. The town is on screen as the page opens.
  * Overlays sit on the picture's blank surfaces: the live phone tour on the drawn phone, today's NIFTY 50
  * on the media building, a live ticker band and price screen on the market building, the billboard
- * messages, and cars driving the roads.
+ * messages, and parked cars.
  */
 export const LandingHero: React.FC = () => {
   const { quotes, nifty } = useHeroMarket();
   const sceneRef = useRef<HTMLDivElement>(null);
   const lineRef = useRef<HTMLDivElement>(null);
-  const [phoneScale, setPhoneScale] = useState(0.27);
+  const [phoneScale, setPhoneScale] = useState(0.3);
   const [slide, setSlide] = useState(0);
   const [tick, setTick] = useState(0);
 
@@ -52,7 +52,7 @@ export const LandingHero: React.FC = () => {
   useEffect(() => {
     const el = sceneRef.current;
     if (!el || typeof ResizeObserver === 'undefined') return;
-    const ro = new ResizeObserver(([entry]) => setPhoneScale((entry.contentRect.width * DRAWN_PHONE_W) / TOWN_W / PHONE_W));
+    const ro = new ResizeObserver(([entry]) => setPhoneScale((entry.contentRect.width * PLAZA_PHONE_W) / TOWN_W / PHONE_W));
     ro.observe(el);
     return () => ro.disconnect();
   }, []);
@@ -72,9 +72,9 @@ export const LandingHero: React.FC = () => {
     let frame = 0;
     const paint = () => {
       frame = 0;
-      const t = Math.min(1, window.scrollY / 260);
-      el.style.opacity = String(1 - t);
-      el.style.transform = `translateY(${-t * 18}px)`;
+      const t = Math.min(1, window.scrollY / 420);
+      el.style.opacity = String(1 - t * t * (3 - 2 * t));
+      el.style.transform = `translateY(${-t * 40}px) scale(${1 - t * 0.06})`;
     };
     const on = () => { if (!frame) frame = requestAnimationFrame(paint); };
     paint();
@@ -98,7 +98,7 @@ export const LandingHero: React.FC = () => {
           <img className="hc-town" src="/hero/city2/town.webp" width={1376} height={768} fetchPriority="high" decoding="async"
             alt="ArthaMind City: offices for tax, money health, investments, goals, insurance and experts around a central plaza where the ArthaMind phone stands" />
 
-          {/* Cars on the roads (drawn under the buildings' fronts) */}
+          {/* Parked cars */}
           <img className="hc-car hc-car1" src="/hero/city2/car1.png" alt="" aria-hidden="true" />
           <img className="hc-car hc-car2" src="/hero/city2/car2.png" alt="" aria-hidden="true" />
           <img className="hc-car hc-auto" src="/hero/city2/auto.png" alt="" aria-hidden="true" />
@@ -118,7 +118,11 @@ export const LandingHero: React.FC = () => {
 
           {/* Market building: live ticker band and a price screen */}
           <div className="hc-band" aria-hidden="true">
-            {quotes.length > 0 && <div className="hc-band-track">{[...quotes, ...quotes].map((q, i) => <Tick key={`${q.symbol}-${i}`} q={q} />)}</div>}
+            {quotes.length > 0 && (['a', 'b'] as const).map((face) => (
+              <div key={face} className={`hc-band-face hc-band-${face}`}>
+                <div className="hc-band-track">{[...quotes, ...quotes].map((q, i) => <Tick key={`${q.symbol}-${i}`} q={q} />)}</div>
+              </div>
+            ))}
           </div>
           <div className="hc-screen" aria-hidden="true">
             <div className="hc-screen-in" key={shown?.symbol ?? 'none'}>

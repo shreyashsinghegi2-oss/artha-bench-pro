@@ -24,7 +24,10 @@ Personal-finance web app for Indian families: money health check, tax (old vs ne
 ## Product rules
 - Be honest in all copy: no fake reviews or names, no invented traction. Reviews carry an "Illustrative quotes" note.
 - Header: four menus (`NavMenu.tsx`, Groww-style panels with building art from the town) and one action, Sign up. Visitors who pick any destination sign up first (pending return path), then land on it.
-- Hero (`LandingHero.tsx`): live ticker (`HeroTicker.tsx`, real quotes only), the line "Financial intelligence for the global Indian." (fades on scroll), then the owner-approved town `public/hero/city2/town.webp` (1376 × 768). Overlays in `heroCity.css` are % of that picture: `HeroPhone` on the drawn phone, NIFTY 50 on the dark screen, a ticker band and price screen on the market building, billboard messages, and car sprites (`city2/*.png`) driving the roads.
+- Landing order: hero, scroll story, pricing, reviews, footer. The old sections (Money Check, AI CFO chat, phone showcase, markets, news, languages) are no longer on the landing; their files remain.
+- Hero (`LandingHero.tsx`): live ticker (`HeroTicker.tsx`, real quotes only), a big two-line heading "Financial intelligence / for the global Indian." that fades on scroll, then the owner-approved town `public/hero/city2/town.webp` (1376 × 768). Overlays in `heroCity.css` are % of that picture: `HeroPhone` standing front-facing on the plaza (covers the drawn phone), NIFTY 50 on the dark screen, a ticker band clipped to the market building's fascia (two faces), a price screen, billboard messages, and parked car sprites (`city2/*.png`, no motion).
+- Scroll story (`LandingStory.tsx`, Groww F&O style): dark pinned stage, seven chapters; text left, a picture drawn in code right (sample numbers from the Money Check profile; markets use live quotes only).
+- Reviews (`ReviewsStory.tsx`): the waitlist number in the centre, illustrative review cards zoom out of the centre on scroll, with a Sign up button.
 - Investment advice or stock tips appear only as education, or through SEBI-registered partners.
 - Keep secrets in environment variables only; `VITE_*` values are public.
 

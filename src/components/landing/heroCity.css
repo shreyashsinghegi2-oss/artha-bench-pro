@@ -10,22 +10,21 @@
 .hc-up{color:#0f9d58;font-weight:700;font-style:normal}.hc-down{color:#d93025;font-weight:700;font-style:normal}
 @keyframes hc-tape{to{transform:translateX(-50%)}}
 
-/* One line */
-.hc-line{padding:clamp(16px,2.6vw,30px) 16px 0;text-align:center;will-change:opacity,transform}
-.hc-title{margin:0;font-size:clamp(24px,3.3vw,44px);line-height:1.1;letter-spacing:-.03em;font-weight:800;color:#0f1714;text-wrap:balance}
-.hc-title span{color:#0f5c4a}
+/* One big line (Groww-style), fades away on scroll */
+.hc-line{padding:clamp(28px,4.6vw,64px) 16px 0;text-align:center;will-change:opacity,transform}
+.hc-title{margin:0 auto;max-width:none;font-size:clamp(36px,5.3vw,76px);line-height:1.02;letter-spacing:-.045em;font-weight:800;color:#0f1714;text-wrap:balance}
+.hc-title span{display:block;color:#0f5c4a}
 
-/* Scene: the whole town, centred and fitted to the first screen */
-.hc-stage{display:flex;justify-content:center;padding:clamp(6px,1.4vw,18px) 8px 0}
-.hc-scene{position:relative;container-type:inline-size;width:min(1240px,100%,calc((100svh - 190px) * 1.7917));aspect-ratio:1376/768}
+/* Scene: the whole town, smaller than the heading so both read on the first screen */
+.hc-stage{display:flex;justify-content:center;padding:clamp(14px,2.4vw,34px) 8px 0}
+.hc-scene{position:relative;container-type:inline-size;width:min(1020px,100%);aspect-ratio:1376/768}
 .hc-town{display:block;width:100%;height:100%;user-select:none;pointer-events:none}
 
-/* Cars: each drives a short stretch of its road and fades in and out at the ends */
-.hc-car{position:absolute;pointer-events:none;opacity:0;animation:hc-drive var(--dur) linear var(--delay) infinite}
-.hc-car1{left:34.88%;top:51.82%;width:6.69%;--fx:4.36cqw;--fy:-1.6cqw;--tx:-3.2cqw;--ty:1.18cqw;--dur:8s;--delay:0s}
-.hc-auto{left:24.35%;top:54.69%;width:5.09%;--fx:-.36cqw;--fy:-.36cqw;--tx:6.18cqw;--ty:2.91cqw;--dur:8s;--delay:4.2s}
-.hc-car2{left:70.13%;top:53.65%;width:6.54%;--fx:6.54cqw;--fy:-2.62cqw;--tx:-5.09cqw;--ty:2.04cqw;--dur:10s;--delay:1.5s}
-@keyframes hc-drive{0%{opacity:0;translate:var(--fx) var(--fy)}10%{opacity:1}88%{opacity:1}100%{opacity:0;translate:var(--tx) var(--ty)}}
+/* Cars parked where the picture drew them */
+.hc-car{position:absolute;pointer-events:none}
+.hc-car1{left:34.88%;top:51.82%;width:6.69%}
+.hc-auto{left:24.35%;top:54.69%;width:5.09%}
+.hc-car2{left:70.13%;top:53.65%;width:6.54%}
 
 /* Media building screen (dark): NIFTY 50 today */
 .hc-dark{position:absolute;left:33.14%;top:36%;width:6.54%;height:8.98%;transform-origin:0 0;transform:skewY(-19.9deg);container-type:size;overflow:hidden;border-radius:4cqh}
@@ -39,10 +38,18 @@
 .hc-spark-line.up{stroke:#34c46f}.hc-spark-line.down{stroke:#ef5350}
 .hc-spark-fill{stroke:none}.hc-spark-fill.up{fill:rgba(52,196,111,.18)}.hc-spark-fill.down{fill:rgba(239,83,80,.18)}
 
-/* Market building: ticker band (runs along the curved fascia) */
-.hc-band{position:absolute;left:48.11%;top:43.23%;width:15.84%;height:2.86%;transform-origin:0 0;transform:skewY(24.9deg);overflow:hidden;background:#0e2a3b;border-radius:3px;container-type:size}
-.hc-band-track{display:flex;width:max-content;height:100%;align-items:center;animation:hc-tape 22s linear infinite}
-.hc-band .hc-tick{padding:0 8cqh;gap:4cqh;font-size:46cqh;color:#cfe3da}
+/* Market building: ticker band. The box covers the drawn fascia (660,330 to 918,456 in the picture) and is
+   clipped to its outline, so the tape stays inside the black band: one track runs the long face, a second
+   follows the short face round the corner. */
+.hc-band{position:absolute;left:47.97%;top:42.97%;width:18.75%;height:16.41%;
+  clip-path:polygon(1.16% 2.38%,79.46% 76.19%,98.45% 53.97%,99.22% 71.43%,93.02% 85.71%,85.27% 92.86%,74.42% 98.41%,1.16% 21.43%);
+  background:linear-gradient(160deg,#10324a,#0b2131)}
+.hc-band-face{position:absolute;overflow:hidden;transform-origin:0 0;container-type:size;display:flex;align-items:center}
+.hc-band-a{left:1.16%;top:2.38%;width:79.5%;height:19.5%;transform:skewY(24.5deg)}
+.hc-band-b{left:79.46%;top:76%;width:20.6%;height:18.5%;transform:skewY(-29.7deg)}
+.hc-band-track{display:flex;width:max-content;height:100%;align-items:center;animation:hc-tape 26s linear infinite}
+.hc-band-b .hc-band-track{animation-duration:14s}
+.hc-band .hc-tick{padding:0 9cqh;gap:4cqh;font-size:50cqh;color:#cfe3da}
 .hc-band .hc-tick b{color:#fff}
 
 /* Market building: price screen */
@@ -62,16 +69,17 @@
 .hc-board b{font-size:11cqw;font-weight:800;color:#0f1714;letter-spacing:-.02em;white-space:nowrap;animation:hc-fade .45s ease both}
 .hc-board small{font-size:6.6cqw;color:#3f4b46;font-weight:600;line-height:1.2;animation:hc-fade .45s .08s ease both}
 
-/* Phone placed exactly over the drawn phone (top-left corner at 639,422; turned to the town's angle) */
-.hc-phone{position:absolute;left:46.44%;top:54.95%;width:0;height:0;z-index:2}
-.hc-phone>.hp{width:300px;transform-origin:0 0;transform:skewY(26deg) scale(var(--s,.27))}
-.hc-phone .hp-device{width:300px;height:620px}
+/* Phone stands on the plaza facing the visitor, a little larger than the drawn phone so it covers it
+   (drawn phone: 636–730 × 418–632 px; ours: 621–745 × 384–640 px). */
+.hc-phone{position:absolute;left:45.13%;top:50%;width:9.01%;height:33.4%;z-index:3}
+.hc-phone>.hp{width:300px;transform-origin:0 0;transform:scale(var(--s,.3))}
+.hc-phone .hp-device{width:300px;height:620px;box-shadow:0 0 0 1px #0d0f12,0 40px 60px -24px rgba(11,27,52,.6),0 18px 30px -18px rgba(0,0,0,.5)}
+.hc-phone::after{content:"";position:absolute;left:-14%;right:-14%;top:calc(100% - 6px);height:12px;border-radius:50%;background:radial-gradient(closest-side,rgba(8,30,22,.4),transparent);pointer-events:none}
 
 @media (max-width:700px){
   .hc-tick{padding:8px 16px;font-size:12px}
 }
 @media (prefers-reduced-motion:reduce){
-  .hc-ticker-track,.hc-band-track,.hc-car,.hc-board b,.hc-board small,.hc-screen-in{animation:none}
-  .hc-car{opacity:0}
-  .hc-ticker,.hc-band{overflow-x:auto}
+  .hc-ticker-track,.hc-band-track,.hc-board b,.hc-board small,.hc-screen-in{animation:none}
+  .hc-ticker{overflow-x:auto}
 }

@@ -57,7 +57,7 @@ export const ReviewsStory: React.FC = () => {
       io.disconnect();
       const start = performance.now();
       const tick = (now: number) => {
-        const k = Math.min(1, (now - start) / 2200);
+        const k = Math.min(1, (now - start) / 6500);
         show(Math.round(WAITLIST_COUNT * (1 - (1 - k) ** 3)));
         if (k < 1) frame = requestAnimationFrame(tick);
       };

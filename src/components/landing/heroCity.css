@@ -14,7 +14,7 @@
    the first screen even in a small window. */
 .hc-line{padding:clamp(14px,2.6vh,40px) 16px 0;text-align:center;will-change:opacity,transform}
 .hc-title{margin:0 auto;max-width:none;font-size:clamp(30px,min(5.3vw,7vh),76px);line-height:1.02;letter-spacing:-.045em;font-weight:800;color:#0f1714;text-wrap:balance}
-.hc-title span{display:block;color:#0f5c4a}
+.hc-title span{display:block;color:inherit}
 
 /* Scene: as wide as fits below the heading (header 72 + ticker 36 + heading ≈ 14.3vh + gaps) */
 .hc-stage{display:flex;justify-content:center;padding:clamp(8px,1.6vh,24px) 8px 0}
@@ -75,9 +75,32 @@
 .hc-board b{font-size:11cqw;font-weight:800;color:#0f1714;letter-spacing:-.02em;white-space:nowrap;animation:hc-fade .45s ease both}
 .hc-board small{font-size:6.6cqw;color:#3f4b46;font-weight:600;line-height:1.2;animation:hc-fade .45s .08s ease both}
 
-/* Phone stands on the plaza facing the visitor, exactly over the drawn phone (631–729 × 422–625 px),
-   clear of the trees and the price screen. */
-.hc-phone{position:absolute;left:45.86%;top:54.95%;width:7.12%;height:26.43%;z-index:3}
+/* Phone on the round platform on top of the market building (picture px 844–960 × -5–235), covering the
+   drawn logo there, so every visitor sees the live tour. */
+.hc-phone{position:absolute;left:61.34%;top:-.65%;width:8.43%;height:31.25%;z-index:3}
+
+/* Plaza centrepiece over the drawn phone (box 600–766 × 395–650 px): platform, light beam, hovering coin.
+   It shows the moment the town does, so the drawn phone is never seen. */
+.hc-monument{position:absolute;left:43.6%;top:51.43%;width:12.06%;height:33.2%;z-index:2;pointer-events:none}
+.hc-scene.is-ready>.hc-monument{transition:none}
+.hc-mon-base{position:absolute;left:12.65%;top:70.2%;width:74.7%;height:22.7%;overflow:visible}
+.hc-mon-glow{position:absolute;left:-10%;right:-10%;top:58%;height:40%;border-radius:50%;background:radial-gradient(closest-side,rgba(110,240,170,.75),rgba(52,196,111,.25) 60%,transparent);filter:blur(2px);animation:hc-pulse 2.6s ease-in-out infinite}
+.hc-mon-beam{position:absolute;left:19.9%;width:60.2%;top:41.2%;height:37.6%;
+  clip-path:polygon(14% 0,86% 0,100% 100%,0 100%);
+  background:linear-gradient(to top,rgba(236,255,245,.99),rgba(205,250,226,.97) 55%,rgba(170,240,205,.95));
+  box-shadow:0 0 30px rgba(110,240,170,.6)}
+.hc-mon-beam::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(to top,transparent 0 10px,rgba(255,255,255,.7) 10px 12px);background-size:100% 24px;animation:hc-rise 1.6s linear infinite;opacity:.6}
+.hc-mon-coin{position:absolute;left:12.05%;top:7.84%;width:66.3%;aspect-ratio:1;perspective:400px;animation:hc-hover 3.2s ease-in-out infinite}
+.hc-mon-face{display:grid;place-items:center;width:100%;height:100%;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,#1f8f4e,#0b3d2f 70%);
+  box-shadow:inset 0 0 0 4px #e6bd5c,inset 0 0 0 7px #8a6a22,0 6px 18px rgba(0,0,0,.25),0 18px 40px rgba(52,196,111,.55);
+  animation:hc-tilt 6s ease-in-out infinite}
+.hc-mon-face .am-logo{width:56%;height:56%;filter:drop-shadow(0 0 8px rgba(255,255,255,.5))}
+@keyframes hc-hover{0%,100%{transform:translateY(0)}50%{transform:translateY(-5%)}}
+@keyframes hc-tilt{0%,100%{transform:rotateY(-18deg)}50%{transform:rotateY(18deg)}}
+@keyframes hc-pulse{0%,100%{opacity:.75}50%{opacity:1}}
+@keyframes hc-rise{to{background-position:0 -24px}}
+
 .hc-phone>.hp{width:300px;transform-origin:0 0;transform:scale(var(--s,.3))}
 .hc-phone .hp-device{width:300px;height:620px;box-shadow:0 0 0 1px #0d0f12,0 40px 60px -24px rgba(11,27,52,.6),0 18px 30px -18px rgba(0,0,0,.5)}
 .hc-phone::after{content:"";position:absolute;left:-14%;right:-14%;top:calc(100% - 6px);height:12px;border-radius:50%;background:radial-gradient(closest-side,rgba(8,30,22,.4),transparent);pointer-events:none}
@@ -86,6 +109,6 @@
   .hc-tick{padding:8px 16px;font-size:12px}
 }
 @media (prefers-reduced-motion:reduce){
-  .hc-ticker-track,.hc-band-track,.hc-board b,.hc-board small,.hc-screen-in{animation:none}
+  .hc-ticker-track,.hc-band-track,.hc-board b,.hc-board small,.hc-screen-in,.hc-mon-coin,.hc-mon-face,.hc-mon-glow,.hc-mon-beam::after{animation:none}
   .hc-ticker{overflow-x:auto}
 }

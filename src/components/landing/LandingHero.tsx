@@ -11,8 +11,8 @@ const HeroPhone = lazy(() => (phoneModule ?? import('./HeroPhone')).then((r) => 
 
 /** Town picture size (px). Every overlay below is placed in % of it, so it scales with the picture. */
 const TOWN_W = 1376;
-/** Width (px of the picture) the phone takes on the plaza, and HeroPhone's own width (px). */
-const PLAZA_PHONE_W = 98;
+/** Width (px of the picture) the phone takes on top of the market building, and HeroPhone's own width (px). */
+const PLAZA_PHONE_W = 116;
 const PHONE_W = 300;
 
 /** What the billboard says, one message at a time. */
@@ -38,7 +38,8 @@ const Spark: React.FC<{ points: number[]; up: boolean }> = ({ points, up }) => {
 
 /**
  * Landing hero: live index ticker, one line, then ArthaMind City. The town is on screen as the page opens.
- * Overlays sit on the picture's blank surfaces: the live phone tour on the drawn phone, today's NIFTY 50
+ * Overlays sit on the picture's blank surfaces: the live phone tour on top of the market building, the
+ * hovering ArthaMind coin in the plaza (it covers the drawn phone), today's NIFTY 50
  * on the media building, a live ticker band and price screen on the market building, the billboard
  * messages, and parked cars.
  */
@@ -151,7 +152,23 @@ export const LandingHero: React.FC = () => {
             </div>
           </div>
 
-          {/* The phone in the plaza: the live ArthaMind tour */}
+          {/* Plaza centrepiece: a glowing platform, a beam of light and the ArthaMind coin hovering above it */}
+          <div className="hc-monument" aria-hidden="true">
+            <span className="hc-mon-glow" />
+            <span className="hc-mon-beam" />
+            <svg className="hc-mon-base" viewBox="0 0 124 58">
+              <defs>
+                <linearGradient id="hcSide" x1="0" x2="1"><stop offset="0" stopColor="#0b4a3b" /><stop offset=".5" stopColor="#1f8f4e" /><stop offset="1" stopColor="#0b4a3b" /></linearGradient>
+                <radialGradient id="hcTop" cx=".5" cy=".5" r=".5"><stop offset="0" stopColor="#f4fff9" /><stop offset=".55" stopColor="#bff5d9" /><stop offset="1" stopColor="#5fd39a" /></radialGradient>
+              </defs>
+              <path d="M1 22 V36 A61 21 0 0 0 123 36 V22 Z" fill="url(#hcSide)" stroke="#123b30" strokeWidth="1.4" />
+              <ellipse cx="62" cy="22" rx="61" ry="21" fill="url(#hcTop)" stroke="#123b30" strokeWidth="1.4" />
+              <ellipse cx="62" cy="22" rx="44" ry="14" fill="none" stroke="#34c46f" strokeWidth="2" opacity=".8" />
+            </svg>
+            <span className="hc-mon-coin"><span className="hc-mon-face"><ArthaMindLogoMark size={64} tone="light" cut="transparent" /></span></span>
+          </div>
+
+          {/* The phone on top of the market building: the live ArthaMind tour */}
           <div className="hc-phone" style={{ '--s': phoneScale } as React.CSSProperties}>
             {townReady && <Suspense fallback={null}><HeroPhone /></Suspense>}
           </div>

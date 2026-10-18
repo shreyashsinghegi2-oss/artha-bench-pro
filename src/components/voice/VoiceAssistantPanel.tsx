@@ -3,12 +3,13 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useDraggable } from '../../hooks/useDraggable';
 import { Download, Loader2, Mic, RotateCcw, Send, Square, Volume2, X } from 'lucide-react';
 import { askAiCfo, type CfoTurn } from '../../services/cfoApi';
+import { isPlatformQuestion, platformAnswer, PLATFORM_FACTS } from '../../data/platformGuide';
 import { SPEEDS, setVoiceSpeed, voiceSpeed, canListen, canSpeak, cloudSpeech, downloadBlob, listenOnce, pickVoice, playBlob, speak, stopAudio, stopSpeaking, VOICE_LANGUAGES, voicesReady, type VoiceLanguage } from '../../services/voice';
 
 type Phase = 'idle' | 'listening' | 'thinking' | 'speaking';
 interface Turn { q: string; a: string; offline: boolean }
 
-const SAMPLES = ['How much emergency fund do I need?', 'Should I repay my loan first or start a SIP?', 'Explain mutual funds in simple words', 'Is crypto safe for me?'];
+const SAMPLES = ['What is ArthaMind and how can it help me?', 'How much emergency fund do I need?', 'Should I repay my loan first or start a SIP?', 'Explain mutual funds in simple words', 'Is crypto safe for me?'];
 const LANG_KEY = 'arthamind-voice-language';
 
 /** What the voice reads: the short answer plus up to three actions. */
@@ -81,17 +82,31 @@ export default function VoiceAssistantPanel({ initialLanguage, onClose }: { init
     catch { setVoiceNote('The voice note could not be prepared right now.'); }
   };
 
+  // Each question gets an id; an answer that arrives after a newer question was asked is dropped.
+  const askId = useRef(0);
   const ask = useCallback(async (question: string) => {
     const q = question.trim();
     if (!q) return;
-    setError(''); setHeard(''); setDraft(''); setPhase('thinking'); stopSpeaking();
-    const history: CfoTurn[] = turns.slice(-3).flatMap((t) => [{ role: 'user' as const, content: t.q }, { role: 'assistant' as const, content: t.a }]);
+    const id = ++askId.current;
+    stopListening.current(); stopPlayback.current(); stopAudio(); stopSpeaking();
+    setError(''); setHeard(''); setDraft(''); setPhase('thinking');
     try {
-      const reply = await askAiCfo(q, history, lang.name === 'Hindi' ? 'hindi' : 'english', { replyLanguage: lang.name, voice: true });
+      // Questions about ArthaMind itself: answered from the platform guide (instant in English).
+      if (isPlatformQuestion(q) && lang.name === 'English') {
+        const text = platformAnswer(q);
+        setTurns((t) => [...t, { q, a: text, offline: false }]);
+        await say(text, false);
+        return;
+      }
+      const history: CfoTurn[] = turns.slice(-3).flatMap((t) => [{ role: 'user' as const, content: t.q }, { role: 'assistant' as const, content: t.a }]);
+      const prompt = isPlatformQuestion(q) ? `${q}\n\nAnswer about the ArthaMind platform using only these facts: ${PLATFORM_FACTS}` : q;
+      const reply = await askAiCfo(prompt, history, lang.name === 'Hindi' ? 'hindi' : 'english', { replyLanguage: lang.name, voice: true });
+      if (id !== askId.current) return;
       const text = spokenAnswer(reply);
       setTurns((t) => [...t, { q, a: text, offline: reply.fallback }]);
       await say(text, reply.fallback);
     } catch (e) {
+      if (id !== askId.current) return;
       setError(e instanceof Error ? e.message : 'Something went wrong. Please try again.');
       setPhase('idle');
     }
@@ -99,7 +114,9 @@ export default function VoiceAssistantPanel({ initialLanguage, onClose }: { init
 
   const startListening = () => {
     if (phase === 'listening') { stopListening.current(); return; }
-    stopSpeaking(); setError(''); setHeard(''); setPhase('listening');
+    // Tapping the mic while an answer plays stops it and listens for the next question at once.
+    askId.current += 1;
+    stopPlayback.current(); stopAudio(); stopSpeaking(); setError(''); setHeard(''); setPhase('listening');
     const { done, stop } = listenOnce(lang.code, setHeard);
     stopListening.current = stop;
     done.then((text) => { if (text) void ask(text); else { setPhase('idle'); setError('I did not catch that. Tap the mic and try again.'); } })
@@ -107,9 +124,9 @@ export default function VoiceAssistantPanel({ initialLanguage, onClose }: { init
   };
 
   const drag = useDraggable<HTMLDivElement>('am-drag-voice-panel', { enabled: typeof window !== 'undefined' && window.matchMedia('(min-width: 641px)').matches });
-  const stopAll = () => { stopListening.current(); stopPlayback.current(); stopAudio(); stopSpeaking(); setPhase('idle'); };
+  const stopAll = () => { askId.current += 1; stopListening.current(); stopPlayback.current(); stopAudio(); stopSpeaking(); setPhase('idle'); };
   const last = turns[turns.length - 1];
-  const status = phase === 'listening' ? 'Listening… speak now' : phase === 'thinking' ? 'Thinking…' : phase === 'speaking' ? 'Speaking…' : listenOk ? 'Tap the mic and ask your question' : 'Type your question below';
+  const status = phase === 'listening' ? 'Listening… speak now' : phase === 'thinking' ? 'Thinking… tap the mic to ask something else' : phase === 'speaking' ? 'Speaking… tap the mic to ask another question' : listenOk ? 'Tap the mic and ask your question' : 'Type your question below';
 
   return <div ref={drag.ref} style={drag.style} className={`va-panel ${drag.dragging ? 'is-dragging' : ''}`} role="dialog" aria-label="Voice money assistant">
     <header className="va-head va-drag" {...drag.handle} title="Drag to move">
@@ -141,10 +158,10 @@ export default function VoiceAssistantPanel({ initialLanguage, onClose }: { init
     </div>
 
     <div className="va-mic-row">
-      <button type="button" className={`va-mic ${phase}`} onClick={phase === 'speaking' ? stopAll : startListening} disabled={phase === 'thinking' || (!listenOk && phase !== 'speaking')}
-        aria-label={phase === 'listening' ? 'Stop listening' : phase === 'speaking' ? 'Stop speaking' : 'Start speaking'}>
+      <button type="button" className={`va-mic ${phase}`} onClick={listenOk ? startListening : stopAll} disabled={!listenOk && phase !== 'speaking'}
+        aria-label={phase === 'listening' ? 'Stop listening' : phase === 'speaking' || phase === 'thinking' ? 'Stop and ask another question' : 'Start speaking'}>
         <span className="va-ring"/><span className="va-ring r2"/>
-        {phase === 'speaking' || phase === 'listening' ? <Square size={22}/> : <Mic size={26}/>}
+        {phase === 'listening' ? <Square size={22}/> : <Mic size={26}/>}
       </button>
       <div className="va-status">
         <b>{status}</b>
@@ -154,8 +171,8 @@ export default function VoiceAssistantPanel({ initialLanguage, onClose }: { init
     </div>
 
     <form className="va-type" onSubmit={(e) => { e.preventDefault(); void ask(draft); }}>
-      <input value={draft} onChange={(e) => setDraft(e.target.value)} placeholder={`Or type in ${lang.name}…`} aria-label="Type your question" maxLength={600} disabled={phase === 'thinking'}/>
-      <button type="submit" aria-label="Ask" disabled={!draft.trim() || phase === 'thinking'}><Send size={16}/></button>
+      <input value={draft} onChange={(e) => setDraft(e.target.value)} placeholder={`Or type in ${lang.name}…`} aria-label="Type your question" maxLength={600}/>
+      <button type="submit" aria-label="Ask" disabled={!draft.trim()}><Send size={16}/></button>
     </form>
 
     <div className="va-foot">

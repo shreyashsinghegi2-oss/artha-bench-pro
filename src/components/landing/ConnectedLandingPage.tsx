@@ -44,7 +44,9 @@ export const ConnectedLandingPage:React.FC<Props>=({signedIn,onEnter,onSignIn,on
  const open=(d:AppNavigationDestination)=>{if(signedIn)return onEnter(d);try{sessionStorage.setItem('arthabench_pending_private_return_v1',pathForDestination(d))}catch{/* storage blocked */}signUp();};
  const scrollToId=(id:string)=>document.getElementById(id)?.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});
  const scrollToCfo=()=>scrollToId('ai-cfo');
- const askCfo=(text:string)=>{scrollToCfo();if(text.trim())setCfoPrompt({id:Date.now(),text});};
+ // Take the visitor straight to the AI CFO chat, where the answer is written. The section may still be
+ // loading, so scroll again once the chat is on the page.
+ const askCfo=(text:string)=>{const toChat=()=>{const chat=document.querySelector('#ai-cfo .cfo-chat');if(chat){chat.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'center'});return true}return false};if(!toChat()){scrollToCfo();let n=0;const t=window.setInterval(()=>{if(toChat()||++n>20)window.clearInterval(t)},150)}if(text.trim())setCfoPrompt({id:Date.now(),text});};
  return <div ref={rootRef} className="connected-landing">
  <header className={'cl-header '+(scrolled?'is-scrolled':'')}><div className="cl-wrap cl-nav">
   <a href="#top" className="cl-brand" aria-label="ArthaMind AI by Artha Bench Pro, back to top"><ArthaMindMark size={34}/><span className="am-brand-text"><b>ArthaMind <em>AI</em></b><small>by Artha Bench Pro</small></span></a>

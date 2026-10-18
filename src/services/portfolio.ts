@@ -1,3 +1,4 @@
+import { updateProfileFromPortfolio } from './moneyProfile';
 /**
  * Portfolio and net worth, kept on this device. Holdings come from a CAS statement import, a fund
  * search, or manual entry. Values refresh from official AMFI NAVs and exchange quotes.
@@ -34,6 +35,17 @@ export function loadPortfolio(): PortfolioData {
 export function savePortfolio(data: PortfolioData) {
   try { window.localStorage.setItem(KEY, JSON.stringify(data)); } catch { /* storage full or blocked */ }
   window.dispatchEvent(new Event(PORTFOLIO_EVENT));
+  // Real holdings replace the typed estimates in the money profile (sample data never does).
+  if (!data.importedFrom?.startsWith('Sample')) {
+    const sum = (kinds: HoldingKind[]) => data.holdings.filter((h) => kinds.includes(h.kind)).reduce((a, h) => a + (Number(h.value) || 0), 0);
+    try {
+      updateProfileFromPortfolio({
+        investments: sum(['mf', 'stock', 'ppf', 'epf', 'nps', 'gold', 'crypto']),
+        liquid: sum(['cash', 'fd']),
+        loans: data.liabilities.reduce((a, l) => a + (Number(l.outstanding) || 0), 0),
+      });
+    } catch { /* profile storage unavailable */ }
+  }
 }
 export const newId = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
 

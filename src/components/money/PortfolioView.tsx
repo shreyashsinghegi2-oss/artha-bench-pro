@@ -95,6 +95,17 @@ export const PortfolioView: React.FC<{ onNavigate?: (d: AppNavigationDestination
     setNote(updated ? `Updated ${updated} price${updated > 1 ? 's' : ''} from AMFI NAVs and exchange quotes.${failed ? ` ${failed} could not be updated right now.` : ''}` : failed ? 'Prices could not be updated right now. Values are from your statement or last update.' : 'Nothing to refresh: prices update for mutual funds and stocks with units.');
   }, [update]);
 
+  // Prices update on their own: on opening when any fund or stock price is over 6 hours old, then every
+  // 30 minutes while the page is open. The Refresh button stays for an instant update.
+  useEffect(() => {
+    const priced = (h: Holding) => (h.kind === 'mf' && (h.schemeCode || h.isin)) || (h.kind === 'stock' && h.symbol);
+    const stale = (d: PortfolioData) => d.holdings.some((h) => priced(h) && (!h.updatedAt || Date.now() - Date.parse(h.updatedAt) > 6 * 3600 * 1000));
+    const first = loadPortfolio();
+    if (!first.importedFrom?.startsWith('Sample') && stale(first)) void refresh(first);
+    const timer = window.setInterval(() => { const d = loadPortfolio(); if (!d.importedFrom?.startsWith('Sample') && d.holdings.some(priced)) void refresh(d); }, 30 * 60 * 1000);
+    return () => window.clearInterval(timer);
+  }, [refresh]);
+
   const remove = (id: string) => update({ ...data, holdings: data.holdings.filter((h) => h.id !== id) });
   const removeLoan = (id: string) => update({ ...data, liabilities: data.liabilities.filter((l) => l.id !== id) });
   const add = (h: Holding) => update({ ...data, importedFrom: isSample ? undefined : data.importedFrom, holdings: [...(isSample ? [] : data.holdings), h], liabilities: isSample ? [] : data.liabilities });

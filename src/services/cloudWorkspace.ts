@@ -24,6 +24,16 @@ export const CLOUD_SYNC_KEYS = [
   'arthabench_ai_context_v1',
   'arthabench_notifications_v1',
   'arthabench_dashboard_preferences_v1',
+  // Money profile, portfolio and planners: synced so the workspace follows the user to every device,
+  // and cleared from a shared device at sign-out like the rest.
+  'arthamind.moneyProfile.v1',
+  'arthamind-portfolio-v1',
+  'arthamind-plan-retirement-v1',
+  'arthamind-plan-jobswitch-v1',
+  'arthamind-plan-education-v1',
+  'arthamind-tutor-progress-v1',
+  'arthamind-use-my-data-v1',
+  'artha_crypto_observations_v1',
 ] as const;
 
 const LEGACY_GUEST_BACKUP_KEY = 'arthabench_guest_workspace_backup_v1';

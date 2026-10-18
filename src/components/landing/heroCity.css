@@ -98,17 +98,17 @@
   filter:drop-shadow(0 10px 14px rgba(15,60,40,.35)) drop-shadow(0 0 16px rgba(245,200,90,.55))}
 .hc-coin3d{position:absolute;inset:0;transform-style:preserve-3d;animation:hc-spin 7s linear infinite}
 .hc-coin-edge{position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle,#c8921f 62%,#8f6310 72%,#e6bd5c 100%)}
-.hc-coin-side{position:absolute;inset:0;border-radius:50%;overflow:hidden;backface-visibility:hidden;-webkit-backface-visibility:hidden;transform:translateZ(3.6px)}
+.hc-coin-side{position:absolute;inset:0;border-radius:50%;overflow:hidden;clip-path:circle(50%);backface-visibility:hidden;-webkit-backface-visibility:hidden;transform:translateZ(3.6px)}
 .hc-coin-side.back{transform:rotateY(180deg) translateZ(3.6px)}
 .hc-coin-side>svg{display:block;width:100%;height:100%}
 .hc-coin-mark{position:absolute;inset:0;display:grid;place-items:center;filter:drop-shadow(0 1px 0 rgba(255,244,200,.8))}
 .hc-coin-mark .am-logo{width:44%;height:44%}
-.hc-coin-shine{position:absolute;inset:0;border-radius:50%;mix-blend-mode:screen;pointer-events:none}
+.hc-coin-shine{position:absolute;inset:0;border-radius:50%;overflow:hidden;clip-path:circle(50%);mix-blend-mode:screen;pointer-events:none}
 .hc-coin-shine::before{content:"";position:absolute;top:-25%;bottom:-25%;left:-70%;width:40%;transform:skewX(-20deg);
   background:linear-gradient(100deg,transparent,rgba(255,248,214,.9) 50%,transparent);animation:hc-shine 3.5s ease-in-out infinite}
-.hc-spark{position:absolute;width:12%;aspect-ratio:1;background:radial-gradient(closest-side,#fff,rgba(255,236,170,.9) 30%,transparent 70%);
+.hc-spark{position:absolute;display:block;width:12%;height:12%;background:radial-gradient(closest-side,#fff,rgba(255,236,170,.9) 30%,transparent 70%);
   clip-path:polygon(50% 0,60% 40%,100% 50%,60% 60%,50% 100%,40% 60%,0 50%,40% 40%);animation:hc-twinkle 2.4s ease-in-out infinite}
-.hc-spark.s1{left:-6%;top:12%}.hc-spark.s2{right:-8%;top:30%;animation-delay:.8s;width:9%}.hc-spark.s3{left:78%;top:-6%;animation-delay:1.6s;width:8%}
+.hc-spark.s1{left:-6%;top:12%}.hc-spark.s2{right:-8%;top:30%;animation-delay:.8s;width:9%;height:9%}.hc-spark.s3{left:78%;top:-6%;animation-delay:1.6s;width:8%;height:8%}
 @keyframes hc-spin{to{transform:rotateY(360deg)}}
 @keyframes hc-shine{0%,40%{left:-70%}75%,100%{left:130%}}
 @keyframes hc-twinkle{0%,100%{opacity:0;transform:scale(.4) rotate(0)}50%{opacity:1;transform:scale(1) rotate(45deg)}}

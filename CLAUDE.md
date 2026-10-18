@@ -18,6 +18,7 @@ Personal-finance web app for Indian families: money health check, tax (old vs ne
 
 ## Data model
 - The browser keeps workspace data in localStorage and syncs it every 7 s (when it changes) to `user_workspace_state` (`user_id`, `storage_key`, JSON `payload`). The sync keys are in `src/services/cloudWorkspace.ts`.
+- Connected workspace (`src/services/workspaceSync.ts`): the money profile (`moneyProfile.ts`, from setup, document scan or a landing Money Check saved before sign-up) fills Income, Expenses, Budget, EMIs and Tax with records tagged `from-profile`. They follow profile changes and step aside once the user adds their own records. The sync runs on every profile save and on workspace navigation. The portfolio feeds investments, cash and loans back into the profile; portfolio prices refresh automatically (stale after 6 h, then every 30 min). The profile, portfolio and planners are in the cloud sync keys.
 - The typed tables (`incomes`, `expenses`, `emi_records`, `health_score_snapshots`, `consent_records`, `finance_data_audit_log`) exist but are not wired up yet.
 - Uploaded documents are parsed on the device (`src/services/documentScan.ts`); they are never uploaded.
 

@@ -134,3 +134,8 @@
   .mc-section .mc-chip{order:3;font-size:9.5px;padding:2px 7px}
   .mc-section .mc-how{white-space:nowrap;font-size:11px}
 }
+
+/* Carry the check into the workspace (after sign-up) */
+.mc-save{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;margin-top:12px;padding:11px 14px;border:1px solid #0f5c4a;border-radius:12px;background:#0f5c4a;color:#fff;font:inherit;font-size:14px;font-weight:800;text-align:left;cursor:pointer}
+.mc-save small{font-size:11.5px;font-weight:500;color:#cfe9dc}
+.mc-save:hover{background:#0b4a3b}

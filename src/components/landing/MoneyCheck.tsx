@@ -28,7 +28,7 @@ const MORE: Field[] = [
 
 const START: Record<string, string> = { age: '30', annualSalary: '12,00,000', monthlyExpenses: '20,000', monthlyEmi: '5,000', liquidSavings: '1,20,200', investments: '60,000', retireAge: '60' };
 
-export const MoneyCheck: React.FC<{ onAsk: (prompt: string) => void }> = ({ onAsk }) => {
+export const MoneyCheck: React.FC<{ onAsk: (prompt: string) => void; onSave?: (inputs: MoneyCheckInputs) => void }> = ({ onAsk, onSave }) => {
   const reduced = useReducedMotion();
   const [values, setValues] = useState<Record<string, string>>(START);
   const [dependants, setDependants] = useState(1);
@@ -64,7 +64,7 @@ export const MoneyCheck: React.FC<{ onAsk: (prompt: string) => void }> = ({ onAs
     <div className="cl-wrap">
       <div className="cl-eyebrow mc-eyebrow">Money Check</div>
       <h2 id="mc-title">Six numbers. Your complete money report.</h2>
-      <p className="mc-lead">Fill it once. Tax, freedom number, insurance, emergency fund and net worth update instantly as you type. Nothing is stored or sent.</p>
+      <p className="mc-lead">Fill it once. Tax, freedom number, insurance, emergency fund and net worth update instantly as you type. Nothing is stored or sent unless you choose to save it to your workspace.</p>
 
       <div className="mc-grid">
         <form className="mc-form" onSubmit={(e) => e.preventDefault()} aria-label="Your numbers">
@@ -76,6 +76,7 @@ export const MoneyCheck: React.FC<{ onAsk: (prompt: string) => void }> = ({ onAs
           <button type="button" className="mc-more" aria-expanded={more} onClick={() => setMore((v) => !v)}>{more ? 'Fewer details' : 'Add insurance, 80C and a goal (optional)'} <ChevronDown size={14} className={more ? 'up' : ''}/></button>
           <AnimatePresence initial={false}>{more && <motion.div className="mc-fields mc-fields-more" initial={reduced ? false : { opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={reduced ? undefined : { opacity: 0, height: 0 }}>{MORE.map(field)}</motion.div>}</AnimatePresence>
           {!touched && <p className="mc-example">Example values are filled in. Replace them with yours.</p>}
+          {onSave && touched && report && <button type="button" className="mc-save" onClick={() => onSave(inputs)}>Save to my workspace <small>Every planner, tracker and report fills in from these numbers</small></button>}
           {error && <p className="mc-error" role="alert">{error}</p>}
           {report && <div className="mc-live" aria-hidden="true">
             <span className="mc-live-ring" style={{ '--deg': `${report.health.score * 3.6}deg` } as React.CSSProperties}><b>{report.health.score}</b></span>

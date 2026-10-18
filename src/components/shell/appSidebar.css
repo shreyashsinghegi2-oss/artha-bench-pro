@@ -39,3 +39,11 @@
 .ws-main.app-workspace-main{margin-left:0}
 .ws-main .page-enter>*{max-width:none!important;margin-left:0!important;margin-right:0!important}
 @media (min-width:1024px){.ws-main .page-enter>*{padding-left:32px!important;padding-right:32px!important}}
+
+/* Connected-data note on income, spending, EMI, budget and report pages */
+.ws-connected{display:flex;align-items:center;gap:10px;flex-wrap:wrap;max-width:1500px;margin:12px auto 0;padding:10px 14px;border:1px solid rgba(15,123,108,.25);border-radius:14px;background:rgba(15,123,108,.06);color:inherit;font-size:13px;line-height:1.5}
+.ws-connected>svg{flex:none;color:#0f7b6c}
+.ws-connected>span{flex:1;min-width:220px}
+.ws-connected button{flex:none;border:1px solid #0f7b6c;border-radius:10px;padding:6px 12px;background:#0f7b6c;color:#fff;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer}
+.ws-connected button:hover{background:#0b6357}
+@media (max-width:640px){.ws-connected{margin:10px 12px 0}}

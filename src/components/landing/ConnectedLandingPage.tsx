@@ -16,6 +16,8 @@ import'./landingMotion.css';
 import{useLandingMotion}from'./useLandingMotion';
 import{MENU,NavMenu}from'./NavMenu';
 import{pathForDestination}from'../../appRoutes';
+import type{MoneyCheckInputs}from'../../services/moneyCheck';
+import{PENDING_MONEY_CHECK_KEY}from'../../services/moneyProfile';
 import{WAITLIST_AS_OF,WAITLIST_COUNT}from'../../data/waitlist';
 const LandingAiCfo=lazyOnView(()=>import('./LandingAiCfo').then(m=>({default:m.LandingAiCfo})),{minHeight:900,anchorId:'ai-cfo'});
 const LandingPurpose=lazyOnView(()=>import('./LandingPurpose').then(m=>({default:m.LandingPurpose})),{minHeight:700,anchorId:'purpose'});
@@ -44,6 +46,8 @@ export const ConnectedLandingPage:React.FC<Props>=({signedIn,onEnter,onSignIn,on
  const open=(d:AppNavigationDestination)=>{if(signedIn)return onEnter(d);try{sessionStorage.setItem('arthabench_pending_private_return_v1',pathForDestination(d))}catch{/* storage blocked */}signUp();};
  const scrollToId=(id:string)=>document.getElementById(id)?.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});
  const scrollToCfo=()=>scrollToId('ai-cfo');
+ // Money Check → workspace: kept in this browser tab only until sign-in, then it becomes the money profile.
+ const saveCheck=(inputs:MoneyCheckInputs)=>{try{sessionStorage.setItem(PENDING_MONEY_CHECK_KEY,JSON.stringify(inputs))}catch{/* storage blocked */}open('overview');};
  // Take the visitor straight to the AI CFO chat, where the answer is written. The section may still be
  // loading, so scroll again once the chat is on the page.
  const askCfo=(text:string)=>{const toChat=()=>{const chat=document.querySelector('#ai-cfo .cfo-chat');if(chat){chat.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'center'});return true}return false};if(!toChat()){scrollToCfo();let n=0;const t=window.setInterval(()=>{if(toChat()||++n>20)window.clearInterval(t)},150)}if(text.trim())setCfoPrompt({id:Date.now(),text});};
@@ -62,7 +66,7 @@ export const ConnectedLandingPage:React.FC<Props>=({signedIn,onEnter,onSignIn,on
  <div className="cl-marquee" aria-label="What the AI CFO covers"><div className="cl-marquee-track">{[...CAPABILITIES,...CAPABILITIES].map((c,i)=><span key={i} aria-hidden={i>=CAPABILITIES.length?true:undefined}><i/>{c}</span>)}</div></div>
  <LandingPurpose onSample={()=>scrollToId('money-check')} onExplore={()=>open('overview')}/>
  <PhoneShowcase onTry={()=>scrollToId('money-check')}/>
- <MoneyCheck onAsk={askCfo}/>
+ <MoneyCheck onAsk={askCfo} onSave={saveCheck}/>
  <LandingAiCfo onEnter={open} externalPrompt={cfoPrompt}/>
   <LandingPricing onStart={()=>open('overview')} onSample={()=>scrollToId('money-check')}/>
  <ReviewsStory/>

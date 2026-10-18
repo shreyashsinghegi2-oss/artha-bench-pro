@@ -43,8 +43,8 @@ export const LandingHero: React.FC<{ onSample: () => void; onExplore: () => void
     if (!el || typeof ResizeObserver === 'undefined') return;
     const ro = new ResizeObserver(([entry]) => {
       const h = (entry.contentRect.width * 919) / 1621;
-      const share = window.innerWidth <= 700 ? 0.42 : 0.31; // about the height of the Growth Tower
-      setScale(Math.max(0.2, Math.min(0.5, (h * share) / PHONE_H)));
+      const share = 0.31; // about the height of the Growth Tower
+      setScale(Math.max(0.1, Math.min(0.5, (h * share) / PHONE_H)));
     });
     ro.observe(el);
     return () => ro.disconnect();

@@ -50,8 +50,7 @@
 @keyframes hc-hover{0%,100%{translate:0 0}50%{translate:0 -6px}}
 
 @media (max-width:700px){
-  .hc-scene-wrap{overflow:hidden;overflow:clip;padding-top:6vw}
-  .hc-scene{width:178%;margin-left:-39%}
+  .hc-scene-wrap{padding:6vw 8px 0}
 }
 @media (prefers-reduced-motion:reduce){
   .hc-ticker-track,.hc-glow,.hc-phone,.hc-board b,.hc-board small{animation:none}

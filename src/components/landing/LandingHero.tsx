@@ -7,7 +7,6 @@ const HeroPhone = lazy(() => import('./HeroPhone').then((r) => ({ default: r.Her
 import { ArrowRight, BadgeIndianRupee, BarChart3, Bot, Calculator, GraduationCap, ShieldCheck } from 'lucide-react';
 import { ArthaMindLogoMark } from '../branding/ArthaMindBrand';
 import './landingHero.css';
-import { HeroVideo } from './HeroVideo';
 
 /** The ecosystem at a glance: every chip is a real part of the product. */
 const ECOSYSTEM: Array<[string, React.ComponentType<{ size?: number }>]> = [
@@ -22,7 +21,7 @@ const ECOSYSTEM: Array<[string, React.ComponentType<{ size?: number }>]> = [
 
 
 /**
- * Landing hero: what the product is in one line, the ecosystem at a glance, and a live phone tour.
+ * Landing hero: what the product is in one line and a live phone tour, on a plain background.
  */
 export const LandingHero: React.FC<{ onSample: () => void; onExplore: () => void }> = ({ onSample, onExplore }) => {
   const reduced = useReducedMotion();
@@ -30,9 +29,8 @@ export const LandingHero: React.FC<{ onSample: () => void; onExplore: () => void
   const item = (i: number) => (reduced ? {} : { className: 'hx-in', style: { animationDelay: `${0.08 + i * 0.1}s` } as React.CSSProperties });
   const cls = (base: string, i: number) => { const it = item(i); return { className: it.className ? `${base} ${it.className}` : base, style: it.style }; };
 
-  return <section className="hx hx-nature hx-photo" aria-labelledby="hx-title">
+  return <section className="hx hx-nature" aria-labelledby="hx-title">
     <div className="hx-scene">
-    <HeroVideo/>
     <div className="hx-wrap">
       <div className="hx-copy">
         <h1 id="hx-title" {...cls("hx-one hx-short", 0)}>Financial intelligence <span>that grows your money and secures your future.</span></h1>

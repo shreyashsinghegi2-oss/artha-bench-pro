@@ -6,11 +6,8 @@ const MoneyCheck=lazyOnView(()=>import('./MoneyCheck').then(m=>({default:m.Money
 import{ArrowDown,ArrowRight,ArrowUp,CheckCircle2,Menu,Sparkles,X}from'lucide-react';
 import type{AppNavigationDestination}from'../../navigationTypes';
 import type{NormalizedMarketQuote}from'../../types';
-import{fetchBusinessNews}from'../../services/learningApi';
 import { ArthaMindMark } from './ArthaMindMark';
 import { LandingHero } from './LandingHero';
-const LiveMarketTicker=lazyOnView(()=>import('./LiveMarketTicker').then(m=>({default:m.LiveMarketTicker})),{minHeight:120});
-const BusinessNewsTicker=lazyOnView(()=>import('./BusinessBrief').then(m=>({default:m.BusinessNewsTicker})),{minHeight:48});type LandingNews=ReturnType<typeof import('./BusinessBrief')['normalizeBusinessNews']>;
 import{LandingPricing}from'./LandingPricing';
 import{LandingProducts}from'./LandingProducts';
 import{ContactLinks}from'../common/ContactLinks';
@@ -35,13 +32,12 @@ export function macroCardFromQuote(label:string,quote:NormalizedMarketQuote|unde
 export function scoreRingOffset(passed:number,total:number):number{if(!(total>0))return 1;return 1-Math.min(Math.max(passed,0),total)/total;}
 // Target is a workspace, or `ask:<question>` to hand the question to the AI CFO on this page.
 export const ConnectedLandingPage:React.FC<Props>=({signedIn,onEnter,onSignIn,onSignUp})=>{
- const[scrolled,setScrolled]=useState(false),[active,setActive]=useState('workspace'),[news,setNews]=useState<LandingNews>([]);
+ const[scrolled,setScrolled]=useState(false),[active,setActive]=useState('workspace');
  const rootRef=useRef<HTMLDivElement>(null);const[menuOpen,setMenuOpen]=useState(false);useEffect(()=>{if(!menuOpen)return;const onKey=(e:KeyboardEvent)=>{if(e.key==='Escape')setMenuOpen(false)};window.addEventListener('keydown',onKey);return()=>window.removeEventListener('keydown',onKey)},[menuOpen]);const[cfoPrompt,setCfoPrompt]=useState<{id:number;text:string}|null>(null);const[showTop,setShowTop]=useState(false);useLandingMotion(rootRef);
  useEffect(()=>{const el=rootRef.current;if(!el)return;return installTilt(el,{selector:'.cl-card, .mk-card',maxWidth:560,maxDeg:7});},[]);
  useEffect(()=>{const f=()=>{setScrolled(window.scrollY>8);setShowTop(window.scrollY>900)};f();addEventListener('scroll',f,{passive:true});return()=>removeEventListener('scroll',f)},[]);
  useEffect(()=>{const move=(e:MouseEvent)=>{const card=(e.target as HTMLElement)?.closest?.('.cl-card') as HTMLElement|null;if(!card)return;const r=card.getBoundingClientRect();card.style.setProperty('--mx',e.clientX-r.left+'px');card.style.setProperty('--my',e.clientY-r.top+'px')};document.addEventListener('mousemove',move);return()=>document.removeEventListener('mousemove',move)},[]);
  useEffect(()=>{const ids=['top','purpose','money-check','ai-cfo','modules','how','lab','trust'];const els=ids.map(id=>document.getElementById(id)).filter(Boolean)as HTMLElement[];if(!els.length)return;const ob=new IntersectionObserver(es=>{const v=es.filter(e=>e.isIntersecting).sort((a,b)=>b.intersectionRatio-a.intersectionRatio)[0];if(v)setActive((v.target as HTMLElement).id==='top'?'workspace':(v.target as HTMLElement).id)},{rootMargin:'-20% 0px -60% 0px',threshold:[.15,.35,.6]});els.forEach(e=>ob.observe(e));const reveal=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)(e.target as HTMLElement).classList.add('in')}),{rootMargin:'0px 0px 10% 0px',threshold:0});document.querySelectorAll('.cl-reveal,.cl-reveal-section').forEach(e=>reveal.observe(e));return()=>{ob.disconnect();reveal.disconnect()}},[]);
- useEffect(()=>{let alive=true;const load=async()=>{try{const [business,general,{normalizeBusinessNews}]=await Promise.all([fetchBusinessNews(undefined,'business'),fetchBusinessNews(undefined,'all'),import('./BusinessBrief')]);if(alive){const items=[...normalizeBusinessNews(business),...normalizeBusinessNews(general)];const seen=new Set<string>();setNews(items.filter(x=>{const k=(x.url||x.title).toLowerCase();if(seen.has(k))return false;seen.add(k);return true}).slice(0,12))}}catch{if(alive)setNews([])}};void load();const t=window.setInterval(()=>void load(),45000);return()=>{alive=false;window.clearInterval(t)}},[]);
 
  // Visitors sign up first; the destination opens right after sign-in.
  const signUp=onSignUp??onSignIn;
@@ -50,7 +46,6 @@ export const ConnectedLandingPage:React.FC<Props>=({signedIn,onEnter,onSignIn,on
  const scrollToCfo=()=>scrollToId('ai-cfo');
  const askCfo=(text:string)=>{scrollToCfo();if(text.trim())setCfoPrompt({id:Date.now(),text});};
  return <div ref={rootRef} className="connected-landing">
- <div className="cl-progress" aria-hidden="true"/>
  <header className={'cl-header '+(scrolled?'is-scrolled':'')}><div className="cl-wrap cl-nav">
   <a href="#top" className="cl-brand" aria-label="ArthaMind AI by Artha Bench Pro, back to top"><ArthaMindMark size={34}/><span className="am-brand-text"><b>ArthaMind <em>AI</em></b><small>by Artha Bench Pro</small></span></a>
   <div className="cl-links"><NavMenu onPick={open}/></div>
@@ -67,8 +62,7 @@ export const ConnectedLandingPage:React.FC<Props>=({signedIn,onEnter,onSignIn,on
  <PhoneShowcase onTry={()=>scrollToId('money-check')}/>
  <MoneyCheck onAsk={askCfo}/>
  <LandingAiCfo onEnter={open} externalPrompt={cfoPrompt}/>
- <LiveMarketTicker/><BusinessNewsTicker articles={news}/>
- <LandingPricing onStart={()=>open('overview')} onSample={()=>scrollToId('money-check')}/>
+  <LandingPricing onStart={()=>open('overview')} onSample={()=>scrollToId('money-check')}/>
  <ReviewsStory/>
  {signedIn?<LanguagesStory ctaLabel="Open your workspace" onCta={()=>open('overview')}/>:<LanguagesStory ctaLabel="Sign up free" onCta={onSignUp??onSignIn} autoPrompt/>}
  </main><button type="button" className={'cl-top '+(showTop?'show':'')} aria-label="Back to top" onClick={()=>window.scrollTo({top:0,behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'})}><ArrowUp size={17}/></button><footer className="cl-footer" id="contact"><div className="cl-wrap cl-footer-grid"><div className="cl-footer-brand"><b>ArthaMind AI</b><span>Your AI CFO for India and Indians abroad: tax, loans, goals and investments. App in 20 languages; AI CFO in 13 Indian languages.</span><nav className="cl-footer-links" aria-label="More"><a href="#pricing">Pricing</a><a href="/data-protection">Data protection</a><a href="/terms.html">Terms &amp; conditions</a><a href="/privacy.html">Privacy policy</a><button type="button" onClick={()=>open('evaluation-lab')}>Answer checker</button></nav></div><div className="cl-footer-contact"><h2>Talk to us</h2><ContactLinks/></div></div><div className="cl-wrap cl-footer-legal"><span>© {new Date().getFullYear()} ArthaMind AI. ArthaMind gives financial information and planning tools. It is not a SEBI-registered investment adviser, does not give personalised investment advice, and never places trades. By using ArthaMind you agree to our <a href="/terms.html">Terms &amp; conditions</a> and <a href="/privacy.html">Privacy policy</a>.</span></div></footer>

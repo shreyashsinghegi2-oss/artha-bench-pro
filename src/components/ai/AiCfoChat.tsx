@@ -6,6 +6,7 @@ import { askAiCfo, type CfoLanguage, type CfoReply, type CfoTurn } from '../../s
 import { buildCfoHealthReport, cfoPlanPrompt, formatInr, type CfoHealthReport } from '../../services/cfoAnalysis';
 import { CFO_QUESTIONS, CfoIntake, type CfoProfile } from './CfoIntake';
 import './aiCfo.css';
+import { ArthaMindLogoMark } from '../branding/ArthaMindBrand';
 import { MicButton } from './MicButton';
 import { ThinkingSteps } from './ThinkingSteps';
 
@@ -194,7 +195,7 @@ export const AiCfoChat: React.FC<Props> = ({ suggestFor, externalPrompt, compact
     <div className="cfo-thread" ref={scroller} aria-label="Conversation with the AI CFO">
       {intake && <CfoIntake onComplete={completeIntake} onCancel={() => setIntake(false)}/>}
       {!intake && messages.length === 0 && <div className="cfo-empty">
-        <span className="cfo-orb" aria-hidden="true"><BriefcaseBusiness size={22}/></span>
+        <span className="cfo-orb cfo-orb-brand" aria-hidden="true"><ArthaMindLogoMark size={34}/></span>
         <b>Ask anything a CFO would answer.</b>
         <p>Salary, tax regime, EMIs, emergency fund, goals or your business cash flow, answered in ₹ with a clear action plan.</p>
         {offerPlan && <button type="button" className="cfo-plan-cta" onClick={() => setIntake(true)}><ClipboardList size={16}/>Build my CFO plan<span>{CFO_QUESTIONS.length} quick questions · about 2 minutes</span></button>}

@@ -28,12 +28,12 @@ function observeCountUps(root: HTMLElement, reduce: boolean): () => void {
   };
   // Markup carries the real value; only reset to 0 when we are actually going to animate it.
   if (reduce || !('IntersectionObserver' in window)) { nodes.forEach((node) => show(node, Number(node.dataset.n || 0))); return () => undefined; }
-  nodes.forEach((node) => show(node, 0));
+  // The real number stays in the page until the count starts, so a page read before scrolling never shows 0.
   const observer = new IntersectionObserver((entries) => entries.forEach((entry) => {
     if (!entry.isIntersecting) return;
     observer.unobserve(entry.target);
     run(entry.target as HTMLElement);
-  }), { threshold: 0.6 });
+  }), { threshold: 0.2 });
   nodes.forEach((node) => observer.observe(node));
   return () => { observer.disconnect(); frames.forEach(cancelAnimationFrame); };
 }

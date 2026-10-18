@@ -19,65 +19,102 @@ const PLANS: Plan[] = [
   {
     name: 'Free',
     price: { monthly: { amount: '₹0', note: 'Free forever' }, yearly: { amount: '₹0', note: 'Free forever' } },
-    blurb: 'See where you stand.',
-    yes: ['Money health score', 'All 14 calculators', 'Money Check report', 'AI CFO, limited questions'],
-    no: ['Tax regime optimiser', 'Portfolio import and XIRR', 'Goal plans'],
+    blurb: 'Everything you need to see where you stand.',
+    yes: [
+      'Money health score',
+      'Money Check report: tax, freedom number, cover, emergency fund, net worth',
+      'All 14 calculators: EMI, SIP, tax, retirement and more',
+      'Budget and expense tracker',
+      'Live markets: NIFTY, SENSEX, US stocks and crypto',
+      'Learning hub and step-by-step lessons',
+      '3 AI CFO questions a month',
+      'App in 20 languages',
+    ],
+    no: ['Tax regime optimiser', 'Portfolio import and XIRR', 'Goal plans across 1,000 market paths'],
     cta: 'sample',
   },
   {
     name: 'Pro',
     price: {
-      monthly: { amount: '₹359', unit: '/month', note: 'or ₹3,499 a year' },
-      yearly: { amount: '₹3,499', unit: '/year', note: 'Save ₹809 vs monthly' },
+      monthly: { amount: '₹249', unit: '/month', note: 'or ₹1,999 a year (save 33%)' },
+      yearly: { amount: '₹1,999', unit: '/year', note: 'About ₹167 a month, billed yearly' },
     },
-    blurb: 'Your full personal CFO for India.',
+    blurb: 'Your full personal CFO. A ₹47,000 tax saving pays for it in about 16 days.',
     yes: [
-      'Old vs new tax regime, every deduction',
-      'EMI prepayment plans',
-      'Portfolio with CAS import and XIRR',
-      'Monte Carlo goal plans',
-      'Unlimited AI CFO in your language',
+      'Everything in Free',
+      'Unlimited tax engine: old vs new regime, 80C, 80D, NPS, HRA and every deduction',
+      'Advance tax and TDS check',
+      'EMI prepayment plans for every loan',
+      'Portfolio sync: mutual fund statement (CAS) import, holdings and XIRR',
+      'Goal plans tested across 1,000 market paths: retirement, education, home',
+      'Term and health insurance gap',
+      'Unlimited AI CFO in 13 Indian languages, by voice or text',
+      'Monthly money reports you can download',
+      'Answer checker: formulas and sources shown',
     ],
-    no: ['Retirement and education abroad'],
+    no: ['Cross-border planning for NRIs'],
     featured: true,
     cta: 'start',
   },
   {
     name: 'Global planner',
     price: {
-      monthly: { amount: '$29', unit: '/month', note: 'or $290 a year' },
-      yearly: { amount: '$290', unit: '/year', note: 'Save $58 vs monthly' },
+      monthly: { amount: '$199', unit: '/year', note: 'Billed yearly · ₹16,999 a year in India' },
+      yearly: { amount: '$199', unit: '/year', note: '₹16,999 a year in India' },
     },
     blurb: 'For Indians living and earning abroad.',
-    yes: ['Everything in Pro', 'Retirement in India or abroad', 'Child education in India or abroad'],
+    yes: [
+      'Everything in Pro',
+      'Retirement in India or abroad, side by side',
+      'Child education in India or abroad',
+      'Cross-border tax: US, UK and UAE tax treaties (DTAA)',
+      'NRE and NRO account planning',
+      'Forex tracking: USD, GBP, EUR and AED against INR',
+      'Plans in two currencies',
+    ],
     cta: 'start',
   },
   {
     name: 'Business',
     price: { monthly: { amount: 'Custom', note: 'Volume pricing' }, yearly: { amount: 'Custom', note: 'Volume pricing' } },
     blurb: 'For NBFCs, HR platforms and API partners.',
-    yes: ['EMI intelligence licensing', 'Employee financial wellness', 'Verified-calculation API'],
+    yes: [
+      'EMI intelligence licensing',
+      'Verified-calculation API',
+      'Employee financial wellness',
+      'Volume pricing for teams',
+      'Onboarding and priority support',
+    ],
     cta: 'sales',
   },
 ];
 
-// Pro at ₹359 a month is ₹4,308 a year. A ₹47,000 tax saving is 10.9 times that.
-const ROI = { saving: '₹47,000', cost: '₹4,308', multiple: '10.9×' };
+/**
+ * Worked examples for the maths block (checked):
+ * - Tax: a ₹47,000 saving ÷ ₹1,999 = 23.5×; ₹1,999 ÷ ₹47,000 × 365 = 15.5 days.
+ * - EMI: ₹50 lakh at 8% for 20 years has an EMI of ₹41,822; paying ₹5,000 extra each month cuts
+ *   interest by ₹12,67,626 and ends the loan 52 months early; ₹12,67,626 ÷ ₹1,999 ≈ 634×.
+ * - Monthly ₹249 × 12 = ₹2,988, so ₹1,999 a year is 33% less.
+ */
+const MATH = {
+  tax: { saving: '₹47,000', multiple: '23.5×', days: '15.5 days' },
+  emi: { loan: '₹50 lakh', rate: '8%', years: 20, emi: '₹41,822', extra: '₹5,000', saved: '₹12.7 lakh', months: 52, multiple: '634×' },
+};
 
 /** Pricing: monthly or yearly, four plans, Pro highlighted with a worked return-on-cost example. */
 export const LandingPricing: React.FC<{ onStart: () => void; onSample: () => void }> = ({ onStart, onSample }) => {
-  const [billing, setBilling] = useState<Billing>('monthly');
+  const [billing, setBilling] = useState<Billing>('yearly');
   return (
     <section id="pricing" className="cl-section lp-section cl-reveal-section" aria-labelledby="lp-title">
       <div className="cl-wrap">
         <div className="cl-eyebrow">Pricing</div>
         <h2 id="lp-title">Free to start. Pro when it saves you money.</h2>
-        <p className="cl-sub">Pro pays for itself if it finds one missed deduction or one sensible loan prepayment a year.</p>
+        <p className="cl-sub">Pro is ₹1,999 a year. It pays for itself if it finds one missed deduction or one sensible loan prepayment.</p>
         <div className="lp-toggle" role="group" aria-label="Billing period">
           {(['monthly', 'yearly'] as const).map((b) => (
             <button key={b} type="button" aria-pressed={billing === b} className={billing === b ? 'on' : ''} onClick={() => setBilling(b)}>
               {b === 'monthly' ? 'Monthly' : 'Yearly'}
-              {b === 'yearly' && <em>save up to 18%</em>}
+              {b === 'yearly' && <em>save 33%</em>}
             </button>
           ))}
         </div>
@@ -98,7 +135,7 @@ export const LandingPricing: React.FC<{ onStart: () => void; onSample: () => voi
                   <div className="lp-roi">
                     <span>Example return</span>
                     <p>
-                      A <b>{ROI.saving}</b> tax saving covers a year of Pro ({ROI.cost}) <b>{ROI.multiple}</b> over.
+                      If Pro finds a <b>{MATH.tax.saving}</b> tax saving, that is <b>{MATH.tax.multiple}</b> its yearly price.
                     </p>
                   </div>
                 )}
@@ -135,8 +172,25 @@ export const LandingPricing: React.FC<{ onStart: () => void; onSample: () => voi
             );
           })}
         </div>
+        <div className="lp-math" aria-labelledby="lp-math-title">
+          <h3 id="lp-math-title">The maths</h3>
+          <div className="lp-math-grid">
+            <div>
+              <small>Tax example</small>
+              <p>Tax saving found: <b>{MATH.tax.saving}</b> a year</p>
+              <p>Cost of Pro: <b>₹1,999</b> a year</p>
+              <p className="lp-math-res">Return <b>{MATH.tax.multiple}</b> · pays for itself in <b>{MATH.tax.days}</b></p>
+            </div>
+            <div>
+              <small>Home-loan example</small>
+              <p>{MATH.emi.loan} at {MATH.emi.rate} for {MATH.emi.years} years · EMI {MATH.emi.emi}</p>
+              <p>Pay <b>{MATH.emi.extra}</b> extra a month: <b>{MATH.emi.saved}</b> less interest, loan ends <b>{MATH.emi.months} months</b> early</p>
+              <p className="lp-math-res">That saving is <b>{MATH.emi.multiple}</b> the price of a year of Pro</p>
+            </div>
+          </div>
+        </div>
         <p className="lp-fine">
-          Prices in Indian rupees and US dollars, taxes extra. The return is an illustration, not a promise: your saving depends on your income and
+          Prices in Indian rupees and US dollars, taxes extra. These are worked examples, not promises or averages: your saving depends on your income, loans and
           deductions. Not investment advice. See our <a href="/terms.html">Terms &amp; conditions</a>.
         </p>
       </div>

@@ -1,22 +1,24 @@
 /* ArthaMind City hero. Overlay positions are % of the town picture (1376 × 768); cqw units follow the scene width. */
 .hc{position:relative;background:#fff;padding:0 0 28px;overflow:hidden}
 
-/* Live ticker: muted, always moving (no pause on hover) */
-.hc-ticker{border-bottom:1px solid #eef0ee;background:#fafbfa;overflow:hidden}
+/* Live ticker with company logos: white, always moving (no pause on hover) */
+.hc-ticker{border-bottom:1px solid #eef0ee;background:#fff;overflow:hidden}
 .hc-ticker-track{display:flex;width:max-content;animation:hc-tape 50s linear infinite;will-change:transform}
-.hc-tick{display:inline-flex;align-items:center;gap:8px;padding:8px 20px;font-size:12.5px;color:#7a837e;white-space:nowrap;font-variant-numeric:tabular-nums}
-.hc-tick b{font-weight:700;color:#5d6762;letter-spacing:.02em}
-.hc-up{color:#3f9d6a;font-weight:700;font-style:normal}.hc-down{color:#c4605a;font-weight:700;font-style:normal}
+.hc-tick{display:inline-flex;align-items:center;gap:8px;padding:7px 22px;font-size:12.5px;color:#4b5550;white-space:nowrap;font-variant-numeric:tabular-nums;border-right:1px solid #f0f2f1}
+.hc-tick b{font-weight:700;color:#2b3330;letter-spacing:.02em}
+.hc-tick-logo{width:20px;height:20px;border-radius:6px;object-fit:contain;flex:none}
+.hc-up{color:#16a34a;font-weight:700;font-style:normal}.hc-down{color:#dc2626;font-weight:700;font-style:normal}
 @keyframes hc-tape{to{transform:translateX(-50%)}}
 
-/* One big line (Groww-style), fades away on scroll */
-.hc-line{padding:clamp(28px,4.6vw,64px) 16px 0;text-align:center;will-change:opacity,transform}
-.hc-title{margin:0 auto;max-width:none;font-size:clamp(36px,5.3vw,76px);line-height:1.02;letter-spacing:-.045em;font-weight:800;color:#0f1714;text-wrap:balance}
+/* One big line (Groww-style), fades away on scroll. Sized by width and height so heading and town fit
+   the first screen even in a small window. */
+.hc-line{padding:clamp(14px,2.6vh,40px) 16px 0;text-align:center;will-change:opacity,transform}
+.hc-title{margin:0 auto;max-width:none;font-size:clamp(30px,min(5.3vw,7vh),76px);line-height:1.02;letter-spacing:-.045em;font-weight:800;color:#0f1714;text-wrap:balance}
 .hc-title span{display:block;color:#0f5c4a}
 
-/* Scene: the whole town, smaller than the heading so both read on the first screen */
-.hc-stage{display:flex;justify-content:center;padding:clamp(14px,2.4vw,34px) 8px 0}
-.hc-scene{position:relative;container-type:inline-size;width:min(1020px,100%);aspect-ratio:1376/768}
+/* Scene: as wide as fits below the heading (header 72 + ticker 36 + heading ≈ 14.3vh + gaps) */
+.hc-stage{display:flex;justify-content:center;padding:clamp(8px,1.6vh,24px) 8px 0}
+.hc-scene{position:relative;container-type:inline-size;width:min(1020px,100%,calc((100svh - 14.3vh - 2.6vh - 1.6vh - 150px) * 1.7917));min-width:min(560px,100%);aspect-ratio:1376/768}
 .hc-town{display:block;width:100%;height:100%;user-select:none;pointer-events:none}
 /* Overlays appear together once the town picture has loaded; the phone fades in whole. */
 .hc-scene>:not(.hc-town){opacity:0;transition:opacity .35s ease}
@@ -58,7 +60,7 @@
 
 /* Market building: price screen */
 .hc-screen{position:absolute;left:52.69%;top:52.04%;width:4%;height:5.08%;transform-origin:0 0;transform:skewY(25.4deg);container-type:size;overflow:hidden;background:#fff}
-.hc-screen-in{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2cqh;line-height:1.05;animation:hc-fade .5s ease both}
+.hc-screen-in{position:absolute;inset:0 0 0 16%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2cqh;line-height:1.05;animation:hc-fade .5s ease both}
 .hc-screen-in b{font-size:15cqw;font-weight:800;color:#0f1714;white-space:nowrap}
 .hc-screen-in span{font-size:15cqw;font-weight:800;color:#0f5c4a;font-variant-numeric:tabular-nums;white-space:nowrap}
 .hc-screen-in em{font-size:12cqw}
@@ -73,9 +75,9 @@
 .hc-board b{font-size:11cqw;font-weight:800;color:#0f1714;letter-spacing:-.02em;white-space:nowrap;animation:hc-fade .45s ease both}
 .hc-board small{font-size:6.6cqw;color:#3f4b46;font-weight:600;line-height:1.2;animation:hc-fade .45s .08s ease both}
 
-/* Phone stands on the plaza facing the visitor, a little larger than the drawn phone so it covers it
-   (drawn phone: 636–730 × 418–632 px; ours: 621–745 × 384–640 px). */
-.hc-phone{position:absolute;left:45.13%;top:50%;width:9.01%;height:33.4%;z-index:3}
+/* Phone stands on the plaza facing the visitor, exactly over the drawn phone (631–729 × 422–625 px),
+   clear of the trees and the price screen. */
+.hc-phone{position:absolute;left:45.86%;top:54.95%;width:7.12%;height:26.43%;z-index:3}
 .hc-phone>.hp{width:300px;transform-origin:0 0;transform:scale(var(--s,.3))}
 .hc-phone .hp-device{width:300px;height:620px;box-shadow:0 0 0 1px #0d0f12,0 40px 60px -24px rgba(11,27,52,.6),0 18px 30px -18px rgba(0,0,0,.5)}
 .hc-phone::after{content:"";position:absolute;left:-14%;right:-14%;top:calc(100% - 6px);height:12px;border-radius:50%;background:radial-gradient(closest-side,rgba(8,30,22,.4),transparent);pointer-events:none}

@@ -2,35 +2,31 @@ import React, { useEffect, useRef, useState } from 'react';
 import { ChevronDown, MapPin } from 'lucide-react';
 import { LANDING_REVIEWS, type LandingReview } from '../../data/landingReviews';
 import { ArthaMindLogoMark } from '../branding/ArthaMindBrand';
+import { WAITLIST_AS_OF, WAITLIST_COUNT } from '../../data/waitlist';
 import './reviewsStory.css';
 
 type Slot = { x: number; y: number; size: 'sm' | 'md' | 'lg' };
 
 /**
- * Groww-style field of reviews around the headline. x and y are the card centre in % of the stage;
- * the middle band stays clear for the headline. On scroll the whole field zooms out from the centre.
+ * Groww-style field of reviews around the headline, on a grid so no two cards touch. x and y are the
+ * card centre in % of the stage; the middle band stays clear for the headline. On scroll the whole
+ * field zooms out from the centre at one rate, so the cards never overlap while they grow.
  */
+const ROWS = [18.5, 36.5, 68, 86.5];
+const COLS = [8.5, 25, 41.5, 58.5, 75, 91.5];
+const SKIP = new Set(['1-2', '1-3', '2-2', '2-3']); // keep the area just above and below the headline airy
 const DESKTOP: Slot[] = [
-  { x: 25, y: 9, size: 'sm' }, { x: 46, y: 6, size: 'sm' }, { x: 88, y: 11, size: 'md' },
-  { x: 12, y: 27, size: 'lg' }, { x: 37, y: 25, size: 'sm' }, { x: 63, y: 21, size: 'lg' },
-  { x: 90, y: 31, size: 'sm' }, { x: 17, y: 42, size: 'md' }, { x: 87, y: 45, size: 'lg' },
-  { x: 7, y: 56, size: 'md' }, { x: 90, y: 60, size: 'sm' },
-  { x: 24, y: 72, size: 'sm' }, { x: 47, y: 75, size: 'sm' }, { x: 73, y: 71, size: 'sm' },
-  { x: 14, y: 87, size: 'sm' }, { x: 40, y: 89, size: 'md' }, { x: 66, y: 86, size: 'lg' }, { x: 92, y: 84, size: 'md' },
+  ...ROWS.flatMap((y, r) => COLS.flatMap((x, c) => (SKIP.has(`${r}-${c}`) ? [] : [{ x, y: y + (c % 2 ? 0.6 : -0.6), size: 'sm' as const }]))),
+  { x: 8.5, y: 53, size: 'sm' }, { x: 91.5, y: 53, size: 'sm' },
 ];
-const MOBILE: Slot[] = [
-  { x: 26, y: 10, size: 'md' }, { x: 76, y: 14, size: 'sm' }, { x: 24, y: 28, size: 'sm' }, { x: 77, y: 31, size: 'md' },
-  { x: 25, y: 70, size: 'sm' }, { x: 75, y: 68, size: 'md' }, { x: 27, y: 87, size: 'md' }, { x: 76, y: 88, size: 'sm' },
-];
-/** Bigger cards sit nearer the visitor, so they grow a little faster. */
-const DEPTH: Record<Slot['size'], number> = { sm: 0.85, md: 1, lg: 1.15 };
+const MOBILE: Slot[] = ROWS.flatMap((y) => [{ x: 26, y, size: 'sm' as const }, { x: 74, y: y + 2, size: 'sm' as const }]);
 
 const clamp = (v: number) => Math.min(1, Math.max(0, v));
 /** 0 before `a`, 1 after `b`, eased in between. */
 const ease = (p: number, a: number, b: number) => { const t = clamp((p - a) / (b - a)); return t * t * (3 - 2 * t); };
 
-const Card: React.FC<{ review: LandingReview; size?: string; style?: React.CSSProperties; className?: string; data?: { x: number; y: number; depth: number } }> = ({ review, size = 'md', style, className = '', data }) => (
-  <figure className={`rs-card rs-${size} ${className}`.trim()} style={style} data-x={data?.x} data-y={data?.y} data-depth={data?.depth}>
+const Card: React.FC<{ review: LandingReview; size?: string; style?: React.CSSProperties; className?: string; data?: { x: number; y: number } }> = ({ review, size = 'md', style, className = '', data }) => (
+  <figure className={`rs-card rs-${size} ${className}`.trim()} style={style} data-x={data?.x} data-y={data?.y}>
     <blockquote>{review.quote}</blockquote>
     <figcaption>
       <span className="rs-place" aria-hidden="true"><MapPin size={14} /></span>
@@ -47,6 +43,29 @@ const Card: React.FC<{ review: LandingReview; size?: string; style?: React.CSSPr
 export const ReviewsStory: React.FC = () => {
   const sectionRef = useRef<HTMLElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
+  const countRef = useRef<HTMLSpanElement>(null);
+
+  // The waitlist number counts up once as the section comes into view.
+  useEffect(() => {
+    const el = countRef.current, section = sectionRef.current;
+    if (!el || !section || typeof IntersectionObserver === 'undefined') return;
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+    const show = (n: number) => { el.textContent = `${n.toLocaleString('en-IN')}+`; };
+    let frame = 0;
+    const io = new IntersectionObserver(([e]) => {
+      if (!e.isIntersecting) return;
+      io.disconnect();
+      const start = performance.now();
+      const tick = (now: number) => {
+        const k = Math.min(1, (now - start) / 2200);
+        show(Math.round(WAITLIST_COUNT * (1 - (1 - k) ** 3)));
+        if (k < 1) frame = requestAnimationFrame(tick);
+      };
+      frame = requestAnimationFrame(tick);
+    }, { threshold: 0.05 });
+    io.observe(section);
+    return () => { io.disconnect(); if (frame) cancelAnimationFrame(frame); };
+  }, []);
   const [reduced, setReduced] = useState(() => typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches);
 
   useEffect(() => {
@@ -77,8 +96,8 @@ export const ReviewsStory: React.FC = () => {
       const w = stage.clientWidth, h = stage.clientHeight;
       stage.querySelectorAll<HTMLElement>('.rs-card').forEach((el) => {
         if (el.offsetParent === null) return; // the other layout (desktop or phone) is hidden
-        const x = Number(el.dataset.x), y = Number(el.dataset.y), depth = Number(el.dataset.depth);
-        const z = 0.92 + t * t * 2.4 * depth + t * 0.5 * depth;
+        const x = Number(el.dataset.x), y = Number(el.dataset.y);
+        const z = 0.92 + t * t * 2.4 + t * 0.5;
         const dx = (x / 100 - 0.5) * w * (z - 1), dy = (y / 100 - 0.5) * h * (z - 1);
         el.style.transform = `translate(-50%,-50%) translate3d(${dx.toFixed(1)}px,${dy.toFixed(1)}px,0) scale(${z.toFixed(3)})`;
         el.style.opacity = Math.min(clamp((2.5 - z) / 0.9), 1 - dark * 2).toFixed(3);
@@ -97,7 +116,7 @@ export const ReviewsStory: React.FC = () => {
   }, [reduced]);
 
   const reviews = LANDING_REVIEWS;
-  const note = reviews.some((review) => review.illustrative) && <p className="rs-note">Illustrative quotes</p>;
+  const note = reviews.some((review) => review.illustrative) && <p className="rs-note">Illustrative quotes · waitlist count as of {WAITLIST_AS_OF}</p>;
   const finale = (
     <div className="rs-final-copy">
       <h2 id="rs-final-title">Taxes, loans, investments and goals. <span>Sorted in one place.</span></h2>
@@ -109,7 +128,7 @@ export const ReviewsStory: React.FC = () => {
   if (reduced) {
     return (
       <section id="reviews" className="rs-static" aria-labelledby="rs-title">
-        <h2 id="rs-title" className="rs-static-title">One personal CFO for every Indian family.</h2>
+        <h2 id="rs-title" className="rs-static-title">{WAITLIST_COUNT.toLocaleString('en-IN')}+ Indians on the waitlist.</h2>
         <div className="rs-static-grid">{reviews.slice(0, 9).map((review) => <Card key={review.name} review={review} />)}</div>
         {note}
         <div className="rs-static-final"><span className="rs-orb is-static" aria-hidden="true"><ArthaMindLogoMark size={88} tone="light" cut="transparent" /></span>{finale}</div>
@@ -124,13 +143,13 @@ export const ReviewsStory: React.FC = () => {
         <div className="rs-cards">
           {([['rs-desk', DESKTOP], ['rs-mob', MOBILE]] as const).map(([cls, slots]) => slots.map((slot, i) => {
             const review = reviews[i % reviews.length];
-            const style = { left: `${slot.x}%`, top: `${slot.y}%`, zIndex: slot.size === 'lg' ? 3 : slot.size === 'md' ? 2 : 1 } as React.CSSProperties;
-            return <Card key={`${cls}-${i}`} review={review} size={slot.size} style={style} className={cls} data={{ x: slot.x, y: slot.y, depth: DEPTH[slot.size] }} />;
+            const style = { left: `${slot.x}%`, top: `${slot.y}%`, } as React.CSSProperties;
+            return <Card key={`${cls}-${i}`} review={review} size={slot.size} style={style} className={cls} data={{ x: slot.x, y: slot.y }} />;
           }))}
         </div>
         <h2 id="rs-title" className="rs-headline">
-          <span className="rs-half-l">One personal CFO</span>{' '}
-          <span className="rs-half-r">for every Indian family.</span>
+          <span className="rs-half-l"><span ref={countRef} className="rs-count">{WAITLIST_COUNT.toLocaleString('en-IN')}+</span> Indians</span>{' '}
+          <span className="rs-half-r">on the waitlist.</span>
         </h2>
         <div className="rs-orb-wrap" aria-hidden="true">
           <span className="rs-orb"><ArthaMindLogoMark size={120} tone="light" cut="transparent" /></span>

@@ -95,3 +95,42 @@
 .mc-grid>*{min-width:0}
 @media (max-width:960px){.mc-grid{grid-template-columns:minmax(0,1fr)}}
 @media (max-width:420px){.mc-deps div{gap:2px}.mc-deps button{min-width:32px;padding:6px 7px}}
+
+/* ---- Landing: the whole check in one screen. Form | score + results | next steps + Ask button ---- */
+@media (min-width:1100px){
+  .mc-section{padding:52px 0}
+  .mc-section h2{margin:6px 0 6px;font-size:clamp(26px,2.8vw,38px)}
+  .mc-section .mc-lead{font-size:14.5px}
+  .mc-section .mc-grid{margin-top:20px;grid-template-columns:minmax(0,.62fr) minmax(0,1.38fr);gap:18px}
+  .mc-section .mc-form{position:static;padding:18px}
+  .mc-section .mc-fields{gap:9px}
+  .mc-section .mc-field input{padding:8px 11px;font-size:14px}
+  .mc-section .mc-report{grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);grid-template-areas:"score actions" "tiles actions" "tiles foot";align-items:start;gap:12px}
+  .mc-section .mc-score{grid-area:score;padding:14px 16px;gap:14px}
+  .mc-section .mc-ring{width:78px;height:78px}.mc-section .mc-ring b{font-size:24px}
+  .mc-section .mc-score>div>b{font-size:19px}
+  .mc-section .mc-score p{font-size:12.5px;line-height:1.45}
+  .mc-section .mc-tiles{grid-area:tiles;gap:9px}
+  .mc-section .mc-tile{padding:10px 12px;gap:2px;border-radius:14px}
+  .mc-section .mc-tile>b{font-size:17px}
+  .mc-section .mc-sub{font-size:11.5px}
+  .mc-section .mc-how{margin-top:2px}
+  .mc-section .mc-actions{grid-area:actions;padding:14px 16px}
+  .mc-section .mc-actions ol{gap:8px}
+  .mc-section .mc-actions li{font-size:12.5px;line-height:1.45}
+  .mc-section .mc-foot{grid-area:foot}
+  .mc-section .mc-ask{width:100%;justify-content:center}
+}
+@media (min-width:1100px){
+  .mc-section .mc-report{grid-template-columns:minmax(0,1.35fr) minmax(0,.85fr)}
+  .mc-section .mc-tiles{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .mc-section .mc-tile small{font-size:9.5px;letter-spacing:.08em}
+  .mc-section .mc-tile-icon{width:22px;height:22px}
+  .mc-section .mc-tile>b{font-size:16px}
+}
+@media (min-width:1100px){
+  .mc-section .mc-tile-top{flex-wrap:wrap;row-gap:4px}
+  .mc-section .mc-tile-top small{flex:1 1 calc(100% - 30px);white-space:normal;overflow:visible}
+  .mc-section .mc-chip{order:3;font-size:9.5px;padding:2px 7px}
+  .mc-section .mc-how{white-space:nowrap;font-size:11px}
+}

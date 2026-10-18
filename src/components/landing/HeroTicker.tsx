@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { fetchMarketHistory, fetchMarketOverview } from '../../services/learningApi';
 import type { NormalizedMarketQuote } from '../../types';
+import { CompanyLogo } from '../market/CompanyLogo';
 
-const SYMBOLS = ['^NSEI', '^BSESN', 'RELIANCE.NS', 'HDFCBANK.NS', 'TCS.NS', 'INFY.NS', 'ICICIBANK.NS', 'GC=F', 'INR=X', 'BTC-USD'];
+const SYMBOLS = ['^NSEI', '^BSESN', 'RELIANCE.NS', 'HDFCBANK.NS', 'TCS.NS', 'INFY.NS', 'ICICIBANK.NS', 'AAPL', 'MSFT', 'NVDA', 'GOOGL', 'AMZN', 'BTC-USD', 'ETH-USD', 'GC=F', 'INR=X'];
 export const QUOTE_NAMES: Record<string, string> = {
   '^NSEI': 'NIFTY 50', '^BSESN': 'SENSEX', 'RELIANCE.NS': 'RELIANCE', 'HDFCBANK.NS': 'HDFC BANK', 'TCS.NS': 'TCS',
-  'INFY.NS': 'INFOSYS', 'ICICIBANK.NS': 'ICICI BANK', 'GC=F': 'GOLD', 'INR=X': 'USD/INR', 'BTC-USD': 'BITCOIN',
+  'INFY.NS': 'INFOSYS', 'ICICIBANK.NS': 'ICICI BANK', 'GC=F': 'GOLD', 'INR=X': 'USD/INR', 'BTC-USD': 'BITCOIN', 'ETH-USD': 'ETHEREUM',
+  AAPL: 'APPLE', MSFT: 'MICROSOFT', NVDA: 'NVIDIA', GOOGL: 'GOOGLE', AMZN: 'AMAZON',
 };
 
 const FEED_NAMES: Record<string, string> = { '^NSEI': 'NIFTY:NSE', '^BSESN': 'SENSEX:BSE' };
@@ -52,11 +54,12 @@ export function useHeroMarket() {
 }
 
 /** One quote as "NAME price ▲ x.xx%". */
-export const Tick: React.FC<{ q: NormalizedMarketQuote; hidden?: boolean }> = ({ q, hidden }) => {
+export const Tick: React.FC<{ q: NormalizedMarketQuote; hidden?: boolean; logo?: boolean }> = ({ q, hidden, logo }) => {
   const cp = Number(q.changePercent ?? 0);
   const up = cp >= 0;
   return (
     <span className="hc-tick" aria-hidden={hidden || undefined}>
+      {logo && <CompanyLogo symbol={q.symbol} size={20} className="hc-tick-logo" />}
       <b>{QUOTE_NAMES[q.symbol] ?? q.symbol}</b>
       <span>{formatPrice(q)}</span>
       <span className={up ? 'hc-up' : 'hc-down'}>{up ? '▲' : '▼'} {Math.abs(cp).toFixed(2)}%</span>
@@ -68,12 +71,12 @@ export const Tick: React.FC<{ q: NormalizedMarketQuote; hidden?: boolean }> = ({
 export const HeroTicker: React.FC<{ quotes: NormalizedMarketQuote[] }> = ({ quotes }) => {
   if (!quotes.length) return null;
   // Repeat the list so one half always fills even a wide screen; the track scrolls by exactly one half.
-  const reps = Math.max(2, Math.ceil(24 / quotes.length));
+  const reps = Math.max(1, Math.ceil(16 / quotes.length));
   const half = Array.from({ length: reps }, () => quotes).flat();
   return (
     <div className="hc-ticker" aria-label="Market prices">
       <div className="hc-ticker-track" style={{ animationDuration: `${half.length * 2.4}s` }}>
-        {[...half, ...half].map((q, i) => <Tick key={`${q.symbol}-${i}`} q={q} hidden={i >= quotes.length} />)}
+        {[...half, ...half].map((q, i) => <Tick key={`${q.symbol}-${i}`} q={q} hidden={i >= quotes.length} logo />)}
       </div>
     </div>
   );

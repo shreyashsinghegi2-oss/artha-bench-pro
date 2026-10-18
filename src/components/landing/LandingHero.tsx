@@ -12,7 +12,7 @@ const HeroPhone = lazy(() => (phoneModule ?? import('./HeroPhone')).then((r) => 
 /** Town picture size (px). Every overlay below is placed in % of it, so it scales with the picture. */
 const TOWN_W = 1376;
 /** Width (px of the picture) the phone takes on the plaza, and HeroPhone's own width (px). */
-const PLAZA_PHONE_W = 124;
+const PLAZA_PHONE_W = 98;
 const PHONE_W = 300;
 
 /** What the billboard says, one message at a time. */

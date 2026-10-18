@@ -3,7 +3,7 @@
  * Serves both local Express server.ts and Vercel serverless api/index.ts.
  */
 
-import { Router, Request, Response, NextFunction } from 'express';
+import express, { Router, Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import {
   checkGroqDiagnostics,
@@ -56,6 +56,8 @@ import { candleTtlMs, findInstrument, getTerminalCandles, getTerminalSnapshot, T
 
 import { fundDetail, fundsByIsin, searchFunds } from './mutualFundService';
 import { synthesize, translateText, VOICE_LANGS } from './voiceService';
+import { speechToText, sttConfigured, sttDailyLimit, useVoiceCredit } from './sarvamService';
+import { bearer } from './personalAccountRoutes';
 import { readWebPage } from './webReader';
 import { createRateLimiter } from './rateLimiter';
 import { precisionRouter } from './precisionRoutes';
@@ -98,6 +100,29 @@ async function sendSpeech(res: Response, text: string, lang: string, rateRaw: un
   }
 }
 apiRouter.post('/voice/tts', voiceLimiter, (req: Request, res: Response) => { const { text, lang } = voiceBody(req); void sendSpeech(res, text, lang, req.body?.rate); });
+// Speech-to-text (Sarvam): signed-in users only, a daily limit per user, one short recording per call.
+// Body: the raw recording (audio/webm, audio/mp4, audio/ogg or audio/wav); ?lang=hi-IN (or 'unknown').
+apiRouter.post('/voice/stt', voiceLimiter, express.raw({ type: () => true, limit: '3mb' }), async (req: Request, res: Response) => {
+  const token = bearer(req);
+  if (!token) return res.status(401).json({ error: 'Sign up or sign in to ask by voice.', code: 'signin' });
+  if (!sttConfigured()) return res.status(503).json({ error: 'Voice input is not available right now. Please type your question.', code: 'unconfigured' });
+  const audio = Buffer.isBuffer(req.body) ? req.body : Buffer.alloc(0);
+  if (audio.length < 1000) return res.status(400).json({ error: 'I did not hear anything. Tap the mic and speak a little closer.', code: 'empty' });
+  let credit;
+  try { credit = await useVoiceCredit(token, 'stt', sttDailyLimit()); }
+  catch (error) {
+    const status = (error as { status?: number }).status === 401 ? 401 : 503;
+    return res.status(status).json({ error: status === 401 ? 'Sign in again to ask by voice.' : 'Voice input is busy right now. Please type your question.', code: status === 401 ? 'signin' : 'busy' });
+  }
+  if (!credit.allowed) return res.status(429).json({ error: `You have used today's ${credit.limit} voice questions. Type your question, or ask by voice again tomorrow.`, code: 'limit', used: credit.used, limit: credit.limit });
+  try {
+    const t = await speechToText(audio, String(req.headers['content-type'] || 'audio/webm'), String(req.query.lang || 'unknown'));
+    res.json({ text: t.text, language: t.language, used: credit.used, limit: credit.limit });
+  } catch (error) {
+    console.warn('STT failed:', error instanceof Error ? error.message : error);
+    res.status(502).json({ error: 'I could not understand that recording. Please try again or type your question.', code: 'failed' });
+  }
+});
 // For <audio src> and quick checks: /api/voice/tts?lang=hi&text=...
 apiRouter.get('/voice/tts', voiceLimiter, (req: Request, res: Response) => { void sendSpeech(res, String(req.query.text ?? '').trim().slice(0, 600), String(req.query.lang ?? '').toLowerCase(), req.query.rate); });
 

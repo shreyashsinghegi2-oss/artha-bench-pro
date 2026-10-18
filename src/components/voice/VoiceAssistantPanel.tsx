@@ -4,6 +4,7 @@ import { useDraggable } from '../../hooks/useDraggable';
 import { Download, Loader2, Mic, RotateCcw, Send, Square, Volume2, X } from 'lucide-react';
 import { askAiCfo, type CfoTurn } from '../../services/cfoApi';
 import { isPlatformQuestion, platformAnswer, PLATFORM_FACTS } from '../../data/platformGuide';
+import { useAuth } from '../../auth/AuthContext';
 import { SPEEDS, setVoiceSpeed, voiceSpeed, canListen, canSpeak, cloudSpeech, downloadBlob, listenOnce, pickVoice, playBlob, speak, stopAudio, stopSpeaking, VOICE_LANGUAGES, voicesReady, type VoiceLanguage } from '../../services/voice';
 
 type Phase = 'idle' | 'listening' | 'thinking' | 'speaking';
@@ -12,15 +13,44 @@ interface Turn { q: string; a: string; offline: boolean }
 const SAMPLES = ['What is ArthaMind and how can it help me?', 'How much emergency fund do I need?', 'Should I repay my loan first or start a SIP?', 'Explain mutual funds in simple words', 'Is crypto safe for me?'];
 const LANG_KEY = 'arthamind-voice-language';
 
-/** What the voice reads: the short answer plus up to three actions. */
+/** At most two sentences and about 280 characters, so every spoken answer is short. */
+export function shortSpoken(text: string, maxChars = 280): string {
+  const clean = text.replace(/[*_#`>|]/g, '').replace(/\s+/g, ' ').trim();
+  const sentences = clean.split(/(?<=[.!?।])\s+/).filter(Boolean);
+  let out = '';
+  for (const sentence of sentences.slice(0, 2)) {
+    if (out && (out + ' ' + sentence).length > maxChars) break;
+    out = out ? `${out} ${sentence}` : sentence;
+  }
+  if (!out) out = clean;
+  return out.length > maxChars ? `${out.slice(0, maxChars - 1).replace(/\s+\S*$/, '')}…` : out;
+}
+
+/** What the voice reads: the short answer, plus the first action when there is room. */
 function spokenAnswer(reply: Awaited<ReturnType<typeof askAiCfo>>): string {
   const s = reply.structured;
   const main = s?.directAnswer || reply.answer;
-  const steps = (s?.keyTakeaways ?? []).slice(0, 3);
-  return [main, ...steps].filter(Boolean).join(' ');
+  const step = s?.keyTakeaways?.[0];
+  return shortSpoken([main, step].filter(Boolean).join(' '));
 }
 
-export default function VoiceAssistantPanel({ initialLanguage, onClose }: { initialLanguage: VoiceLanguage; onClose: () => void }) {
+export default function VoiceAssistantPanel(props: { initialLanguage: VoiceLanguage; onClose: () => void }) {
+  const auth = useAuth();
+  if (!auth.user) {
+    return <div className="va-panel va-gate" role="dialog" aria-label="Voice money assistant">
+      <header className="va-head">
+        <div><b>Voice money assistant</b><small>Ask about money by voice in 13 Indian languages.</small></div>
+        <button type="button" className="va-icon" onClick={props.onClose} aria-label="Close voice assistant"><X size={18}/></button>
+      </header>
+      <p className="va-gate-text">Voice questions are part of your free ArthaMind account. Sign up in a minute, then ask anything by voice and hear a short answer.</p>
+      <button type="button" className="va-gate-cta" onClick={() => { props.onClose(); auth.openAuth('signup'); }}>Sign up free</button>
+      <button type="button" className="va-gate-link" onClick={() => { props.onClose(); auth.openAuth('login'); }}>I already have an account</button>
+    </div>;
+  }
+  return <VoicePanelSignedIn {...props}/>;
+}
+
+function VoicePanelSignedIn({ initialLanguage, onClose }: { initialLanguage: VoiceLanguage; onClose: () => void }) {
   const [lang, setLang] = useState<VoiceLanguage>(() => {
     try { const saved = window.localStorage.getItem(LANG_KEY); return VOICE_LANGUAGES.find((l) => l.code === saved) ?? initialLanguage; } catch { return initialLanguage; }
   });
@@ -93,7 +123,7 @@ export default function VoiceAssistantPanel({ initialLanguage, onClose }: { init
     try {
       // Questions about ArthaMind itself: answered from the platform guide (instant in English).
       if (isPlatformQuestion(q) && lang.name === 'English') {
-        const text = platformAnswer(q);
+        const text = shortSpoken(platformAnswer(q), 320);
         setTurns((t) => [...t, { q, a: text, offline: false }]);
         await say(text, false);
         return;

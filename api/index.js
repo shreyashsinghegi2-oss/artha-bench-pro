@@ -1,9 +1,9 @@
 // server/vercelHandler.ts
-import express2 from "express";
+import express3 from "express";
 
 // server/routes.ts
-import { Router as Router3 } from "express";
-import { z as z8 } from "zod";
+import express, { Router as Router4 } from "express";
+import { z as z9 } from "zod";
 
 // server/aiResponseStandard.ts
 import { z } from "zod";
@@ -8143,9 +8143,440 @@ async function translateText(text, lang) {
   return { text: await publicTranslate(src, l.tts), provider: "Google Translate" };
 }
 
-// server/groundingRoutes.ts
+// server/sarvamService.ts
+var STT_URL = "https://api.sarvam.ai/speech-to-text";
+var MODELS = ["saaras:v3", "saarika:v2.5"];
+var SARVAM_LANGS = /* @__PURE__ */ new Set(["en-IN", "hi-IN", "bn-IN", "gu-IN", "kn-IN", "ml-IN", "mr-IN", "od-IN", "pa-IN", "ta-IN", "te-IN"]);
+function sarvamLanguage(code) {
+  const c2 = (code || "").trim();
+  const norm = c2.toLowerCase().startsWith("or") ? "od-IN" : c2.includes("-") ? `${c2.split("-")[0].toLowerCase()}-IN` : `${c2.toLowerCase()}-IN`;
+  return SARVAM_LANGS.has(norm) ? norm : "unknown";
+}
+var sttConfigured = () => Boolean(process.env.SARVAM_API_KEY?.trim());
+var sttDailyLimit = () => Math.max(1, Math.min(200, Number(process.env.VOICE_STT_DAILY_LIMIT) || 15));
+async function speechToText(audio, mime, languageCode) {
+  const key = process.env.SARVAM_API_KEY?.trim();
+  if (!key) throw new Error("Speech-to-text is not configured.");
+  const type = (mime || "audio/webm").split(";")[0];
+  const ext = type.includes("mp4") || type.includes("m4a") ? "m4a" : type.includes("ogg") ? "ogg" : type.includes("wav") ? "wav" : type.includes("mpeg") ? "mp3" : "webm";
+  let lastError = "Speech-to-text failed.";
+  for (const model of MODELS) {
+    const form = new FormData();
+    form.append("file", new Blob([new Uint8Array(audio)], { type }), `voice.${ext}`);
+    form.append("model", model);
+    form.append("language_code", sarvamLanguage(languageCode));
+    if (model.startsWith("saaras")) form.append("mode", "transcribe");
+    const res = await fetch(STT_URL, { method: "POST", headers: { "api-subscription-key": key }, body: form, signal: AbortSignal.timeout(25e3) });
+    const body = await res.json().catch(() => ({}));
+    if (res.ok && typeof body.transcript === "string") return { text: body.transcript.trim(), language: body.language_code ?? null, model };
+    lastError = `Sarvam HTTP ${res.status}: ${typeof body.error === "string" ? body.error : body.error?.message ?? ""}`.trim();
+    if (![400, 404, 422].includes(res.status)) break;
+  }
+  throw new Error(lastError);
+}
+async function useVoiceCredit(token, kind, limit) {
+  const url = (process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || "https://agjbvoosukxfvrritgto.supabase.co").replace(/\/$/, "");
+  const anon = process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY || "sb_publishable_KOdXB7LW5Ho5hDjsi3GMiw_xdogy5oR";
+  const res = await fetch(`${url}/rest/v1/rpc/use_voice_credit`, {
+    method: "POST",
+    headers: { apikey: anon, Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ p_kind: kind, p_limit: limit }),
+    signal: AbortSignal.timeout(8e3)
+  });
+  const body = await res.json().catch(() => null);
+  if (res.status === 401 || res.status === 403) throw Object.assign(new Error("Sign in again to use voice."), { status: 401 });
+  if (!res.ok || !body || typeof body.allowed !== "boolean") throw new Error(`Voice credit check failed (HTTP ${res.status}).`);
+  return { allowed: body.allowed, used: Number(body.used ?? 0), limit: Number(body.limit ?? limit) };
+}
+
+// server/personalAccountRoutes.ts
 import { Router as Router2 } from "express";
-var groundingRouter = Router2();
+import Decimal4 from "decimal.js";
+import { z as z8 } from "zod";
+var personalAccountRouter = Router2();
+var DEFAULT_SUPABASE_URL = "https://agjbvoosukxfvrritgto.supabase.co";
+var DEFAULT_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_KOdXB7LW5Ho5hDjsi3GMiw_xdogy5oR";
+var contextSettingsSchema = z8.object({
+  income: z8.boolean().optional(),
+  expenses: z8.boolean().optional(),
+  budgets: z8.boolean().optional(),
+  emis: z8.boolean().optional(),
+  goals: z8.boolean().optional(),
+  personalFinance: z8.boolean().optional(),
+  budgetsAndGoals: z8.boolean().optional(),
+  paperPortfolio: z8.boolean().optional(),
+  learningProgress: z8.boolean().optional(),
+  saveConversation: z8.boolean().optional()
+});
+var personalizedAssistantSchema = z8.object({
+  question: z8.string().min(3).max(1200),
+  history: z8.array(z8.object({ role: z8.enum(["user", "assistant"]), content: z8.string().min(1).max(4e3) })).max(10).optional(),
+  settings: contextSettingsSchema,
+  publicContext: z8.object({
+    capturedAt: z8.string().max(64),
+    selectedSymbol: z8.string().min(1).max(20),
+    selectedRange: z8.string().min(1).max(8),
+    selectedCountry: z8.enum(["us", "india"]),
+    quotes: z8.array(z8.object({ symbol: z8.string(), price: z8.number(), changePercent: z8.number().nullable(), freshness: z8.string(), providerName: z8.string() })).max(8),
+    marketHistory: z8.object({
+      symbol: z8.string(),
+      range: z8.string(),
+      pointCount: z8.number(),
+      startDate: z8.string().nullable(),
+      endDate: z8.string().nullable(),
+      startPrice: z8.number().nullable(),
+      latestPrice: z8.number().nullable(),
+      high: z8.number().nullable(),
+      low: z8.number().nullable(),
+      returnPercent: z8.number().nullable()
+    }).nullable().optional(),
+    economicIndicators: z8.array(z8.object({ label: z8.string(), value: z8.number().nullable(), unit: z8.string(), date: z8.string().nullable(), sourceName: z8.string(), status: z8.string() })).max(30),
+    providerHealth: z8.object({
+      connected: z8.number(),
+      total: z8.number(),
+      connectedProviders: z8.array(z8.string()).max(30),
+      unavailableProviders: z8.array(z8.string()).max(30)
+    }).optional(),
+    latestEvaluation: z8.any().nullable().optional()
+  })
+});
+var replayChangesSchema = z8.object({
+  monthlyIncomeDelta: z8.number().min(-1e8).max(1e8).default(0),
+  expenseReductionPercent: z8.number().min(0).max(100).default(0),
+  additionalMonthlyExpense: z8.number().min(0).max(1e8).default(0),
+  newMonthlyEmi: z8.number().min(0).max(1e8).default(0),
+  savingsTargetDelta: z8.number().min(-1e8).max(1e8).default(0)
+});
+var decisionReplaySchema = z8.object({
+  horizonMonths: z8.union([z8.literal(1), z8.literal(3), z8.literal(6), z8.literal(12)]),
+  changes: replayChangesSchema,
+  explain: z8.boolean().optional().default(false)
+});
+function supabaseConfig() {
+  const url = (process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || DEFAULT_SUPABASE_URL).replace(/\/$/, "");
+  const anonKey = process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY || DEFAULT_SUPABASE_PUBLISHABLE_KEY;
+  const serviceRole = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+  return { url, anonKey, serviceRole };
+}
+function bearer(req) {
+  const header = req.headers.authorization || "";
+  return header.startsWith("Bearer ") ? header.slice(7).trim() : null;
+}
+async function verifyUser(token) {
+  const { url, anonKey } = supabaseConfig();
+  const response = await fetch(`${url}/auth/v1/user`, {
+    headers: { apikey: anonKey, Authorization: `Bearer ${token}` }
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || !payload?.id) throw new Error("Your account session is invalid or expired. Sign in again and retry.");
+  return payload;
+}
+async function fetchWorkspace(token) {
+  const { url, anonKey } = supabaseConfig();
+  const response = await fetch(`${url}/rest/v1/user_workspace_state?select=storage_key,payload`, {
+    headers: { apikey: anonKey, Authorization: `Bearer ${token}` }
+  });
+  const rows = await response.json().catch(() => []);
+  if (!response.ok) throw new Error("Your private workspace could not be loaded from Supabase.");
+  return Object.fromEntries((Array.isArray(rows) ? rows : []).map((row) => [row.storage_key, row.payload]));
+}
+function parsePayload(workspace, key) {
+  try {
+    return workspace[key] ? JSON.parse(workspace[key]) : null;
+  } catch {
+    return null;
+  }
+}
+function enabled(settings, granular, legacy) {
+  if (settings[granular] === true) return true;
+  if (settings[granular] === false) return false;
+  return settings[legacy] === true;
+}
+function buildPersonalContext(workspace, settings) {
+  const context2 = {};
+  const references = [];
+  const incomeEnabled = enabled(settings, "income", "personalFinance");
+  const expensesEnabled = enabled(settings, "expenses", "personalFinance");
+  const budgetsEnabled = enabled(settings, "budgets", "budgetsAndGoals");
+  const emisEnabled = enabled(settings, "emis", "personalFinance");
+  if (incomeEnabled) {
+    const income = parsePayload(workspace, "artha_income_sources_v1");
+    const sources = Array.isArray(income?.sources) ? income.sources.slice(0, 80).map((item) => ({ type: item.type, amount: item.amount, currency: item.currency, frequency: item.frequency, description: item.description, startDate: item.startDate, endDate: item.endDate ?? null })) : [];
+    context2.income = sources;
+    if (sources.length) references.push(`Income: ${sources.length} recorded source${sources.length === 1 ? "" : "s"}`);
+  }
+  if (expensesEnabled) {
+    const expenses = parsePayload(workspace, "artha_expenses_v1");
+    const records = Array.isArray(expenses?.records) ? expenses.records.slice(-150).map((item) => ({ amount: item.amount, category: item.category, date: item.date, merchant: item.merchant, paymentMethod: item.paymentMethod, recurring: item.recurring })) : [];
+    context2.expenses = records;
+    if (records.length) {
+      const dates = records.map((item) => item.date).filter(Boolean).sort();
+      references.push(`Expenses: ${dates[0] || "date unavailable"}\u2013${dates.at(-1) || "date unavailable"}; ${records.length} records`);
+    }
+  }
+  if (budgetsEnabled) {
+    const budgets = parsePayload(workspace, "artha_budgets_v1");
+    const items = Array.isArray(budgets?.budgets) ? budgets.budgets.slice(-24).map((budget) => ({ name: budget.name, month: budget.month, savingsTarget: budget.savingsTarget, notes: budget.notes, categories: budget.categories })) : [];
+    context2.budgets = items;
+    if (items.length) references.push(`Budgets: ${items.length} saved plan${items.length === 1 ? "" : "s"}`);
+  }
+  if (emisEnabled) {
+    const emis = parsePayload(workspace, "artha_emi_records_v1");
+    const items = Array.isArray(emis?.records) ? emis.records.slice(0, 60).map((item) => ({ name: item.name, lender: item.lender, loanType: item.loanType, status: item.status, emiAmount: item.emiAmount, outstandingBalance: item.outstandingBalance, annualInterestRate: item.annualInterestRate, nextDueDate: item.nextDueDate, remainingInstallments: item.remainingInstallments })) : [];
+    context2.emis = items;
+    if (items.length) references.push(`EMIs: ${items.length} recorded commitment${items.length === 1 ? "" : "s"}`);
+  }
+  if (settings.paperPortfolio) {
+    const portfolio = parsePayload(workspace, "artha_paper_portfolio_v1");
+    if (portfolio) {
+      context2.paperPortfolio = { cashBalance: portfolio.cashBalance, initialBalance: portfolio.initialBalance, positions: Array.isArray(portfolio.positions) ? portfolio.positions : [], trades: Array.isArray(portfolio.trades) ? portfolio.trades.slice(0, 50) : [] };
+      references.push(`Paper portfolio: ${Array.isArray(portfolio.positions) ? portfolio.positions.length : 0} positions; ${Array.isArray(portfolio.trades) ? portfolio.trades.length : 0} trades`);
+    }
+  }
+  if (settings.learningProgress) {
+    const progress = parsePayload(workspace, "artha_learning_progress_v1");
+    if (progress) {
+      context2.learningProgress = { completedLessonIds: progress.completedLessonIds ?? [], quizScores: progress.quizScores ?? {}, bookmarkedLessonIds: progress.bookmarkedLessonIds ?? [], lastActiveLessonId: progress.lastActiveLessonId ?? null, streakDays: progress.streakDays ?? 0, lastActiveDate: progress.lastActiveDate ?? null };
+      references.push(`Learning: ${Array.isArray(progress.completedLessonIds) ? progress.completedLessonIds.length : 0} completed lessons`);
+    }
+  }
+  return { context: context2, references };
+}
+function monthlyIncomeFromWorkspace(workspace) {
+  const income = parsePayload(workspace, "artha_income_sources_v1");
+  const sources = Array.isArray(income?.sources) ? income.sources : [];
+  const today = (/* @__PURE__ */ new Date()).toISOString().slice(0, 10);
+  let total = new Decimal4(0);
+  let count = 0;
+  for (const source of sources) {
+    if (String(source?.currency || "").toUpperCase() !== "INR") continue;
+    if (source?.frequency === "One-time") continue;
+    if (source?.startDate && source.startDate > today) continue;
+    if (source?.endDate && source.endDate < today) continue;
+    const amount = new Decimal4(Number(source?.amount || 0));
+    if (!amount.isFinite() || amount.lte(0)) continue;
+    const monthly = source.frequency === "Quarterly" ? amount.div(3) : source.frequency === "Annually" ? amount.div(12) : amount;
+    total = total.plus(monthly);
+    count += 1;
+  }
+  return { total, sourceCount: count };
+}
+function currentMonthExpenses(workspace) {
+  const expenses = parsePayload(workspace, "artha_expenses_v1");
+  const records = Array.isArray(expenses?.records) ? expenses.records : [];
+  const month = (/* @__PURE__ */ new Date()).toISOString().slice(0, 7);
+  const current = records.filter((item) => typeof item?.date === "string" && item.date.startsWith(month));
+  return {
+    total: current.reduce((sum, item) => sum.plus(Number(item?.amount || 0)), new Decimal4(0)),
+    recordCount: current.length,
+    month
+  };
+}
+function currentBudget(workspace, month) {
+  const budgets = parsePayload(workspace, "artha_budgets_v1");
+  const items = Array.isArray(budgets?.budgets) ? budgets.budgets : [];
+  const budget = items.find((item) => item?.month === month) ?? null;
+  if (!budget) return { planned: new Decimal4(0), savingsTarget: new Decimal4(0), categoryCount: 0 };
+  const categories = Array.isArray(budget.categories) ? budget.categories : [];
+  return {
+    planned: categories.reduce((sum, item) => sum.plus(Number(item?.plannedAmount || 0)), new Decimal4(0)),
+    savingsTarget: new Decimal4(Number(budget?.savingsTarget || 0)),
+    categoryCount: categories.length
+  };
+}
+function activeEmis(workspace) {
+  const envelope2 = parsePayload(workspace, "artha_emi_records_v1");
+  const records = Array.isArray(envelope2?.records) ? envelope2.records.filter((item) => item?.status !== "closed") : [];
+  return {
+    monthly: records.reduce((sum, item) => sum.plus(Number(item?.emiAmount || 0)), new Decimal4(0)),
+    count: records.length
+  };
+}
+function roundMoney(value) {
+  return value.toDecimalPlaces(2).toNumber();
+}
+function roundPercent(value) {
+  return value ? value.toDecimalPlaces(2).toNumber() : null;
+}
+personalAccountRouter.post("/personal/assistant", async (req, res) => {
+  try {
+    const parsed = personalizedAssistantSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: "A valid personalized assistant request is required." });
+    const token = bearer(req);
+    if (!token) return res.status(401).json({ error: "Sign in to use personal ArthaMind context." });
+    const user = await verifyUser(token);
+    const safety = checkPromptSafety(parsed.data.question);
+    if (!safety.safe) return res.status(400).json({ error: safety.reason, safety });
+    const directAdvicePattern = /\b(should i|would you|do you recommend|tell me (?:whether|if) to)\b.{0,80}\b(buy|sell|hold|invest)\b|\b(target price|trade signal|guaranteed return)\b/i;
+    if (directAdvicePattern.test(parsed.data.question)) return res.status(400).json({ error: "ArthaMind can explain your recorded data and educational trade-offs, but cannot provide personalized buy/sell/hold instructions, target prices, or guaranteed outcomes." });
+    const workspace = await fetchWorkspace(token);
+    const { context: personalContext, references } = buildPersonalContext(workspace, parsed.data.settings);
+    const personalDataUsed = Object.keys(personalContext).length > 0;
+    const publicContext = parsed.data.publicContext;
+    const groundedContext = { publicDashboard: publicContext, authorizedPersonalContext: personalContext };
+    const systemPrompt2 = `You are ArthaMind, the evidence-grounded financial-intelligence assistant inside Artha Bench Pro.
+
+Rules:
+1. Use only the supplied public dashboard snapshot and authorized personal context for specific personal facts. Never invent a transaction, income amount, balance, budget, EMI, holding, goal, or learning event.
+2. If requested personal data is absent, say there is insufficient recorded data and name the next useful record/action.
+3. State the data period or record context used when relevant. Distinguish recorded facts, calculations, and educational suggestions.
+4. Never provide personalized investment instructions, guaranteed outcomes, regulated financial advice, tax advice, or legal advice.
+5. Suggestions must be practical educational guidance, with INR context when the recorded values use INR.
+6. Do not infer disabled personal data sources.
+7. For public market/economic questions, use the supplied quote, chart-history, economic and provider-health snapshot exactly as captured. Do not call unavailable or delayed data live.
+${buildStructuredFinancialAnswerInstructions({ audience: "dashboard", language: "English", level: "beginner", detail: "detailed", hasVerifiedCurrentData: publicContext.quotes.length > 0 || publicContext.economicIndicators.length > 0 || personalDataUsed })}`;
+    const userPrompt = `Question: ${parsed.data.question}
+Authenticated user id: ${user.id}
+Grounded context:
+${JSON.stringify(groundedContext)}`;
+    const demoMode = !process.env.GROQ_API_KEY?.trim();
+    const fallback = personalDataUsed ? `I found authorized personal context for this account (${references.join("; ")}). The live AI model is not configured, so I will not invent an interpretation. Review the recorded values in the relevant workspace or configure the AI provider for grounded natural-language analysis.` : "There is not enough authorized personal data in the enabled context to answer this as a personal-data question. Add records or enable the relevant AI Data Context source; I will not invent missing values.";
+    const structuredAnswer = demoMode ? createFallbackStructuredFinancialAnswer(parsed.data.question, fallback) : await callGroqStructuredFinancialAnswer(systemPrompt2, userPrompt, { history: parsed.data.history, fallbackQuestion: parsed.data.question });
+    const answer = serializeStructuredFinancialAnswer(structuredAnswer);
+    const sourceLabels = Array.from(/* @__PURE__ */ new Set([
+      ...publicContext.quotes.map((quote) => quote.providerName),
+      ...publicContext.economicIndicators.map((indicator) => indicator.sourceName),
+      ...personalDataUsed ? ["My authorized Artha Bench workspace"] : []
+    ]));
+    return res.json({
+      answer,
+      structuredAnswer,
+      provider: demoMode ? "demo" : "groq",
+      model: demoMode ? null : getGroqModels().tutorModel,
+      groundedAt: publicContext.capturedAt,
+      sourceLabels,
+      suggestedQuestions: ["Where did I spend the most in my recorded expenses?", "Which saved budget category is closest to its limit?", "Summarize my recorded income and expenses.", "How would a change in one monthly commitment affect my recorded cash flow?"],
+      disclaimer: "Educational analysis only \u2014 not investment, tax, legal, or financial advice.",
+      personalDataUsed,
+      personalContextReferences: references,
+      requestId: res.getHeader("x-request-id")
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Personalized ArthaMind request failed.";
+    const status = /session is invalid|sign in/i.test(message) ? 401 : 500;
+    console.error("[personal-assistant]", message);
+    return res.status(status).json({ error: message });
+  }
+});
+personalAccountRouter.post("/personal/decision-replay", async (req, res) => {
+  try {
+    const parsed = decisionReplaySchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: "A valid Decision Replay scenario is required." });
+    const token = bearer(req);
+    if (!token) return res.status(401).json({ error: "Sign in to use Decision Replay." });
+    const user = await verifyUser(token);
+    const workspace = await fetchWorkspace(token);
+    const income = monthlyIncomeFromWorkspace(workspace);
+    const expenses = currentMonthExpenses(workspace);
+    const budget = currentBudget(workspace, expenses.month);
+    const emis = activeEmis(workspace);
+    const changes = parsed.data.changes;
+    const baselineCashFlow = income.total.minus(expenses.total);
+    const incomeScenario = Decimal4.max(0, income.total.plus(changes.monthlyIncomeDelta));
+    const reducedExpenseBase = expenses.total.times(new Decimal4(1).minus(new Decimal4(changes.expenseReductionPercent).div(100)));
+    const expenseScenario = Decimal4.max(0, reducedExpenseBase.plus(changes.additionalMonthlyExpense));
+    const scenarioCashFlow = incomeScenario.minus(expenseScenario).minus(changes.newMonthlyEmi);
+    const monthlyChange = scenarioCashFlow.minus(baselineCashFlow);
+    const horizonImpact = monthlyChange.times(parsed.data.horizonMonths);
+    const baselineEmiRatio = income.total.gt(0) ? emis.monthly.div(income.total).times(100) : null;
+    const scenarioEmi = emis.monthly.plus(changes.newMonthlyEmi);
+    const scenarioEmiRatio = incomeScenario.gt(0) ? scenarioEmi.div(incomeScenario).times(100) : null;
+    const baselineHeadroom = budget.planned.gt(0) ? budget.planned.minus(expenses.total) : null;
+    const scenarioHeadroom = budget.planned.gt(0) ? budget.planned.minus(expenseScenario) : null;
+    const scenarioSavingsTarget = Decimal4.max(0, budget.savingsTarget.plus(changes.savingsTargetDelta));
+    const completenessSignals = [income.sourceCount > 0, expenses.recordCount > 0, budget.categoryCount > 0, emis.count > 0];
+    const completenessCount = completenessSignals.filter(Boolean).length;
+    const completeness = completenessCount >= 3 ? "High" : completenessCount >= 2 ? "Medium" : "Low";
+    const replay = {
+      scenarioId: `replay-${Date.now().toString(36)}`,
+      calculatedAt: (/* @__PURE__ */ new Date()).toISOString(),
+      month: expenses.month,
+      horizonMonths: parsed.data.horizonMonths,
+      baseline: {
+        monthlyIncome: roundMoney(income.total),
+        recordedMonthlyExpenses: roundMoney(expenses.total),
+        recordedNetCashFlow: roundMoney(baselineCashFlow),
+        activeMonthlyEmiCommitment: roundMoney(emis.monthly),
+        emiCommitmentRatioPercent: roundPercent(baselineEmiRatio),
+        plannedBudget: roundMoney(budget.planned),
+        budgetHeadroom: baselineHeadroom ? roundMoney(baselineHeadroom) : null,
+        savingsTarget: roundMoney(budget.savingsTarget)
+      },
+      scenario: {
+        monthlyIncome: roundMoney(incomeScenario),
+        monthlyExpenses: roundMoney(expenseScenario),
+        projectedMonthlyCashFlowAfterNewCommitment: roundMoney(scenarioCashFlow),
+        activePlusNewMonthlyEmi: roundMoney(scenarioEmi),
+        emiCommitmentRatioPercent: roundPercent(scenarioEmiRatio),
+        budgetHeadroom: scenarioHeadroom ? roundMoney(scenarioHeadroom) : null,
+        savingsTarget: roundMoney(scenarioSavingsTarget)
+      },
+      impact: {
+        monthlyCashFlowChange: roundMoney(monthlyChange),
+        horizonCashFlowChange: roundMoney(horizonImpact)
+      },
+      dataBasis: {
+        recurringIncomeSources: income.sourceCount,
+        currentMonthExpenseRecords: expenses.recordCount,
+        budgetCategories: budget.categoryCount,
+        activeEmis: emis.count,
+        completeness
+      },
+      assumptions: [
+        "Recurring INR income is normalized to a monthly amount; one-time income is excluded.",
+        `Recorded expenses use ${expenses.month} only; the replay does not invent missing transactions.`,
+        "A new EMI is treated as an additional future monthly commitment and is not written to Expenses or EMI Manager.",
+        `The ${parsed.data.horizonMonths}-month impact holds the entered changes constant and does not predict markets, inflation, salary growth, taxes, or unexpected expenses.`
+      ],
+      changes
+    };
+    let structuredAnswer = null;
+    let answer = null;
+    if (parsed.data.explain) {
+      const prompt = `Explain this private Decision Replay without changing its arithmetic. Separate recorded baseline facts from scenario assumptions. Do not give investment, tax, legal, lending-approval, refinancing, or guaranteed-outcome advice. State data completeness as record coverage, not accuracy. Authenticated user id: ${user.id}. Deterministic replay: ${JSON.stringify(replay)}`;
+      const demoMode = !process.env.GROQ_API_KEY?.trim();
+      structuredAnswer = demoMode ? createFallbackStructuredFinancialAnswer("Decision Replay", "The deterministic replay is available above, but the live AI explanation provider is not configured. No interpretation has been invented.") : await callGroqStructuredFinancialAnswer(
+        `You are ArthaMind Decision Replay, a private counterfactual financial-education assistant. Use the supplied deterministic output exactly. ${buildStructuredFinancialAnswerInstructions({ audience: "dashboard", language: "English", level: "beginner", detail: "detailed", hasVerifiedCurrentData: true })}`,
+        prompt,
+        { fallbackQuestion: "Explain my Decision Replay." }
+      );
+      answer = serializeStructuredFinancialAnswer(structuredAnswer);
+    }
+    return res.json({
+      replay,
+      structuredAnswer,
+      answer,
+      disclaimer: "Counterfactual educational analysis only. Decision Replay does not modify your records, predict markets, approve credit, or provide financial advice."
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Decision Replay failed.";
+    const status = /session is invalid|sign in/i.test(message) ? 401 : 500;
+    console.error("[decision-replay]", message);
+    return res.status(status).json({ error: message });
+  }
+});
+personalAccountRouter.delete("/account/delete", async (req, res) => {
+  const token = bearer(req);
+  if (!token) return res.status(401).json({ error: "Authentication required." });
+  try {
+    const user = await verifyUser(token);
+    const { url, serviceRole } = supabaseConfig();
+    if (!serviceRole) return res.status(503).json({ error: "Account deletion is not configured. SUPABASE_SERVICE_ROLE_KEY is required on the server." });
+    const response = await fetch(`${url}/auth/v1/admin/users/${encodeURIComponent(user.id)}`, {
+      method: "DELETE",
+      headers: { apikey: serviceRole, Authorization: `Bearer ${serviceRole}` }
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) return res.status(response.status).json({ error: payload?.message || "Account deletion failed." });
+    return res.json({ deleted: true });
+  } catch (error) {
+    return res.status(401).json({ error: error instanceof Error ? error.message : "Account deletion failed." });
+  }
+});
+
+// server/groundingRoutes.ts
+import { Router as Router3 } from "express";
+var groundingRouter = Router3();
 var previewLimiter = createRateLimiter({ windowMs: 6e4, max: 20, message: "Too many previews. Please wait a minute." });
 groundingRouter.get("/status", (_req, res) => {
   res.json({
@@ -8189,7 +8620,7 @@ groundingRouter.get("/preview", previewLimiter, async (req, res) => {
 
 // server/routes.ts
 var voiceLimiter = createRateLimiter({ windowMs: 6e4, max: 30, message: "Too many voice requests. Please wait a minute." });
-var apiRouter = Router3();
+var apiRouter = Router4();
 apiRouter.use("/precision", precisionRouter);
 apiRouter.use("/grounding", groundingRouter);
 var voiceBody = (req) => {
@@ -8224,6 +8655,28 @@ async function sendSpeech(res, text, lang, rateRaw) {
 apiRouter.post("/voice/tts", voiceLimiter, (req, res) => {
   const { text, lang } = voiceBody(req);
   void sendSpeech(res, text, lang, req.body?.rate);
+});
+apiRouter.post("/voice/stt", voiceLimiter, express.raw({ type: () => true, limit: "3mb" }), async (req, res) => {
+  const token = bearer(req);
+  if (!token) return res.status(401).json({ error: "Sign up or sign in to ask by voice.", code: "signin" });
+  if (!sttConfigured()) return res.status(503).json({ error: "Voice input is not available right now. Please type your question.", code: "unconfigured" });
+  const audio = Buffer.isBuffer(req.body) ? req.body : Buffer.alloc(0);
+  if (audio.length < 1e3) return res.status(400).json({ error: "I did not hear anything. Tap the mic and speak a little closer.", code: "empty" });
+  let credit;
+  try {
+    credit = await useVoiceCredit(token, "stt", sttDailyLimit());
+  } catch (error) {
+    const status = error.status === 401 ? 401 : 503;
+    return res.status(status).json({ error: status === 401 ? "Sign in again to ask by voice." : "Voice input is busy right now. Please type your question.", code: status === 401 ? "signin" : "busy" });
+  }
+  if (!credit.allowed) return res.status(429).json({ error: `You have used today's ${credit.limit} voice questions. Type your question, or ask by voice again tomorrow.`, code: "limit", used: credit.used, limit: credit.limit });
+  try {
+    const t = await speechToText(audio, String(req.headers["content-type"] || "audio/webm"), String(req.query.lang || "unknown"));
+    res.json({ text: t.text, language: t.language, used: credit.used, limit: credit.limit });
+  } catch (error) {
+    console.warn("STT failed:", error instanceof Error ? error.message : error);
+    res.status(502).json({ error: "I could not understand that recording. Please try again or type your question.", code: "failed" });
+  }
 });
 apiRouter.get("/voice/tts", voiceLimiter, (req, res) => {
   void sendSpeech(res, String(req.query.text ?? "").trim().slice(0, 600), String(req.query.lang ?? "").toLowerCase(), req.query.rate);
@@ -8300,160 +8753,160 @@ apiRouter.use((req, res, next) => {
   }
   next();
 });
-var querySchema = z8.object({
-  query: z8.string().min(1, "Query parameter is required.").max(2e3, "Query exceeds maximum length of 2000 characters."),
-  profile: z8.enum(["India", "US", "Global"]).optional()
+var querySchema = z9.object({
+  query: z9.string().min(1, "Query parameter is required.").max(2e3, "Query exceeds maximum length of 2000 characters."),
+  profile: z9.enum(["India", "US", "Global"]).optional()
 });
-var tutorSchema = z8.object({
-  userPrompt: z8.string().min(1, "Prompt is required.").max(2e3, "Prompt exceeds maximum length."),
-  systemPrompt: z8.string().optional(),
-  modelName: z8.string().optional(),
-  history: z8.array(
-    z8.object({
-      role: z8.enum(["user", "assistant"]),
-      content: z8.string().min(1).max(4e3)
+var tutorSchema = z9.object({
+  userPrompt: z9.string().min(1, "Prompt is required.").max(2e3, "Prompt exceeds maximum length."),
+  systemPrompt: z9.string().optional(),
+  modelName: z9.string().optional(),
+  history: z9.array(
+    z9.object({
+      role: z9.enum(["user", "assistant"]),
+      content: z9.string().min(1).max(4e3)
     })
   ).max(10).optional(),
-  context: z8.object({
-    country: z8.enum(["US", "India", "Global"]),
-    currency: z8.enum(["USD", "INR", "EUR", "GBP"]),
-    language: z8.enum(["english", "hindi", "hinglish"]),
-    level: z8.enum(["beginner", "intermediate", "advanced"]),
-    mode: z8.enum(["explain", "quiz", "calc"]),
-    detail: z8.enum(["short", "detailed"]),
-    useOfficialSources: z8.boolean()
+  context: z9.object({
+    country: z9.enum(["US", "India", "Global"]),
+    currency: z9.enum(["USD", "INR", "EUR", "GBP"]),
+    language: z9.enum(["english", "hindi", "hinglish"]),
+    level: z9.enum(["beginner", "intermediate", "advanced"]),
+    mode: z9.enum(["explain", "quiz", "calc"]),
+    detail: z9.enum(["short", "detailed"]),
+    useOfficialSources: z9.boolean()
   }).optional()
 });
-var batchRunSchema = z8.object({
-  scenarioIds: z8.array(z8.string()).optional(),
-  profile: z8.enum(["India", "US", "Global"]).optional()
+var batchRunSchema = z9.object({
+  scenarioIds: z9.array(z9.string()).optional(),
+  profile: z9.enum(["India", "US", "Global"]).optional()
 });
-var calculatorMoneySchema = z8.coerce.number().finite().min(0).max(1e15);
-var calculatorPositiveSchema = z8.coerce.number().finite().gt(0).max(1e15);
-var compoundInterestInputSchema = z8.object({
+var calculatorMoneySchema = z9.coerce.number().finite().min(0).max(1e15);
+var calculatorPositiveSchema = z9.coerce.number().finite().gt(0).max(1e15);
+var compoundInterestInputSchema = z9.object({
   principal: calculatorMoneySchema,
-  annualRatePercent: z8.coerce.number().finite().min(0).max(1e3),
-  years: z8.coerce.number().finite().gt(0).max(200),
+  annualRatePercent: z9.coerce.number().finite().min(0).max(1e3),
+  years: z9.coerce.number().finite().gt(0).max(200),
   monthlyContribution: calculatorMoneySchema.default(0),
-  compoundingFrequencyPerYear: z8.coerce.number().int().min(1).max(365).default(12)
+  compoundingFrequencyPerYear: z9.coerce.number().int().min(1).max(365).default(12)
 });
-var quickRatioInputSchema = z8.object({
+var quickRatioInputSchema = z9.object({
   cash: calculatorMoneySchema,
   marketableSecurities: calculatorMoneySchema,
   receivables: calculatorMoneySchema,
   currentLiabilities: calculatorPositiveSchema
 });
-var cagrInputSchema = z8.object({
+var cagrInputSchema = z9.object({
   initialValue: calculatorPositiveSchema,
   finalValue: calculatorPositiveSchema,
-  years: z8.coerce.number().finite().gt(0).max(200)
+  years: z9.coerce.number().finite().gt(0).max(200)
 });
-var breakEvenInputSchema = z8.object({
+var breakEvenInputSchema = z9.object({
   fixedCosts: calculatorMoneySchema,
   pricePerUnit: calculatorPositiveSchema,
   variableCostPerUnit: calculatorMoneySchema
 }).refine((value) => value.pricePerUnit > value.variableCostPerUnit, {
   message: "Price per unit must be greater than variable cost per unit."
 });
-var dtiInputSchema = z8.object({
+var dtiInputSchema = z9.object({
   monthlyGrossIncome: calculatorPositiveSchema,
   monthlyDebtPayments: calculatorMoneySchema
 });
-var scenarioAssistantSchema = z8.object({
-  scenario: z8.enum(["compound", "quick-ratio", "cagr", "break-even", "dti"]),
-  question: z8.string().min(3).max(1200),
-  profile: z8.enum(["US", "India", "Global"]).default("US"),
-  currency: z8.enum(["USD", "INR", "EUR", "GBP"]).default("USD"),
-  companySymbol: z8.string().trim().max(20).regex(/^[A-Za-z0-9][A-Za-z0-9.:_&-]*$/).optional().or(z8.literal("")),
-  useExternalContext: z8.boolean().default(true),
-  inputs: z8.record(z8.string(), z8.union([z8.number().finite(), z8.string().max(120), z8.boolean()]))
+var scenarioAssistantSchema = z9.object({
+  scenario: z9.enum(["compound", "quick-ratio", "cagr", "break-even", "dti"]),
+  question: z9.string().min(3).max(1200),
+  profile: z9.enum(["US", "India", "Global"]).default("US"),
+  currency: z9.enum(["USD", "INR", "EUR", "GBP"]).default("USD"),
+  companySymbol: z9.string().trim().max(20).regex(/^[A-Za-z0-9][A-Za-z0-9.:_&-]*$/).optional().or(z9.literal("")),
+  useExternalContext: z9.boolean().default(true),
+  inputs: z9.record(z9.string(), z9.union([z9.number().finite(), z9.string().max(120), z9.boolean()]))
 });
-var dashboardAssistantSchema = z8.object({
-  question: z8.string().min(3).max(1200),
-  history: z8.array(
-    z8.object({
-      role: z8.enum(["user", "assistant"]),
-      content: z8.string().min(1).max(4e3)
+var dashboardAssistantSchema = z9.object({
+  question: z9.string().min(3).max(1200),
+  history: z9.array(
+    z9.object({
+      role: z9.enum(["user", "assistant"]),
+      content: z9.string().min(1).max(4e3)
     })
   ).max(10).optional(),
-  snapshot: z8.object({
-    capturedAt: z8.string().max(64),
-    selectedSymbol: z8.string().min(1).max(20).regex(/^[A-Za-z0-9][A-Za-z0-9.:_&-]*$/),
-    selectedRange: z8.enum(["1d", "1w", "1m", "3m", "6m", "1y"]),
-    selectedCountry: z8.enum(["us", "india"]),
-    quotes: z8.array(
-      z8.object({
-        symbol: z8.string().min(1).max(20),
-        price: z8.number().finite(),
-        changePercent: z8.number().finite().nullable(),
-        freshness: z8.enum(["real_time", "delayed", "end_of_day", "stale", "demo"]),
-        providerName: z8.string().min(1).max(80)
+  snapshot: z9.object({
+    capturedAt: z9.string().max(64),
+    selectedSymbol: z9.string().min(1).max(20).regex(/^[A-Za-z0-9][A-Za-z0-9.:_&-]*$/),
+    selectedRange: z9.enum(["1d", "1w", "1m", "3m", "6m", "1y"]),
+    selectedCountry: z9.enum(["us", "india"]),
+    quotes: z9.array(
+      z9.object({
+        symbol: z9.string().min(1).max(20),
+        price: z9.number().finite(),
+        changePercent: z9.number().finite().nullable(),
+        freshness: z9.enum(["real_time", "delayed", "end_of_day", "stale", "demo"]),
+        providerName: z9.string().min(1).max(80)
       })
     ).max(8),
-    marketHistory: z8.object({
-      symbol: z8.string().min(1).max(20),
-      range: z8.string().min(1).max(8),
-      pointCount: z8.number().int().min(0).max(500),
-      startDate: z8.string().max(32).nullable(),
-      endDate: z8.string().max(32).nullable(),
-      startPrice: z8.number().finite().nullable(),
-      latestPrice: z8.number().finite().nullable(),
-      high: z8.number().finite().nullable(),
-      low: z8.number().finite().nullable(),
-      returnPercent: z8.number().finite().nullable()
+    marketHistory: z9.object({
+      symbol: z9.string().min(1).max(20),
+      range: z9.string().min(1).max(8),
+      pointCount: z9.number().int().min(0).max(500),
+      startDate: z9.string().max(32).nullable(),
+      endDate: z9.string().max(32).nullable(),
+      startPrice: z9.number().finite().nullable(),
+      latestPrice: z9.number().finite().nullable(),
+      high: z9.number().finite().nullable(),
+      low: z9.number().finite().nullable(),
+      returnPercent: z9.number().finite().nullable()
     }).nullable(),
-    economicIndicators: z8.array(
-      z8.object({
-        label: z8.string().min(1).max(120),
-        value: z8.number().finite().nullable(),
-        unit: z8.string().max(32),
-        date: z8.string().max(32).nullable(),
-        sourceName: z8.enum(["FRED", "World Bank"]),
-        status: z8.string().max(40)
+    economicIndicators: z9.array(
+      z9.object({
+        label: z9.string().min(1).max(120),
+        value: z9.number().finite().nullable(),
+        unit: z9.string().max(32),
+        date: z9.string().max(32).nullable(),
+        sourceName: z9.enum(["FRED", "World Bank"]),
+        status: z9.string().max(40)
       })
     ).max(14),
-    providerHealth: z8.object({
-      connected: z8.number().int().min(0).max(50),
-      total: z8.number().int().min(0).max(50),
-      connectedProviders: z8.array(z8.string().max(120)).max(20),
-      unavailableProviders: z8.array(z8.string().max(120)).max(20)
+    providerHealth: z9.object({
+      connected: z9.number().int().min(0).max(50),
+      total: z9.number().int().min(0).max(50),
+      connectedProviders: z9.array(z9.string().max(120)).max(20),
+      unavailableProviders: z9.array(z9.string().max(120)).max(20)
     }),
-    latestEvaluation: z8.object({
-      verificationCode: z8.string().max(80),
-      timestamp: z8.string().max(64),
-      verdict: z8.string().max(80),
-      overallReliabilityScore: z8.number().finite().min(0).max(100),
-      formulaAccuracyScore: z8.number().finite().min(0).max(100),
-      dualModelConsensusScore: z8.number().finite().min(0).max(100),
-      evidenceVerificationScore: z8.number().finite().min(0).max(100),
-      safetyComplianceScore: z8.number().finite().min(0).max(100)
+    latestEvaluation: z9.object({
+      verificationCode: z9.string().max(80),
+      timestamp: z9.string().max(64),
+      verdict: z9.string().max(80),
+      overallReliabilityScore: z9.number().finite().min(0).max(100),
+      formulaAccuracyScore: z9.number().finite().min(0).max(100),
+      dualModelConsensusScore: z9.number().finite().min(0).max(100),
+      evidenceVerificationScore: z9.number().finite().min(0).max(100),
+      safetyComplianceScore: z9.number().finite().min(0).max(100)
     }).nullable()
   })
 });
-var cryptoKlineQuerySchema = z8.object({
-  symbol: z8.enum(CRYPTO_SYMBOLS),
-  interval: z8.enum(CRYPTO_INTERVALS)
+var cryptoKlineQuerySchema = z9.object({
+  symbol: z9.enum(CRYPTO_SYMBOLS),
+  interval: z9.enum(CRYPTO_INTERVALS)
 });
-var cryptoAssistantSchema = z8.object({
-  question: z8.string().min(3).max(500),
-  context: z8.object({
-    symbol: z8.enum(CRYPTO_SYMBOLS),
-    interval: z8.enum(CRYPTO_INTERVALS),
-    candleStatus: z8.enum(["Forming", "Closed"]),
-    timeUtc: z8.string().min(1).max(80),
-    timeIst: z8.string().min(1).max(80),
-    open: z8.number().finite().nonnegative(),
-    high: z8.number().finite().nonnegative(),
-    low: z8.number().finite().nonnegative(),
-    close: z8.number().finite().nonnegative(),
-    absoluteChange: z8.number().finite(),
-    percentChange: z8.number().finite(),
-    baseVolume: z8.number().finite().nonnegative(),
-    quoteVolume: z8.number().finite().nonnegative(),
-    tradeCount: z8.number().int().nonnegative(),
-    provider: z8.literal("Binance Public Market Data"),
-    streamStatus: z8.enum(["connecting", "cached", "live", "reconnecting", "stale", "unavailable"]),
-    lastUpdatedAt: z8.string().max(80).nullable()
+var cryptoAssistantSchema = z9.object({
+  question: z9.string().min(3).max(500),
+  context: z9.object({
+    symbol: z9.enum(CRYPTO_SYMBOLS),
+    interval: z9.enum(CRYPTO_INTERVALS),
+    candleStatus: z9.enum(["Forming", "Closed"]),
+    timeUtc: z9.string().min(1).max(80),
+    timeIst: z9.string().min(1).max(80),
+    open: z9.number().finite().nonnegative(),
+    high: z9.number().finite().nonnegative(),
+    low: z9.number().finite().nonnegative(),
+    close: z9.number().finite().nonnegative(),
+    absoluteChange: z9.number().finite(),
+    percentChange: z9.number().finite(),
+    baseVolume: z9.number().finite().nonnegative(),
+    quoteVolume: z9.number().finite().nonnegative(),
+    tradeCount: z9.number().int().nonnegative(),
+    provider: z9.literal("Binance Public Market Data"),
+    streamStatus: z9.enum(["connecting", "cached", "live", "reconnecting", "stale", "unavailable"]),
+    lastUpdatedAt: z9.string().max(80).nullable()
   }).refine((context2) => context2.high >= Math.max(context2.open, context2.close, context2.low), {
     message: "Candle high must be greater than or equal to the other OHLC values."
   }).refine((context2) => context2.low <= Math.min(context2.open, context2.close, context2.high), {
@@ -9151,9 +9604,9 @@ apiRouter.get("/markets/terminal/snapshot", async (_req, res) => {
     res.status(503).json({ error: "Market snapshot is temporarily unavailable." });
   }
 });
-var terminalCandleQuerySchema = z8.object({
-  instrument: z8.enum(["nifty50", "sensex", "usdinr", "gold", "btcusdt"]),
-  interval: z8.enum(TERMINAL_INTERVALS)
+var terminalCandleQuerySchema = z9.object({
+  instrument: z9.enum(["nifty50", "sensex", "usdinr", "gold", "btcusdt"]),
+  interval: z9.enum(TERMINAL_INTERVALS)
 });
 apiRouter.get("/markets/terminal/candles", async (req, res) => {
   const parsed = terminalCandleQuerySchema.safeParse(req.query);
@@ -9179,8 +9632,8 @@ apiRouter.get("/markets/history", async (req, res, next) => {
 });
 apiRouter.get("/company/intelligence", async (req, res, next) => {
   try {
-    const parsed = z8.object({
-      symbol: z8.string().min(1).max(20).regex(/^[A-Za-z0-9][A-Za-z0-9.:_&-]*$/)
+    const parsed = z9.object({
+      symbol: z9.string().min(1).max(20).regex(/^[A-Za-z0-9][A-Za-z0-9.:_&-]*$/)
     }).safeParse(req.query);
     if (!parsed.success) {
       return res.status(400).json({ error: "A valid company stock symbol is required." });
@@ -9197,13 +9650,13 @@ apiRouter.get("/company/intelligence", async (req, res, next) => {
 });
 apiRouter.post("/company/assistant", async (req, res, next) => {
   try {
-    const parsed = z8.object({
-      symbol: z8.string().min(1).max(20).regex(/^[A-Za-z0-9][A-Za-z0-9.:_&-]*$/),
-      question: z8.string().min(3).max(1200),
-      history: z8.array(
-        z8.object({
-          role: z8.enum(["user", "assistant"]),
-          content: z8.string().min(1).max(4e3)
+    const parsed = z9.object({
+      symbol: z9.string().min(1).max(20).regex(/^[A-Za-z0-9][A-Za-z0-9.:_&-]*$/),
+      question: z9.string().min(3).max(1200),
+      history: z9.array(
+        z9.object({
+          role: z9.enum(["user", "assistant"]),
+          content: z9.string().min(1).max(4e3)
         })
       ).max(10).optional()
     }).safeParse(req.body);
@@ -9305,9 +9758,9 @@ apiRouter.get("/economy/overview", async (_req, res, next) => {
 });
 apiRouter.get("/economy/series", async (req, res, next) => {
   try {
-    const parsed = z8.object({
-      seriesId: z8.string().min(1).max(64).regex(/^[A-Za-z0-9._-]+$/),
-      limit: z8.coerce.number().int().min(1).max(240).optional()
+    const parsed = z9.object({
+      seriesId: z9.string().min(1).max(64).regex(/^[A-Za-z0-9._-]+$/),
+      limit: z9.coerce.number().int().min(1).max(240).optional()
     }).safeParse(req.query);
     if (!parsed.success) {
       return res.status(400).json({ error: "A valid FRED seriesId is required." });
@@ -9331,9 +9784,9 @@ apiRouter.get("/economy/india/overview", async (_req, res, next) => {
 });
 apiRouter.get("/economy/india/series", async (req, res, next) => {
   try {
-    const parsed = z8.object({
-      indicatorId: z8.string().min(2).max(64).regex(/^[A-Za-z0-9._-]+$/),
-      limit: z8.coerce.number().int().min(1).max(240).optional()
+    const parsed = z9.object({
+      indicatorId: z9.string().min(2).max(64).regex(/^[A-Za-z0-9._-]+$/),
+      limit: z9.coerce.number().int().min(1).max(240).optional()
     }).safeParse(req.query);
     if (!parsed.success) {
       return res.status(400).json({ error: "A valid World Bank indicatorId is required." });
@@ -9403,8 +9856,8 @@ apiRouter.use((err, req, res, next) => {
 });
 
 // server/aiRoutes.ts
-import { Router as Router4 } from "express";
-import { z as z9 } from "zod";
+import { Router as Router5 } from "express";
+import { z as z10 } from "zod";
 
 // server/nvidiaService.ts
 var DEFAULT_NVIDIA_MODEL = "nvidia/nemotron-3-ultra-550b-a55b";
@@ -9586,18 +10039,18 @@ function applyOfflineDetail(answer, prompt, liveText) {
 }
 
 // server/financialCalculations.ts
-import { Decimal as Decimal4 } from "decimal.js";
-Decimal4.set({ precision: 28, rounding: Decimal4.ROUND_HALF_UP });
+import { Decimal as Decimal5 } from "decimal.js";
+Decimal5.set({ precision: 28, rounding: Decimal5.ROUND_HALF_UP });
 function positive(value, name) {
   if (!Number.isFinite(value) || value <= 0) throw new Error(`${name} must be greater than zero.`);
-  return new Decimal4(value);
+  return new Decimal5(value);
 }
 function nonNegative2(value, name) {
   if (!Number.isFinite(value) || value < 0) throw new Error(`${name} cannot be negative.`);
-  return new Decimal4(value);
+  return new Decimal5(value);
 }
 function rounded(value) {
-  return value.toDecimalPlaces(2, Decimal4.ROUND_HALF_UP).toNumber();
+  return value.toDecimalPlaces(2, Decimal5.ROUND_HALF_UP).toNumber();
 }
 function calculateEMI(principal2, annualRatePercent, years) {
   const P = positive(principal2, "Loan amount");
@@ -9606,9 +10059,9 @@ function calculateEMI(principal2, annualRatePercent, years) {
   const n2 = Math.round(t.toNumber() * 12);
   if (n2 < 1) throw new Error("Loan tenure must produce at least one monthly payment.");
   const r = annual.div(100).div(12);
-  const emi3 = r.isZero() ? P.div(n2) : P.times(r).times(new Decimal4(1).plus(r).pow(n2)).div(new Decimal4(1).plus(r).pow(n2).minus(1));
+  const emi3 = r.isZero() ? P.div(n2) : P.times(r).times(new Decimal5(1).plus(r).pow(n2)).div(new Decimal5(1).plus(r).pow(n2).minus(1));
   const monthly = rounded(emi3);
-  return { principal: P.toNumber(), annualRatePercent: annual.toNumber(), years: t.toNumber(), payments: n2, monthlyRatePercent: rounded(r.times(100)), emi: monthly, totalPayments: rounded(new Decimal4(monthly).times(n2)), totalInterest: rounded(new Decimal4(monthly).times(n2).minus(P)) };
+  return { principal: P.toNumber(), annualRatePercent: annual.toNumber(), years: t.toNumber(), payments: n2, monthlyRatePercent: rounded(r.times(100)), emi: monthly, totalPayments: rounded(new Decimal5(monthly).times(n2)), totalInterest: rounded(new Decimal5(monthly).times(n2).minus(P)) };
 }
 function calculateEmergencyFund(monthlyExpenses, months) {
   const expenses = nonNegative2(monthlyExpenses, "Monthly expenses");
@@ -9627,10 +10080,10 @@ function calculateSavingsTarget(targetAmount, months) {
 
 // server/aiRoutes.ts
 var aiChatLimiter = createRateLimiter({ windowMs: 6e4, max: 20, message: "You are sending questions quickly. Please wait a minute and try again." });
-var aiRouter = Router4();
-var context = z9.object({ country: z9.enum(["India", "US", "Global"]).optional().catch(void 0), currency: z9.enum(["INR", "USD", "EUR", "GBP"]).optional().catch(void 0), language: z9.enum(["english", "hindi", "hinglish"]).optional().catch(void 0), replyLanguage: z9.string().max(40).optional().catch(void 0), voice: z9.boolean().optional().catch(void 0), level: z9.enum(["beginner", "intermediate", "advanced"]).optional().catch(void 0), mode: z9.enum(["explain", "quiz", "calc"]).optional().catch(void 0), detail: z9.enum(["short", "standard", "detailed"]).optional().catch(void 0), useOfficialSources: z9.boolean().optional().catch(void 0), highContrast: z9.boolean().optional().catch(void 0), reducedMotion: z9.boolean().optional().catch(void 0), learningGoal: z9.string().max(200).optional().catch(void 0), learningStyle: z9.enum(["visual", "practical", "reading", "socratic", "example-first", "step-by-step", "challenge-based", "deep-dive"]).optional().catch(void 0), activityType: z9.enum(["lesson", "quiz", "calculation", "scenario", "flashcards", "revision", "mock-test"]).optional().catch(void 0), quizType: z9.enum(["mcq", "mixed", "true-false", "fill-blank", "short-answer", "scenario", "calculation"]).optional().catch(void 0), quizLength: z9.union([z9.literal(5), z9.literal(10), z9.literal(20), z9.literal(50)]).optional().catch(void 0), adaptiveDifficulty: z9.boolean().optional().catch(void 0), sessionLength: z9.union([z9.literal(2), z9.literal(5), z9.literal(10), z9.literal(15), z9.literal(20), z9.literal(30), z9.literal(45), z9.literal(60)]).optional().catch(void 0), learnerProfile: z9.string().max(500).optional().catch(void 0) });
-var requestSchema = z9.object({ prompt: z9.preprocess((value) => typeof value === "string" ? value.trim().slice(0, 4e3) : value, z9.string().min(1).max(4e3)), model: z9.enum(["artha", "nemotron"]).optional(), task: z9.enum(["education", "calculation", "live_data", "quiz", "scenario", "evaluation", "report", "general", "cfo"]).optional(), history: z9.preprocess((value) => Array.isArray(value) ? value.filter((turn) => turn && (turn.role === "user" || turn.role === "assistant") && typeof turn.content === "string" && turn.content.trim()).slice(-10).map((turn) => ({ role: turn.role, content: turn.content.slice(0, 4e3) })) : void 0, z9.array(z9.object({ role: z9.enum(["user", "assistant"]), content: z9.string().min(1).max(4e3) })).max(10).optional()), context: context.optional().catch(void 0) });
-var calcSchema = z9.object({ kind: z9.enum(["emi", "emergency-fund", "budget-503020", "savings-target"]), principal: z9.coerce.number().finite().optional(), annualRatePercent: z9.coerce.number().finite().optional(), years: z9.coerce.number().finite().optional(), monthlyIncome: z9.coerce.number().finite().optional(), monthlyExpenses: z9.coerce.number().finite().optional(), targetAmount: z9.coerce.number().finite().optional(), months: z9.coerce.number().finite().optional() });
+var aiRouter = Router5();
+var context = z10.object({ country: z10.enum(["India", "US", "Global"]).optional().catch(void 0), currency: z10.enum(["INR", "USD", "EUR", "GBP"]).optional().catch(void 0), language: z10.enum(["english", "hindi", "hinglish"]).optional().catch(void 0), replyLanguage: z10.string().max(40).optional().catch(void 0), voice: z10.boolean().optional().catch(void 0), level: z10.enum(["beginner", "intermediate", "advanced"]).optional().catch(void 0), mode: z10.enum(["explain", "quiz", "calc"]).optional().catch(void 0), detail: z10.enum(["short", "standard", "detailed"]).optional().catch(void 0), useOfficialSources: z10.boolean().optional().catch(void 0), highContrast: z10.boolean().optional().catch(void 0), reducedMotion: z10.boolean().optional().catch(void 0), learningGoal: z10.string().max(200).optional().catch(void 0), learningStyle: z10.enum(["visual", "practical", "reading", "socratic", "example-first", "step-by-step", "challenge-based", "deep-dive"]).optional().catch(void 0), activityType: z10.enum(["lesson", "quiz", "calculation", "scenario", "flashcards", "revision", "mock-test"]).optional().catch(void 0), quizType: z10.enum(["mcq", "mixed", "true-false", "fill-blank", "short-answer", "scenario", "calculation"]).optional().catch(void 0), quizLength: z10.union([z10.literal(5), z10.literal(10), z10.literal(20), z10.literal(50)]).optional().catch(void 0), adaptiveDifficulty: z10.boolean().optional().catch(void 0), sessionLength: z10.union([z10.literal(2), z10.literal(5), z10.literal(10), z10.literal(15), z10.literal(20), z10.literal(30), z10.literal(45), z10.literal(60)]).optional().catch(void 0), learnerProfile: z10.string().max(500).optional().catch(void 0) });
+var requestSchema = z10.object({ prompt: z10.preprocess((value) => typeof value === "string" ? value.trim().slice(0, 4e3) : value, z10.string().min(1).max(4e3)), model: z10.enum(["artha", "nemotron"]).optional(), task: z10.enum(["education", "calculation", "live_data", "quiz", "scenario", "evaluation", "report", "general", "cfo"]).optional(), history: z10.preprocess((value) => Array.isArray(value) ? value.filter((turn) => turn && (turn.role === "user" || turn.role === "assistant") && typeof turn.content === "string" && turn.content.trim()).slice(-10).map((turn) => ({ role: turn.role, content: turn.content.slice(0, 4e3) })) : void 0, z10.array(z10.object({ role: z10.enum(["user", "assistant"]), content: z10.string().min(1).max(4e3) })).max(10).optional()), context: context.optional().catch(void 0) });
+var calcSchema = z10.object({ kind: z10.enum(["emi", "emergency-fund", "budget-503020", "savings-target"]), principal: z10.coerce.number().finite().optional(), annualRatePercent: z10.coerce.number().finite().optional(), years: z10.coerce.number().finite().optional(), monthlyIncome: z10.coerce.number().finite().optional(), monthlyExpenses: z10.coerce.number().finite().optional(), targetAmount: z10.coerce.number().finite().optional(), months: z10.coerce.number().finite().optional() });
 function logEvent(event) {
   console.info(JSON.stringify({ scope: "artha-ai", ...event }));
 }
@@ -9667,391 +10120,6 @@ aiRouter.post("/ai/calculate", async (req, res) => {
     return res.json({ calculation, engine: "Decimal.js", verificationStatus: "verified", calculatedAt: (/* @__PURE__ */ new Date()).toISOString() });
   } catch (error) {
     return res.status(400).json({ error: error instanceof Error ? error.message : "Calculation could not be completed." });
-  }
-});
-
-// server/personalAccountRoutes.ts
-import { Router as Router5 } from "express";
-import Decimal5 from "decimal.js";
-import { z as z10 } from "zod";
-var personalAccountRouter = Router5();
-var DEFAULT_SUPABASE_URL = "https://agjbvoosukxfvrritgto.supabase.co";
-var DEFAULT_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_KOdXB7LW5Ho5hDjsi3GMiw_xdogy5oR";
-var contextSettingsSchema = z10.object({
-  income: z10.boolean().optional(),
-  expenses: z10.boolean().optional(),
-  budgets: z10.boolean().optional(),
-  emis: z10.boolean().optional(),
-  goals: z10.boolean().optional(),
-  personalFinance: z10.boolean().optional(),
-  budgetsAndGoals: z10.boolean().optional(),
-  paperPortfolio: z10.boolean().optional(),
-  learningProgress: z10.boolean().optional(),
-  saveConversation: z10.boolean().optional()
-});
-var personalizedAssistantSchema = z10.object({
-  question: z10.string().min(3).max(1200),
-  history: z10.array(z10.object({ role: z10.enum(["user", "assistant"]), content: z10.string().min(1).max(4e3) })).max(10).optional(),
-  settings: contextSettingsSchema,
-  publicContext: z10.object({
-    capturedAt: z10.string().max(64),
-    selectedSymbol: z10.string().min(1).max(20),
-    selectedRange: z10.string().min(1).max(8),
-    selectedCountry: z10.enum(["us", "india"]),
-    quotes: z10.array(z10.object({ symbol: z10.string(), price: z10.number(), changePercent: z10.number().nullable(), freshness: z10.string(), providerName: z10.string() })).max(8),
-    marketHistory: z10.object({
-      symbol: z10.string(),
-      range: z10.string(),
-      pointCount: z10.number(),
-      startDate: z10.string().nullable(),
-      endDate: z10.string().nullable(),
-      startPrice: z10.number().nullable(),
-      latestPrice: z10.number().nullable(),
-      high: z10.number().nullable(),
-      low: z10.number().nullable(),
-      returnPercent: z10.number().nullable()
-    }).nullable().optional(),
-    economicIndicators: z10.array(z10.object({ label: z10.string(), value: z10.number().nullable(), unit: z10.string(), date: z10.string().nullable(), sourceName: z10.string(), status: z10.string() })).max(30),
-    providerHealth: z10.object({
-      connected: z10.number(),
-      total: z10.number(),
-      connectedProviders: z10.array(z10.string()).max(30),
-      unavailableProviders: z10.array(z10.string()).max(30)
-    }).optional(),
-    latestEvaluation: z10.any().nullable().optional()
-  })
-});
-var replayChangesSchema = z10.object({
-  monthlyIncomeDelta: z10.number().min(-1e8).max(1e8).default(0),
-  expenseReductionPercent: z10.number().min(0).max(100).default(0),
-  additionalMonthlyExpense: z10.number().min(0).max(1e8).default(0),
-  newMonthlyEmi: z10.number().min(0).max(1e8).default(0),
-  savingsTargetDelta: z10.number().min(-1e8).max(1e8).default(0)
-});
-var decisionReplaySchema = z10.object({
-  horizonMonths: z10.union([z10.literal(1), z10.literal(3), z10.literal(6), z10.literal(12)]),
-  changes: replayChangesSchema,
-  explain: z10.boolean().optional().default(false)
-});
-function supabaseConfig() {
-  const url = (process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || DEFAULT_SUPABASE_URL).replace(/\/$/, "");
-  const anonKey = process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY || DEFAULT_SUPABASE_PUBLISHABLE_KEY;
-  const serviceRole = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
-  return { url, anonKey, serviceRole };
-}
-function bearer(req) {
-  const header = req.headers.authorization || "";
-  return header.startsWith("Bearer ") ? header.slice(7).trim() : null;
-}
-async function verifyUser(token) {
-  const { url, anonKey } = supabaseConfig();
-  const response = await fetch(`${url}/auth/v1/user`, {
-    headers: { apikey: anonKey, Authorization: `Bearer ${token}` }
-  });
-  const payload = await response.json().catch(() => ({}));
-  if (!response.ok || !payload?.id) throw new Error("Your account session is invalid or expired. Sign in again and retry.");
-  return payload;
-}
-async function fetchWorkspace(token) {
-  const { url, anonKey } = supabaseConfig();
-  const response = await fetch(`${url}/rest/v1/user_workspace_state?select=storage_key,payload`, {
-    headers: { apikey: anonKey, Authorization: `Bearer ${token}` }
-  });
-  const rows = await response.json().catch(() => []);
-  if (!response.ok) throw new Error("Your private workspace could not be loaded from Supabase.");
-  return Object.fromEntries((Array.isArray(rows) ? rows : []).map((row) => [row.storage_key, row.payload]));
-}
-function parsePayload(workspace, key) {
-  try {
-    return workspace[key] ? JSON.parse(workspace[key]) : null;
-  } catch {
-    return null;
-  }
-}
-function enabled(settings, granular, legacy) {
-  if (settings[granular] === true) return true;
-  if (settings[granular] === false) return false;
-  return settings[legacy] === true;
-}
-function buildPersonalContext(workspace, settings) {
-  const context2 = {};
-  const references = [];
-  const incomeEnabled = enabled(settings, "income", "personalFinance");
-  const expensesEnabled = enabled(settings, "expenses", "personalFinance");
-  const budgetsEnabled = enabled(settings, "budgets", "budgetsAndGoals");
-  const emisEnabled = enabled(settings, "emis", "personalFinance");
-  if (incomeEnabled) {
-    const income = parsePayload(workspace, "artha_income_sources_v1");
-    const sources = Array.isArray(income?.sources) ? income.sources.slice(0, 80).map((item) => ({ type: item.type, amount: item.amount, currency: item.currency, frequency: item.frequency, description: item.description, startDate: item.startDate, endDate: item.endDate ?? null })) : [];
-    context2.income = sources;
-    if (sources.length) references.push(`Income: ${sources.length} recorded source${sources.length === 1 ? "" : "s"}`);
-  }
-  if (expensesEnabled) {
-    const expenses = parsePayload(workspace, "artha_expenses_v1");
-    const records = Array.isArray(expenses?.records) ? expenses.records.slice(-150).map((item) => ({ amount: item.amount, category: item.category, date: item.date, merchant: item.merchant, paymentMethod: item.paymentMethod, recurring: item.recurring })) : [];
-    context2.expenses = records;
-    if (records.length) {
-      const dates = records.map((item) => item.date).filter(Boolean).sort();
-      references.push(`Expenses: ${dates[0] || "date unavailable"}\u2013${dates.at(-1) || "date unavailable"}; ${records.length} records`);
-    }
-  }
-  if (budgetsEnabled) {
-    const budgets = parsePayload(workspace, "artha_budgets_v1");
-    const items = Array.isArray(budgets?.budgets) ? budgets.budgets.slice(-24).map((budget) => ({ name: budget.name, month: budget.month, savingsTarget: budget.savingsTarget, notes: budget.notes, categories: budget.categories })) : [];
-    context2.budgets = items;
-    if (items.length) references.push(`Budgets: ${items.length} saved plan${items.length === 1 ? "" : "s"}`);
-  }
-  if (emisEnabled) {
-    const emis = parsePayload(workspace, "artha_emi_records_v1");
-    const items = Array.isArray(emis?.records) ? emis.records.slice(0, 60).map((item) => ({ name: item.name, lender: item.lender, loanType: item.loanType, status: item.status, emiAmount: item.emiAmount, outstandingBalance: item.outstandingBalance, annualInterestRate: item.annualInterestRate, nextDueDate: item.nextDueDate, remainingInstallments: item.remainingInstallments })) : [];
-    context2.emis = items;
-    if (items.length) references.push(`EMIs: ${items.length} recorded commitment${items.length === 1 ? "" : "s"}`);
-  }
-  if (settings.paperPortfolio) {
-    const portfolio = parsePayload(workspace, "artha_paper_portfolio_v1");
-    if (portfolio) {
-      context2.paperPortfolio = { cashBalance: portfolio.cashBalance, initialBalance: portfolio.initialBalance, positions: Array.isArray(portfolio.positions) ? portfolio.positions : [], trades: Array.isArray(portfolio.trades) ? portfolio.trades.slice(0, 50) : [] };
-      references.push(`Paper portfolio: ${Array.isArray(portfolio.positions) ? portfolio.positions.length : 0} positions; ${Array.isArray(portfolio.trades) ? portfolio.trades.length : 0} trades`);
-    }
-  }
-  if (settings.learningProgress) {
-    const progress = parsePayload(workspace, "artha_learning_progress_v1");
-    if (progress) {
-      context2.learningProgress = { completedLessonIds: progress.completedLessonIds ?? [], quizScores: progress.quizScores ?? {}, bookmarkedLessonIds: progress.bookmarkedLessonIds ?? [], lastActiveLessonId: progress.lastActiveLessonId ?? null, streakDays: progress.streakDays ?? 0, lastActiveDate: progress.lastActiveDate ?? null };
-      references.push(`Learning: ${Array.isArray(progress.completedLessonIds) ? progress.completedLessonIds.length : 0} completed lessons`);
-    }
-  }
-  return { context: context2, references };
-}
-function monthlyIncomeFromWorkspace(workspace) {
-  const income = parsePayload(workspace, "artha_income_sources_v1");
-  const sources = Array.isArray(income?.sources) ? income.sources : [];
-  const today = (/* @__PURE__ */ new Date()).toISOString().slice(0, 10);
-  let total = new Decimal5(0);
-  let count = 0;
-  for (const source of sources) {
-    if (String(source?.currency || "").toUpperCase() !== "INR") continue;
-    if (source?.frequency === "One-time") continue;
-    if (source?.startDate && source.startDate > today) continue;
-    if (source?.endDate && source.endDate < today) continue;
-    const amount = new Decimal5(Number(source?.amount || 0));
-    if (!amount.isFinite() || amount.lte(0)) continue;
-    const monthly = source.frequency === "Quarterly" ? amount.div(3) : source.frequency === "Annually" ? amount.div(12) : amount;
-    total = total.plus(monthly);
-    count += 1;
-  }
-  return { total, sourceCount: count };
-}
-function currentMonthExpenses(workspace) {
-  const expenses = parsePayload(workspace, "artha_expenses_v1");
-  const records = Array.isArray(expenses?.records) ? expenses.records : [];
-  const month = (/* @__PURE__ */ new Date()).toISOString().slice(0, 7);
-  const current = records.filter((item) => typeof item?.date === "string" && item.date.startsWith(month));
-  return {
-    total: current.reduce((sum, item) => sum.plus(Number(item?.amount || 0)), new Decimal5(0)),
-    recordCount: current.length,
-    month
-  };
-}
-function currentBudget(workspace, month) {
-  const budgets = parsePayload(workspace, "artha_budgets_v1");
-  const items = Array.isArray(budgets?.budgets) ? budgets.budgets : [];
-  const budget = items.find((item) => item?.month === month) ?? null;
-  if (!budget) return { planned: new Decimal5(0), savingsTarget: new Decimal5(0), categoryCount: 0 };
-  const categories = Array.isArray(budget.categories) ? budget.categories : [];
-  return {
-    planned: categories.reduce((sum, item) => sum.plus(Number(item?.plannedAmount || 0)), new Decimal5(0)),
-    savingsTarget: new Decimal5(Number(budget?.savingsTarget || 0)),
-    categoryCount: categories.length
-  };
-}
-function activeEmis(workspace) {
-  const envelope2 = parsePayload(workspace, "artha_emi_records_v1");
-  const records = Array.isArray(envelope2?.records) ? envelope2.records.filter((item) => item?.status !== "closed") : [];
-  return {
-    monthly: records.reduce((sum, item) => sum.plus(Number(item?.emiAmount || 0)), new Decimal5(0)),
-    count: records.length
-  };
-}
-function roundMoney(value) {
-  return value.toDecimalPlaces(2).toNumber();
-}
-function roundPercent(value) {
-  return value ? value.toDecimalPlaces(2).toNumber() : null;
-}
-personalAccountRouter.post("/personal/assistant", async (req, res) => {
-  try {
-    const parsed = personalizedAssistantSchema.safeParse(req.body);
-    if (!parsed.success) return res.status(400).json({ error: "A valid personalized assistant request is required." });
-    const token = bearer(req);
-    if (!token) return res.status(401).json({ error: "Sign in to use personal ArthaMind context." });
-    const user = await verifyUser(token);
-    const safety = checkPromptSafety(parsed.data.question);
-    if (!safety.safe) return res.status(400).json({ error: safety.reason, safety });
-    const directAdvicePattern = /\b(should i|would you|do you recommend|tell me (?:whether|if) to)\b.{0,80}\b(buy|sell|hold|invest)\b|\b(target price|trade signal|guaranteed return)\b/i;
-    if (directAdvicePattern.test(parsed.data.question)) return res.status(400).json({ error: "ArthaMind can explain your recorded data and educational trade-offs, but cannot provide personalized buy/sell/hold instructions, target prices, or guaranteed outcomes." });
-    const workspace = await fetchWorkspace(token);
-    const { context: personalContext, references } = buildPersonalContext(workspace, parsed.data.settings);
-    const personalDataUsed = Object.keys(personalContext).length > 0;
-    const publicContext = parsed.data.publicContext;
-    const groundedContext = { publicDashboard: publicContext, authorizedPersonalContext: personalContext };
-    const systemPrompt2 = `You are ArthaMind, the evidence-grounded financial-intelligence assistant inside Artha Bench Pro.
-
-Rules:
-1. Use only the supplied public dashboard snapshot and authorized personal context for specific personal facts. Never invent a transaction, income amount, balance, budget, EMI, holding, goal, or learning event.
-2. If requested personal data is absent, say there is insufficient recorded data and name the next useful record/action.
-3. State the data period or record context used when relevant. Distinguish recorded facts, calculations, and educational suggestions.
-4. Never provide personalized investment instructions, guaranteed outcomes, regulated financial advice, tax advice, or legal advice.
-5. Suggestions must be practical educational guidance, with INR context when the recorded values use INR.
-6. Do not infer disabled personal data sources.
-7. For public market/economic questions, use the supplied quote, chart-history, economic and provider-health snapshot exactly as captured. Do not call unavailable or delayed data live.
-${buildStructuredFinancialAnswerInstructions({ audience: "dashboard", language: "English", level: "beginner", detail: "detailed", hasVerifiedCurrentData: publicContext.quotes.length > 0 || publicContext.economicIndicators.length > 0 || personalDataUsed })}`;
-    const userPrompt = `Question: ${parsed.data.question}
-Authenticated user id: ${user.id}
-Grounded context:
-${JSON.stringify(groundedContext)}`;
-    const demoMode = !process.env.GROQ_API_KEY?.trim();
-    const fallback = personalDataUsed ? `I found authorized personal context for this account (${references.join("; ")}). The live AI model is not configured, so I will not invent an interpretation. Review the recorded values in the relevant workspace or configure the AI provider for grounded natural-language analysis.` : "There is not enough authorized personal data in the enabled context to answer this as a personal-data question. Add records or enable the relevant AI Data Context source; I will not invent missing values.";
-    const structuredAnswer = demoMode ? createFallbackStructuredFinancialAnswer(parsed.data.question, fallback) : await callGroqStructuredFinancialAnswer(systemPrompt2, userPrompt, { history: parsed.data.history, fallbackQuestion: parsed.data.question });
-    const answer = serializeStructuredFinancialAnswer(structuredAnswer);
-    const sourceLabels = Array.from(/* @__PURE__ */ new Set([
-      ...publicContext.quotes.map((quote) => quote.providerName),
-      ...publicContext.economicIndicators.map((indicator) => indicator.sourceName),
-      ...personalDataUsed ? ["My authorized Artha Bench workspace"] : []
-    ]));
-    return res.json({
-      answer,
-      structuredAnswer,
-      provider: demoMode ? "demo" : "groq",
-      model: demoMode ? null : getGroqModels().tutorModel,
-      groundedAt: publicContext.capturedAt,
-      sourceLabels,
-      suggestedQuestions: ["Where did I spend the most in my recorded expenses?", "Which saved budget category is closest to its limit?", "Summarize my recorded income and expenses.", "How would a change in one monthly commitment affect my recorded cash flow?"],
-      disclaimer: "Educational analysis only \u2014 not investment, tax, legal, or financial advice.",
-      personalDataUsed,
-      personalContextReferences: references,
-      requestId: res.getHeader("x-request-id")
-    });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Personalized ArthaMind request failed.";
-    const status = /session is invalid|sign in/i.test(message) ? 401 : 500;
-    console.error("[personal-assistant]", message);
-    return res.status(status).json({ error: message });
-  }
-});
-personalAccountRouter.post("/personal/decision-replay", async (req, res) => {
-  try {
-    const parsed = decisionReplaySchema.safeParse(req.body);
-    if (!parsed.success) return res.status(400).json({ error: "A valid Decision Replay scenario is required." });
-    const token = bearer(req);
-    if (!token) return res.status(401).json({ error: "Sign in to use Decision Replay." });
-    const user = await verifyUser(token);
-    const workspace = await fetchWorkspace(token);
-    const income = monthlyIncomeFromWorkspace(workspace);
-    const expenses = currentMonthExpenses(workspace);
-    const budget = currentBudget(workspace, expenses.month);
-    const emis = activeEmis(workspace);
-    const changes = parsed.data.changes;
-    const baselineCashFlow = income.total.minus(expenses.total);
-    const incomeScenario = Decimal5.max(0, income.total.plus(changes.monthlyIncomeDelta));
-    const reducedExpenseBase = expenses.total.times(new Decimal5(1).minus(new Decimal5(changes.expenseReductionPercent).div(100)));
-    const expenseScenario = Decimal5.max(0, reducedExpenseBase.plus(changes.additionalMonthlyExpense));
-    const scenarioCashFlow = incomeScenario.minus(expenseScenario).minus(changes.newMonthlyEmi);
-    const monthlyChange = scenarioCashFlow.minus(baselineCashFlow);
-    const horizonImpact = monthlyChange.times(parsed.data.horizonMonths);
-    const baselineEmiRatio = income.total.gt(0) ? emis.monthly.div(income.total).times(100) : null;
-    const scenarioEmi = emis.monthly.plus(changes.newMonthlyEmi);
-    const scenarioEmiRatio = incomeScenario.gt(0) ? scenarioEmi.div(incomeScenario).times(100) : null;
-    const baselineHeadroom = budget.planned.gt(0) ? budget.planned.minus(expenses.total) : null;
-    const scenarioHeadroom = budget.planned.gt(0) ? budget.planned.minus(expenseScenario) : null;
-    const scenarioSavingsTarget = Decimal5.max(0, budget.savingsTarget.plus(changes.savingsTargetDelta));
-    const completenessSignals = [income.sourceCount > 0, expenses.recordCount > 0, budget.categoryCount > 0, emis.count > 0];
-    const completenessCount = completenessSignals.filter(Boolean).length;
-    const completeness = completenessCount >= 3 ? "High" : completenessCount >= 2 ? "Medium" : "Low";
-    const replay = {
-      scenarioId: `replay-${Date.now().toString(36)}`,
-      calculatedAt: (/* @__PURE__ */ new Date()).toISOString(),
-      month: expenses.month,
-      horizonMonths: parsed.data.horizonMonths,
-      baseline: {
-        monthlyIncome: roundMoney(income.total),
-        recordedMonthlyExpenses: roundMoney(expenses.total),
-        recordedNetCashFlow: roundMoney(baselineCashFlow),
-        activeMonthlyEmiCommitment: roundMoney(emis.monthly),
-        emiCommitmentRatioPercent: roundPercent(baselineEmiRatio),
-        plannedBudget: roundMoney(budget.planned),
-        budgetHeadroom: baselineHeadroom ? roundMoney(baselineHeadroom) : null,
-        savingsTarget: roundMoney(budget.savingsTarget)
-      },
-      scenario: {
-        monthlyIncome: roundMoney(incomeScenario),
-        monthlyExpenses: roundMoney(expenseScenario),
-        projectedMonthlyCashFlowAfterNewCommitment: roundMoney(scenarioCashFlow),
-        activePlusNewMonthlyEmi: roundMoney(scenarioEmi),
-        emiCommitmentRatioPercent: roundPercent(scenarioEmiRatio),
-        budgetHeadroom: scenarioHeadroom ? roundMoney(scenarioHeadroom) : null,
-        savingsTarget: roundMoney(scenarioSavingsTarget)
-      },
-      impact: {
-        monthlyCashFlowChange: roundMoney(monthlyChange),
-        horizonCashFlowChange: roundMoney(horizonImpact)
-      },
-      dataBasis: {
-        recurringIncomeSources: income.sourceCount,
-        currentMonthExpenseRecords: expenses.recordCount,
-        budgetCategories: budget.categoryCount,
-        activeEmis: emis.count,
-        completeness
-      },
-      assumptions: [
-        "Recurring INR income is normalized to a monthly amount; one-time income is excluded.",
-        `Recorded expenses use ${expenses.month} only; the replay does not invent missing transactions.`,
-        "A new EMI is treated as an additional future monthly commitment and is not written to Expenses or EMI Manager.",
-        `The ${parsed.data.horizonMonths}-month impact holds the entered changes constant and does not predict markets, inflation, salary growth, taxes, or unexpected expenses.`
-      ],
-      changes
-    };
-    let structuredAnswer = null;
-    let answer = null;
-    if (parsed.data.explain) {
-      const prompt = `Explain this private Decision Replay without changing its arithmetic. Separate recorded baseline facts from scenario assumptions. Do not give investment, tax, legal, lending-approval, refinancing, or guaranteed-outcome advice. State data completeness as record coverage, not accuracy. Authenticated user id: ${user.id}. Deterministic replay: ${JSON.stringify(replay)}`;
-      const demoMode = !process.env.GROQ_API_KEY?.trim();
-      structuredAnswer = demoMode ? createFallbackStructuredFinancialAnswer("Decision Replay", "The deterministic replay is available above, but the live AI explanation provider is not configured. No interpretation has been invented.") : await callGroqStructuredFinancialAnswer(
-        `You are ArthaMind Decision Replay, a private counterfactual financial-education assistant. Use the supplied deterministic output exactly. ${buildStructuredFinancialAnswerInstructions({ audience: "dashboard", language: "English", level: "beginner", detail: "detailed", hasVerifiedCurrentData: true })}`,
-        prompt,
-        { fallbackQuestion: "Explain my Decision Replay." }
-      );
-      answer = serializeStructuredFinancialAnswer(structuredAnswer);
-    }
-    return res.json({
-      replay,
-      structuredAnswer,
-      answer,
-      disclaimer: "Counterfactual educational analysis only. Decision Replay does not modify your records, predict markets, approve credit, or provide financial advice."
-    });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Decision Replay failed.";
-    const status = /session is invalid|sign in/i.test(message) ? 401 : 500;
-    console.error("[decision-replay]", message);
-    return res.status(status).json({ error: message });
-  }
-});
-personalAccountRouter.delete("/account/delete", async (req, res) => {
-  const token = bearer(req);
-  if (!token) return res.status(401).json({ error: "Authentication required." });
-  try {
-    const user = await verifyUser(token);
-    const { url, serviceRole } = supabaseConfig();
-    if (!serviceRole) return res.status(503).json({ error: "Account deletion is not configured. SUPABASE_SERVICE_ROLE_KEY is required on the server." });
-    const response = await fetch(`${url}/auth/v1/admin/users/${encodeURIComponent(user.id)}`, {
-      method: "DELETE",
-      headers: { apikey: serviceRole, Authorization: `Bearer ${serviceRole}` }
-    });
-    const payload = await response.json().catch(() => ({}));
-    if (!response.ok) return res.status(response.status).json({ error: payload?.message || "Account deletion failed." });
-    return res.json({ deleted: true });
-  } catch (error) {
-    return res.status(401).json({ error: error instanceof Error ? error.message : "Account deletion failed." });
   }
 });
 
@@ -10210,7 +10278,7 @@ freeMarketRouter.get("/markets/batch", async (req, res) => {
 });
 
 // server/v1/router.ts
-import express, { Router as Router8 } from "express";
+import express2, { Router as Router8 } from "express";
 import { ZodError } from "zod";
 
 // server/v1/ai.ts
@@ -11842,7 +11910,7 @@ v1Router.use((req, res, next) => {
   }
   next();
 });
-v1Router.use(express.json({ limit: "64kb" }));
+v1Router.use(express2.json({ limit: "64kb" }));
 v1Router.use(optionalApiKey);
 v1Router.use(rateLimit);
 v1Router.get("/calculators", (_req, res) => {
@@ -13986,10 +14054,10 @@ function createTimetableRouter(deps = {}) {
 var timetableRouter = createTimetableRouter();
 
 // server/vercelHandler.ts
-var app = express2();
+var app = express3();
 var GROUNDED_AI_PATHS = /* @__PURE__ */ new Set(["/ai/chat", "/ai/tutor", "/tutor", "/nvidia-tutor", "/crypto/assistant", "/company/assistant", "/dashboard/assistant", "/personal/assistant", "/finance/scenario-assistant", "/news/explain", "/news/brief"]);
 app.disable("x-powered-by");
-app.use(express2.json({ limit: "2mb" }));
+app.use(express3.json({ limit: "2mb" }));
 app.get("/api/news/image", handleNewsImage);
 app.use("/api/v1", v1Router);
 app.use("/api/advisor", advisorRouter);

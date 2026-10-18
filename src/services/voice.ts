@@ -1,8 +1,10 @@
 /**
- * Voice for the AI CFO, using only what the browser provides: speech recognition to hear the question
- * and speech synthesis to read the answer. Nothing is recorded or stored by ArthaMind; on Chrome and
- * Edge the browser's own speech service turns speech into text.
+ * Voice for the AI CFO. Hearing the question: for signed-in users the recording goes to our server,
+ * which turns it into text with Sarvam AI (every browser, Indian languages, a daily limit per user);
+ * the audio is not stored. Without a server answer (limit reached, offline) Chrome and Edge fall back
+ * to the browser's own speech recognition. Visitors who are not signed in are asked to sign up.
  */
+import { getStoredAccessToken } from './supabaseRest';
 
 export interface VoiceLanguage {
   /** BCP-47 tag used for recognition and voices. */
@@ -52,7 +54,77 @@ function recognitionCtor(): RecognitionCtor | null {
   return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null;
 }
 
-export const canListen = () => recognitionCtor() !== null;
+const canRecord = () => typeof window !== 'undefined' && typeof MediaRecorder !== 'undefined' && !!navigator.mediaDevices?.getUserMedia;
+/** Voice input is possible: server transcription (any browser that can record) or the browser's own. */
+export const canListen = () => canRecord() || recognitionCtor() !== null;
+export const SIGN_IN_FOR_VOICE = 'Sign up or sign in to ask by voice. It is free.';
+
+/** Records until stop() or a pause after speaking (max 25 s), then sends it to /api/voice/stt. */
+function listenWithServer(lang: string, token: string, onText: (text: string) => void): { done: Promise<string>; stop: () => void } {
+  let stopNow: () => void = () => undefined;
+  const done = (async () => {
+    let stream: MediaStream;
+    try { stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } }); }
+    catch { throw new Error(LISTEN_ERRORS['not-allowed']); }
+    const type = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg;codecs=opus'].find((t) => MediaRecorder.isTypeSupported?.(t)) ?? '';
+    const rec = new MediaRecorder(stream, type ? { mimeType: type } : undefined);
+    const chunks: BlobPart[] = [];
+    rec.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data); };
+    const ended = new Promise<void>((resolve) => { rec.onstop = () => resolve(); });
+    // Stop after ~1.4 s of quiet once the person has spoken, or after 25 s.
+    let ctx: AudioContext | null = null, timer = 0, raf = 0;
+    const finish = () => { if (rec.state !== 'inactive') rec.stop(); };
+    stopNow = finish;
+    try {
+      ctx = new AudioContext();
+      const analyser = ctx.createAnalyser(); analyser.fftSize = 1024;
+      ctx.createMediaStreamSource(stream).connect(analyser);
+      const data = new Uint8Array(analyser.fftSize);
+      let heard = false, quietSince = 0;
+      const tick = () => {
+        analyser.getByteTimeDomainData(data);
+        let peak = 0; for (const v of data) peak = Math.max(peak, Math.abs(v - 128));
+        const now = performance.now();
+        if (peak > 14) { heard = true; quietSince = 0; } else if (heard) { quietSince ||= now; if (now - quietSince > 1400) { finish(); return; } }
+        raf = requestAnimationFrame(tick);
+      };
+      raf = requestAnimationFrame(tick);
+    } catch { /* no level meter: tap to stop, or the 25 s cap */ }
+    timer = window.setTimeout(finish, 25_000);
+    onText('Listening…');
+    rec.start(250);
+    await ended;
+    window.clearTimeout(timer); cancelAnimationFrame(raf); void ctx?.close(); stream.getTracks().forEach((t) => t.stop());
+    const blob = new Blob(chunks, { type: rec.mimeType || type || 'audio/webm' });
+    if (blob.size < 1000) { onText(''); return ''; }
+    onText('Understanding…');
+    const res = await fetch(`/api/voice/stt?lang=${encodeURIComponent(lang)}`, { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': blob.type }, body: blob });
+    const body = await res.json().catch(() => ({})) as { text?: string; error?: string; code?: string };
+    if (!res.ok) throw Object.assign(new Error(body.error || 'Voice input stopped. Please try again or type your question.'), { code: body.code });
+    onText(body.text ?? '');
+    return (body.text ?? '').trim();
+  })();
+  return { done, stop: () => stopNow() };
+}
+
+/** Listen once: server transcription when signed in, else a prompt to sign up. */
+export function listenOnce(lang: string, onText: (text: string) => void): { done: Promise<string>; stop: () => void } {
+  const token = getStoredAccessToken();
+  if (!token) return { done: Promise.reject(new Error(SIGN_IN_FOR_VOICE)), stop: () => undefined };
+  if (!canRecord()) return listenInBrowser(lang, onText);
+  const server = listenWithServer(lang, token, onText);
+  let current = server.stop;
+  const done = server.done.catch((error: Error & { code?: string }) => {
+    // Daily limit used up or the service unavailable: the browser's free recognition takes over where it exists.
+    if (['limit', 'unconfigured', 'busy', 'failed'].includes(error.code ?? '') && recognitionCtor()) {
+      const local = listenInBrowser(lang, onText);
+      current = local.stop;
+      return local.done;
+    }
+    throw error;
+  });
+  return { done, stop: () => current() };
+}
 export const canSpeak = () => typeof window !== 'undefined' && 'speechSynthesis' in window && typeof SpeechSynthesisUtterance !== 'undefined';
 
 const LISTEN_ERRORS: Record<string, string> = {
@@ -64,8 +136,8 @@ const LISTEN_ERRORS: Record<string, string> = {
   'language-not-supported': 'This browser cannot recognise speech in this language yet. Please type your question.',
 };
 
-/** Listen once. Calls onText with live text; resolves with the final text ('' if nothing was heard). */
-export function listenOnce(lang: string, onText: (text: string) => void): { done: Promise<string>; stop: () => void } {
+/** The browser's own recognition. Calls onText with live text; resolves with the final text ('' if nothing was heard). */
+function listenInBrowser(lang: string, onText: (text: string) => void): { done: Promise<string>; stop: () => void } {
   const Ctor = recognitionCtor();
   if (!Ctor) return { done: Promise.reject(new Error('Voice input works in Chrome or Edge. Please type your question.')), stop: () => undefined };
   const rec = new Ctor();

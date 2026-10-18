@@ -4,8 +4,10 @@ import { HeroTicker, Tick, QUOTE_NAMES, formatPrice, useHeroMarket } from './Her
 import './landingHero.css';
 import './heroCity.css';
 
-// The animated phone (and the animation library it uses) loads after the town is on screen.
-const HeroPhone = lazy(() => import('./HeroPhone').then((r) => ({ default: r.HeroPhone })));
+// Start fetching the animated phone (and its animation library) as soon as this module runs, in
+// parallel with the town picture, so the whole phone appears at once instead of in pieces.
+const phoneModule = typeof window !== 'undefined' ? import('./HeroPhone') : undefined;
+const HeroPhone = lazy(() => (phoneModule ?? import('./HeroPhone')).then((r) => ({ default: r.HeroPhone })));
 
 /** Town picture size (px). Every overlay below is placed in % of it, so it scales with the picture. */
 const TOWN_W = 1376;
@@ -43,6 +45,10 @@ const Spark: React.FC<{ points: number[]; up: boolean }> = ({ points, up }) => {
 export const LandingHero: React.FC = () => {
   const { quotes, nifty } = useHeroMarket();
   const sceneRef = useRef<HTMLDivElement>(null);
+  const townRef = useRef<HTMLImageElement>(null);
+  // Overlays wait for the town picture so nothing shows half-built on an empty page.
+  const [townReady, setTownReady] = useState(false);
+  useEffect(() => { if (townRef.current?.complete) setTownReady(true); }, []);
   const lineRef = useRef<HTMLDivElement>(null);
   const [phoneScale, setPhoneScale] = useState(0.3);
   const [slide, setSlide] = useState(0);
@@ -94,8 +100,8 @@ export const LandingHero: React.FC = () => {
       </div>
 
       <div className="hc-stage">
-        <div ref={sceneRef} className="hc-scene">
-          <img className="hc-town" src="/hero/city2/town.webp" width={1376} height={768} fetchPriority="high" decoding="async"
+        <div ref={sceneRef} className={'hc-scene' + (townReady ? ' is-ready' : '')}>
+          <img ref={townRef} onLoad={() => setTownReady(true)} className="hc-town" src="/hero/city2/town.webp" width={1376} height={768} fetchPriority="high" decoding="async"
             alt="ArthaMind City: offices for tax, money health, investments, goals, insurance and experts around a central plaza where the ArthaMind phone stands" />
 
           {/* Parked cars */}
@@ -147,7 +153,7 @@ export const LandingHero: React.FC = () => {
 
           {/* The phone in the plaza: the live ArthaMind tour */}
           <div className="hc-phone" style={{ '--s': phoneScale } as React.CSSProperties}>
-            <Suspense fallback={<div className="hp" aria-hidden="true"><div className="hp-device" /></div>}><HeroPhone /></Suspense>
+            {townReady && <Suspense fallback={null}><HeroPhone /></Suspense>}
           </div>
         </div>
       </div>

@@ -14,11 +14,11 @@ export function lazyOnView<P extends object>(loader: () => Promise<{ default: Re
       if (show) return;
       const el = ref.current;
       if (!el || typeof IntersectionObserver === 'undefined') { setShow(true); return; }
-      const io = new IntersectionObserver((es) => { if (es.some((e) => e.isIntersecting)) { setShow(true); io.disconnect(); } }, { rootMargin: '900px 0px' });
+      const io = new IntersectionObserver((es) => { if (es.some((e) => e.isIntersecting)) { setShow(true); io.disconnect(); } }, { rootMargin: '1800px 0px' });
       io.observe(el);
       // Start loading anyway once the page is idle, so fast scrollers rarely see a placeholder.
       const idle = (window as unknown as { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number }).requestIdleCallback;
-      const t = idle ? idle(() => { void loader(); }, { timeout: 4000 }) : window.setTimeout(() => { void loader(); }, 3000);
+      const t = idle ? idle(() => { void loader(); }, { timeout: 1500 }) : window.setTimeout(() => { void loader(); }, 1200);
       return () => { io.disconnect(); if (!idle) window.clearTimeout(t as number); };
     }, [show]);
     const placeholder = <div ref={ref} id={opts.anchorId} style={{ minHeight: opts.minHeight }} aria-hidden="true"/>;

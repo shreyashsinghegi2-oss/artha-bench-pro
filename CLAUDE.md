@@ -24,7 +24,7 @@ Personal-finance web app for Indian families: money health check, tax (old vs ne
 ## Product rules
 - Be honest in all copy: no fake reviews or names, no invented traction. Reviews carry an "Illustrative quotes" note.
 - Header: four menus (`NavMenu.tsx`, Groww-style panels with building art from the town) and one action, Sign up. Visitors who pick any destination sign up first (pending return path), then land on it.
-- Landing order: hero, products, stats, purpose, phone showcase, Money Check, AI CFO, markets and news, pricing, reviews (`ReviewsStory.tsx`), languages, footer.
+- Landing order: hero, products, stats, purpose, phone showcase, Money Check, AI CFO, markets and news, pricing, reviews (`ReviewsStory.tsx`: Groww-style field of cards that zooms out from the centre, then the dark logo finale), languages, footer. The Bitcoin candlestick preview was removed from the landing.
 - Hero (`LandingHero.tsx`): live ticker (`HeroTicker.tsx`, real quotes only), a big two-line heading "Financial intelligence / for the global Indian." that fades on scroll, then the owner-approved town `public/hero/city2/town.webp` (1376 × 768). Overlays in `heroCity.css` are % of that picture: `HeroPhone` standing front-facing on the plaza (covers the drawn phone), NIFTY 50 on the dark screen, a ticker band clipped to the market building's fascia (two faces), a price screen, billboard messages, and parked car sprites (`city2/*.png`, no motion).
 - Investment advice or stock tips appear only as education, or through SEBI-registered partners.
 - Keep secrets in environment variables only; `VITE_*` values are public.

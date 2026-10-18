@@ -10,7 +10,6 @@ import{fetchBusinessNews}from'../../services/learningApi';
 import { ArthaMindMark } from './ArthaMindMark';
 import { LandingHero } from './LandingHero';
 const LiveMarketTicker=lazyOnView(()=>import('./LiveMarketTicker').then(m=>({default:m.LiveMarketTicker})),{minHeight:120});
-import{LazyCryptoMarketPreview as CryptoMarketPreview}from'./LazyCryptoMarketPreview';
 const BusinessNewsTicker=lazyOnView(()=>import('./BusinessBrief').then(m=>({default:m.BusinessNewsTicker})),{minHeight:48});type LandingNews=ReturnType<typeof import('./BusinessBrief')['normalizeBusinessNews']>;
 import{LandingPricing}from'./LandingPricing';
 import{LandingProducts}from'./LandingProducts';
@@ -68,7 +67,7 @@ export const ConnectedLandingPage:React.FC<Props>=({signedIn,onEnter,onSignIn,on
  <PhoneShowcase onTry={()=>scrollToId('money-check')}/>
  <MoneyCheck onAsk={askCfo}/>
  <LandingAiCfo onEnter={open} externalPrompt={cfoPrompt}/>
- <LiveMarketTicker/><CryptoMarketPreview/><BusinessNewsTicker articles={news}/>
+ <LiveMarketTicker/><BusinessNewsTicker articles={news}/>
  <LandingPricing onStart={()=>open('overview')} onSample={()=>scrollToId('money-check')}/>
  <ReviewsStory/>
  {signedIn?<LanguagesStory ctaLabel="Open your workspace" onCta={()=>open('overview')}/>:<LanguagesStory ctaLabel="Sign up free" onCta={onSignUp??onSignIn} autoPrompt/>}

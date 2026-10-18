@@ -27,7 +27,7 @@ export const LandingProducts: React.FC<{ onTryMind: () => void; onOpenBench: () 
       <div className="lpd-grid">
         <article className="lpd-mind" aria-labelledby="lpd-mind-title">
           <header>
-            <span className="lpd-logo"><ArthaMindMark size={30} tone="light" /></span>
+            <span className="lpd-logo"><ArthaMindMark size={30} /></span>
             <div>
               <small>For you</small>
               <h3 id="lpd-mind-title">ArthaMind AI</h3>

@@ -8,6 +8,15 @@ export const QUOTE_NAMES: Record<string, string> = {
   'INFY.NS': 'INFOSYS', 'ICICIBANK.NS': 'ICICI BANK', 'GC=F': 'GOLD', 'INR=X': 'USD/INR', 'BTC-USD': 'BITCOIN',
 };
 
+const FEED_NAMES: Record<string, string> = { '^NSEI': 'NIFTY:NSE', '^BSESN': 'SENSEX:BSE' };
+/** True when a feed symbol is the requested one: exact, a known index alias, or X.NS/X.BO sent back as X:NSE/X:BSE. */
+export function sameSymbol(feed: string, wanted: string): boolean {
+  const f = feed.toUpperCase(), w = wanted.toUpperCase();
+  if (f === w || FEED_NAMES[w] === f) return true;
+  const m = /^(.+)\.(NS|BO)$/.exec(w);
+  return !!m && f === `${m[1]}:${m[2] === 'NS' ? 'NSE' : 'BSE'}`;
+}
+
 export const formatPrice = (q: NormalizedMarketQuote) =>
   Number(q.price).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -25,7 +34,11 @@ export function useHeroMarket() {
       try {
         const [data, history] = await Promise.all([fetchMarketOverview(SYMBOLS), fetchMarketHistory('^NSEI', '1d').catch(() => ({ points: [] }))]);
         const real = data.filter((q) => q && q.freshness !== 'demo' && Number.isFinite(Number(q.price)));
-        const ordered = SYMBOLS.map((s) => real.find((q) => q.symbol.toUpperCase() === s)).filter(Boolean) as NormalizedMarketQuote[];
+        // The feed names Indian symbols its own way (^NSEI comes back as NIFTY:NSE), so match either form.
+        const ordered = SYMBOLS.flatMap((s) => {
+          const q = real.find((r) => sameSymbol(r.symbol, s));
+          return q ? [{ ...q, symbol: s }] : [];
+        });
         const path = (history.points ?? []).map((p) => Number(p.close ?? p.price)).filter(Number.isFinite);
         if (alive) { setQuotes(ordered); setNifty(path); }
       } catch { /* keep the last good data */ }
@@ -51,13 +64,16 @@ export const Tick: React.FC<{ q: NormalizedMarketQuote; hidden?: boolean }> = ({
   );
 };
 
-/** A thin, light ticker across the top of the hero. Hidden when no real quotes loaded. */
+/** A thin, muted ticker across the top of the hero that never stops. Hidden when no real quotes loaded. */
 export const HeroTicker: React.FC<{ quotes: NormalizedMarketQuote[] }> = ({ quotes }) => {
   if (!quotes.length) return null;
+  // Repeat the list so one half always fills even a wide screen; the track scrolls by exactly one half.
+  const reps = Math.max(2, Math.ceil(24 / quotes.length));
+  const half = Array.from({ length: reps }, () => quotes).flat();
   return (
     <div className="hc-ticker" aria-label="Market prices">
-      <div className="hc-ticker-track">
-        {[...quotes, ...quotes].map((q, i) => <Tick key={`${q.symbol}-${i}`} q={q} hidden={i >= quotes.length} />)}
+      <div className="hc-ticker-track" style={{ animationDuration: `${half.length * 2.4}s` }}>
+        {[...half, ...half].map((q, i) => <Tick key={`${q.symbol}-${i}`} q={q} hidden={i >= quotes.length} />)}
       </div>
     </div>
   );

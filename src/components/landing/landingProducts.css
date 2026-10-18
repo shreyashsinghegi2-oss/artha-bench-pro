@@ -34,13 +34,19 @@
 .lpd-btn-dark:hover{background:#1e293b}
 @media (max-width:960px){.lpd-grid{grid-template-columns:1fr}}
 @media (max-width:560px){.lpd-mind,.lpd-bench{padding:22px 18px}.lpd-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}.lpd-btn{align-self:stretch}}
-/* Artha Bench Pro in the same brand green as ArthaMind */
-.lpd-bench{background:radial-gradient(120% 90% at 100% 0%,#14532d 0%,#0b2a22 55%,#081c17 100%);border:0;color:#e8f5f0}
-.lpd-bench small{color:#d9a441}
-.lpd-bench .lpd-lead{color:#c7ddd5}
-.lpd-logo-bench{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.14)}
+/* Both products on clean white cards */
+.lpd-mind,.lpd-bench{background:#fff;border:1px solid #e3e8e6;color:#0f172a;box-shadow:0 18px 40px -28px rgba(15,23,42,.25)}
+.lpd-logo,.lpd-logo-bench{background:#f4f7f6;border-color:#e3e8e6}
 .lpd-logo-bench img{display:block;width:34px;height:34px;object-fit:contain}
-.lpd-tiles li{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.12)}
-.lpd-tiles li svg{color:#34d399}
-.lpd-tiles b{color:#fff}
-.lpd-tiles span{color:#b9d3ca}
+.lpd-mind small,.lpd-bench small{color:#64748b}
+.lpd-mind .lpd-lead,.lpd-bench .lpd-lead{color:#475569}
+.lpd-steps li:not(:last-child)::before{background:#e3e8e6}
+.lpd-step-icon{background:#f4f7f6;color:#0f172a;border:1px solid #e3e8e6}
+.lpd-steps b em{color:#64748b}
+.lpd-steps p{color:#5b6675}
+.lpd-tiles li{background:#fff;border:1px solid #e8ecef}
+.lpd-tiles li svg{color:#0f172a}
+.lpd-tiles b{color:#0f172a}
+.lpd-tiles span{color:#5b6675}
+.lpd-btn-light{background:#0f172a;color:#fff}
+.lpd-btn-light:hover{background:#1e293b}

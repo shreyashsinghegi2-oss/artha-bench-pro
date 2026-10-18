@@ -1,13 +1,12 @@
 /* ArthaMind City hero. Overlay positions are % of the town picture (1376 × 768); cqw units follow the scene width. */
 .hc{position:relative;background:#fff;padding:0 0 28px;overflow:hidden}
 
-/* Live ticker */
-.hc-ticker{border-bottom:1px solid #eef0ee;background:#fff;overflow:hidden;mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent)}
-.hc-ticker-track{display:flex;width:max-content;animation:hc-tape 46s linear infinite}
-.hc-ticker:hover .hc-ticker-track{animation-play-state:paused}
-.hc-tick{display:inline-flex;align-items:center;gap:8px;padding:9px 22px;font-size:12.5px;color:#44403c;white-space:nowrap;font-variant-numeric:tabular-nums}
-.hc-tick b{font-weight:700;color:#1c1917;letter-spacing:.02em}
-.hc-up{color:#0f9d58;font-weight:700;font-style:normal}.hc-down{color:#d93025;font-weight:700;font-style:normal}
+/* Live ticker: muted, always moving (no pause on hover) */
+.hc-ticker{border-bottom:1px solid #eef0ee;background:#fafbfa;overflow:hidden}
+.hc-ticker-track{display:flex;width:max-content;animation:hc-tape 50s linear infinite;will-change:transform}
+.hc-tick{display:inline-flex;align-items:center;gap:8px;padding:8px 20px;font-size:12.5px;color:#7a837e;white-space:nowrap;font-variant-numeric:tabular-nums}
+.hc-tick b{font-weight:700;color:#5d6762;letter-spacing:.02em}
+.hc-up{color:#3f9d6a;font-weight:700;font-style:normal}.hc-down{color:#c4605a;font-weight:700;font-style:normal}
 @keyframes hc-tape{to{transform:translateX(-50%)}}
 
 /* One big line (Groww-style), fades away on scroll */
@@ -19,6 +18,11 @@
 .hc-stage{display:flex;justify-content:center;padding:clamp(14px,2.4vw,34px) 8px 0}
 .hc-scene{position:relative;container-type:inline-size;width:min(1020px,100%);aspect-ratio:1376/768}
 .hc-town{display:block;width:100%;height:100%;user-select:none;pointer-events:none}
+/* Overlays appear together once the town picture has loaded; the phone fades in whole. */
+.hc-scene>:not(.hc-town){opacity:0;transition:opacity .35s ease}
+.hc-scene.is-ready>:not(.hc-town){opacity:1}
+.hc-phone>.hp{animation:hc-in .45s ease both}
+@keyframes hc-in{from{opacity:0}to{opacity:1}}
 
 /* Cars parked where the picture drew them */
 .hc-car{position:absolute;pointer-events:none}

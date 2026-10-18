@@ -1,58 +1,77 @@
-/* ArthaMind City hero. Positions inside .hc-scene are percentages of the town image (1621 × 919). */
-.hc{position:relative;background:#fff;padding:0 0 32px;overflow:hidden}
+/* ArthaMind City hero. Overlay positions are % of the town picture (1376 × 768); cqw units follow the scene width. */
+.hc{position:relative;background:#fff;padding:0 0 28px;overflow:hidden}
 
 /* Live ticker */
 .hc-ticker{border-bottom:1px solid #eef0ee;background:#fff;overflow:hidden;mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent)}
 .hc-ticker-track{display:flex;width:max-content;animation:hc-tape 46s linear infinite}
 .hc-ticker:hover .hc-ticker-track{animation-play-state:paused}
-.hc-tick{display:inline-flex;align-items:center;gap:8px;padding:10px 22px;font-size:12.5px;color:#44403c;white-space:nowrap;font-variant-numeric:tabular-nums}
+.hc-tick{display:inline-flex;align-items:center;gap:8px;padding:9px 22px;font-size:12.5px;color:#44403c;white-space:nowrap;font-variant-numeric:tabular-nums}
 .hc-tick b{font-weight:700;color:#1c1917;letter-spacing:.02em}
-.hc-up{color:#0f9d58;font-weight:700}.hc-down{color:#d93025;font-weight:700}
+.hc-up{color:#0f9d58;font-weight:700;font-style:normal}.hc-down{color:#d93025;font-weight:700;font-style:normal}
 @keyframes hc-tape{to{transform:translateX(-50%)}}
 
-/* Headline */
-.hc-copy{max-width:820px;margin:0 auto;padding:clamp(36px,5vw,64px) 16px 0;text-align:center}
-.hc-title{margin:0;font-size:clamp(32px,4.6vw,60px);line-height:1.06;letter-spacing:-.035em;font-weight:800;color:#0f1714;text-wrap:balance}
+/* One line */
+.hc-line{padding:clamp(16px,2.6vw,30px) 16px 0;text-align:center;will-change:opacity,transform}
+.hc-title{margin:0;font-size:clamp(24px,3.3vw,44px);line-height:1.1;letter-spacing:-.03em;font-weight:800;color:#0f1714;text-wrap:balance}
 .hc-title span{color:#0f5c4a}
-.hc-sub{margin:18px auto 0;max-width:58ch;font-size:clamp(15px,1.4vw,17.5px);line-height:1.6;color:#5b6560}
-.hc-ctas{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:12px 22px;margin-top:26px}
-.hc-btn{display:inline-flex;align-items:center;gap:8px;border:0;border-radius:999px;padding:15px 28px;background:#0f5c4a;color:#fff;font-size:16px;font-weight:700;cursor:pointer;box-shadow:0 10px 26px rgba(15,92,74,.22);transition:transform .2s,background .2s}
-.hc-btn:hover{background:#0b4a3b;transform:translateY(-2px)}
-.hc-link{display:inline-flex;align-items:center;gap:6px;border:0;background:none;color:#0f5c4a;font-size:15px;font-weight:700;cursor:pointer;padding:6px 2px;border-bottom:1px solid rgba(15,92,74,.35)}
-.hc-link:hover{border-color:#0f5c4a}
-.hc-btn:focus-visible,.hc-link:focus-visible{outline:3px solid #34c46f;outline-offset:3px}
 
-/* Scene */
-.hc-scene-wrap{margin-top:clamp(40px,5vw,72px)}
-.hc-scene{position:relative;width:min(1240px,100%);margin:0 auto;aspect-ratio:1621/919}
+/* Scene: the whole town, centred and fitted to the first screen */
+.hc-stage{display:flex;justify-content:center;padding:clamp(6px,1.4vw,18px) 8px 0}
+.hc-scene{position:relative;container-type:inline-size;width:min(1240px,100%,calc((100svh - 190px) * 1.7917));aspect-ratio:1376/768}
 .hc-town{display:block;width:100%;height:100%;user-select:none;pointer-events:none}
 
-/* Light pool on the pedestal (pedestal top ≈ 49.2% × 48.5%) */
-.hc-glow{position:absolute;left:49.2%;top:48.5%;width:11%;aspect-ratio:2.4;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(closest-side,rgba(52,196,111,.6),rgba(52,196,111,0));animation:hc-pulse 3.2s ease-in-out infinite}
-@keyframes hc-pulse{0%,100%{opacity:.6;transform:translate(-50%,-50%) scale(.92)}50%{opacity:1;transform:translate(-50%,-50%) scale(1.06)}}
+/* Cars: each drives a short stretch of its road and fades in and out at the ends */
+.hc-car{position:absolute;pointer-events:none;opacity:0;animation:hc-drive var(--dur) linear var(--delay) infinite}
+.hc-car1{left:34.88%;top:51.82%;width:6.69%;--fx:4.36cqw;--fy:-1.6cqw;--tx:-3.2cqw;--ty:1.18cqw;--dur:8s;--delay:0s}
+.hc-auto{left:24.35%;top:54.69%;width:5.09%;--fx:-.36cqw;--fy:-.36cqw;--tx:6.18cqw;--ty:2.91cqw;--dur:8s;--delay:4.2s}
+.hc-car2{left:70.13%;top:53.65%;width:6.54%;--fx:6.54cqw;--fy:-2.62cqw;--tx:-5.09cqw;--ty:2.04cqw;--dur:10s;--delay:1.5s}
+@keyframes hc-drive{0%{opacity:0;translate:var(--fx) var(--fy)}10%{opacity:1}88%{opacity:1}100%{opacity:0;translate:var(--tx) var(--ty)}}
 
-/* Brand on the blank billboard (inner panel: left edge x 1093, y 662–735; right edge x 1195, y 708–785) */
-.hc-board{position:absolute;left:67.43%;top:72.04%;width:6.29%;height:7.95%;transform-origin:0 0;transform:skewY(24.3deg);display:grid;place-items:center;overflow:hidden;container-type:size;background:linear-gradient(160deg,#f3faf6,#e2f3ea)}
-.hc-board-in{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2cqw;text-align:center;line-height:1.05;width:100%;padding:0 4cqw}
-.hc-board-brand{display:inline-flex;align-items:center;gap:2cqw;font-size:6.5cqw;font-weight:800;color:#0f5c4a;white-space:nowrap}
-.hc-board-brand .am-logo{width:10cqw;height:10cqw}
+/* Media building screen (dark): NIFTY 50 today */
+.hc-dark{position:absolute;left:33.14%;top:36%;width:6.54%;height:8.98%;transform-origin:0 0;transform:skewY(-19.9deg);container-type:size;overflow:hidden;border-radius:4cqh}
+.hc-dark-in{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:6cqh 8cqw;background:#0e2a3b;color:#e8f3ee}
+.hc-dark-head{display:flex;width:100%;justify-content:space-between;align-items:baseline;gap:4cqw;font-size:10.5cqw;line-height:1;white-space:nowrap}
+.hc-dark-head b{font-weight:800;letter-spacing:.02em}
+.hc-dark-head em{font-size:10cqw}
+.hc-dark-price{width:100%;font-size:15cqw;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.15}
+.hc-spark{width:100%;height:42cqh;margin-top:2cqh}
+.hc-spark-line{fill:none;stroke-width:2.2;vector-effect:non-scaling-stroke;stroke-linejoin:round}
+.hc-spark-line.up{stroke:#34c46f}.hc-spark-line.down{stroke:#ef5350}
+.hc-spark-fill{stroke:none}.hc-spark-fill.up{fill:rgba(52,196,111,.18)}.hc-spark-fill.down{fill:rgba(239,83,80,.18)}
+
+/* Market building: ticker band (runs along the curved fascia) */
+.hc-band{position:absolute;left:48.11%;top:43.23%;width:15.84%;height:2.86%;transform-origin:0 0;transform:skewY(24.9deg);overflow:hidden;background:#0e2a3b;border-radius:3px;container-type:size}
+.hc-band-track{display:flex;width:max-content;height:100%;align-items:center;animation:hc-tape 22s linear infinite}
+.hc-band .hc-tick{padding:0 8cqh;gap:4cqh;font-size:46cqh;color:#cfe3da}
+.hc-band .hc-tick b{color:#fff}
+
+/* Market building: price screen */
+.hc-screen{position:absolute;left:52.69%;top:52.04%;width:4%;height:5.08%;transform-origin:0 0;transform:skewY(25.4deg);container-type:size;overflow:hidden;background:#fff}
+.hc-screen-in{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2cqh;line-height:1.05;animation:hc-fade .5s ease both}
+.hc-screen-in b{font-size:15cqw;font-weight:800;color:#0f1714;white-space:nowrap}
+.hc-screen-in span{font-size:15cqw;font-weight:800;color:#0f5c4a;font-variant-numeric:tabular-nums;white-space:nowrap}
+.hc-screen-in em{font-size:12cqw}
+@keyframes hc-fade{from{opacity:0;transform:translateY(12%)}to{opacity:1;transform:none}}
+
+/* Billboard: brand + one message */
+.hc-board{position:absolute;left:79.07%;top:61.91%;width:11.92%;height:12.37%;transform-origin:0 0;transform:skewY(20.5deg);container-type:size;overflow:hidden;background:#fff}
+.hc-board-in{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4cqh;padding:0 6cqw;text-align:center;line-height:1.05}
+.hc-board-brand{display:inline-flex;align-items:center;gap:2cqw;font-size:7cqw;font-weight:800;color:#0f5c4a;white-space:nowrap}
+.hc-board-brand .am-logo{width:9cqw;height:9cqw}
 .hc-board-brand em{font-style:normal;color:#0f9d58}
-.hc-board b{font-size:10.5cqw;font-weight:800;color:#0f1714;letter-spacing:-.02em;white-space:nowrap;animation:hc-board-in .45s ease both}
-.hc-board small{font-size:6.2cqw;line-height:1.15;max-width:92cqw;color:#3f4b46;font-weight:600;animation:hc-board-in .45s .08s ease both}
-@keyframes hc-board-in{from{opacity:0;transform:translateY(25%)}to{opacity:1;transform:none}}
+.hc-board b{font-size:11cqw;font-weight:800;color:#0f1714;letter-spacing:-.02em;white-space:nowrap;animation:hc-fade .45s ease both}
+.hc-board small{font-size:6.6cqw;color:#3f4b46;font-weight:600;line-height:1.2;animation:hc-fade .45s .08s ease both}
 
-/* Phone standing on the pedestal: its base sits on the pedestal top (49.5% down), centred at 49.2% */
-.hc-phone{position:absolute;left:49.2%;bottom:50.5%;width:calc(300px * var(--s,.5));height:calc(620px * var(--s,.5));transform:translateX(-50%);z-index:3;animation:hc-hover 4s ease-in-out infinite}
-.hc-phone-in{width:300px;transform:scale(var(--s,.5));transform-origin:top left}
-.hc-phone-shadow{position:absolute;left:50%;bottom:-10px;width:150%;height:26px;transform:translateX(-50%);border-radius:50%;background:radial-gradient(closest-side,rgba(10,60,40,.35),transparent);pointer-events:none}
-.hc-phone .hp,.hc-phone .hp-device{width:300px}
-.hc-phone .hp-device{height:620px}
-@keyframes hc-hover{0%,100%{translate:0 0}50%{translate:0 -6px}}
+/* Phone placed exactly over the drawn phone (top-left corner at 639,422; turned to the town's angle) */
+.hc-phone{position:absolute;left:46.44%;top:54.95%;width:0;height:0;z-index:2}
+.hc-phone>.hp{width:300px;transform-origin:0 0;transform:skewY(26deg) scale(var(--s,.27))}
+.hc-phone .hp-device{width:300px;height:620px}
 
 @media (max-width:700px){
-  .hc-scene-wrap{padding:6vw 8px 0}
+  .hc-tick{padding:8px 16px;font-size:12px}
 }
 @media (prefers-reduced-motion:reduce){
-  .hc-ticker-track,.hc-glow,.hc-phone,.hc-board b,.hc-board small{animation:none}
-  .hc-ticker{overflow-x:auto}
+  .hc-ticker-track,.hc-band-track,.hc-car,.hc-board b,.hc-board small,.hc-screen-in{animation:none}
+  .hc-car{opacity:0}
+  .hc-ticker,.hc-band{overflow-x:auto}
 }

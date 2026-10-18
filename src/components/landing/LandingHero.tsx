@@ -1,96 +1,149 @@
 import React, { lazy, Suspense, useEffect, useRef, useState } from 'react';
-import { ArrowRight } from 'lucide-react';
 import { ArthaMindLogoMark } from '../branding/ArthaMindBrand';
-import { HeroTicker } from './HeroTicker';
+import { HeroTicker, Tick, QUOTE_NAMES, formatPrice, useHeroMarket } from './HeroTicker';
 import './landingHero.css';
 import './heroCity.css';
 
-// The animated phone (and the animation library it uses) loads after the headline and buttons are on screen.
+// The animated phone (and the animation library it uses) loads after the town is on screen.
 const HeroPhone = lazy(() => import('./HeroPhone').then((r) => ({ default: r.HeroPhone })));
 
-/** Natural height of the phone in HeroPhone (px); the scene scales it to stand on the pedestal. */
-const PHONE_H = 620;
+/** Town picture size (px). Every overlay below is placed in % of it, so it scales with the picture. */
+const TOWN_W = 1376;
+/** Width of the phone drawn in the town (px) and of HeroPhone (px). */
+const DRAWN_PHONE_W = 88;
+const PHONE_W = 300;
 
-/** What the billboard says, one line at a time, in step with the phone tour. */
+/** What the billboard says, one message at a time. */
 const BOARD = [
   ['Save tax', 'Old vs new regime, picked for you'],
   ['Money health', 'Your score in 2 minutes'],
-  ['Plan goals', 'Retirement, kids, home'],
+  ['Plan every goal', 'Retirement, kids, home'],
   ['Experts check', 'CA-reviewed, not just AI'],
   ['Your language', '13 Indian languages by voice'],
 ] as const;
 
+/** Today's NIFTY 50 path as an SVG line for the screen on the media building. */
+const Spark: React.FC<{ points: number[]; up: boolean }> = ({ points, up }) => {
+  const min = Math.min(...points), max = Math.max(...points), span = max - min || 1;
+  const d = points.map((p, i) => `${(i / (points.length - 1)) * 100},${36 - ((p - min) / span) * 32}`).join(' ');
+  return (
+    <svg viewBox="0 0 100 38" preserveAspectRatio="none" className="hc-spark" aria-hidden="true">
+      <polyline points={`0,38 ${d} 100,38`} className={up ? 'hc-spark-fill up' : 'hc-spark-fill down'} />
+      <polyline points={d} className={up ? 'hc-spark-line up' : 'hc-spark-line down'} />
+    </svg>
+  );
+};
+
 /**
- * Landing hero: live index ticker, one-line promise, then "ArthaMind City", an isometric town where each
- * building is a part of the product (tax office, money health centre, growth tower, goals, insurance,
- * expert hub, voice tower, family homes). The live phone tour stands on the central pedestal, lit from below.
+ * Landing hero: live index ticker, one line, then ArthaMind City. The town is on screen as the page opens.
+ * Overlays sit on the picture's blank surfaces: the live phone tour on the drawn phone, today's NIFTY 50
+ * on the media building, a live ticker band and price screen on the market building, the billboard
+ * messages, and cars driving the roads.
  */
-export const LandingHero: React.FC<{ onSample: () => void; onExplore: () => void }> = ({ onSample, onExplore }) => {
+export const LandingHero: React.FC = () => {
+  const { quotes, nifty } = useHeroMarket();
   const sceneRef = useRef<HTMLDivElement>(null);
-  const [scale, setScale] = useState(0.32);
+  const lineRef = useRef<HTMLDivElement>(null);
+  const [phoneScale, setPhoneScale] = useState(0.27);
   const [slide, setSlide] = useState(0);
+  const [tick, setTick] = useState(0);
 
-  useEffect(() => {
-    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
-    const id = window.setInterval(() => setSlide((s) => (s + 1) % BOARD.length), 3200);
-    return () => window.clearInterval(id);
-  }, []);
-
-  // The phone stands on the central pedestal; its height is a fixed share of the town's height so it
-  // keeps the same place in the scene at every screen size.
+  // Fit HeroPhone to the drawn phone at every screen size.
   useEffect(() => {
     const el = sceneRef.current;
     if (!el || typeof ResizeObserver === 'undefined') return;
-    const ro = new ResizeObserver(([entry]) => {
-      const h = (entry.contentRect.width * 919) / 1621;
-      const share = 0.31; // about the height of the Growth Tower
-      setScale(Math.max(0.1, Math.min(0.5, (h * share) / PHONE_H)));
-    });
+    const ro = new ResizeObserver(([entry]) => setPhoneScale((entry.contentRect.width * DRAWN_PHONE_W) / TOWN_W / PHONE_W));
     ro.observe(el);
     return () => ro.disconnect();
   }, []);
 
+  // Billboard and price screen cycle; both stop for reduced motion.
+  useEffect(() => {
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+    const a = window.setInterval(() => setSlide((s) => (s + 1) % BOARD.length), 3400);
+    const b = window.setInterval(() => setTick((t) => t + 1), 2600);
+    return () => { window.clearInterval(a); window.clearInterval(b); };
+  }, []);
+
+  // The line fades and lifts away as the visitor scrolls.
+  useEffect(() => {
+    const el = lineRef.current;
+    if (!el || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+    let frame = 0;
+    const paint = () => {
+      frame = 0;
+      const t = Math.min(1, window.scrollY / 260);
+      el.style.opacity = String(1 - t);
+      el.style.transform = `translateY(${-t * 18}px)`;
+    };
+    const on = () => { if (!frame) frame = requestAnimationFrame(paint); };
+    paint();
+    window.addEventListener('scroll', on, { passive: true });
+    return () => { window.removeEventListener('scroll', on); if (frame) cancelAnimationFrame(frame); };
+  }, []);
+
+  const nf = quotes.find((q) => q.symbol === '^NSEI');
+  const niftyUp = nf ? Number(nf.changePercent ?? 0) >= 0 : nifty.length > 1 ? nifty[nifty.length - 1] >= nifty[0] : true;
+  const shown = quotes.length ? quotes[tick % quotes.length] : undefined;
+
   return (
     <section className="hc" aria-labelledby="hx-title">
-      <HeroTicker />
-      <div className="hc-copy">
-        <h1 id="hx-title" className="hc-title">
-          Financial intelligence <span>that grows your money and secures your future.</span>
-        </h1>
-        <p className="hc-sub">Tax, savings, insurance and investments in one place. AI does the work, registered experts check it, in your language.</p>
-        <div className="hc-ctas">
-          <button type="button" className="hc-btn" onClick={onSample}>Try a sample analysis <ArrowRight size={16} aria-hidden="true" /></button>
-          <button type="button" className="hc-link" onClick={onExplore}>Explore the workspace <ArrowRight size={14} aria-hidden="true" /></button>
-        </div>
+      <HeroTicker quotes={quotes} />
+      <div className="hc-line" ref={lineRef}>
+        <h1 id="hx-title" className="hc-title">Financial intelligence <span>for the global Indian.</span></h1>
       </div>
 
-      <div className="hc-scene-wrap">
+      <div className="hc-stage">
         <div ref={sceneRef} className="hc-scene">
-          <img
-            className="hc-town"
-            src="/hero/city.webp"
-            width={1621}
-            height={919}
-            alt="ArthaMind City: a tax office, money health centre, growth tower, goals building, insurance dome, expert hub, voice tower and family homes around a central plaza"
-            fetchPriority="high"
-            decoding="async"
-          />
+          <img className="hc-town" src="/hero/city2/town.webp" width={1376} height={768} fetchPriority="high" decoding="async"
+            alt="ArthaMind City: offices for tax, money health, investments, goals, insurance and experts around a central plaza where the ArthaMind phone stands" />
 
-          <div className="hc-glow" aria-hidden="true" />
+          {/* Cars on the roads (drawn under the buildings' fronts) */}
+          <img className="hc-car hc-car1" src="/hero/city2/car1.png" alt="" aria-hidden="true" />
+          <img className="hc-car hc-car2" src="/hero/city2/car2.png" alt="" aria-hidden="true" />
+          <img className="hc-car hc-auto" src="/hero/city2/auto.png" alt="" aria-hidden="true" />
 
-          <div className="hc-board" aria-hidden="true">
-            <span className="hc-board-in">
-              <span className="hc-board-brand"><ArthaMindLogoMark size={12} /> ArthaMind <em>AI</em></span>
-              <b key={slide}>{BOARD[slide][0]}</b>
-              <small key={`s${slide}`}>{BOARD[slide][1]}</small>
-            </span>
+          {/* Media building screen: today's NIFTY 50 */}
+          <div className="hc-dark" aria-hidden="true">
+            <div className="hc-dark-in">
+              {nf || nifty.length > 1 ? (
+                <>
+                  <span className="hc-dark-head"><b>NIFTY 50</b>{nf && <em className={niftyUp ? 'hc-up' : 'hc-down'}>{niftyUp ? '▲' : '▼'} {Math.abs(Number(nf.changePercent ?? 0)).toFixed(2)}%</em>}</span>
+                  {nf && <span className="hc-dark-price">{formatPrice(nf)}</span>}
+                  {nifty.length > 1 && <Spark points={nifty} up={niftyUp} />}
+                </>
+              ) : <ArthaMindLogoMark size={28} tone="light" cut="transparent" />}
+            </div>
           </div>
 
-          <div className="hc-phone" style={{ '--s': scale } as React.CSSProperties}>
-            <span className="hc-phone-shadow" aria-hidden="true" />
-            <div className="hc-phone-in">
-              <Suspense fallback={<div className="hp" aria-hidden="true"><div className="hp-device" /></div>}><HeroPhone /></Suspense>
+          {/* Market building: live ticker band and a price screen */}
+          <div className="hc-band" aria-hidden="true">
+            {quotes.length > 0 && <div className="hc-band-track">{[...quotes, ...quotes].map((q, i) => <Tick key={`${q.symbol}-${i}`} q={q} />)}</div>}
+          </div>
+          <div className="hc-screen" aria-hidden="true">
+            <div className="hc-screen-in" key={shown?.symbol ?? 'none'}>
+              {shown ? (
+                <>
+                  <b>{QUOTE_NAMES[shown.symbol] ?? shown.symbol}</b>
+                  <span>{formatPrice(shown)}</span>
+                  <em className={Number(shown.changePercent ?? 0) >= 0 ? 'hc-up' : 'hc-down'}>{Number(shown.changePercent ?? 0) >= 0 ? '▲' : '▼'} {Math.abs(Number(shown.changePercent ?? 0)).toFixed(2)}%</em>
+                </>
+              ) : <ArthaMindLogoMark size={22} />}
             </div>
+          </div>
+
+          {/* Billboard */}
+          <div className="hc-board" aria-hidden="true">
+            <div className="hc-board-in">
+              <span className="hc-board-brand"><ArthaMindLogoMark size={14} /> ArthaMind <em>AI</em></span>
+              <b key={slide}>{BOARD[slide][0]}</b>
+              <small key={`s${slide}`}>{BOARD[slide][1]}</small>
+            </div>
+          </div>
+
+          {/* The phone in the plaza: the live ArthaMind tour */}
+          <div className="hc-phone" style={{ '--s': phoneScale } as React.CSSProperties}>
+            <Suspense fallback={<div className="hp" aria-hidden="true"><div className="hp-device" /></div>}><HeroPhone /></Suspense>
           </div>
         </div>
       </div>

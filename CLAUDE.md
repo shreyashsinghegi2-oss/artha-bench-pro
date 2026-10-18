@@ -23,7 +23,7 @@ Personal-finance web app for Indian families: money health check, tax (old vs ne
 
 ## Product rules
 - Be honest in all copy: no fake reviews or names, no invented traction. Reviews carry an "Illustrative quotes" note.
-- Do not reintroduce the 3D isometric "hero town"; the owner rejected it. The hero is `LandingHero.tsx` (HeroVideo + HeroPhone).
+- Hero (`LandingHero.tsx`): live index ticker (`HeroTicker.tsx`, real quotes only), headline, then the owner-approved "ArthaMind City" illustration (`public/hero/city.webp`) with `HeroPhone` standing on the central pedestal (no floating logo) and the brand on the billboard. Positions are percentages of the 1621 × 919 image (`heroCity.css`). The old coin background video was removed at the owner's request.
 - Investment advice or stock tips appear only as education, or through SEBI-registered partners.
 - Keep secrets in environment variables only; `VITE_*` values are public.
 

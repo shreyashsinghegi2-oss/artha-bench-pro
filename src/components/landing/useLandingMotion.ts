@@ -12,6 +12,8 @@ const easeOutCubic = (t: number) => 1 - (1 - t) ** 3;
 function observeCountUps(root: HTMLElement, reduce: boolean): () => void {
   const nodes = Array.from(root.querySelectorAll<HTMLElement>('[data-n]'));
   const frames = new Set<number>();
+  // Indian digit grouping (5,000 / 1,20,000) plus an optional suffix such as "+".
+  const show = (node: HTMLElement, n: number) => { node.textContent = n.toLocaleString('en-IN') + (node.dataset.suffix ?? ''); };
   const run = (node: HTMLElement) => {
     const target = Number(node.dataset.n || 0);
     if (!Number.isFinite(target)) return;
@@ -19,14 +21,14 @@ function observeCountUps(root: HTMLElement, reduce: boolean): () => void {
     const start = performance.now();
     const tick = (now: number) => {
       const progress = Math.min(1, Math.max(0, (now - start) / duration));
-      node.textContent = String(Math.round(target * easeOutCubic(progress)));
+      show(node, Math.round(target * easeOutCubic(progress)));
       if (progress < 1) frames.add(requestAnimationFrame(tick));
     };
     frames.add(requestAnimationFrame(tick));
   };
   // Markup carries the real value; only reset to 0 when we are actually going to animate it.
-  if (reduce || !('IntersectionObserver' in window)) { nodes.forEach((node) => { node.textContent = String(Number(node.dataset.n || 0)); }); return () => undefined; }
-  nodes.forEach((node) => { node.textContent = '0'; });
+  if (reduce || !('IntersectionObserver' in window)) { nodes.forEach((node) => show(node, Number(node.dataset.n || 0))); return () => undefined; }
+  nodes.forEach((node) => show(node, 0));
   const observer = new IntersectionObserver((entries) => entries.forEach((entry) => {
     if (!entry.isIntersecting) return;
     observer.unobserve(entry.target);

@@ -19,6 +19,7 @@ import{ContactLinks}from'../common/ContactLinks';
 import'./connectedLanding.css';
 import'./landingMotion.css';
 import{useLandingMotion}from'./useLandingMotion';
+import{WAITLIST_AS_OF,WAITLIST_COUNT}from'../../data/waitlist';
 const LandingAiCfo=lazyOnView(()=>import('./LandingAiCfo').then(m=>({default:m.LandingAiCfo})),{minHeight:900,anchorId:'ai-cfo'});
 const LandingPurpose=lazyOnView(()=>import('./LandingPurpose').then(m=>({default:m.LandingPurpose})),{minHeight:700,anchorId:'purpose'});
 const LanguagesStory=lazyOnView(()=>import('./LanguagesStory').then(m=>({default:m.LanguagesStory})),{minHeight:700,anchorId:'languages'});
@@ -59,7 +60,7 @@ export const ConnectedLandingPage:React.FC<Props>=({signedIn,onEnter,onSignIn,on
  <main id="top">
  <LandingHero onSample={()=>scrollToId('money-check')} onExplore={()=>open('overview')}/>
  <LandingProducts onTryMind={()=>scrollToId('money-check')} onOpenBench={()=>open('overview')}/>
- <div className="cl-stat-strip"><div className="cl-wrap cl-stats" data-stagger><div><b data-n="15">15</b><span>money modules in one app</span></div><div><b data-n="20">20</b><span>languages: 13 Indian and 7 international</span></div><div><b>India</b><span>80C, 80D, NPS, PPF and SGB aware</span></div><div><b>Evidence</b><span>first: every answer shows what supports it</span></div></div></div>
+ <div className="cl-stat-strip"><div className="cl-wrap cl-stats" data-stagger><div><b data-n={WAITLIST_COUNT} data-suffix="+">{WAITLIST_COUNT.toLocaleString('en-IN')}+</b><span>joined the early-access waitlist ({WAITLIST_AS_OF})</span></div><div><b data-n="15">15</b><span>money modules in one app</span></div><div><b data-n="20">20</b><span>languages: 13 Indian and 7 international</span></div><div><b>Evidence</b><span>first: every answer shows what supports it</span></div></div></div>
  <div className="cl-marquee" aria-label="What the AI CFO covers"><div className="cl-marquee-track">{[...CAPABILITIES,...CAPABILITIES].map((c,i)=><span key={i} aria-hidden={i>=CAPABILITIES.length?true:undefined}><i/>{c}</span>)}</div></div>
  <LandingPurpose onSample={()=>scrollToId('money-check')} onExplore={()=>open('overview')}/>
  <PhoneShowcase onTry={()=>scrollToId('money-check')}/>

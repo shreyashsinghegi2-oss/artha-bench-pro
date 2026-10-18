@@ -11,6 +11,15 @@ const HeroPhone = lazy(() => import('./HeroPhone').then((r) => ({ default: r.Her
 /** Natural height of the phone in HeroPhone (px); the scene scales it to stand on the pedestal. */
 const PHONE_H = 620;
 
+/** What the billboard says, one line at a time, in step with the phone tour. */
+const BOARD = [
+  ['Save tax', 'Old vs new regime, picked for you'],
+  ['Money health', 'Your score in 2 minutes'],
+  ['Plan goals', 'Retirement, kids, home'],
+  ['Experts check', 'CA-reviewed, not just AI'],
+  ['Your language', '13 Indian languages by voice'],
+] as const;
+
 /**
  * Landing hero: live index ticker, one-line promise, then "ArthaMind City", an isometric town where each
  * building is a part of the product (tax office, money health centre, growth tower, goals, insurance,
@@ -18,7 +27,14 @@ const PHONE_H = 620;
  */
 export const LandingHero: React.FC<{ onSample: () => void; onExplore: () => void }> = ({ onSample, onExplore }) => {
   const sceneRef = useRef<HTMLDivElement>(null);
-  const [scale, setScale] = useState(0.5);
+  const [scale, setScale] = useState(0.32);
+  const [slide, setSlide] = useState(0);
+
+  useEffect(() => {
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+    const id = window.setInterval(() => setSlide((s) => (s + 1) % BOARD.length), 3200);
+    return () => window.clearInterval(id);
+  }, []);
 
   // The phone stands on the central pedestal; its height is a fixed share of the town's height so it
   // keeps the same place in the scene at every screen size.
@@ -27,8 +43,8 @@ export const LandingHero: React.FC<{ onSample: () => void; onExplore: () => void
     if (!el || typeof ResizeObserver === 'undefined') return;
     const ro = new ResizeObserver(([entry]) => {
       const h = (entry.contentRect.width * 919) / 1621;
-      const share = window.innerWidth <= 700 ? 0.66 : 0.5;
-      setScale(Math.max(0.28, Math.min(0.72, (h * share) / PHONE_H)));
+      const share = window.innerWidth <= 700 ? 0.42 : 0.31; // about the height of the Growth Tower
+      setScale(Math.max(0.2, Math.min(0.5, (h * share) / PHONE_H)));
     });
     ro.observe(el);
     return () => ro.disconnect();
@@ -63,7 +79,11 @@ export const LandingHero: React.FC<{ onSample: () => void; onExplore: () => void
           <div className="hc-glow" aria-hidden="true" />
 
           <div className="hc-board" aria-hidden="true">
-            <span className="hc-board-in"><ArthaMindLogoMark size={18} /><b>ArthaMind <em>AI</em></b></span>
+            <span className="hc-board-in">
+              <span className="hc-board-brand"><ArthaMindLogoMark size={12} /> ArthaMind <em>AI</em></span>
+              <b key={slide}>{BOARD[slide][0]}</b>
+              <small key={`s${slide}`}>{BOARD[slide][1]}</small>
+            </span>
           </div>
 
           <div className="hc-phone" style={{ '--s': scale } as React.CSSProperties}>

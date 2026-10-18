@@ -28,16 +28,18 @@
 .hc-town{display:block;width:100%;height:100%;user-select:none;pointer-events:none}
 
 /* Light pool on the pedestal (pedestal top ≈ 49.2% × 48.5%) */
-.hc-glow{position:absolute;left:49.2%;top:48.5%;width:16%;aspect-ratio:2.4;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(closest-side,rgba(52,196,111,.6),rgba(52,196,111,0));animation:hc-pulse 3.2s ease-in-out infinite}
+.hc-glow{position:absolute;left:49.2%;top:48.5%;width:11%;aspect-ratio:2.4;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(closest-side,rgba(52,196,111,.6),rgba(52,196,111,0));animation:hc-pulse 3.2s ease-in-out infinite}
 @keyframes hc-pulse{0%,100%{opacity:.6;transform:translate(-50%,-50%) scale(.92)}50%{opacity:1;transform:translate(-50%,-50%) scale(1.06)}}
 
 /* Brand on the blank billboard (inner panel: left edge x 1093, y 662–735; right edge x 1195, y 708–785) */
-.hc-board{position:absolute;left:67.43%;top:72.04%;width:6.29%;height:7.95%;transform-origin:0 0;transform:skewY(24.3deg);display:grid;place-items:center;overflow:hidden;background:linear-gradient(160deg,#f3faf6,#e2f3ea)}
-.hc-board-in{display:flex;flex-direction:column;align-items:center;gap:1px;text-align:center;line-height:1.05;container-type:inline-size;width:100%}
-.hc-board-in .am-logo{width:30cqw;height:30cqw}
-.hc-board b{font-size:11.5cqw;white-space:nowrap;font-weight:800;color:#0f1714;letter-spacing:-.02em}
-.hc-board b em{font-style:normal;color:#0f9d58}
-.hc-board small{font-size:7.5cqw;color:#0f5c4a;font-weight:600}
+.hc-board{position:absolute;left:67.43%;top:72.04%;width:6.29%;height:7.95%;transform-origin:0 0;transform:skewY(24.3deg);display:grid;place-items:center;overflow:hidden;container-type:size;background:linear-gradient(160deg,#f3faf6,#e2f3ea)}
+.hc-board-in{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2cqw;text-align:center;line-height:1.05;width:100%;padding:0 4cqw}
+.hc-board-brand{display:inline-flex;align-items:center;gap:2cqw;font-size:6.5cqw;font-weight:800;color:#0f5c4a;white-space:nowrap}
+.hc-board-brand .am-logo{width:10cqw;height:10cqw}
+.hc-board-brand em{font-style:normal;color:#0f9d58}
+.hc-board b{font-size:10.5cqw;font-weight:800;color:#0f1714;letter-spacing:-.02em;white-space:nowrap;animation:hc-board-in .45s ease both}
+.hc-board small{font-size:6.2cqw;line-height:1.15;max-width:92cqw;color:#3f4b46;font-weight:600;animation:hc-board-in .45s .08s ease both}
+@keyframes hc-board-in{from{opacity:0;transform:translateY(25%)}to{opacity:1;transform:none}}
 
 /* Phone standing on the pedestal: its base sits on the pedestal top (49.5% down), centred at 49.2% */
 .hc-phone{position:absolute;left:49.2%;bottom:50.5%;width:calc(300px * var(--s,.5));height:calc(620px * var(--s,.5));transform:translateX(-50%);z-index:3;animation:hc-hover 4s ease-in-out infinite}
@@ -48,11 +50,10 @@
 @keyframes hc-hover{0%,100%{translate:0 0}50%{translate:0 -6px}}
 
 @media (max-width:700px){
-  .hc-scene-wrap{overflow:hidden;overflow:clip;padding-top:22vw}
+  .hc-scene-wrap{overflow:hidden;overflow:clip;padding-top:6vw}
   .hc-scene{width:178%;margin-left:-39%}
-  .hc-board{display:none}
 }
 @media (prefers-reduced-motion:reduce){
-  .hc-ticker-track,.hc-glow,.hc-phone{animation:none}
+  .hc-ticker-track,.hc-glow,.hc-phone,.hc-board b,.hc-board small{animation:none}
   .hc-ticker{overflow-x:auto}
 }

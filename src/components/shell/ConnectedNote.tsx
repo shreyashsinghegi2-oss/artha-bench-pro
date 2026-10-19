@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { openAnswersEditor } from '../../services/answersEditor';
 import { Link2, Sparkles } from 'lucide-react';
 import type { AppNavigationDestination } from '../../navigationTypes';
 import { loadMoneyProfile, onMoneyProfileChange } from '../../services/moneyProfile';
@@ -38,14 +39,14 @@ export const ConnectedNote: React.FC<{ destination: AppNavigationDestination; on
   if (!profile || profile.source === 'sample') {
     return <div className="ws-connected">
       <Sparkles size={16} aria-hidden="true" />
-      <span><b>Fill every page at once.</b> Answer six quick questions or scan a salary slip, and income, spending, EMIs, budget and tax fill in here automatically.</span>
-      <button type="button" onClick={() => onNavigate('overview')}>Set up in 2 minutes</button>
+      <span><b>Your answers fill every page.</b> Open your saved answers and income, spending, EMIs, budget and tax fill in here automatically.</span>
+      <button type="button" onClick={openAnswersEditor}>Open my answers</button>
     </div>;
   }
   if (!seeds.length) return null;
   return <div className="ws-connected">
     <Link2 size={16} aria-hidden="true" />
-    <span><b>Connected to your money profile.</b> Your {seeds.join(', ')} {seeds.length > 1 ? 'are' : 'is'} filled in from it and update when it changes. Add your own records any time and they take over.</span>
-    <button type="button" onClick={() => onNavigate('overview')}>Update profile</button>
+    <span><b>Filled in from your answers.</b> Your {seeds.join(', ')} {seeds.length > 1 ? 'come' : 'comes'} from your sign-up answers and update when you edit them. Add your own records any time and they take over.</span>
+    <button type="button" onClick={openAnswersEditor}>Edit my answers</button>
   </div>;
 };

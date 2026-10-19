@@ -74,7 +74,7 @@ const CfoAnswer: React.FC<{ message: Message; latest: boolean; suggestion: CfoSu
   return <article className="cfo-msg cfo-msg-ai" aria-live={latest ? 'polite' : undefined}>
     <header className="cfo-brief-head">
       <span className="cfo-brief-icon"><BriefcaseBusiness size={15}/></span>
-      <div><small>ArthaMind AI CFO</small><b>{offline ? 'AI CFO is reconnecting' : clean(structured?.title || 'CFO brief')}</b></div>
+      <div><small>ArthaMind CFO</small><b>{offline ? 'ArthaMind CFO is reconnecting' : clean(structured?.title || 'CFO brief')}</b></div>
       {message.reply?.fallback && <span className="cfo-tag cfo-tag-warn">Offline guidance</span>}
     </header>
     <p className="cfo-bottom-line">{typed}{!done && <i className="cfo-caret" aria-hidden="true"/>}</p>
@@ -183,7 +183,7 @@ export const AiCfoChat: React.FC<Props> = ({ suggestFor, externalPrompt, compact
 
   return <div className={`cfo-chat ${compact ? 'is-compact' : ''}`}>
     <div className="cfo-chat-bar">
-      <span className="cfo-live"><i aria-hidden="true"/>AI CFO online</span>
+      <span className="cfo-live"><i aria-hidden="true"/>ArthaMind CFO online</span>
       <label className="cfo-lang">Reply in
         <select value={language} onChange={(event) => setLanguage(event.target.value as CfoLanguage)} aria-label="Answer language">
           <option value="english">English</option><option value="hinglish">Hinglish</option><option value="hindi">हिंदी</option>
@@ -192,7 +192,7 @@ export const AiCfoChat: React.FC<Props> = ({ suggestFor, externalPrompt, compact
       {offerPlan && !intake && messages.length > 0 && <button type="button" className="cfo-link" onClick={() => setIntake(true)} disabled={busy}><ClipboardList size={13}/>CFO plan</button>}
       {(messages.length > 0 || intake) && <button type="button" className="cfo-link" onClick={() => { setMessages([]); setIntake(false); }} disabled={busy}><RotateCcw size={13}/>New chat</button>}
     </div>
-    <div className="cfo-thread" ref={scroller} aria-label="Conversation with the AI CFO">
+    <div className="cfo-thread" ref={scroller} aria-label="Conversation with the ArthaMind CFO">
       {intake && <CfoIntake onComplete={completeIntake} onCancel={() => setIntake(false)}/>}
       {!intake && messages.length === 0 && <div className="cfo-empty">
         <span className="cfo-orb cfo-orb-brand" aria-hidden="true"><ArthaMindLogoMark size={34}/></span>
@@ -211,7 +211,7 @@ export const AiCfoChat: React.FC<Props> = ({ suggestFor, externalPrompt, compact
     </div>
     <div className="cfo-web"><WebSearchToggle/></div>
     <form className="cfo-compose" onSubmit={(event) => { event.preventDefault(); void send(draft); }}>
-      <textarea ref={input} value={draft} rows={1} disabled={intake} maxLength={4000} placeholder="Ask your AI CFO… e.g. Can I afford a ₹12,00,000 car on ₹1,10,000 salary?" aria-label="Ask your AI CFO"
+      <textarea ref={input} value={draft} rows={1} disabled={intake} maxLength={4000} placeholder="Ask your ArthaMind CFO… e.g. Can I afford a ₹12,00,000 car on ₹1,10,000 salary?" aria-label="Ask your ArthaMind CFO"
         onChange={(event) => setDraft(event.target.value)}
         onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); void send(draft); } }}/>
       <MicButton onText={setDraft} onFinal={(t) => void send(t)} disabled={busy || intake}/>

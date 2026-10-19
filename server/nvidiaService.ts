@@ -16,10 +16,10 @@ function buildMessages(systemPrompt: string, userPrompt: string, history?: Array
 }
 
 function sanitizedProviderError(status: number, body = '') {
-  if (status === 401 || status === 403) return 'The NVIDIA AI connection is not authorized.';
-  if (status === 429) return 'The NVIDIA AI service is temporarily rate-limited.';
-  if (status >= 500) return 'The NVIDIA AI service is temporarily unavailable.';
-  return body ? 'The NVIDIA AI service returned an invalid response.' : `The NVIDIA AI service returned HTTP ${status}.`;
+  if (status === 401 || status === 403) return 'The NVIDIA model connection is not authorized.';
+  if (status === 429) return 'The NVIDIA model service is temporarily rate-limited.';
+  if (status >= 500) return 'The NVIDIA model service is temporarily unavailable.';
+  return body ? 'The NVIDIA model service returned an invalid response.' : `The NVIDIA model service returned HTTP ${status}.`;
 }
 
 export async function callNvidiaNemotron(userPrompt: string, history?: Array<{ role: string; content: string }>, systemPrompt?: string, requestedModel?: string) {
@@ -54,7 +54,7 @@ export async function callNvidiaNemotron(userPrompt: string, history?: Array<{ r
       }
       const data = await response.json().catch(() => null);
       const text = data?.choices?.[0]?.message?.content;
-      if (typeof text !== 'string' || !text.trim()) throw new Error('The NVIDIA AI service returned no usable answer.');
+      if (typeof text !== 'string' || !text.trim()) throw new Error('The NVIDIA model service returned no usable answer.');
       console.info(JSON.stringify({ scope: 'nvidia', model, status: 200, latencyMs: Date.now() - started, attempt }));
       return { text: text.trim(), model };
     } catch (error) {
@@ -76,6 +76,6 @@ export async function handleNvidiaTutor(req: Request, res: Response) {
     return res.json({ answer: result.text, provider: 'NVIDIA NIM', model: result.model, fallbackMode: false, requestId: res.getHeader('x-request-id') });
   } catch (error) {
     console.warn(JSON.stringify({ scope: 'nvidia', requestId: res.getHeader('x-request-id'), status: 502, error: error instanceof Error ? error.message : 'provider_failure' }));
-    return res.status(502).json({ error: 'This model is temporarily unavailable. Retrying with another available AI model.', provider: 'NVIDIA NIM', model: requestedModel || DEFAULT_NVIDIA_MODEL, requestId: res.getHeader('x-request-id') });
+    return res.status(502).json({ error: 'This model is temporarily unavailable. Retrying with another available model.', provider: 'NVIDIA NIM', model: requestedModel || DEFAULT_NVIDIA_MODEL, requestId: res.getHeader('x-request-id') });
   }
 }

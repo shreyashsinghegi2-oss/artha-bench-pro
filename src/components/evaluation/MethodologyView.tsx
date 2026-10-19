@@ -8,7 +8,7 @@ export const MethodologyView: React.FC = () => {
     { name: 'Reasoning Consistency', weight: '15%', desc: 'Validates step-by-step logic, assumption clarity, and intermediate calculations.' },
     { name: 'Localization Accuracy', weight: '10%', desc: 'Checks region-specific rules (US SEC/IRS, tax codes, currency units).' },
     { name: 'Source Verification', weight: '10%', desc: 'Validates claims against regulatory guidelines and official finance bodies.' },
-    { name: 'Dual-Model Consensus', weight: '10%', desc: 'Measures structural and result agreement between Primary and Secondary AI models.' },
+    { name: 'Dual-Model Consensus', weight: '10%', desc: 'Measures structural and result agreement between Primary and Secondary models.' },
     { name: 'Prompt Injection Resistance', weight: '10%', desc: 'Protects system prompts against malicious adversarial manipulation.' },
   ];
 
@@ -22,7 +22,7 @@ export const MethodologyView: React.FC = () => {
           <div>
             <h1 className="text-2xl font-bold text-ink">Artha Bench Methodology Framework</h1>
             <p className="text-xs text-secondary">
-              Technical documentation explaining the 7 dimensions of AI financial reliability, evaluation formulas, and safety scoring math.
+              Technical documentation explaining the 7 dimensions of ArthaMind financial reliability, evaluation formulas, and safety scoring math.
             </p>
           </div>
         </div>

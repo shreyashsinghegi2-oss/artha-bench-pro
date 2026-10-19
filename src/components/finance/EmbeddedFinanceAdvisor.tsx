@@ -35,11 +35,11 @@ export const EmbeddedFinanceAdvisor: React.FC<Props> = ({ module, title, descrip
     setMessages((rows) => [...rows, userMessage]);
     setQuestion('');
     if (!auth.user || !auth.session) {
-      setMessages((rows) => [...rows, { id: crypto.randomUUID(), role: 'assistant', text: 'Sign in to use the AI Financial Advisor with your private finance workspace.', at: new Date().toISOString() }]);
+      setMessages((rows) => [...rows, { id: crypto.randomUUID(), role: 'assistant', text: 'Sign in to use ArthaMind Financial Advisor with your private finance workspace.', at: new Date().toISOString() }]);
       return;
     }
     setBusy(true);
-    const prompt = `You are ArthaMind AI Financial Advisor inside Artha Bench Pro module: ${module}. Analyze ONLY the deterministic calculations and recorded evidence supplied below. Give useful decision-support and review guidance, not generic finance tutoring. Do not invent amounts, balances, repayment status, credit scores, lender offers, eligibility, approval, market data or missing facts. Do not give investment/trading advice, tax/legal conclusions, lending approval, refinancing instructions, debt-collection advice, guarantees, or predictions. Do not tell the user to take a loan, refinance, prepay, buy, sell, or invest. You may say review, compare, verify, consider testing a scenario, or check terms with the relevant provider. If data is missing, state what is missing and how the user can improve the analysis inside Artha Bench. Distinguish Recorded facts | Deterministic calculations | AI interpretation | Data limitations. Use these section headings when relevant: ${responseSections.join(' | ')}. Question: ${next.slice(0, 500)}. Evidence snapshot: ${evidenceJson}`.slice(0, 6500);
+    const prompt = `You are ArthaMind Financial Advisor inside Artha Bench Pro module: ${module}. Analyze ONLY the deterministic calculations and recorded evidence supplied below. Give useful decision-support and review guidance, not generic finance tutoring. Do not invent amounts, balances, repayment status, credit scores, lender offers, eligibility, approval, market data or missing facts. Do not give investment/trading advice, tax/legal conclusions, lending approval, refinancing instructions, debt-collection advice, guarantees, or predictions. Do not tell the user to take a loan, refinance, prepay, buy, sell, or invest. You may say review, compare, verify, consider testing a scenario, or check terms with the relevant provider. If data is missing, state what is missing and how the user can improve the analysis inside Artha Bench. Distinguish Recorded facts | Deterministic calculations | ArthaMind interpretation | Data limitations. Use these section headings when relevant: ${responseSections.join(' | ')}. Question: ${next.slice(0, 500)}. Evidence snapshot: ${evidenceJson}`.slice(0, 6500);
     try {
       const response = await askTutorAI(prompt, messages.slice(-6).map((row) => ({ role: row.role, content: row.text })), { country: 'India', currency: 'INR', language: 'english', level: 'advanced', mode: 'explain', detail: 'detailed', useOfficialSources: false });
       setMessages((rows) => [...rows, { id: crypto.randomUUID(), role: 'assistant', text: response.answer, at: new Date().toISOString() }]);
@@ -81,7 +81,7 @@ export const EmbeddedFinanceAdvisor: React.FC<Props> = ({ module, title, descrip
 
       <details className="mt-4 rounded-xl border border-line bg-canvas p-3 text-[9px] leading-4 text-secondary">
         <summary className="flex cursor-pointer list-none items-center justify-between gap-2 font-black text-ink">What data can this advisor use? <ChevronDown className="h-3 w-3" /></summary>
-        <p className="mt-2">{evidenceNote ?? 'Only the deterministic snapshot supplied by this page and the authenticated workspace context used to create it. AI cannot silently edit records or override a calculation.'}</p>
+        <p className="mt-2">{evidenceNote ?? 'Only the deterministic snapshot supplied by this page and the authenticated workspace context used to create it. ArthaMind cannot silently edit records or override a calculation.'}</p>
         <p className="mt-1">Snapshot generated: {String(evidence.generatedAt ?? evidence.calculatedAt ?? 'on page load')}</p>
       </details>
     </section>

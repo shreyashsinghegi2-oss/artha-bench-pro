@@ -30,9 +30,9 @@ export const AuthGateView: React.FC<Props> = ({ returnTo, onCancel, onEmail }) =
         <div className="am-brand-mid">
           <h2>Your records stay private.<br/><em>Everything else stays open.</em></h2>
           <ul className="am-points">
-            <li><span><PieChart size={16}/></span><div><b>Free without an account</b><small>Dashboard, portfolio, planner, markets, mutual funds, AI tutor and voice.</small></div></li>
+            <li><span><PieChart size={16}/></span><div><b>Free without an account</b><small>Dashboard, portfolio, planner, markets, mutual funds, ArthaMind tutor and voice.</small></div></li>
             <li><span><LineChart size={16}/></span><div><b>With an account</b><small>Save income, expenses, budgets, EMIs and reports across devices.</small></div></li>
-            <li><span><Languages size={16}/></span><div><b>Same AI CFO, your language</b><small>Ask about your own records by text or voice.</small></div></li>
+            <li><span><Languages size={16}/></span><div><b>Same ArthaMind CFO, your language</b><small>Ask about your own records by text or voice.</small></div></li>
           </ul>
         </div>
         <p className="am-brand-foot">For information only. Not investment advice.</p>

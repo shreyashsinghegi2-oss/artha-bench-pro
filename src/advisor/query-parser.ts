@@ -382,7 +382,7 @@ export function mergeAi(rules: RuleParse, ai: AiExtraction, question: string): M
 
   let intent = rules.intent;
   if (isIntent(ai.intent)) intent = ai.intent.toUpperCase() as Intent;
-  else if (ai.intent !== undefined) corrections.push(`AI intent "${String(ai.intent)}" is not a known intent; kept "${rules.intent}".`);
+  else if (ai.intent !== undefined) corrections.push(`ArthaMind intent "${String(ai.intent)}" is not a known intent; kept "${rules.intent}".`);
 
   const entities: Entity[] = [...rules.entities];
   if (Array.isArray(ai.entities)) {
@@ -390,7 +390,7 @@ export function mergeAi(rules: RuleParse, ai: AiExtraction, question: string): M
       const e = normaliseEntity(raw);
       if (!e) continue;
       if (!isEntity(e)) {
-        corrections.push(`Dropped AI entity "${String(raw)}": not in the vocabulary.`);
+        corrections.push(`Dropped ArthaMind entity "${String(raw)}": not in the vocabulary.`);
         continue;
       }
       if (!entities.includes(e)) entities.push(e);
@@ -406,11 +406,11 @@ export function mergeAi(rules: RuleParse, ai: AiExtraction, question: string): M
       if (!Number.isFinite(value) || value <= 0) continue;
       const match = amounts.find((a) => Math.abs(a.value - value) <= Math.max(0.01, a.value * 0.005));
       if (!match) {
-        corrections.push(`Dropped AI amount ${value}: it does not appear in the question.`);
+        corrections.push(`Dropped ArthaMind amount ${value}: it does not appear in the question.`);
         continue;
       }
       if (isAmountType(rec.type) && !match.explicit && rec.type !== match.type) {
-        corrections.push(`Amount ${match.raw}: type "${match.type}" relabelled "${rec.type}" by AI (rules had to guess).`);
+        corrections.push(`Amount ${match.raw}: type "${match.type}" relabelled "${rec.type}" by ArthaMind (rules had to guess).`);
         match.type = rec.type;
       }
     }
@@ -421,7 +421,7 @@ export function mergeAi(rules: RuleParse, ai: AiExtraction, question: string): M
     const h = /^(\d+(?:\.\d+)?)\s*(y|m)$/i.exec(ai.time_horizon.trim());
     const digits: string[] = question.match(/\d+(?:\.\d+)?/g) ?? [];
     if (h?.[1] && h[2] && digits.includes(h[1])) horizon = `${Number(h[1])}${h[2].toLowerCase()}` as TimeHorizon;
-    else if (ai.time_horizon.trim()) corrections.push(`Dropped AI horizon "${ai.time_horizon}": not stated in the question.`);
+    else if (ai.time_horizon.trim()) corrections.push(`Dropped ArthaMind horizon "${ai.time_horizon}": not stated in the question.`);
   }
 
   return {
@@ -451,7 +451,7 @@ export interface ParseOptions {
 function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
   let timer: ReturnType<typeof setTimeout> | undefined;
   const timeout = new Promise<never>((_, reject) => {
-    timer = setTimeout(() => reject(new Error(`AI extraction timed out after ${ms} ms`)), ms);
+    timer = setTimeout(() => reject(new Error(`ArthaMind extraction timed out after ${ms} ms`)), ms);
   });
   return Promise.race([p, timeout]).finally(() => {
     if (timer) clearTimeout(timer);
@@ -471,11 +471,11 @@ export async function parseQuery(question: string, opts: ParseOptions = {}): Pro
   if (opts.ai && text) {
     try {
       const ai = await withTimeout(opts.ai(text), opts.aiTimeoutMs ?? DEFAULT_AI_TIMEOUT_MS);
-      if (!ai || typeof ai !== 'object') throw new Error('AI returned no structure');
+      if (!ai || typeof ai !== 'object') throw new Error('ArthaMind returned no structure');
       merged = mergeAi(rules, ai, text);
       method = 'ai+rules';
     } catch (e) {
-      aiError = e instanceof Error ? e.message : 'AI extraction failed';
+      aiError = e instanceof Error ? e.message : 'ArthaMind extraction failed';
     }
   }
 

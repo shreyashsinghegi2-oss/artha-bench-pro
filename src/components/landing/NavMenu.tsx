@@ -45,10 +45,10 @@ export const MENU: MenuGroup[] = [
     ],
   },
   {
-    id: 'learn', label: 'AI & Learn', art: '/hero/menu/learn.webp', title: 'Your AI CFO, with experts', lead: 'tutor',
+    id: 'learn', label: 'Learn', art: '/hero/menu/learn.webp', title: 'Your ArthaMind CFO, with experts', lead: 'tutor',
     blurb: 'Ask anything about money by voice in 13 Indian languages, and learn at your own pace.',
     items: [
-      { label: 'AI CFO', desc: 'Ask any money question, get checked numbers', to: 'tutor' },
+      { label: 'ArthaMind CFO', desc: 'Ask any money question, get checked numbers', to: 'tutor' },
       { label: 'Learning hub', desc: 'Courses from basics to advanced', to: 'learning' },
       { label: 'Market lessons', desc: 'How stocks, funds and F&O work', to: 'markets-learn' },
       { label: 'Platform guide', desc: 'Everything ArthaMind can do', to: 'platform-guide' },

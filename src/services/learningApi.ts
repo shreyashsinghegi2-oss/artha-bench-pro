@@ -55,7 +55,7 @@ async function fetchJSON<T>(url: string, options?: RequestInit): Promise<T> {
       clearTimeout(timeout);
     }
   }
-  throw lastError instanceof Error ? lastError : new Error('The AI service did not respond.');
+  throw lastError instanceof Error ? lastError : new Error('ArthaMind service did not respond.');
 }
 
 export async function getProviderDiagnostics(): Promise<ProviderDiagnostic[]> {
@@ -97,7 +97,7 @@ export async function explainNewsArticleAI(article: NormalizedNewsItem) {
   try {
     return await fetchJSON<NewsExplanationResponse>('/api/news/explain', { method: 'POST', body: JSON.stringify({ articleId: article.id, title: article.title, summary: article.summary, sourceName: article.sourceName, sourceUrl: article.sourceUrl, publishedAt: article.publishedAt }) });
   } catch {
-    const structuredAnswer: StructuredFinancialAnswer = { title: 'AI analysis unavailable', directAnswer: 'I could not reach the analysis service for this headline. You can still open the original source and verify the underlying announcement.', steps: [], interpretation: ['No unsupported interpretation was substituted.'], risks: ['Headlines can omit context, revisions and one-time effects.'], keyTakeaways: ['Verify important claims against the original source.'], sources: [{ name: article.sourceName, dataDate: article.publishedAt || '', freshness: 'Supplied headline only' }] } as StructuredFinancialAnswer;
+    const structuredAnswer: StructuredFinancialAnswer = { title: 'ArthaMind analysis unavailable', directAnswer: 'I could not reach the analysis service for this headline. You can still open the original source and verify the underlying announcement.', steps: [], interpretation: ['No unsupported interpretation was substituted.'], risks: ['Headlines can omit context, revisions and one-time effects.'], keyTakeaways: ['Verify important claims against the original source.'], sources: [{ name: article.sourceName, dataDate: article.publishedAt || '', freshness: 'Supplied headline only' }] } as StructuredFinancialAnswer;
     return { explanation: structuredAnswer.directAnswer, structuredAnswer, keyTakeaways: structuredAnswer.keyTakeaways, disclaimer: 'Educational material only. Does not constitute investment advice.' };
   }
 }
@@ -169,7 +169,7 @@ function presentationFromText(text: string, title: string, model: string): Struc
     formula: { expression: 'A formula is shown only when it is relevant to the question.', variables: [], whenToUse: 'Use the formula when the question requires a financial calculation.' },
     example: { title: 'Personalized learning context', dataStatus: 'illustrative', dataAsOf: new Date().toISOString(), inputs: ['Country, currency, language, learner level and learning mode are applied.'], calculation: [], result: 'For consequential financial decisions, verify current facts with an official source.' },
     interpretation: ['The tutor adapts explanations to the selected context.', 'Current facts are only described as current when verified data is available.'],
-    risks: ['AI-generated explanations can contain mistakes; verify important financial decisions independently.'],
+    risks: ['Automatically generated explanations can contain mistakes; verify important financial decisions independently.'],
     keyTakeaways: ['Ask a follow-up question for a simpler explanation, another example, or a step-by-step calculation.'],
     sources: [],
   } as StructuredFinancialAnswer;
@@ -186,14 +186,14 @@ export async function askTutorAI(question: string, history: Array<{ role: 'user'
       const fallback = await askReliableTutor(question, { history, context, visibleData: { question, context } });
       return { answer: fallback.answer, suggestedFollowUps: fallback.suggestedFollowUps || [], fallbackMode: true, provider: fallback.provider || 'ArthaBench grounded fallback', model: fallback.model || 'ArthaBench Smart', structuredAnswer: fallback.structuredAnswer || presentationFromText(fallback.answer, 'ArthaBench response', fallback.model || 'ArthaBench Smart') };
     } catch {
-      return { answer: 'I can still help with this topic, but the live AI service is temporarily unavailable. Please try the question again in a moment.', suggestedFollowUps: ['Try the question again', 'Ask for a simpler explanation'], fallbackMode: true, provider: 'ArthaBench local fallback', model: 'ArthaBench Smart', structuredAnswer: presentationFromText('I can still help with this topic, but the live AI service is temporarily unavailable. Please try the question again in a moment.', 'ArthaBench response', 'ArthaBench Smart') };
+      return { answer: 'I can still help with this topic, but the live ArthaMind service is temporarily unavailable. Please try the question again in a moment.', suggestedFollowUps: ['Try the question again', 'Ask for a simpler explanation'], fallbackMode: true, provider: 'ArthaBench local fallback', model: 'ArthaBench Smart', structuredAnswer: presentationFromText('I can still help with this topic, but the live ArthaMind service is temporarily unavailable. Please try the question again in a moment.', 'ArthaBench response', 'ArthaBench Smart') };
     }
   };
 
   if (model === 'nemotron') {
     try {
       const response = await fetchJSON<{ answer: string; provider: string; model: string; fallbackMode: boolean }>('/api/nvidia-tutor', { method: 'POST', body: JSON.stringify({ userPrompt: question, history: history.slice(-10), model: 'nvidia/nemotron-3-ultra-550b-a55b' }) });
-      return { answer: response.answer, suggestedFollowUps: [], fallbackMode: false, provider: response.provider, model: response.model, structuredAnswer: presentationFromText(response.answer, 'AI Tutor response', response.model) };
+      return { answer: response.answer, suggestedFollowUps: [], fallbackMode: false, provider: response.provider, model: response.model, structuredAnswer: presentationFromText(response.answer, 'ArthaMind Tutor response', response.model) };
     } catch {
       return makeSmartFallback();
     }
@@ -203,7 +203,7 @@ export async function askTutorAI(question: string, history: Array<{ role: 'user'
     const response = await requestTutorDirect(question, history, context);
     const answer = response.answer || response.response || '';
     if (!answer.trim()) return makeSmartFallback();
-    return { answer, suggestedFollowUps: response.suggestedFollowUps || [], fallbackMode: Boolean(response.fallbackMode), provider: response.provider || 'ArthaBench Smart', model: response.model || 'ArthaBench Smart', structuredAnswer: response.structuredAnswer || presentationFromText(answer, 'AI Tutor response', response.model || 'ArthaBench Smart') };
+    return { answer, suggestedFollowUps: response.suggestedFollowUps || [], fallbackMode: Boolean(response.fallbackMode), provider: response.provider || 'ArthaBench Smart', model: response.model || 'ArthaBench Smart', structuredAnswer: response.structuredAnswer || presentationFromText(answer, 'ArthaMind Tutor response', response.model || 'ArthaBench Smart') };
   } catch {
     return makeSmartFallback();
   }

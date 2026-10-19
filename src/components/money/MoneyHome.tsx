@@ -8,6 +8,8 @@ import { AiCfoChat } from '../ai/AiCfoChat';
 import '../ai/aiCfo.css';
 import { MoneyReportView, moneyAskPrompt, shortInr } from './MoneyReport';
 import { MoneySetup } from './MoneySetup';
+import { openAnswersEditor } from '../../services/answersEditor';
+import { DownloadReportButton } from './DownloadReportButton';
 import { CalculatorsHub, CALCULATOR_COUNT } from './CalculatorsHub';
 import './moneyHome.css';
 
@@ -94,7 +96,7 @@ export const MoneyHome: React.FC<{ onNavigate: (destination: AppNavigationDestin
 
   const sections = [
     ...(profile && report ? [['mh-snapshot', 'Snapshot'], ['mh-report', 'Report'], ['mh-plan', 'Plan']] : [['mh-start', 'Get started']]),
-    ['mh-tools', 'Calculators'], ['mh-learn', 'Learn & markets'], ['mh-cfo', 'AI CFO'],
+    ['mh-tools', 'Calculators'], ['mh-learn', 'Learn & markets'], ['mh-cfo', 'ArthaMind CFO'],
   ] as Array<[string, string]>;
   const goTo = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
   const runway = report ? (Number.isFinite(report.runwayMonths) ? (report.runwayMonths >= 24 ? `${(report.runwayMonths / 12).toFixed(1)} years` : `${report.runwayMonths.toFixed(1)} months`) : 'No outgoings') : '';
@@ -108,9 +110,9 @@ export const MoneyHome: React.FC<{ onNavigate: (destination: AppNavigationDestin
         <p>{profile ? `Built ${SOURCE_LABEL[profile.source]} · updated ${updated} · saved on this device only.` : 'Answer a few simple questions, or scan a payslip, and get a complete report: tax, freedom number, insurance, emergency fund and a plan.'}</p>
       </div>
       {profile && <div className="mh-head-actions">
-        <button type="button" className="mh-btn" onClick={() => setMode({ kind: 'setup', scan: false })}><UserRound size={15}/> Edit answers</button>
+        <DownloadReportButton/>
+        <button type="button" className="mh-btn" onClick={openAnswersEditor}><UserRound size={15}/> Edit my answers</button>
         <button type="button" className="mh-btn" onClick={() => setMode({ kind: 'setup', scan: true })}><FileUp size={15}/> Scan a document</button>
-        <button type="button" className="mh-btn ghost" onClick={() => { if (window.confirm('Remove your money profile from this device?')) clearMoneyProfile(); }}><RotateCcw size={15}/> Start over</button>
       </div>}
     </header>
 
@@ -118,14 +120,11 @@ export const MoneyHome: React.FC<{ onNavigate: (destination: AppNavigationDestin
     </div>
 
     {!profile && <motion.section id="mh-start" className="mh-start mh-anchor" initial={reduced ? false : { opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}>
-      <button type="button" className="mh-start-card primary" onClick={() => setMode({ kind: 'setup', scan: false })}>
-        <ClipboardList size={22}/><b>Answer about 12 quick questions</b><span>One at a time, mostly taps. About two minutes.</span><em>Start <ArrowRight size={14}/></em>
+      <button type="button" className="mh-start-card primary" onClick={openAnswersEditor}>
+        <ClipboardList size={22}/><b>Finish your answers</b><span>Your Money Home fills in from the questions you answer once.</span><em>Continue <ArrowRight size={14}/></em>
       </button>
       <button type="button" className="mh-start-card" onClick={() => setMode({ kind: 'setup', scan: true })}>
         <FileUp size={22}/><b>Scan a payslip or statement</b><span>PDF payslip, Form 16 or bank CSV. Read on your device; you confirm every number.</span><em>Upload <ArrowRight size={14}/></em>
-      </button>
-      <button type="button" className="mh-start-card" onClick={trySample}>
-        <Sparkles size={22}/><b>Look around with a sample</b><span>See a full report for a sample 29-year-old, then replace it with yours.</span><em>Try it <ArrowRight size={14}/></em>
       </button>
     </motion.section>}
 
@@ -156,7 +155,7 @@ export const MoneyHome: React.FC<{ onNavigate: (destination: AppNavigationDestin
               <header><span className="mh-area-icon"><Icon size={18}/></span><div><small>0{i + 1}</small><b>{area.title}</b></div></header>
               <p>{area.line(report)}</p>
               <ul>{area.links.map((link) => <li key={link.label}>
-                <button type="button" onClick={() => ('to' in link ? onNavigate(link.to) : askWithContext(link.ask))}>{link.label}<span>{'to' in link ? 'Open' : 'Ask ArthaMind AI'} <ArrowRight size={13}/></span></button>
+                <button type="button" onClick={() => ('to' in link ? onNavigate(link.to) : askWithContext(link.ask))}>{link.label}<span>{'to' in link ? 'Open' : 'Ask ArthaMind'} <ArrowRight size={13}/></span></button>
               </li>)}</ul>
             </motion.article>;
           })}
@@ -179,9 +178,9 @@ export const MoneyHome: React.FC<{ onNavigate: (destination: AppNavigationDestin
 
     <section id="mh-cfo" ref={cfoRef} className="mh-cfo mh-anchor" aria-labelledby="mh-cfo-title">
       <div className="mh-cfo-copy">
-        <small className="mh-kicker">AI CFO</small>
+        <small className="mh-kicker">ArthaMind CFO</small>
         <h2 id="mh-cfo-title">Ask anything about your money.</h2>
-        <p>{profile ? 'Your verified numbers are shared with the AI CFO when you ask from the report, so answers are about you, not a generic example.' : 'Ask in English, Hindi or Hinglish. Set up your profile first for answers that use your own numbers.'}</p>
+        <p>{profile ? 'Your verified numbers are shared with the ArthaMind CFO when you ask from the report, so answers are about you, not a generic example.' : 'Ask in English, Hindi or Hinglish. Set up your profile first for answers that use your own numbers.'}</p>
       </div>
       <div className="mh-cfo-chat"><AiCfoChat externalPrompt={cfoPrompt} compact offerPlan={false}/></div>
     </section>

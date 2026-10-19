@@ -178,7 +178,7 @@ function VoicePanelSignedIn({ initialLanguage, onClose }: { initialLanguage: Voi
         <div className="va-a notranslate">
           <p>{t.a}</p>
           <footer>
-            {t.offline && <span className="va-tag">AI offline · basic answer in English</span>}
+            {t.offline && <span className="va-tag">Offline · basic answer in English</span>}
             <button type="button" onClick={() => void say(t.a, t.offline)} disabled={phase !== 'idle'}><Volume2 size={14}/> Listen again</button>
             <button type="button" onClick={() => void saveNote(t.a, t.offline)}><Download size={14}/> Voice note</button>
           </footer>

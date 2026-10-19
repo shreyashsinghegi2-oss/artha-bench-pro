@@ -239,7 +239,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
             </div>
             <h1 className="text-3xl font-black tracking-tight text-ink sm:text-4xl lg:text-5xl">ArthaMind Pro Analytics</h1>
             <p className="mt-3 max-w-4xl text-sm leading-7 text-secondary sm:text-base">
-              India’s first 7B-parameter SLM for Capital Markets | Evidence-linked insights with an AI assistant that explains the exact data on screen.
+              India’s first 7B-parameter SLM for Capital Markets | Evidence-linked insights with an ArthaMind assistant that explains the exact data on screen.
             </p>
           </div>
           <div className="flex flex-wrap gap-2.5">
@@ -312,7 +312,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigate }) => {
         <div className="rounded-2xl border border-line bg-surface p-4 shadow-sm">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0 flex-1">
-              <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-secondary">AI Grounding Score</p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-secondary">Grounding Score</p>
               <div className="mt-2 flex flex-wrap items-center gap-2">
                 <p className="text-2xl font-black text-ink">{groundingValue}</p>
                 {!latestReport && (

@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useLayoutEffect, useState } from 'react'
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Check, ChevronDown, ChevronUp, Trophy, X } from 'lucide-react';
 import type { AppNavigationDestination } from '../../navigationTypes';
 import { QUESTION_LOG_EVENT, loadQuestions } from '../../services/questionLog';
+import { loadExpenses } from '../../services/personalFinanceStorage';
 import './guidedTour.css';
 
 /**
@@ -31,6 +32,9 @@ function save(s: TourState) {
   try { localStorage.setItem(KEY, JSON.stringify(s)); } catch { /* ignore */ }
   window.dispatchEvent(new CustomEvent(EVENT));
 }
+
+/** True once the tour has run (editing answers later does not restart it). */
+export function loadTourStarted() { return load().done.includes('profile'); }
 
 /** Called once the sign-up questions are saved. */
 export function startTour() { save({ active: true, step: 0, done: ['profile'], collapsed: false }); }
@@ -139,12 +143,11 @@ export function useQuestTracking(destination: AppNavigationDestination) {
     // A saved expense of the user's own (not one filled in from the profile).
     const onStorage = () => {
       try {
-        const list = JSON.parse(localStorage.getItem('artha_expenses_v1') || '[]') as Array<{ id: string }>;
-        if (list.some((e) => !String(e.id).startsWith('profile-spend-'))) markQuest('expense');
+        if (loadExpenses().some((e) => !String(e.id).startsWith('profile-spend-'))) markQuest('expense');
       } catch { /* ignore */ }
     };
     onStorage();
-    const id = window.setInterval(onStorage, 3000);
+    const id = window.setInterval(onStorage, 1500);
     return () => { window.removeEventListener(QUESTION_LOG_EVENT, check); window.clearInterval(id); };
   }, []);
 }

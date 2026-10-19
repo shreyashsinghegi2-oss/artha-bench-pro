@@ -56,7 +56,7 @@ const LAB_ITEMS: NavigationItem[] = [
   { id: 'comparison', label: 'Model comparison', icon: BarChart3 },
   { id: 'batch', label: 'Batch benchmark', icon: BrainCircuit },
   { id: 'reports', label: 'Reports & history', icon: BookOpen },
-  { id: 'connections', label: 'AI connections', icon: ShieldCheck },
+  { id: 'connections', label: 'ArthaMind connections', icon: ShieldCheck },
   { id: 'methodology', label: 'Methodology', icon: ShieldCheck },
 ];
 
@@ -119,7 +119,7 @@ export const Navigation: React.FC<NavigationProps> = ({ currentDestination, onNa
         <NavigationGroup title="Markets" items={MARKET_ITEMS} currentDestination={currentDestination} onNavigate={onNavigate} />
         <NavigationGroup title="Learn & ask" items={LEARN_ITEMS} currentDestination={currentDestination} onNavigate={onNavigate} />
         <details className="dashboard-nav-lab" open={LAB_ITEMS.some((item) => item.id === currentDestination) || undefined}>
-          <summary>AI reliability lab</summary>
+          <summary>answer reliability lab</summary>
           <NavigationGroup title="Lab tools" items={LAB_ITEMS} currentDestination={currentDestination} onNavigate={onNavigate} />
         </details>
         <NavigationGroup title="Account" items={SYSTEM_ITEMS} currentDestination={currentDestination} onNavigate={onNavigate} />

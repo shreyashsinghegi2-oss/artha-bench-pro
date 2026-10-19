@@ -74,9 +74,9 @@ export function buildOpenApi(): Json {
   };
   paths['/ai/cfo'] = {
     post: {
-      tags: ['AI (API key)'],
+      tags: ['Assistant (API key)'],
       operationId: 'ai_cfo',
-      summary: 'AI CFO brief grounded in live sources',
+      summary: 'ArthaMind CFO brief grounded in live sources',
       security: [{ ApiKeyAuth: [] }],
       requestBody: {
         required: true,
@@ -105,9 +105,9 @@ export function buildOpenApi(): Json {
   };
   paths['/ai/benchmark'] = {
     post: {
-      tags: ['AI (API key)'],
+      tags: ['Assistant (API key)'],
       operationId: 'ai_benchmark',
-      summary: 'Score an AI model on your numeric questions',
+      summary: 'Score a model on your numeric questions',
       security: [{ ApiKeyAuth: [] }],
       requestBody: {
         required: true,
@@ -180,11 +180,11 @@ export function buildOpenApi(): Json {
       title: 'ArthaBench Public API',
       version: '1.0.0',
       description:
-        'Deterministic financial calculators (no key), market data and AI endpoints. Every response is { data, source, timestamp, reliability_score, is_deterministic }. Free: 100 requests/minute per IP. With an API key: 1000/minute. Educational use; not investment, tax or legal advice.',
+        'Deterministic financial calculators (no key), market data and assistant endpoints. Every response is { data, source, timestamp, reliability_score, is_deterministic }. Free: 100 requests/minute per IP. With an API key: 1000/minute. Educational use; not investment, tax or legal advice.',
       license: { name: 'See repository licence', url: 'https://github.com/shreyashsinghegi2-oss/artha-bench-pro' },
     },
     servers: [{ url: '/api/v1' }],
-    tags: [{ name: 'Calculators' }, { name: 'Market' }, { name: 'AI (API key)' }, { name: 'Webhooks (API key)' }, { name: 'Service' }],
+    tags: [{ name: 'Calculators' }, { name: 'Market' }, { name: 'Assistant (API key)' }, { name: 'Webhooks (API key)' }, { name: 'Service' }],
     paths,
     components: {
       securitySchemes: { ApiKeyAuth: { type: 'apiKey', in: 'header', name: 'x-api-key' } },

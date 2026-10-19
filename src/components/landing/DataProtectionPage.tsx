@@ -10,7 +10,7 @@ const RIGHTS = [
   { icon: UserCheck, title: 'Know what we hold', text: 'See every record saved to your account from the Account page.' },
   { icon: Download, title: 'Take it with you', text: 'Export your saved workspace data as a file whenever you want.' },
   { icon: Trash2, title: 'Delete it', text: 'Delete saved records, or request deletion of your whole account, from Account.' },
-  { icon: ShieldCheck, title: 'Withdraw consent', text: 'Turn AI access to each data category off at any time. It is off until you switch it on.' },
+  { icon: ShieldCheck, title: 'Withdraw consent', text: 'Turn ArthaMind access to each data category off at any time. It is off until you switch it on.' },
 ];
 
 /** Standalone data-protection page: where data goes, what protects it, and the controls a person keeps. */
@@ -18,9 +18,9 @@ const DataProtectionPage: React.FC<{ onHome: () => void; onSignIn: () => void; s
   <div className="connected-landing dp-page">
     <header className="cl-header is-scrolled">
       <div className="cl-wrap cl-nav">
-        <a href="/" className="cl-brand" onClick={(e) => { e.preventDefault(); onHome(); }} aria-label="ArthaMind AI home">
+        <a href="/" className="cl-brand" onClick={(e) => { e.preventDefault(); onHome(); }} aria-label="ArthaMind home">
           <ArthaMindMark size={34} />
-          <span className="am-brand-text"><b>ArthaMind <em>AI</em></b><small>by Artha Bench Pro</small></span>
+          <span className="am-brand-text"><b>ArthaMind</b><small>by Artha Bench Pro</small></span>
         </a>
         <div className="cl-right">
           <button type="button" className="cl-signin" onClick={onHome}><ArrowLeft size={15} aria-hidden="true" /> Home</button>
@@ -54,7 +54,7 @@ const DataProtectionPage: React.FC<{ onHome: () => void; onSignIn: () => void; s
         </div>
       </section>
     </main>
-    <footer className="cl-footer"><div className="cl-wrap"><b>ArthaMind AI</b><span>Not investment, tax, legal or lending advice. See our <a href="/terms.html">Terms &amp; conditions</a>.</span></div></footer>
+    <footer className="cl-footer"><div className="cl-wrap"><b>ArthaMind</b><span>Not investment, tax, legal or lending advice. See our <a href="/terms.html">Terms &amp; conditions</a>.</span></div></footer>
   </div>
 );
 

@@ -87,7 +87,7 @@ export const EducationPlannerView: React.FC = () => {
         </Card>
 
         <PlanAI title="child education plan" summary={summary} questions={['Review my education plan', 'Current fees for these courses?', 'Which funds or schemes to use?', 'Loan vs saving for the masters?']}/>
-        <p className="pk-note">Future cost = cost today × (1 + education inflation)^years. SIPs compound monthly with a yearly step-up. Course costs are indicative planning figures; ask the AI for current fees. Educational planning, not investment advice.</p>
+        <p className="pk-note">Future cost = cost today × (1 + education inflation)^years. SIPs compound monthly with a yearly step-up. Course costs are indicative planning figures; ask ArthaMind for current fees. Educational planning, not investment advice.</p>
       </main>
     </div>
   </div>;

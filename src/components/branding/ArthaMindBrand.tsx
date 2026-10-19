@@ -40,7 +40,7 @@ export const ArthaMindWordmark: React.FC<{ size?: number; tone?: 'ink' | 'light'
     <ArthaMindLogoMark size={size} tone={markTone ?? tone} />
     <span style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1 }}>
       <span style={{ fontWeight: 800, fontSize: Math.round(size * 0.52), letterSpacing: '-0.01em', color: ink, whiteSpace: 'nowrap' }}>
-        ArthaMind <span style={{ color: tone === 'ink' ? BRAND.green : BRAND.greenLight, fontSize: '0.78em', fontWeight: 800 }}>AI</span>
+        ArthaMind
       </span>
       {showParent && <span className="am-wordmark-parent" style={{ fontSize: Math.max(10, Math.round(size * 0.32)), fontWeight: 500, color: tone === 'ink' ? '#6b7078' : 'rgba(255,255,255,.7)', whiteSpace: 'nowrap' }}>by Artha Bench Pro</span>}
     </span>

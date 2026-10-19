@@ -30,7 +30,7 @@ export const PageAIDock: React.FC<{ destination: AppNavigationDestination; raise
   const title = expertName(destination);
   return <>
     {!open && <button ref={launch.ref} style={launch.style} {...launch.handle} type="button" className={`pai-launch ${raised ? 'raised' : ''} ${launch.dragging ? 'is-dragging' : ''}`} onClick={() => setOpen(true)} aria-label={`Ask ${title} (drag to move)`} title="Drag to move">
-      <AssistantLogo size={24}/><span>Ask ArthaMind AI</span>
+      <AssistantLogo size={24}/><span>Ask ArthaMind</span>
     </button>}
     {open && <div className="pai-sheet" onMouseDown={(e) => { if (e.target === e.currentTarget) setOpen(false); }}>
       <aside ref={panel.ref} style={panel.style} className={`pai-panel ${panel.dragging ? 'is-dragging' : ''}`} role="dialog" aria-label={title}>

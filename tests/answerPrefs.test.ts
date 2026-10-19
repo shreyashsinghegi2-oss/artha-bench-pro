@@ -17,3 +17,11 @@ describe('answer level and currency', () => {
     expect(numberStyleFor(undefined)).toBe(NUMBER_STYLE);
   });
 });
+
+describe('answer language', () => {
+  it('asks for the chosen language and ignores bad codes', () => {
+    expect(numberStyleFor(parsePrefs('{"level":"beginner","country":"India","currency":"INR","language":"hi-IN"}'))).toContain('everyday Hindi');
+    expect(parsePrefs('{"language":"<script>"}')?.language).toBeUndefined();
+    expect(numberStyleFor(parsePrefs('{"language":"en-IN"}'))).not.toContain('LANGUAGE:');
+  });
+});

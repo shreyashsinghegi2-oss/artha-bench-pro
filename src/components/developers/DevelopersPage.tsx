@@ -286,7 +286,7 @@ export default function DevelopersPage({ onHome }: { onHome: () => void }): Reac
                     <td>Source (NSE 95, Binance 90, Yahoo 85) minus freshness penalty (0 / 10 / 25 / 40 / 60)</td>
                   </tr>
                   <tr>
-                    <td className="py-2 pr-3">AI answers</td>
+                    <td className="py-2 pr-3">ArthaMind answers</td>
                     <td>15 to 95 from evidence: linked sources, certified numbers, citation fixes. Never 100.</td>
                   </tr>
                 </tbody>
@@ -409,15 +409,15 @@ export default function DevelopersPage({ onHome }: { onHome: () => void }): Reac
         <div className="grid gap-6 lg:grid-cols-2">
           <section className={card} aria-labelledby="keys-title">
             <h2 id="keys-title" className="flex items-center gap-2 text-lg font-black">
-              <KeyRound className="h-5 w-5 text-brand" aria-hidden="true" /> API keys and AI endpoints
+              <KeyRound className="h-5 w-5 text-brand" aria-hidden="true" /> API keys and ArthaMind endpoints
             </h2>
             <p className="mt-2 text-xs leading-6 text-secondary">
-              POST /api/v1/ai/cfo (grounded AI CFO brief) and POST /api/v1/ai/benchmark (score a model on your numeric questions) need a key in the x-api-key
+              POST /api/v1/ai/cfo (grounded ArthaMind CFO brief) and POST /api/v1/ai/benchmark (score a model on your numeric questions) need a key in the x-api-key
               header. Keys also raise your limit to 1,000 requests a minute. Keys are issued by the project maintainers for now; self-service keys come with
               paid plans.
             </p>
             <div className="mt-3">
-              <Code label="AI CFO request" text={aiCall} />
+              <Code label="ArthaMind CFO request" text={aiCall} />
             </div>
           </section>
 
@@ -438,7 +438,7 @@ export default function DevelopersPage({ onHome }: { onHome: () => void }): Reac
 
         <section className={card} aria-labelledby="mcp-title">
           <h2 id="mcp-title" className="text-lg font-black">
-            Use ArthaBench from your AI assistant (MCP)
+            Use ArthaBench from your assistant (MCP)
           </h2>
           <p className="mt-2 text-xs leading-6 text-secondary">
             An MCP server that exposes these calculators and market data as tools for Claude Code, Cursor, Goose and Windsurf is the next module. Until then,

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { AssistantLogo } from '../ai/AssistantLogo';
 import { ArrowRight, Bot, Brain, GraduationCap, History, PieChart, ReceiptText, Sparkles, UserRound } from 'lucide-react';
 import type { AppNavigationDestination } from '../../navigationTypes';
@@ -11,6 +11,7 @@ import { loadQuestions, QUESTION_LOG_EVENT } from '../../services/questionLog';
 import { loadTutorProgress, streak } from '../../services/tutorProgress';
 import { StructuredFinancialAnswerView } from '../ai/StructuredFinancialAnswer';
 import { ThinkingSteps } from '../ai/ThinkingSteps';
+import { answersSummary } from '../../services/onboarding';
 
 const inr = (v: number) => `${v < 0 ? '−' : ''}₹${Math.abs(Math.round(v)).toLocaleString('en-IN')}`;
 const pct = (v: number) => `${Math.round(v * 100)}%`;
@@ -20,7 +21,7 @@ type Tone = 'good' | 'warn' | 'bad' | 'info';
 const PALETTE = ['#059669', '#2563eb', '#d97706', '#7c3aed', '#0891b2', '#dc2626', '#db2777', '#65a30d', '#64748b'];
 
 export const SECTIONS: Array<[string, string]> = [
-  ['dash-overview', 'Overview'], ['dash-ai', 'AI analysis'], ['dash-profile', 'Profile'], ['dash-cash', 'Cash flow & tax'],
+  ['dash-overview', 'Overview'], ['dash-ai', 'ArthaMind analysis'], ['dash-profile', 'Profile'], ['dash-cash', 'Cash flow & tax'],
   ['dash-invest', 'Investments & spending'], ['dash-loans', 'Loans, goals & safety'], ['dash-activity', 'Your activity'], ['dash-markets', 'Markets & news'],
 ];
 
@@ -151,33 +152,51 @@ export function dashboardSummary(profile: MoneyProfile, d: CompleteDashboard): s
     pf ? `Portfolio: value ${inr(pf.assets)}, gain ${inr(pf.gain)}, XIRR ${pf.xirr == null ? 'unknown' : `${(pf.xirr * 100).toFixed(1)}%`}, split ${pf.byClass.map((c) => `${c.cls} ${pct(c.share)}`).join(', ')}.` : 'Portfolio: not imported.',
     d.loans.length ? `Loans: ${d.loans.map((l) => `${l.name} EMI ${inr(l.emi)}, ${inr(l.outstanding)} left${l.rate != null ? ` at ${l.rate}%` : ''}`).join('; ')}.` : '',
   ];
-  return lines.filter(Boolean).join('\n');
+  return [answersSummary(), ...lines].filter(Boolean).join('\n');
 }
 
 const QUICK = ['Give me a complete analysis of my finances', 'What are my three biggest risks?', 'How can I retire earlier?', 'Where should my next ₹50,000 go?'];
 
 /** The AI reads the complete dashboard and answers with a colour-coded, structured analysis. */
+export const DASH_ANALYSIS_KEY = 'arthamind.dashAnalysis.v1';
+const ANALYSIS_TTL = 6 * 3600_000;
+const hashText = (t: string) => { let h = 0; for (let i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) | 0; return String(h); };
+/** The last complete analysis (used again for 6 hours while the numbers stay the same, and in the report). */
+export function loadDashAnalysis(): { at: number; hash: string; answer: StructuredFinancialAnswer } | null {
+  try { const r = JSON.parse(localStorage.getItem(DASH_ANALYSIS_KEY) || 'null'); return r && r.answer ? r : null; } catch { return null; }
+}
+
 export const DashboardAI: React.FC<{ summary: string }> = ({ summary }) => {
   const [busy, setBusy] = useState(false);
-  const [answer, setAnswer] = useState<StructuredFinancialAnswer | null>(null);
+  const hash = hashText(summary);
+  const [answer, setAnswer] = useState<StructuredFinancialAnswer | null>(() => { const c = loadDashAnalysis(); return c && c.hash === hash && Date.now() - c.at < ANALYSIS_TTL ? c.answer : null; });
   const [error, setError] = useState('');
-  const ask = async (q: string) => {
+  const started = useRef(false);
+  // The advisor analyses the complete picture by itself when the dashboard opens (no button needed).
+  useEffect(() => {
+    if (started.current || answer) return;
+    started.current = true;
+    void ask(QUICK[0], true);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const ask = async (q: string, save = q === QUICK[0]) => {
     if (busy) return;
     setBusy(true); setError(''); setAnswer(null);
     try {
       const res = await fetch('/api/ai/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
         task: 'cfo',
         prompt: `You are analysing the user's complete financial dashboard. Use every number below, today's market and news context, and answer the question for this person specifically. Rank issues by urgency, show the numbers behind each point, and give concrete next steps with amounts.\n\nDASHBOARD\n${summary}\n\nQuestion: ${q}`,
-        context: { country: 'India', currency: 'INR', language: 'english', detail: 'detailed' },
+        context: { detail: 'detailed' },
       }) });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || 'The AI could not answer right now.');
-      if (data.structuredAnswer) setAnswer(data.structuredAnswer); else throw new Error('No analysis came back. Please try again.');
+      if (!res.ok) throw new Error(data.error || 'ArthaMind could not answer right now.');
+      if (!data.structuredAnswer) throw new Error('No analysis came back. Please try again.');
+      setAnswer(data.structuredAnswer);
+      if (save) try { localStorage.setItem(DASH_ANALYSIS_KEY, JSON.stringify({ at: Date.now(), hash, answer: data.structuredAnswer })); } catch { /* storage full */ }
     } catch (e) { setError(e instanceof Error ? e.message : 'Please try again.'); }
     finally { setBusy(false); }
   };
   return <article className="wd-card wd-ai info" id="dash-ai">
-    <header><h2><AssistantLogo size={22}/> ArthaMind CFO Intelligence · analysis of your complete dashboard</h2><span className="wd-status info"><Sparkles size={11}/> Live data</span><small className="wd-sub">The AI reads every figure on this page plus live markets and news, then ranks what matters most for you.</small></header>
+    <header><h2><AssistantLogo size={22}/> ArthaMind CFO Intelligence · analysis of your complete dashboard</h2><span className="wd-status info"><Sparkles size={11}/> Live data</span><small className="wd-sub">ArthaMind reads every figure on this page plus live markets and news, then ranks what matters most for you.</small></header>
     <div className="wd-ai-quick">{QUICK.map((q, i) => <button key={q} type="button" className={i === 0 ? 'primary' : ''} onClick={() => void ask(q)} disabled={busy}>{q}</button>)}</div>
     <ThinkingSteps active={busy}/>
     {error && <p className="wd-note neg">{error}</p>}

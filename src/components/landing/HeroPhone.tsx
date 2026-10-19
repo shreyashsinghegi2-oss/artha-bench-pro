@@ -115,7 +115,7 @@ const DURATION: Record<Screen, number> = { splash: 3000, home: 2400, dashboard: 
 type TabId = 'home' | 'markets' | 'ai' | 'news' | 'more';
 const TAB_OF: Record<Screen, TabId> = { splash: 'home', home: 'home', dashboard: 'home', markets: 'markets', stock: 'markets', cfo: 'ai', tutor: 'ai', news: 'news', tax: 'more', language: 'more', security: 'more', people: 'more' };
 const TABS: Array<{ id: TabId; label: string; icon: React.ComponentType<{ size?: number }> }> = [
-  { id: 'home', label: 'Home', icon: Home }, { id: 'markets', label: 'Markets', icon: BarChart3 }, { id: 'ai', label: 'AI', icon: Bot },
+  { id: 'home', label: 'Home', icon: Home }, { id: 'markets', label: 'Markets', icon: BarChart3 }, { id: 'ai', label: 'Ask', icon: Bot },
   { id: 'news', label: 'News', icon: Newspaper }, { id: 'more', label: 'More', icon: LayoutGrid },
 ];
 const QUICK: Array<[string, React.ComponentType<{ size?: number }>]> = [['Tax', ReceiptText], ['SIP', Target], ['Insure', ShieldCheck], ['Wallet', Wallet]];
@@ -146,7 +146,7 @@ const CoinDrop: React.FC<{ animate: boolean }> = ({ animate }) => { const coinRe
       transition={{ duration: 2.6, times: COIN_TIMES }}/>
   </div>
   <motion.div className="hp-coin-title" initial={animate ? { opacity: 0, y: 10 } : false} animate={{ opacity: 1, y: 0 }} transition={{ delay: animate ? 1.2 : 0, duration: 0.4 }}>
-    <b>ArthaMind <em>AI</em></b><small>by Artha Bench Pro</small>
+    <b>ArthaMind</b><small>by Artha Bench Pro</small>
   </motion.div>
   <motion.div className="hp-coin-load" initial={animate ? { opacity: 0 } : false} animate={{ opacity: animate ? [0, 1, 1, 0] : 1 }} transition={{ duration: 1.4, delay: animate ? 1.2 : 0, times: [0, 0.1, 0.8, 1] }}>
     <span className="hp-coin-bar"><motion.i initial={animate ? { scaleX: 0 } : false} animate={{ scaleX: 1 }} transition={{ delay: animate ? 1.25 : 0, duration: 0.95, ease: [0.4, 0, 0.2, 1] }}/></span>
@@ -236,7 +236,7 @@ const NEWS: Array<{ theme: 'bank' | 'chip' | 'oil'; source: string; time: string
 /** App bar shown at the top of every screen after the splash. */
 const AppBar: React.FC<{ dark: boolean; photoSrc?: string }> = ({ dark, photoSrc }) => <div className={`hp-appbar ${dark ? 'dark' : ''}`}>
   <ArthaMindLogoMark size={22} tone="app"/>
-  <b>ArthaMind <em>AI</em></b>
+  <b>ArthaMind</b>
   <span className="hp-appbar-icons" aria-hidden="true"><Bell size={14}/><Portrait photoSrc={photoSrc}/></span>
 </div>;
 
@@ -393,12 +393,12 @@ export const HeroPhone: React.FC<{ photoSrc?: string }> = ({ photoSrc }) => {
                 <div className="hp-card hp-stock-card"><StockChart animate={animate}/></div>
                 <div className="hp-stats">{[['Open', '₹1,404'], ['Day high', '₹1,418'], ['Day low', '₹1,398'], ['52W range', '₹1,115–1,551']].map(([k, v]) => <span key={k}><small>{k}</small><b>{v}</b></span>)}</div>
                 <motion.div className="hp-card hp-insight" initial={animate ? { opacity: 0, y: 10 } : false} animate={{ opacity: 1, y: 0 }} transition={{ delay: animate ? 0.8 : 0 }}>
-                  <Sparkles size={13}/><p><b>AI read:</b> up on retail and Jio growth; weaker refining margins are the risk to watch.</p>
+                  <Sparkles size={13}/><p><b>ArthaMind read:</b> up on retail and Jio growth; weaker refining margins are the risk to watch.</p>
                 </motion.div>
               </>}
 
               {screen === 'cfo' && <>
-                <div className="hp-head"><b>AI CFO</b><small>Answers with the working shown</small></div>
+                <div className="hp-head"><b>ArthaMind CFO</b><small>Answers with the working shown</small></div>
                 <div className="hp-chat">
                   {chatStep >= 1 && <motion.p className="hp-bubble me" initial={animate ? { opacity: 0, y: 8 } : false} animate={{ opacity: 1, y: 0 }}>Old or new tax regime on a ₹12,00,000 salary?</motion.p>}
                   {chatStep === 2 && <p className="hp-bubble ai typing" aria-hidden="true"><i/><i/><i/></p>}
@@ -411,7 +411,7 @@ export const HeroPhone: React.FC<{ photoSrc?: string }> = ({ photoSrc }) => {
               </>}
 
               {screen === 'tutor' && <>
-                <div className="hp-head"><b>AI Tutor</b><small>Learn with worked examples</small></div>
+                <div className="hp-head"><b>ArthaMind Tutor</b><small>Learn with worked examples</small></div>
                 <div className="hp-card hp-lesson"><span className="hp-lesson-ico"><BookOpen size={14}/></span><div><small>Lesson 3 of 8 · Investing basics</small><b>Compounding and CAGR</b><span className="hp-lesson-bar"><motion.i initial={animate ? { width: 0 } : false} animate={{ width: '38%' }} transition={{ duration: 0.9 }}/></span></div></div>
                 <div className="hp-chat">
                   {chatStep >= 1 && <motion.p className="hp-bubble me" initial={animate ? { opacity: 0, y: 8 } : false} animate={{ opacity: 1, y: 0 }}>What is CAGR?</motion.p>}
@@ -461,7 +461,7 @@ export const HeroPhone: React.FC<{ photoSrc?: string }> = ({ photoSrc }) => {
                   <span className="hp-lang-bar"><i style={{ transform: `scaleX(${(lang.index + 1) / lang.total})` }}/></span>
                 </div>
                 <div className="hp-lang-grid" aria-hidden="true">{SUPPORTED_LANGUAGES.slice(0, 12).map(([code, name], i) => <span key={code} className={i === lang.index ? 'on' : i < lang.index ? 'done' : ''}>{name}</span>)}</div>
-                <p className="hp-note">AI CFO replies in 13 Indian languages, including Hinglish.</p>
+                <p className="hp-note">ArthaMind CFO replies in 13 Indian languages, including Hinglish.</p>
               </>}
 
               {screen === 'security' && <>
@@ -475,7 +475,7 @@ export const HeroPhone: React.FC<{ photoSrc?: string }> = ({ photoSrc }) => {
                   [Calculator, 'Your numbers are calculated with plain maths on your phone'],
                   [LockKeyhole, 'Everything sent is encrypted (HTTPS)'],
                   [KeyRound, 'Saved records open only for your account'],
-                  [EyeOff, 'AI sees only the question you ask'],
+                  [EyeOff, 'ArthaMind sees only the question you ask'],
                 ] as Array<[React.ComponentType<{ size?: number }>, string]>).map(([Icon, text], i) => <motion.li key={text} initial={animate ? { opacity: 0, x: 14 } : false} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.4 + i * 0.25 }}>
                   <span><Icon size={12}/></span>{text}<Check size={11} className="hp-secure-ok"/>
                 </motion.li>)}</ul>

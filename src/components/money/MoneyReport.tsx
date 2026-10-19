@@ -42,7 +42,7 @@ const Tile: React.FC<{ label: string; value: string; sub?: string; tone?: 'neg' 
 };
 
 /** The full money report: score, eight result tiles, prioritised actions and an AI hand-off. */
-export const MoneyReportView: React.FC<{ report: MoneyCheckReport; onAsk?: () => void; askLabel?: string }> = ({ report, onAsk, askLabel = 'Ask the AI CFO about this report' }) => <>
+export const MoneyReportView: React.FC<{ report: MoneyCheckReport; onAsk?: () => void; askLabel?: string }> = ({ report, onAsk, askLabel = 'Ask the ArthaMind CFO about this report' }) => <>
   <div className={`mc-score ${report.health.score >= 70 ? 'pos' : report.health.score >= 45 ? 'warn' : 'neg'}`} aria-live="polite">
     <div className="mc-ring" style={{ '--deg': `${report.health.score * 3.6}deg` } as React.CSSProperties}><b>{report.health.score}</b><span>/100</span></div>
     <div><small>Money health</small><b>{report.health.status}</b><p>{report.health.summary}</p></div>

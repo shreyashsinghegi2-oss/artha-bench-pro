@@ -102,7 +102,7 @@ function fallbackFor(path: string, body: Record<string, any>) {
   if (path === '/api/company/assistant') {
     const symbol = String(body.symbol || 'Selected company').toUpperCase();
     const visible = { symbol, note: 'Company-provider evidence was not included in this failed assistant request.' };
-    const answer = `${buildGroundedFallbackAnswer(question, visible)}\n\nCompany evidence limitation\nThe company AI endpoint was unavailable. No valuation ratio, earnings figure, analyst trend, target, fundamental, or company fact has been invented.`;
+    const answer = `${buildGroundedFallbackAnswer(question, visible)}\n\nCompany evidence limitation\nThe company assistant endpoint was unavailable. No valuation ratio, earnings figure, analyst trend, target, fundamental, or company fact has been invented.`;
     return jsonResponse({
       symbol,
       answer,
@@ -131,11 +131,11 @@ function fallbackFor(path: string, body: Record<string, any>) {
       useExternalContext: Boolean(body.useExternalContext),
       inputs: body.inputs || {},
     };
-    const answer = `${buildGroundedFallbackAnswer(question, visible)}\n\nCalculation boundary\nThe scenario AI endpoint was unavailable, so this fallback does not claim a newly verified deterministic result. Use the calculator's visible deterministic result as the numerical source of truth.`;
+    const answer = `${buildGroundedFallbackAnswer(question, visible)}\n\nCalculation boundary\nThe scenario assistant endpoint was unavailable, so this fallback does not claim a newly verified deterministic result. Use the calculator's visible deterministic result as the numerical source of truth.`;
     return jsonResponse({
       structuredAnswer: buildFallbackStructuredAnswer({ title: 'ArthaMind scenario fallback', question, answer, sourceLabels: ['Visible scenario inputs / calculator state'], dataAsOf: now }),
       sourceLabels: ['Visible scenario inputs / calculator state'],
-      contextNotes: ['External AI generation unavailable; no hidden market or company fact was substituted.'],
+      contextNotes: ['External model generation unavailable; no hidden market or company fact was substituted.'],
       suggestedQuestions: ['Which visible assumption should I review?', 'What data is missing from this scenario?', 'Explain the limitation of this fallback.'],
       groundedAt: now,
       engine: 'Client grounded fallback — no new calculation',
@@ -180,7 +180,7 @@ export function installAiFetchResilience() {
       const headers = new Headers(originalInit?.headers ?? (input instanceof Request ? input.headers : undefined));
       headers.set('x-artha-web-search', getWebSearchMode());
       // Level, country and currency (not personal data): every answer uses the right words and currency.
-      try { const { loadPrefs } = await import('./userPrefs'); const p = loadPrefs(); headers.set('x-artha-prefs', JSON.stringify({ level: p.level, country: p.country, currency: p.currency })); } catch { /* ignore */ }
+      try { const { loadPrefs } = await import('./userPrefs'); const p = loadPrefs(); headers.set('x-artha-prefs', JSON.stringify({ level: p.level, country: p.country, currency: p.currency, language: p.language })); } catch { /* ignore */ }
       init = { ...originalInit, headers };
       logFromRequestBody(originalInit?.body, path);
       // With the user's consent, attach one summary of their data from every feature.

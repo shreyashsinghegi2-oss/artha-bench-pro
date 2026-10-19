@@ -121,7 +121,7 @@ export const LandingModulePipeline: React.FC<{
     {advisor && <div className="mp-advisor">
       <span className="mp-advisor-icon"><TrendingUp size={18}/></span>
       <div><b>{advisor[1]} runs across every stage</b><small>Ask anything in 13 Indian languages, including Hinglish. Answers reuse the verified numbers above and show their sources.</small></div>
-      <button type="button" onClick={() => launch(advisor)}>Ask the AI CFO <ArrowRight size={14}/></button>
+      <button type="button" onClick={() => launch(advisor)}>Ask the ArthaMind CFO <ArrowRight size={14}/></button>
     </div>}
   </div>;
 };

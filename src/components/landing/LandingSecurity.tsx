@@ -7,7 +7,7 @@ const STAGES = [
   { icon: Smartphone, title: 'On your phone', text: 'Your portfolio and money profile stay in your own browser. Tax, SIP, EMI, XIRR and health scores are worked out right there with tested maths formulas.' },
   { icon: LockKeyhole, title: 'Locked in transit', text: 'Anything that leaves your device travels over encrypted HTTPS, the same protection banks use for their websites.' },
   { icon: Database, title: 'Your private vault', text: 'Records you save to an account are stored encrypted by our database provider, and database rules let only your signed-in account read them.' },
-  { icon: EyeOff, title: 'AI sees only what you ask', text: 'The AI gets the question you type. Sharing your personal records with it is off by default, category by category, until you switch it on.' },
+  { icon: EyeOff, title: 'ArthaMind sees only what you ask', text: 'ArthaMind gets the question you type. Sharing your personal records with it is off by default, category by category, until you switch it on.' },
 ];
 
 const NEVER = [
@@ -34,7 +34,7 @@ export const LandingSecurity: React.FC = () => {
   <div className="cl-wrap">
     <div className="cl-eyebrow">Data security</div>
     <h2 id="ls-title">Your money data stays yours.</h2>
-    <p className="cl-sub">Here is exactly where your numbers go, and what protects them at every step. The AI explains; the maths does the work.</p>
+    <p className="cl-sub">Here is exactly where your numbers go, and what protects them at every step. ArthaMind explains; the maths does the work.</p>
 
     <div className="ls-flow" role="list">
       {STAGES.map((s, i) => { const Icon = s.icon; return <React.Fragment key={s.title}>
@@ -48,7 +48,7 @@ export const LandingSecurity: React.FC = () => {
     </div>
 
     <div className="ls-maths" aria-hidden="true">
-      <span><Calculator size={16}/> Your numbers</span><em>→</em><span className="ls-calc">EMI = P·r·(1+r)<sup>n</sup> ÷ ((1+r)<sup>n</sup> − 1)</span><em>→</em><span><ShieldCheck size={16}/> Checked result</span><em>→</em><span><ServerCog size={16}/> AI explains it in your language</span>
+      <span><Calculator size={16}/> Your numbers</span><em>→</em><span className="ls-calc">EMI = P·r·(1+r)<sup>n</sup> ÷ ((1+r)<sup>n</sup> − 1)</span><em>→</em><span><ShieldCheck size={16}/> Checked result</span><em>→</em><span><ServerCog size={16}/> ArthaMind explains it in your language</span>
     </div>
 
     <div className="ls-lists">
@@ -57,7 +57,7 @@ export const LandingSecurity: React.FC = () => {
       <div className="ls-list you"><h3><KeyRound size={18}/> You stay in control</h3><ul>
         <li>Clear your device data anytime from Portfolio or Settings</li>
         <li><Trash2 size={13}/> Delete saved records or request account deletion in Account</li>
-        <li>Turn AI access to each category on or off</li>
+        <li>Turn ArthaMind access to each category on or off</li>
       </ul></div>
     </div>
     <p className="ls-fine">No online service can promise zero risk. We keep the data we hold to the minimum, protect it with encryption and access rules, and never ask for the details that could move your money.</p>

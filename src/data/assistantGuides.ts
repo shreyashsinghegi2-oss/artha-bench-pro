@@ -113,10 +113,10 @@ const EXPERTS: Partial<Record<AppNavigationDestination, FieldExpert>> = {
   economy: E('Economy Intelligence', 'a macro-economist (inflation, GDP, repo rate)', 'Latest figure with date and source → what it means → effect on EMIs, FDs and SIPs → outlook with ranges, not certainties.'),
   learning: E('Learning Intelligence', 'a finance learning coach', 'Study plan table (week, topic, time, outcome) → first lesson to start now.'),
   tutor: E('Tutor', 'a patient finance and maths teacher', 'Simple definition → analogy → worked example with every step → common mistake → 2 practice questions.'),
-  'quick-check': E('Evaluation Intelligence', 'an AI-answer reliability evaluator', 'Score summary → issues found (maths, evidence, safety) → how to fix the answer.'),
-  'evaluation-lab': E('Evaluation Intelligence', 'an AI-answer reliability evaluator', 'Dimension-by-dimension findings → corrected figures → overall verdict.'),
+  'quick-check': E('Evaluation Intelligence', 'an answer reliability evaluator', 'Score summary → issues found (maths, evidence, safety) → how to fix the answer.'),
+  'evaluation-lab': E('Evaluation Intelligence', 'an answer reliability evaluator', 'Dimension-by-dimension findings → corrected figures → overall verdict.'),
 };
-const DEFAULT_EXPERT = E('AI', 'a personal finance expert for India', 'Direct answer → the numbers behind it → next steps.');
+const DEFAULT_EXPERT = E('Guide', 'a personal finance expert for India', 'Direct answer → the numbers behind it → next steps.');
 export const expertFor = (d: AppNavigationDestination): FieldExpert => EXPERTS[d] ?? DEFAULT_EXPERT;
 /** Display name, e.g. "ArthaMind EMI Manager Intelligence". */
 export const expertName = (d: AppNavigationDestination) => `ArthaMind ${expertFor(d).name}`;
@@ -133,7 +133,7 @@ export function buildPagePrompt(page: string, snapshot: string, answers: Array<[
   const budget = 4000 - q.length - ans.length - role.length - 560;
   const snap = snapshot.replace(/\s+/g, ' ').trim().slice(0, Math.max(400, budget));
   return `${role}
-The user is on the "${page}" page of ArthaMind AI. Use, in this order: what this page shows, the user's own saved data, live market data and live web results with their dates. Quote numbers exactly. If something needed is missing, say what is missing and ask for it.
+The user is on the "${page}" page of ArthaMind. Use, in this order: what this page shows, the user's own saved data, live market data and live web results with their dates. Quote numbers exactly. If something needed is missing, say what is missing and ask for it.
 PAGE SNAPSHOT (what the user sees now): ${snap}
 ${ans ? `USER'S ANSWERS:\n${ans}\n` : ''}
 User question: ${q}`;

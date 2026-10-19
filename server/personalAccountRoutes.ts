@@ -258,7 +258,7 @@ personalAccountRouter.post('/personal/assistant', async (req: Request, res: Resp
     const userPrompt = `Question: ${parsed.data.question}\nAuthenticated user id: ${user.id}\nGrounded context:\n${JSON.stringify(groundedContext)}`;
     const demoMode = !process.env.GROQ_API_KEY?.trim();
     const fallback = personalDataUsed
-      ? `I found authorized personal context for this account (${references.join('; ')}). The live AI model is not configured, so I will not invent an interpretation. Review the recorded values in the relevant workspace or configure the AI provider for grounded natural-language analysis.`
+      ? `I found authorized personal context for this account (${references.join('; ')}). The live explanation model is not configured, so I will not invent an interpretation. Review the recorded values in the relevant workspace or configure the AI provider for grounded natural-language analysis.`
       : 'There is not enough authorized personal data in the enabled context to answer this as a personal-data question. Add records or enable the relevant AI Data Context source; I will not invent missing values.';
     const structuredAnswer = demoMode
       ? createFallbackStructuredFinancialAnswer(parsed.data.question, fallback)
@@ -374,7 +374,7 @@ personalAccountRouter.post('/personal/decision-replay', async (req: Request, res
       const prompt = `Explain this private Decision Replay without changing its arithmetic. Separate recorded baseline facts from scenario assumptions. Do not give investment, tax, legal, lending-approval, refinancing, or guaranteed-outcome advice. State data completeness as record coverage, not accuracy. Authenticated user id: ${user.id}. Deterministic replay: ${JSON.stringify(replay)}`;
       const demoMode = !process.env.GROQ_API_KEY?.trim();
       structuredAnswer = demoMode
-        ? createFallbackStructuredFinancialAnswer('Decision Replay', 'The deterministic replay is available above, but the live AI explanation provider is not configured. No interpretation has been invented.')
+        ? createFallbackStructuredFinancialAnswer('Decision Replay', 'The deterministic replay is available above, but the live explanation provider is not configured. No interpretation has been invented.')
         : await callGroqStructuredFinancialAnswer(
             `You are ArthaMind Decision Replay, a private counterfactual financial-education assistant. Use the supplied deterministic output exactly. ${buildStructuredFinancialAnswerInstructions({ audience: 'dashboard', language: 'English', level: 'beginner', detail: 'detailed', hasVerifiedCurrentData: true })}`,
             prompt,

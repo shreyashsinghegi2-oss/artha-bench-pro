@@ -1,4 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { openAnswersEditor } from '../../services/answersEditor';
+import { DownloadReportButton } from './DownloadReportButton';
 import { ArrowRight, PieChart, BadgeIndianRupee, CalendarClock, Coins, Gauge, Landmark, PiggyBank, ReceiptText, ShieldCheck, Sparkles, Target, TrendingUp, Wallet } from 'lucide-react';
 import { SAMPLE_MONEY_CHECK } from '../../services/moneyCheck';
 import { loadMoneyProfile, onMoneyProfileChange, saveMoneyProfile, type MoneyProfile } from '../../services/moneyProfile';
@@ -50,7 +52,8 @@ export const CompleteDashboardView: React.FC<{ onNavigate: (d: AppNavigationDest
 
   const d = useMemo(() => {
     if (!profile) return null;
-    try { return buildCompleteDashboard({ profile, loans: loadEmiRecords(), income: loadIncomeSources(), expenses: loadExpenses() }); } catch { return null; }
+    try { return buildCompleteDashboard({ profile, loans: loadEmiRecords(), income: loadIncomeSources(), expenses: loadExpenses() }); }
+    catch { try { return buildCompleteDashboard({ profile, loans: [], income: [], expenses: [] }); } catch { return null; } }
   }, [profile, tick]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const today = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
@@ -59,8 +62,7 @@ export const CompleteDashboardView: React.FC<{ onNavigate: (d: AppNavigationDest
     return <div className="wd">
       <header className="wd-head"><div><small className="wd-kicker">Dashboard</small><h1>Everything about your money, on one page.</h1><p>Net worth, investments, savings, tax, loans and EMIs, health score, goals and insurance, together. Set up once and it fills in.</p></div></header>
       <section className="wd-empty">
-        <button type="button" className="wd-empty-card primary" onClick={() => onNavigate('overview')}><Sparkles size={20}/><b>Set up in about two minutes</b><span>A few simple questions, or scan a payslip.</span><em>Start <ArrowRight size={14}/></em></button>
-        <button type="button" className="wd-empty-card" onClick={() => saveMoneyProfile({ ...SAMPLE_MONEY_CHECK, source: 'sample', updatedAt: new Date().toISOString() })}><Gauge size={20}/><b>See it with a sample profile</b><span>Explore the full dashboard, then replace it with your numbers.</span><em>Show sample <ArrowRight size={14}/></em></button>
+        <button type="button" className="wd-empty-card primary" onClick={openAnswersEditor}><Sparkles size={20}/><b>Finish your answers</b><span>Your dashboard fills in from the questions you answer once.</span><em>Continue <ArrowRight size={14}/></em></button>
       </section>
       <section className="wd-markets"><header className="wd-markets-head"><h2>Markets & news</h2><small>Live quotes, fund check and business headlines</small></header><LiveBoard onNavigate={onNavigate}/></section>
     </div>;
@@ -85,8 +87,9 @@ export const CompleteDashboardView: React.FC<{ onNavigate: (d: AppNavigationDest
         <p>As of {today} · {profile.source === 'sample' ? 'sample profile' : 'your numbers'} · saved on this device only</p>
       </div>
       <div className="wd-head-actions">
-        <button type="button" className="wd-btn" onClick={() => onNavigate('overview')}>Update numbers</button>
-        <button type="button" className="wd-btn primary" onClick={() => onNavigate('money-planner')}><Coins size={15}/> Plan a lump sum</button>
+        <DownloadReportButton className="wd-btn primary"/>
+        <button type="button" className="wd-btn" onClick={openAnswersEditor}>Edit my answers</button>
+        <button type="button" className="wd-btn" onClick={() => onNavigate('money-planner')}><Coins size={15}/> Plan a lump sum</button>
       </div>
     </header>
     <SectionNav/>

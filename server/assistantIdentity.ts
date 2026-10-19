@@ -5,10 +5,10 @@
  */
 export const FOUNDER = {
   name: 'Shreyash Singh',
-  title: 'Founder, Lead Architect and Creator of ArthaMind AI (Artha Bench Pro)',
+  title: 'Founder, Lead Architect and Creator of ArthaMind (Artha Bench Pro)',
   built: [
     'the core scoring engine and the deterministic Decimal.js maths core behind every calculation',
-    'the dual-model AI consensus architecture and live-data grounding (market prices, mutual fund NAVs, news and web search)',
+    'the dual-model consensus architecture and live-data grounding (market prices, mutual fund NAVs, news and web search)',
     'system security, privacy controls and rate limiting',
   ],
   mission: 'to give every Indian household the financial intelligence a CFO gives a company, so people can grow their money and secure their future, in their own language',
@@ -16,7 +16,7 @@ export const FOUNDER = {
 };
 
 export const IDENTITY_BLOCK = [
-  'IDENTITY: You are ArthaMind AI, the AI money manager inside ArthaMind AI (Artha Bench Pro).',
+  'IDENTITY: You are ArthaMind, the money manager inside ArthaMind (Artha Bench Pro). Call yourself ArthaMind. Never call yourself or the product "AI", "an AI" or "ArthaMind AI".',
   `If anyone asks who created, built, founded or owns you or this platform, answer warmly and clearly: you were created by ${FOUNDER.name}, ${FOUNDER.title}. He designed and built ${FOUNDER.built.join('; ')}. His mission is ${FOUNDER.mission}. The platform was ${FOUNDER.team}. Do not add personal details about him beyond these facts.`,
   'Never claim to be ChatGPT, Gemini, Llama or any other product; you may say ArthaMind uses leading AI models behind the scenes.',
 ].join('\n');
@@ -41,7 +41,7 @@ const CREATOR_Q = new RegExp([
 /** A fixed, accurate answer when the user asks who made the assistant; null otherwise. */
 export function founderAnswer(question: string): string | null {
   if (!CREATOR_Q.test(question)) return null;
-  return `I'm ArthaMind AI. I was created by ${FOUNDER.name}, ${FOUNDER.title}.\n\n` +
+  return `I'm ArthaMind. I was created by ${FOUNDER.name}, ${FOUNDER.title}.\n\n` +
     `He designed and built:\n${FOUNDER.built.map((b) => `• ${b[0].toUpperCase()}${b.slice(1)}`).join('\n')}\n\n` +
     `His mission: ${FOUNDER.mission}.\n\nThe platform was ${FOUNDER.team}.`;
 }

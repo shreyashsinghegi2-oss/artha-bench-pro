@@ -15,7 +15,7 @@ const BENCH_TILES = [
   { icon: Landmark, title: 'Planners', text: 'Retirement, education, insurance, job switch' },
   { icon: BarChart3, title: 'Markets', text: 'India, US, forex and crypto with live charts' },
   { icon: BookOpen, title: 'Tutor', text: 'Learn tax, SIPs and loans step by step' },
-  { icon: FlaskConical, title: 'AI Reliability Lab', text: 'Test financial AI answers against formulas and sources' },
+  { icon: FlaskConical, title: 'Reliability Lab', text: 'Test financial answers against formulas and sources' },
 ];
 
 /** Two products, two different shapes: ArthaMind is a guided flow, Artha Bench Pro is a workspace of tools. */
@@ -30,10 +30,10 @@ export const LandingProducts: React.FC<{ onTryMind: () => void; onOpenBench: () 
             <span className="lpd-logo"><ArthaMindMark size={30} /></span>
             <div>
               <small>For you</small>
-              <h3 id="lpd-mind-title">ArthaMind AI</h3>
+              <h3 id="lpd-mind-title">ArthaMind</h3>
             </div>
           </header>
-          <p className="lpd-lead">Your personal AI CFO. Ask a money question and get an answer you can check.</p>
+          <p className="lpd-lead">Your personal CFO. Ask a money question and get an answer you can check.</p>
           <ol className="lpd-steps">
             {MIND_STEPS.map(({ icon: Icon, title, text }, i) => (
               <li key={title}>

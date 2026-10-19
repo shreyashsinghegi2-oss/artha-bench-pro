@@ -15,7 +15,12 @@ export type Steadiness = 'fixed' | 'varies' | 'irregular';
 export type Goal = 'emergency' | 'home' | 'education' | 'retirement' | 'vehicle' | 'travel' | 'debt-free' | 'wealth';
 
 export interface OnboardingAnswers {
+  /** Language for the questions and every answer (BCP-47, e.g. hi-IN). */
+  language?: string;
   name?: string;
+  /** What the user does, in their words (e.g. "Software engineer", "Kirana shop"). */
+  jobTitle?: string;
+  industry?: string;
   level?: Level;
   country?: string;
   currency?: string;
@@ -401,4 +406,31 @@ export function incomeBand(monthly: number, currency: string): string {
   if (monthly <= 0) return 'No income';
   const label = bands.find(([max]) => inr < max)?.[1] ?? 'Above ₹5,00,000';
   return `${label} a month${currency === 'INR' ? '' : ` (about, from ${currency})`}`;
+}
+
+/**
+ * The sign-up answers that are not already in the money profile, as short plain lines, so every
+ * assistant, the dashboard analysis and the report know the person (job, goals, habits, mindset).
+ */
+export function answersSummary(record: OnboardingRecord | null = loadOnboardingRecord()): string {
+  if (!record) return '';
+  const a = record.answers;
+  const cur = a.currency ?? 'INR';
+  const m = (n?: number) => (n === undefined ? undefined : `${cur} ${Math.round(n).toLocaleString(cur === 'INR' ? 'en-IN' : 'en-US')}`);
+  const work = WORK_OPTIONS.find((w) => w.value === a.work)?.label;
+  const goals = (a.goals ?? (a.goal ? [a.goal] : [])).map((g) => GOAL_OPTIONS.find((o) => o.value === g)?.label ?? g);
+  const lines = [
+    `About the person: ${[a.name, a.age ? `age ${a.age}` : '', a.country, work, a.jobTitle, a.jobYears !== undefined ? `${a.jobYears} years in current work` : '', a.totalYears !== undefined ? `${a.totalYears} years earning in total` : ''].filter(Boolean).join(', ')}.`,
+    `Reading level: ${a.level ?? 'beginner'}; language ${a.language ?? 'en-IN'}; home currency ${cur}.`,
+    a.incomeSources?.length || a.steadiness ? `Income: ${[a.incomeSources?.join(', '), a.steadiness ? `${a.steadiness === 'fixed' ? 'same every month' : a.steadiness === 'varies' ? 'changes a little' : 'changes a lot'}` : '', a.worstMonthIncome !== undefined ? `worst month ${m(a.worstMonthIncome)}` : ''].filter(Boolean).join('; ')}.` : '',
+    a.fixedExpenses !== undefined ? `Spending split: fixed ${m(a.fixedExpenses)}, day-to-day ${m(a.variableExpenses)}${a.budget ? `; budget: ${a.budget}` : ''}${a.overspend ? `; extra money goes to ${a.overspend}` : ''}.` : '',
+    [a.gold ? `gold ${m(a.gold)}` : '', a.propertyValue ? `property ${m(a.propertyValue)}` : '', a.businessValue ? `business stake ${m(a.businessValue)}` : ''].filter(Boolean).length ? `Other assets: ${[a.gold ? `gold ${m(a.gold)}` : '', a.propertyValue ? `property ${m(a.propertyValue)}` : '', a.businessValue ? `business stake ${m(a.businessValue)}` : ''].filter(Boolean).join(', ')}.` : '',
+    a.loanTypes?.length || a.highestRate || a.creditCardDue ? `Debt detail: ${[a.loanTypes?.join(', '), a.highestRate ? `highest rate ${a.highestRate}%` : '', a.creditCardDue ? `unpaid credit card ${m(a.creditCardDue)}` : 'no unpaid card bill'].filter(Boolean).join('; ')}.` : '',
+    a.yearlyRevenue || a.profitMargin !== undefined ? `Business: revenue ${m(a.yearlyRevenue) ?? 'unknown'} a year, profit margin ${a.profitMargin ?? '?'}%, separate accounts ${a.separateAccounts ?? 'unknown'}.` : '',
+    `Protection: health cover ${m(a.healthCover) ?? 'unknown'}, term cover ${m(a.termCover) ?? 'unknown'}, critical illness ${a.criticalCover ?? 'unknown'}, nominees ${a.nominees ?? 'unknown'}, will ${a.will ?? 'unknown'}.`,
+    goals.length ? `Goals in order: ${goals.join(' > ')}${a.goalAmount ? `; top goal costs ${m(a.goalAmount)} today, needed in ${a.goalYears} years` : ''}${a.retireAge ? `; wants to stop working at ${a.retireAge}` : ''}${a.freedomIncome ? `; freedom income ${m(a.freedomIncome)} a month` : ''}.` : '',
+    a.taxRegime || a.section80C !== undefined ? `Tax: regime ${a.taxRegime ?? 'unknown'}, 80C ${m(a.section80C) ?? 'unknown'}, has CA ${a.hasAdviser ?? 'unknown'}, open tax notice ${a.taxNotice ?? 'unknown'}.` : '',
+    `Mindset: ${record.result.riskLabel}; ${record.result.habitLabel}${a.decisionStyle ? `; decides by ${a.decisionStyle}` : ''}${a.lostMoney ? `; lost money before: ${a.lostMoney}` : ''}${a.knowledgeGaps?.length ? `; wants to learn ${a.knowledgeGaps.join(', ')}` : ''}.`,
+  ];
+  return lines.filter(Boolean).join('\n');
 }

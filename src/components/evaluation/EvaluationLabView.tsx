@@ -19,7 +19,7 @@ export const EvaluationLabView: React.FC = () => {
   const handleEvaluate = async () => {
     if (!query.trim()) return;
     if (mode !== 'dual' && !suppliedResponse.trim()) {
-      setError(mode === 'upload' ? 'Upload a supported text file before running the evaluation.' : 'Paste or enter the AI response you want to evaluate.');
+      setError(mode === 'upload' ? 'Upload a supported text file before running the evaluation.' : 'Paste or enter the answer you want to evaluate.');
       return;
     }
     setLoading(true);
@@ -89,7 +89,7 @@ export const EvaluationLabView: React.FC = () => {
 
         <div className="grid gap-2 rounded-2xl border border-line bg-canvas p-2 sm:grid-cols-3" role="tablist" aria-label="Evaluation input mode">
           <ModeButton active={mode === 'dual'} onClick={() => { setMode('dual'); setReport(null); setError(null); }} icon={<ShieldCheck className="h-4 w-4" />} title="Dual-model prompt" description="Generate and audit two evaluator outputs" />
-          <ModeButton active={mode === 'response'} onClick={() => { setMode('response'); setReport(null); setError(null); }} icon={<FileText className="h-4 w-4" />} title="Evaluate a response" description="Paste an existing AI answer" />
+          <ModeButton active={mode === 'response'} onClick={() => { setMode('response'); setReport(null); setError(null); }} icon={<FileText className="h-4 w-4" />} title="Evaluate a response" description="Paste an existing ArthaMind answer" />
           <ModeButton active={mode === 'upload'} onClick={() => { setMode('upload'); setReport(null); setError(null); }} icon={<FileUp className="h-4 w-4" />} title="Evaluate uploaded text" description="Load TXT, MD, CSV or JSON" />
         </div>
 
@@ -101,7 +101,7 @@ export const EvaluationLabView: React.FC = () => {
 
         {mode === 'response' && (
           <div className="space-y-2">
-            <label className="block text-xs font-semibold text-secondary" htmlFor="supplied-evaluation-response">AI-generated or external response to evaluate</label>
+            <label className="block text-xs font-semibold text-secondary" htmlFor="supplied-evaluation-response">Automatically generated or external response to evaluate</label>
             <textarea id="supplied-evaluation-response" value={suppliedResponse} onChange={(event) => { setSuppliedResponse(event.target.value.slice(0, 12000)); setReport(null); }} rows={9} maxLength={12000} className="w-full resize-y rounded-xl border border-line bg-canvas p-4 text-xs leading-6 text-ink outline-none focus:border-interactive focus:ring-2 focus:ring-interactive/20" placeholder="Paste the response exactly as produced. Artha Bench will score this supplied text rather than generating a replacement." />
             <div className="text-right font-mono text-[9px] text-secondary">{suppliedResponse.length.toLocaleString()} / 12,000</div>
           </div>

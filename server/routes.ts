@@ -974,7 +974,7 @@ apiRouter.post('/dashboard/assistant', async (req: Request, res: Response, next:
     if (directAdvicePattern.test(parsed.data.question)) {
       return res.status(400).json({
         error:
-          'Ask Artha AI can explain dashboard evidence, trends, and risks, but it cannot provide personalized buy, sell, hold, target-price, or guaranteed-return recommendations.',
+          'Ask ArthaMind can explain dashboard evidence, trends, and risks, but it cannot provide personalized buy, sell, hold, target-price, or guaranteed-return recommendations.',
       });
     }
 
@@ -1048,7 +1048,7 @@ ${buildStructuredFinancialAnswerInstructions({
         'Which dashboard data limitations should I notice?',
         snapshot.latestEvaluation
           ? 'Explain the latest reliability score and its weakest dimension.'
-          : 'How does ArthaBench measure AI reliability?',
+          : 'How does ArthaBench measure answer reliability?',
       ],
       disclaimer: 'Educational analysis only — not investment advice.',
       requestId: res.getHeader('x-request-id'),
@@ -1300,7 +1300,7 @@ apiRouter.post('/company/assistant', async (req: Request, res: Response, next: N
     if (directAdvicePattern.test(parsed.data.question)) {
       return res.status(400).json({
         error:
-          'The Company AI Assistant cannot provide buy, sell, hold, target-price, or personalized investment recommendations. Ask about the company’s reported metrics, earnings, risks, or trends instead.',
+          'The Company Assistant cannot provide buy, sell, hold, target-price, or personalized investment recommendations. Ask about the company’s reported metrics, earnings, risks, or trends instead.',
       });
     }
 

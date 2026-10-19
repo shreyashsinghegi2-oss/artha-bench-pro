@@ -92,8 +92,8 @@ export const PublicFinanceOverview: React.FC<Props> = ({ onSignIn, onNavigate })
             <ShieldCheck className="h-4 w-4 text-success" /> Public vs private
           </div>
           <div className="mt-4 space-y-3 text-[11px] leading-5 text-secondary">
-            <p><strong className="text-ink">Open without an account:</strong> market research, crypto, learning and AI reliability tools.</p>
-            <p><strong className="text-ink">Sign-in required:</strong> income, expenses, budgets, EMIs, personal reports and private AI context.</p>
+            <p><strong className="text-ink">Open without an account:</strong> market research, crypto, learning and answer reliability tools.</p>
+            <p><strong className="text-ink">Sign-in required:</strong> income, expenses, budgets, EMIs, personal reports and private assistant context.</p>
             <p className="rounded-xl border border-success-fill/20 bg-success-soft p-3 text-success">Personal records are isolated to your authenticated account and are not mixed with public market data.</p>
           </div>
         </aside>

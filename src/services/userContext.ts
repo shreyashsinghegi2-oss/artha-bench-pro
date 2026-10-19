@@ -4,6 +4,7 @@
  * to AI requests while "Use my data" is on (the default) so every assistant answers for this person; one tap turns it off.
  */
 import { loadMoneyProfile } from './moneyProfile';
+import { answersSummary } from './onboarding';
 import { buildCompleteDashboard } from './completeDashboard';
 import { loadEmiRecords } from './emiStorage';
 import { loadIncomeSources } from './incomeStorage';
@@ -55,5 +56,7 @@ export function buildUserContext(): string {
   for (const [key, label] of [['arthamind-plan-retirement-v1', 'Retirement plan inputs'], ['arthamind-plan-education-v1', 'Education plan inputs'], ['arthamind-plan-jobswitch-v1', 'Job switch inputs']] as const) {
     try { const raw = localStorage.getItem(key); if (raw) lines.push(`${label}: ${raw.slice(0, 300)}`); } catch { /* ignore */ }
   }
-  return lines.join('\n').slice(0, 2400);
+  // The sign-up answers (job, goals, habits, mindset) come first, so every assistant knows the person.
+  const about = answersSummary();
+  return [about, ...lines].filter(Boolean).join('\n').slice(0, 3600);
 }

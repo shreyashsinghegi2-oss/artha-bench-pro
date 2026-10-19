@@ -175,7 +175,7 @@ export function createTimetableRouter(deps: { fetchImpl?: typeof fetch } = {}): 
       res.json({
         rows,
         note: rows.length
-          ? 'Read by AI. Check every row against the timetable before publishing.'
+          ? 'Read automatically. Check every row against the timetable before publishing.'
           : 'No classes could be read from this image. Enter the rows by hand.',
       });
     } catch (e) {

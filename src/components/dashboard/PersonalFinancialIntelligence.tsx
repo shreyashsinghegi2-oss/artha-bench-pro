@@ -91,7 +91,7 @@ export const PersonalFinancialIntelligence: React.FC<Props> = ({ onNavigate }) =
       </div>
 
       <div className="mt-4 flex flex-col gap-3 rounded-2xl border border-line bg-canvas px-4 py-3 text-[10px] text-secondary sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-2"><PiggyBank className="h-4 w-4 text-brand" /><span><span className="font-semibold text-ink">ArthaMind prompt:</span> Ask about your {new Date(`${snapshot.month}-01`).toLocaleDateString('en-IN', { month: 'long' })} budget after enabling the relevant AI Data Context.</span></div>
+        <div className="flex items-center gap-2"><PiggyBank className="h-4 w-4 text-brand" /><span><span className="font-semibold text-ink">ArthaMind prompt:</span> Ask about your {new Date(`${snapshot.month}-01`).toLocaleDateString('en-IN', { month: 'long' })} budget after enabling the relevant Assistant Data Context.</span></div>
         <button type="button" onClick={() => onNavigate('decision-replay')} className="inline-flex shrink-0 items-center gap-1.5 font-black text-interactive">Replay a what-if <ArrowRight className="h-3.5 w-3.5" /></button>
       </div>
     </section>

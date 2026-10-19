@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Languages } from 'lucide-react';
+import { loadPrefs, savePrefs } from '../services/userPrefs';
 
 export const SUPPORTED_LANGUAGES = [
   ['en', 'English'],
@@ -152,6 +153,100 @@ function ensureGoogleTranslateWidget() {
   return true;
 }
 
+/** BCP-47 tag for a site language code (hi → hi-IN for Indian languages). */
+export const languageTag = (code: string) => (['en', 'hi', 'mr', 'gu', 'bn', 'ta', 'te', 'kn', 'ml', 'pa', 'ur', 'or', 'as'].includes(code) ? `${code}-IN` : code);
+/** Site language code for a BCP-47 tag (hi-IN → hi). */
+export const siteCode = (tag: string) => (tag || 'en').split('-')[0].toLowerCase();
+
+/**
+ * Loads the hidden page translator once. The page opens in the language the user chose (saved in their
+ * preferences), or English for visitors.
+ */
+export function bootSiteTranslation() {
+  if (typeof window === 'undefined' || booted) return;
+  booted = true;
+
+  // Every fresh load starts in English.
+  window.localStorage.removeItem('artha-bench-global-language');
+  clearGoogleCookies();
+  document.documentElement.lang = 'en';
+
+  const style = document.createElement('style');
+  style.id = 'artha-google-translate-cleanup';
+  style.textContent = `
+    .goog-te-banner-frame,
+    .goog-te-balloon-frame,
+    .goog-tooltip,
+    .goog-tooltip:hover,
+    .goog-text-highlight,
+    .skiptranslate > iframe { display: none !important; }
+    body { top: 0 !important; margin-top: 0 !important; }
+    html { top: 0 !important; }
+  `;
+  document.head.appendChild(style);
+
+  const init = () => {
+    ensureGoogleTranslateWidget();
+    hideGoogleChrome();
+  };
+
+  window.arthaGoogleTranslateInit = init;
+
+  if (!document.getElementById('artha-google-translate')) {
+    const script = document.createElement('script');
+    script.id = 'artha-google-translate';
+    script.src = 'https://translate.google.com/translate_a/element.js?cb=arthaGoogleTranslateInit';
+    script.async = true;
+    document.head.appendChild(script);
+  }
+
+  const observer = new MutationObserver(() => hideGoogleChrome());
+  observer.observe(document.documentElement, { childList: true, subtree: true });
+
+  const timer = window.setInterval(() => {
+    init();
+    if (document.querySelector<HTMLSelectElement>('.goog-te-combo')) {
+      window.clearInterval(timer);
+    }
+  }, 300);
+  // Style, script and observer live for the whole page: other selectors rely on them.
+
+  const saved = siteCode(loadPrefs().language);
+  if (saved !== 'en' && SUPPORTED_LANGUAGES.some(([c]) => c === saved)) setSiteLanguage(saved);
+}
+
+/** Shows the whole page in `code` (e.g. 'hi'), or the original English for 'en'. */
+export function setSiteLanguage(code: string) {
+  bootSiteTranslation();
+  setPageLanguage(code);
+  document.documentElement.lang = code;
+
+  if (code === 'en') {
+    clearGoogleCookies();
+    // Restore the original page now; retry while Google finishes, and reload once only if the
+    // page is still translated after that (the cookie is already cleared, so it loads in English).
+    [0, 250, 700].forEach((delay) => window.setTimeout(() => { if (isPageTranslated()) restoreOriginal(); hideGoogleChrome(); }, delay));
+    window.setTimeout(() => { if (isPageTranslated() && pageLanguage === 'en') window.location.reload(); }, 1600);
+    return;
+  }
+
+  setGoogleLanguageCookie(code);
+  ensureGoogleTranslateWidget();
+
+  // Google Translate can load its hidden select asynchronously. Retry briefly so
+  // choosing a language always applies even when the user selects immediately.
+  const attempts = [0, 200, 500, 900, 1500, 2200];
+  attempts.forEach((delay) => {
+    window.setTimeout(() => {
+      if (pageLanguage !== code) return; // the user has already picked another language
+      ensureGoogleTranslateWidget();
+      applyGoogleLanguage(code);
+      hideGoogleChrome();
+    }, delay);
+  });
+  
+}
+
 export const LanguageSelector: React.FC<{ compact?: boolean }> = ({ compact = false }) => {
   // Every fresh load starts in English; after that all selectors share the page's language.
   const [language, setLanguage] = useState(pageLanguage);
@@ -162,84 +257,9 @@ export const LanguageSelector: React.FC<{ compact?: boolean }> = ({ compact = fa
     return () => { listeners.delete(setLanguage); };
   }, []);
 
-  useEffect(() => {
-    if (typeof window === 'undefined' || booted) return;
-    booted = true;
+  useEffect(() => { bootSiteTranslation(); }, []);
 
-    // Every fresh load starts in English.
-    window.localStorage.removeItem('artha-bench-global-language');
-    clearGoogleCookies();
-    document.documentElement.lang = 'en';
-
-    const style = document.createElement('style');
-    style.id = 'artha-google-translate-cleanup';
-    style.textContent = `
-      .goog-te-banner-frame,
-      .goog-te-balloon-frame,
-      .goog-tooltip,
-      .goog-tooltip:hover,
-      .goog-text-highlight,
-      .skiptranslate > iframe { display: none !important; }
-      body { top: 0 !important; margin-top: 0 !important; }
-      html { top: 0 !important; }
-    `;
-    document.head.appendChild(style);
-
-    const init = () => {
-      ensureGoogleTranslateWidget();
-      hideGoogleChrome();
-    };
-
-    window.arthaGoogleTranslateInit = init;
-
-    if (!document.getElementById('artha-google-translate')) {
-      const script = document.createElement('script');
-      script.id = 'artha-google-translate';
-      script.src = 'https://translate.google.com/translate_a/element.js?cb=arthaGoogleTranslateInit';
-      script.async = true;
-      document.head.appendChild(script);
-    }
-
-    const observer = new MutationObserver(() => hideGoogleChrome());
-    observer.observe(document.documentElement, { childList: true, subtree: true });
-
-    const timer = window.setInterval(() => {
-      init();
-      if (document.querySelector<HTMLSelectElement>('.goog-te-combo')) {
-        window.clearInterval(timer);
-      }
-    }, 300);
-    // Style, script and observer live for the whole page: other selectors rely on them.
-  }, []);
-
-  const change = (code: string) => {
-    setPageLanguage(code);
-    document.documentElement.lang = code;
-
-    if (code === 'en') {
-      clearGoogleCookies();
-      // Restore the original page now; retry while Google finishes, and reload once only if the
-      // page is still translated after that (the cookie is already cleared, so it loads in English).
-      [0, 250, 700].forEach((delay) => window.setTimeout(() => { if (isPageTranslated()) restoreOriginal(); hideGoogleChrome(); }, delay));
-      window.setTimeout(() => { if (isPageTranslated() && pageLanguage === 'en') window.location.reload(); }, 1600);
-      return;
-    }
-
-    setGoogleLanguageCookie(code);
-    ensureGoogleTranslateWidget();
-
-    // Google Translate can load its hidden select asynchronously. Retry briefly so
-    // choosing a language always applies even when the user selects immediately.
-    const attempts = [0, 200, 500, 900, 1500, 2200];
-    attempts.forEach((delay) => {
-      window.setTimeout(() => {
-        if (pageLanguage !== code) return; // the user has already picked another language
-        ensureGoogleTranslateWidget();
-        applyGoogleLanguage(code);
-        hideGoogleChrome();
-      }, delay);
-    });
-  };
+  const change = (code: string) => { setSiteLanguage(code); savePrefs({ language: languageTag(code) }); };
 
   const currentName = SUPPORTED_LANGUAGES.find(([code]) => code === language)?.[1] || 'English';
 

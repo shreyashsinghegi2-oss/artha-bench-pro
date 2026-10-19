@@ -198,7 +198,7 @@ export const AuthModal: React.FC = () => {
               : 'Check your email';
 
   const description = auth.authScreen === 'login'
-    ? 'Sign in to your portfolio, money report and AI CFO.'
+    ? 'Sign in to your portfolio, money report and ArthaMind CFO.'
     : auth.authScreen === 'signup'
       ? 'Track income, expenses, EMIs and investments, and get answers in your language.'
       : auth.authScreen === 'onboarding'
@@ -220,7 +220,7 @@ export const AuthModal: React.FC = () => {
             <h2>Your money, understood.<br/><em>In your language.</em></h2>
             <ul className="am-points">
               <li><span><PieChart size={16}/></span><div><b>Portfolio & net worth</b><small>Import your mutual fund statement, add stocks, FDs and gold. See true returns (XIRR).</small></div></li>
-              <li><span><Languages size={16}/></span><div><b>AI CFO in 13 Indian languages</b><small>Ask by voice, listen to answers, download voice notes.</small></div></li>
+              <li><span><Languages size={16}/></span><div><b>ArthaMind CFO in 13 Indian languages</b><small>Ask by voice, listen to answers, download voice notes.</small></div></li>
               <li><span><LineChart size={16}/></span><div><b>Live markets and mutual funds</b><small>NIFTY, SENSEX, official AMFI NAVs and business news.</small></div></li>
               <li><span><LockKeyhole size={16}/></span><div><b>Your data stays yours</b><small>Secure sign-in; personal records are visible only to your account.</small></div></li>
             </ul>
@@ -370,7 +370,7 @@ export const AuthModal: React.FC = () => {
             {auth.authScreen === 'onboarding' && (
               <form onSubmit={submitOnboarding} className="space-y-4">
                 <div className="grid gap-4 sm:grid-cols-2"><div><label className={labelClass}>Full name</label><input className={inputClass} value={fullName} onChange={(e) => setFullName(e.target.value)} /></div><div><label className={labelClass}>Country</label><input className={inputClass} value={country} onChange={(e) => setCountry(e.target.value)} /></div></div>
-                <div><label className={labelClass}>Primary goal</label><select className={inputClass} value={goal} onChange={(e) => setGoal(e.target.value)}><option value="learn">Learn finance</option><option value="manage">Manage personal finances</option><option value="markets">Follow markets</option><option value="evaluate">Test financial AI</option><option value="all">All of these</option></select></div>
+                <div><label className={labelClass}>Primary goal</label><select className={inputClass} value={goal} onChange={(e) => setGoal(e.target.value)}><option value="learn">Learn finance</option><option value="manage">Manage personal finances</option><option value="markets">Follow markets</option><option value="evaluate">Test financial answers</option><option value="all">All of these</option></select></div>
                 <div className="grid gap-4 sm:grid-cols-2"><div><label className={labelClass}>Preferred currency</label><select className={inputClass} value={currency} onChange={(e) => setCurrency(e.target.value)}><option>INR</option><option>USD</option><option>EUR</option><option>GBP</option></select></div><div><label className={labelClass}>Market focus</label><select className={inputClass} value={marketFocus} onChange={(e) => setMarketFocus(e.target.value as typeof marketFocus)}><option>India</option><option>US</option><option>Global</option></select></div></div>
                 <div className="grid gap-4 sm:grid-cols-2"><div><label className={labelClass}>Monthly income range (optional)</label><input className={inputClass} placeholder="e.g. ₹25,000 – ₹50,000" value={incomeRange} onChange={(e) => setIncomeRange(e.target.value)} /></div><div><label className={labelClass}>Learning level</label><select className={inputClass} value={learningLevel} onChange={(e) => setLearningLevel(e.target.value as typeof learningLevel)}><option value="beginner">Beginner</option><option value="intermediate">Intermediate</option><option value="advanced">Advanced</option></select></div></div>
                 <div><label className={labelClass}>Savings or financial goal (optional)</label><input className={inputClass} placeholder="Describe a goal without sensitive account details" value={financialGoal} onChange={(e) => setFinancialGoal(e.target.value)} /></div>

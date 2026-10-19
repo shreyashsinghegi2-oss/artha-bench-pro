@@ -1149,17 +1149,17 @@ import { AsyncLocalStorage } from "node:async_hooks";
 // server/assistantIdentity.ts
 var FOUNDER = {
   name: "Shreyash Singh",
-  title: "Founder, Lead Architect and Creator of ArthaMind AI (Artha Bench Pro)",
+  title: "Founder, Lead Architect and Creator of ArthaMind (Artha Bench Pro)",
   built: [
     "the core scoring engine and the deterministic Decimal.js maths core behind every calculation",
-    "the dual-model AI consensus architecture and live-data grounding (market prices, mutual fund NAVs, news and web search)",
+    "the dual-model consensus architecture and live-data grounding (market prices, mutual fund NAVs, news and web search)",
     "system security, privacy controls and rate limiting"
   ],
   mission: "to give every Indian household the financial intelligence a CFO gives a company, so people can grow their money and secure their future, in their own language",
   team: "developed with the ArthaBench Research Team (financial reliability, datasets, regulatory evidence checks and localisation)"
 };
 var IDENTITY_BLOCK = [
-  "IDENTITY: You are ArthaMind AI, the AI money manager inside ArthaMind AI (Artha Bench Pro).",
+  'IDENTITY: You are ArthaMind, the money manager inside ArthaMind (Artha Bench Pro). Call yourself ArthaMind. Never call yourself or the product "AI", "an AI" or "ArthaMind AI".',
   `If anyone asks who created, built, founded or owns you or this platform, answer warmly and clearly: you were created by ${FOUNDER.name}, ${FOUNDER.title}. He designed and built ${FOUNDER.built.join("; ")}. His mission is ${FOUNDER.mission}. The platform was ${FOUNDER.team}. Do not add personal details about him beyond these facts.`,
   "Never claim to be ChatGPT, Gemini, Llama or any other product; you may say ArthaMind uses leading AI models behind the scenes."
 ].join("\n");
@@ -1180,7 +1180,7 @@ var CREATOR_Q = new RegExp([
 ].join("|"), "i");
 function founderAnswer(question) {
   if (!CREATOR_Q.test(question)) return null;
-  return `I'm ArthaMind AI. I was created by ${FOUNDER.name}, ${FOUNDER.title}.
+  return `I'm ArthaMind. I was created by ${FOUNDER.name}, ${FOUNDER.title}.
 
 He designed and built:
 ${FOUNDER.built.map((b) => `\u2022 ${b[0].toUpperCase()}${b.slice(1)}`).join("\n")}
@@ -2643,7 +2643,7 @@ var TOPICS = [
   },
   {
     id: "tech",
-    label: "Technology & AI",
+    label: "Technology",
     re: /\b(AI|artificial intelligence|chip|semiconductor|software|cloud|data centre|data center)\b/i,
     area: "Technology",
     why: "Technology spending cycles drive revenue for IT services, chipmakers and cloud providers.",
@@ -2958,7 +2958,7 @@ Please explain:
     explanation: serializeStructuredFinancialAnswer(structuredAnswer),
     structuredAnswer,
     keyTakeaways: structuredAnswer.keyTakeaways,
-    disclaimer: "AI explanation generated from the supplied headline and summary for educational analysis only. Not investment advice."
+    disclaimer: "ArthaMind explanation generated from the supplied headline and summary for educational analysis only. Not investment advice."
   };
 }
 async function buildNewsResearchBrief(article, now = /* @__PURE__ */ new Date()) {
@@ -5148,7 +5148,7 @@ var store2 = new AsyncLocalStorage();
 function stripUserProfile(req, _res, next) {
   const body = req.body;
   if (body && typeof body === "object" && typeof body.userProfile === "string") {
-    req.arthaUserProfile = body.userProfile.replace(/[<>]/g, "").slice(0, 2400);
+    req.arthaUserProfile = body.userProfile.replace(/[<>]/g, "").slice(0, 3600);
     delete body.userProfile;
   }
   next();
@@ -5378,6 +5378,7 @@ ${parts.join("\n\n")}` : "";
   return value;
 }
 var NUMBER_STYLE = "NUMBER STYLE: write every rupee amount in full with Indian digit grouping (\u20B912,00,000; \u20B91,20,200; \u20B95,000). Never abbreviate amounts as k, K, L, lakh, Cr, crore, M or bn.";
+var LANGUAGE_NAMES = { hi: "Hindi", mr: "Marathi", bn: "Bengali", ta: "Tamil", te: "Telugu", gu: "Gujarati", kn: "Kannada", ml: "Malayalam", pa: "Punjabi", ur: "Urdu", or: "Odia", od: "Odia", as: "Assamese", es: "Spanish", fr: "French", de: "German", ar: "Arabic", pt: "Portuguese", it: "Italian", ja: "Japanese" };
 function parsePrefs(raw) {
   if (!raw) return void 0;
   try {
@@ -5385,7 +5386,8 @@ function parsePrefs(raw) {
     const level = p.level === "intermediate" || p.level === "advanced" ? p.level : "beginner";
     const country = typeof p.country === "string" ? p.country.replace(/[^A-Za-z .'-]/g, "").slice(0, 40) || "India" : "India";
     const currency = typeof p.currency === "string" && /^[A-Z]{3}$/.test(p.currency) ? p.currency : "INR";
-    return { level, country, currency };
+    const language = typeof p.language === "string" && /^[a-z]{2}(-[A-Z]{2})?$/.test(p.language) ? p.language : void 0;
+    return language ? { level, country, currency, language } : { level, country, currency };
   } catch {
     return void 0;
   }
@@ -5399,8 +5401,11 @@ function numberStyleFor(prefs) {
   if (!prefs) return NUMBER_STYLE;
   const indian = ["INR", "NPR", "PKR", "BDT", "LKR"].includes(prefs.currency);
   const home = indian ? `${prefs.currency === "INR" ? "rupees (\u20B9)" : prefs.currency} with Indian digit grouping (\u20B912,00,000; \u20B91,20,200), and add the amount in words in brackets for big amounts (\u20B912,00,000 (12 lakh); \u20B92,50,00,000 (2.5 crore))` : `${prefs.currency} with international digit grouping (1,200,000), and add the amount in words in brackets for big amounts (1,200,000 (1.2 million); 3,000,000,000 (3 billion))`;
+  const lang = prefs.language ? LANGUAGE_NAMES[prefs.language.split("-")[0]] : void 0;
+  const languageRule = lang ? `
+LANGUAGE: write every word of the answer (all fields) in simple everyday ${lang}, in its own script, as a patient family elder would say it. Keep numbers and amounts as digits. Keep names of funds, companies and schemes as they are.` : "";
   return `CURRENCY AND NUMBERS: the reader lives in ${prefs.country}; their home currency is ${prefs.currency}. If the question names a currency (\u20B9, rupees, INR, $, dollars, USD, \xA3, \u20AC, AED\u2026), answer in THAT currency. Otherwise answer in ${home}. Never mix currencies in one answer unless the question compares them, and never convert at a made-up exchange rate (say the rate must be checked). Do not use k, K, L, Cr, M or bn shorthand.
-${LEVEL_STYLE[prefs.level]}`;
+${LEVEL_STYLE[prefs.level]}${languageRule}`;
 }
 async function groundSystemPrompt(systemPrompt2, userPrompt) {
   const state = store2.getStore();
@@ -5668,7 +5673,7 @@ Both ratios measure short-term liquidity, but differ in asset strictness:
   }
   return `### Here is how to think about it
 
-The live AI adviser is not connected right now, so this is a general framework rather than a tailored answer to "*${userPrompt.trim()}*".
+The live ArthaMind adviser is not connected right now, so this is a general framework rather than a tailored answer to "*${userPrompt.trim()}*".
 
 1. **Start with your numbers:** note your monthly take-home, fixed costs, EMIs and savings, since every money decision depends on them.
 2. **Check the basics first:** keep EMIs under about 40% of take-home, aim to save 20% or more, and hold 6 months of expenses as an emergency fund.
@@ -8160,7 +8165,7 @@ async function translateText(text, lang) {
         `You translate personal-finance answers for Indian families. Translate the user's text into simple, everyday ${l.name}${lang === "en" ? "" : ` in its own script`}, the way a patient family elder would say it aloud. Keep every number and amount exactly, in digits with Indian grouping (\u20B912,00,000). Keep names of funds, companies and schemes as they are. Output only the translation, no notes.`,
         src
       );
-      if (out && out.trim().length > 5 && !/unavailable|fallback/i.test(out.slice(0, 80))) return { text: out.trim(), provider: "AI translation" };
+      if (out && out.trim().length > 5 && !/unavailable|fallback/i.test(out.slice(0, 80))) return { text: out.trim(), provider: "ArthaMind translation" };
     } catch {
     }
   }
@@ -8454,7 +8459,7 @@ Authenticated user id: ${user.id}
 Grounded context:
 ${JSON.stringify(groundedContext)}`;
     const demoMode = !process.env.GROQ_API_KEY?.trim();
-    const fallback = personalDataUsed ? `I found authorized personal context for this account (${references.join("; ")}). The live AI model is not configured, so I will not invent an interpretation. Review the recorded values in the relevant workspace or configure the AI provider for grounded natural-language analysis.` : "There is not enough authorized personal data in the enabled context to answer this as a personal-data question. Add records or enable the relevant AI Data Context source; I will not invent missing values.";
+    const fallback = personalDataUsed ? `I found authorized personal context for this account (${references.join("; ")}). The live explanation model is not configured, so I will not invent an interpretation. Review the recorded values in the relevant workspace or configure the AI provider for grounded natural-language analysis.` : "There is not enough authorized personal data in the enabled context to answer this as a personal-data question. Add records or enable the relevant AI Data Context source; I will not invent missing values.";
     const structuredAnswer = demoMode ? createFallbackStructuredFinancialAnswer(parsed.data.question, fallback) : await callGroqStructuredFinancialAnswer(systemPrompt2, userPrompt, { history: parsed.data.history, fallbackQuestion: parsed.data.question });
     const answer = serializeStructuredFinancialAnswer(structuredAnswer);
     const sourceLabels = Array.from(/* @__PURE__ */ new Set([
@@ -8559,7 +8564,7 @@ personalAccountRouter.post("/personal/decision-replay", async (req, res) => {
     if (parsed.data.explain) {
       const prompt = `Explain this private Decision Replay without changing its arithmetic. Separate recorded baseline facts from scenario assumptions. Do not give investment, tax, legal, lending-approval, refinancing, or guaranteed-outcome advice. State data completeness as record coverage, not accuracy. Authenticated user id: ${user.id}. Deterministic replay: ${JSON.stringify(replay)}`;
       const demoMode = !process.env.GROQ_API_KEY?.trim();
-      structuredAnswer = demoMode ? createFallbackStructuredFinancialAnswer("Decision Replay", "The deterministic replay is available above, but the live AI explanation provider is not configured. No interpretation has been invented.") : await callGroqStructuredFinancialAnswer(
+      structuredAnswer = demoMode ? createFallbackStructuredFinancialAnswer("Decision Replay", "The deterministic replay is available above, but the live explanation provider is not configured. No interpretation has been invented.") : await callGroqStructuredFinancialAnswer(
         `You are ArthaMind Decision Replay, a private counterfactual financial-education assistant. Use the supplied deterministic output exactly. ${buildStructuredFinancialAnswerInstructions({ audience: "dashboard", language: "English", level: "beginner", detail: "detailed", hasVerifiedCurrentData: true })}`,
         prompt,
         { fallbackQuestion: "Explain my Decision Replay." }
@@ -9415,7 +9420,7 @@ apiRouter.post("/dashboard/assistant", async (req, res, next) => {
     const directAdvicePattern = /\b(should i|would you|do you recommend|tell me (?:whether|if) to)\b.{0,80}\b(buy|sell|hold|invest)\b|\b(target price|trade signal|guaranteed return)\b/i;
     if (directAdvicePattern.test(parsed.data.question)) {
       return res.status(400).json({
-        error: "Ask Artha AI can explain dashboard evidence, trends, and risks, but it cannot provide personalized buy, sell, hold, target-price, or guaranteed-return recommendations."
+        error: "Ask ArthaMind can explain dashboard evidence, trends, and risks, but it cannot provide personalized buy, sell, hold, target-price, or guaranteed-return recommendations."
       });
     }
     const { snapshot } = parsed.data;
@@ -9482,7 +9487,7 @@ ${JSON.stringify(groundedContext)}`;
         `Explain the ${snapshot.selectedSymbol} chart in simple language.`,
         `Compare the latest ${snapshot.selectedCountry === "us" ? "US" : "India"} economic signals.`,
         "Which dashboard data limitations should I notice?",
-        snapshot.latestEvaluation ? "Explain the latest reliability score and its weakest dimension." : "How does ArthaBench measure AI reliability?"
+        snapshot.latestEvaluation ? "Explain the latest reliability score and its weakest dimension." : "How does ArthaBench measure answer reliability?"
       ],
       disclaimer: "Educational analysis only \u2014 not investment advice.",
       requestId: res.getHeader("x-request-id")
@@ -9696,7 +9701,7 @@ apiRouter.post("/company/assistant", async (req, res, next) => {
     const directAdvicePattern = /\b(should i|would you|do you recommend|tell me (?:whether|if) to)\b.{0,60}\b(buy|sell|hold)\b|\b(target price|trade signal)\b/i;
     if (directAdvicePattern.test(parsed.data.question)) {
       return res.status(400).json({
-        error: "The Company AI Assistant cannot provide buy, sell, hold, target-price, or personalized investment recommendations. Ask about the company\u2019s reported metrics, earnings, risks, or trends instead."
+        error: "The Company Assistant cannot provide buy, sell, hold, target-price, or personalized investment recommendations. Ask about the company\u2019s reported metrics, earnings, risks, or trends instead."
       });
     }
     const symbol = parsed.data.symbol.toUpperCase();
@@ -9898,10 +9903,10 @@ function buildMessages(systemPrompt2, userPrompt, history) {
   return messages;
 }
 function sanitizedProviderError(status, body = "") {
-  if (status === 401 || status === 403) return "The NVIDIA AI connection is not authorized.";
-  if (status === 429) return "The NVIDIA AI service is temporarily rate-limited.";
-  if (status >= 500) return "The NVIDIA AI service is temporarily unavailable.";
-  return body ? "The NVIDIA AI service returned an invalid response." : `The NVIDIA AI service returned HTTP ${status}.`;
+  if (status === 401 || status === 403) return "The NVIDIA model connection is not authorized.";
+  if (status === 429) return "The NVIDIA model service is temporarily rate-limited.";
+  if (status >= 500) return "The NVIDIA model service is temporarily unavailable.";
+  return body ? "The NVIDIA model service returned an invalid response." : `The NVIDIA model service returned HTTP ${status}.`;
 }
 async function callNvidiaNemotron(userPrompt, history, systemPrompt2, requestedModel) {
   const apiKey = process.env.NVIDIA_API_KEY?.trim() || "";
@@ -9937,7 +9942,7 @@ async function callNvidiaNemotron(userPrompt, history, systemPrompt2, requestedM
       }
       const data = await response.json().catch(() => null);
       const text = data?.choices?.[0]?.message?.content;
-      if (typeof text !== "string" || !text.trim()) throw new Error("The NVIDIA AI service returned no usable answer.");
+      if (typeof text !== "string" || !text.trim()) throw new Error("The NVIDIA model service returned no usable answer.");
       console.info(JSON.stringify({ scope: "nvidia", model, status: 200, latencyMs: Date.now() - started, attempt }));
       return { text: text.trim(), model };
     } catch (error) {
@@ -9961,7 +9966,7 @@ async function handleNvidiaTutor(req, res) {
     return res.json({ answer: result.text, provider: "NVIDIA NIM", model: result.model, fallbackMode: false, requestId: res.getHeader("x-request-id") });
   } catch (error) {
     console.warn(JSON.stringify({ scope: "nvidia", requestId: res.getHeader("x-request-id"), status: 502, error: error instanceof Error ? error.message : "provider_failure" }));
-    return res.status(502).json({ error: "This model is temporarily unavailable. Retrying with another available AI model.", provider: "NVIDIA NIM", model: requestedModel || DEFAULT_NVIDIA_MODEL, requestId: res.getHeader("x-request-id") });
+    return res.status(502).json({ error: "This model is temporarily unavailable. Retrying with another available model.", provider: "NVIDIA NIM", model: requestedModel || DEFAULT_NVIDIA_MODEL, requestId: res.getHeader("x-request-id") });
   }
 }
 
@@ -10004,19 +10009,19 @@ function sanitizeText(text) {
   return text.replace(/```(?:json|markdown|text)?/gi, "").replace(/```/g, "").replace(/^\s*(JSON|Answer):\s*/i, "").replace(/\\text\{([^}]*)\}/g, "$1").replace(/\\times/g, "\xD7").replace(/\\cdot/g, "\xB7").replace(/\\%/g, "%").replace(/\\#/g, "#").replace(/\\frac\{([^}]*)\}\{([^}]*)\}/g, "($1) / ($2)").replace(/\\\[|\\\]/g, "").trim();
 }
 function presentationFromText(text, task) {
-  return { title: task === "cfo" ? "CFO brief" : task === "calculation" ? "Verified financial calculation" : task === "quiz" ? "Financial learning check" : "ArthaBench financial explanation", directAnswer: sanitizeText(text), steps: [], formula: { expression: "Shown when relevant.", variables: [], whenToUse: "Use a formula when the question requires a calculation." }, example: { title: "Context applied", dataStatus: "not_applicable", dataAsOf: (/* @__PURE__ */ new Date()).toISOString(), inputs: [], calculation: [], result: sanitizeText(text) }, interpretation: [], risks: ["AI-generated explanations should be verified for consequential decisions."], keyTakeaways: [], sources: currentGroundingSources().map(({ name, dataDate, freshness }) => ({ name, dataDate, freshness })) };
+  return { title: task === "cfo" ? "CFO brief" : task === "calculation" ? "Verified financial calculation" : task === "quiz" ? "Financial learning check" : "ArthaBench financial explanation", directAnswer: sanitizeText(text), steps: [], formula: { expression: "Shown when relevant.", variables: [], whenToUse: "Use a formula when the question requires a calculation." }, example: { title: "Context applied", dataStatus: "not_applicable", dataAsOf: (/* @__PURE__ */ new Date()).toISOString(), inputs: [], calculation: [], result: sanitizeText(text) }, interpretation: [], risks: ["Automated explanations should be verified for consequential decisions."], keyTakeaways: [], sources: currentGroundingSources().map(({ name, dataDate, freshness }) => ({ name, dataDate, freshness })) };
 }
 async function runAiGateway(request) {
   const creator = founderAnswer(extractQuestion(request.prompt));
   if (creator) {
     const answer = presentationFromText(creator, "general");
-    answer.title = "About ArthaMind AI";
+    answer.title = "About ArthaMind";
     answer.risks = [];
     return { ok: true, requestId: requestId(), answer: creator, structuredAnswer: answer, provider: "ArthaMind", model: "identity", fallbackUsed: false, latencyMs: 0 };
   }
   const id = requestId(), started = Date.now(), context2 = request.context || {}, task = request.task || inferTask(request.prompt, context2), preferred = request.requestedModel || "artha";
   const candidates = preferred === "nemotron" ? ["nemotron", "artha"] : ["artha", "nemotron"];
-  let lastError = "No configured AI provider responded.";
+  let lastError = "No configured model provider responded.";
   for (const model of candidates) {
     try {
       if (model === "nemotron") {
@@ -10029,18 +10034,18 @@ async function runAiGateway(request) {
       const models = getGroqModels();
       const raw = await callGroqStructuredFinancialAnswer(systemPrompt(task, context2), request.prompt, { modelName: models.tutorModel, history: request.history, fallbackQuestion: request.prompt, throwOnFailure: true });
       const parsed = structuredFinancialAnswerSchema.safeParse(raw);
-      if (!parsed.success) throw new Error("AI structured response failed validation.");
+      if (!parsed.success) throw new Error("Structured response failed validation.");
       return { ok: true, requestId: id, answer: sanitizeText(parsed.data.directAnswer || parsed.data.example?.result || ""), structuredAnswer: parsed.data, provider: "Groq", model: models.tutorModel, fallbackUsed: model !== preferred, latencyMs: Date.now() - started, grounding: currentGroundingReport() };
     } catch (error) {
       lastError = error instanceof Error ? error.message : "Provider request failed.";
     }
   }
   const live = await liveFallbackContext(request.prompt);
-  const fallback = createFallbackStructuredFinancialAnswer(request.prompt, live.text ? `The AI models are unavailable right now, so here is what the live sources show for your question. Read them directly; nothing below has been interpreted by AI.
-${live.text}` : "The live AI providers are temporarily unavailable. A safe educational fallback is being shown instead.");
+  const fallback = createFallbackStructuredFinancialAnswer(request.prompt, live.text ? `ArthaMind\u2019s language models are unavailable right now, so here is what the live sources show for your question. Read them directly; nothing below has been interpreted by AI.
+${live.text}` : "ArthaMind is temporarily unavailable. A safe educational fallback is being shown instead.");
   if (live.sources.length) fallback.sources = live.sources;
   applyOfflineDetail(fallback, request.prompt, live.text);
-  return { ok: false, requestId: id, answer: fallback.directAnswer, structuredAnswer: fallback, provider: "Local fallback", model: "ArthaBench", fallbackUsed: true, latencyMs: Date.now() - started, error: "AI providers temporarily unavailable", sanitizedProviderError: lastError.replace(/Bearer\s+\S+/gi, "Bearer [redacted]") };
+  return { ok: false, requestId: id, answer: fallback.directAnswer, structuredAnswer: fallback, provider: "Local fallback", model: "ArthaBench", fallbackUsed: true, latencyMs: Date.now() - started, error: "ArthaMind is temporarily unavailable", sanitizedProviderError: lastError.replace(/Bearer\s+\S+/gi, "Bearer [redacted]") };
 }
 async function liveFallbackContext(prompt) {
   try {
@@ -10055,11 +10060,11 @@ function applyOfflineDetail(answer, prompt, liveText) {
   const snap = offlineSnapshot(prompt);
   const liveLines = liveText.split("\n").map((l) => l.replace(/^-\s*/, "").trim()).filter(Boolean);
   const steps = [];
-  if (snap) steps.push({ title: "Your numbers (calculated, not AI)", explanation: snap.lines.join(" ") });
+  if (snap) steps.push({ title: "Your numbers (calculated by the app)", explanation: snap.lines.join(" ") });
   if (liveLines.length) steps.push({ title: "What the live sources and formula book show", explanation: liveLines.join(" \xB7 ") });
   if (!steps.length) return;
   answer.title = snap ? "Your numbers, worked out offline" : answer.title;
-  answer.directAnswer = snap ? `The AI models are unavailable right now, so here is plain arithmetic on the numbers you gave. ${snap.lines[snap.lines.length > 2 ? 2 : 0]}` : "The AI models are unavailable right now, so here is what the live sources show for your question. Nothing below has been interpreted by AI.";
+  answer.directAnswer = snap ? `ArthaMind\u2019s language models are unavailable right now, so here is plain arithmetic on the numbers you gave. ${snap.lines[snap.lines.length > 2 ? 2 : 0]}` : "ArthaMind\u2019s language models are unavailable right now, so here is what the live sources show for your question. Nothing below has been interpreted by AI.";
   answer.steps = snap ? steps : [...steps, ...answer.steps].slice(0, 5);
   if (snap?.takeaways.length) answer.keyTakeaways = snap.takeaways;
 }
@@ -10118,7 +10123,7 @@ async function handleCentralChat(req, res) {
   if (!parsed.success) return res.status(400).json({ error: "Please check the tutor request and try again." });
   const result = await runAiGateway({ prompt: parsed.data.prompt, requestedModel: parsed.data.model, task: parsed.data.task, history: parsed.data.history, context: parsed.data.context });
   logEvent({ requestId: result.requestId, provider: result.provider, model: result.model, fallbackUsed: result.fallbackUsed, latencyMs: result.latencyMs, status: result.ok ? "ok" : "fallback" });
-  return res.status(200).json({ ...result, error: result.ok ? void 0 : "The selected AI model is temporarily unavailable. A safe fallback is being shown." });
+  return res.status(200).json({ ...result, error: result.ok ? void 0 : "The selected model is temporarily unavailable. A safe fallback is being shown." });
 }
 aiRouter.post("/ai/chat", aiChatLimiter, handleCentralChat);
 aiRouter.post("/ai/tutor", aiChatLimiter, handleCentralChat);
@@ -10367,7 +10372,7 @@ async function cfoBrief(body, gateway = runAiGateway) {
       latency_ms: r.latencyMs,
       structured: r.structuredAnswer
     },
-    r.ok ? `ArthaBench AI gateway \xB7 ${r.provider}` : "ArthaBench offline fallback (no AI model answered)",
+    r.ok ? `ArthaMind gateway \xB7 ${r.provider}` : "ArthaBench offline fallback (no model answered)",
     aiReliability(r),
     false
   );
@@ -10416,7 +10421,7 @@ async function runBenchmark(body, gateway = runAiGateway) {
       results,
       scoring: "An answer is correct when any number in it is within tolerance_pct of the expected value. Scoring is deterministic; the answers are not."
     },
-    "ArthaBench benchmark runner \xB7 AI gateway",
+    "ArthaBench benchmark runner \xB7 gateway",
     results.every((x) => x.answered_by_ai) ? 90 : 50,
     false
   );
@@ -11586,9 +11591,9 @@ Source: ${c2.source}. Deterministic, no API key needed, cached 60 s.`,
   };
   paths["/ai/cfo"] = {
     post: {
-      tags: ["AI (API key)"],
+      tags: ["Assistant (API key)"],
       operationId: "ai_cfo",
-      summary: "AI CFO brief grounded in live sources",
+      summary: "ArthaMind CFO brief grounded in live sources",
       security: [{ ApiKeyAuth: [] }],
       requestBody: {
         required: true,
@@ -11617,9 +11622,9 @@ Source: ${c2.source}. Deterministic, no API key needed, cached 60 s.`,
   };
   paths["/ai/benchmark"] = {
     post: {
-      tags: ["AI (API key)"],
+      tags: ["Assistant (API key)"],
       operationId: "ai_benchmark",
-      summary: "Score an AI model on your numeric questions",
+      summary: "Score a model on your numeric questions",
       security: [{ ApiKeyAuth: [] }],
       requestBody: {
         required: true,
@@ -11689,11 +11694,11 @@ Source: ${c2.source}. Deterministic, no API key needed, cached 60 s.`,
     info: {
       title: "ArthaBench Public API",
       version: "1.0.0",
-      description: "Deterministic financial calculators (no key), market data and AI endpoints. Every response is { data, source, timestamp, reliability_score, is_deterministic }. Free: 100 requests/minute per IP. With an API key: 1000/minute. Educational use; not investment, tax or legal advice.",
+      description: "Deterministic financial calculators (no key), market data and assistant endpoints. Every response is { data, source, timestamp, reliability_score, is_deterministic }. Free: 100 requests/minute per IP. With an API key: 1000/minute. Educational use; not investment, tax or legal advice.",
       license: { name: "See repository licence", url: "https://github.com/shreyashsinghegi2-oss/artha-bench-pro" }
     },
     servers: [{ url: "/api/v1" }],
-    tags: [{ name: "Calculators" }, { name: "Market" }, { name: "AI (API key)" }, { name: "Webhooks (API key)" }, { name: "Service" }],
+    tags: [{ name: "Calculators" }, { name: "Market" }, { name: "Assistant (API key)" }, { name: "Webhooks (API key)" }, { name: "Service" }],
     paths,
     components: {
       securitySchemes: { ApiKeyAuth: { type: "apiKey", in: "header", name: "x-api-key" } },
@@ -12382,14 +12387,14 @@ function mergeAi(rules, ai, question) {
   const corrections = [];
   let intent = rules.intent;
   if (isIntent(ai.intent)) intent = ai.intent.toUpperCase();
-  else if (ai.intent !== void 0) corrections.push(`AI intent "${String(ai.intent)}" is not a known intent; kept "${rules.intent}".`);
+  else if (ai.intent !== void 0) corrections.push(`ArthaMind intent "${String(ai.intent)}" is not a known intent; kept "${rules.intent}".`);
   const entities = [...rules.entities];
   if (Array.isArray(ai.entities)) {
     for (const raw of ai.entities.slice(0, 30)) {
       const e = normaliseEntity(raw);
       if (!e) continue;
       if (!isEntity(e)) {
-        corrections.push(`Dropped AI entity "${String(raw)}": not in the vocabulary.`);
+        corrections.push(`Dropped ArthaMind entity "${String(raw)}": not in the vocabulary.`);
         continue;
       }
       if (!entities.includes(e)) entities.push(e);
@@ -12404,11 +12409,11 @@ function mergeAi(rules, ai, question) {
       if (!Number.isFinite(value) || value <= 0) continue;
       const match = amounts.find((a) => Math.abs(a.value - value) <= Math.max(0.01, a.value * 5e-3));
       if (!match) {
-        corrections.push(`Dropped AI amount ${value}: it does not appear in the question.`);
+        corrections.push(`Dropped ArthaMind amount ${value}: it does not appear in the question.`);
         continue;
       }
       if (isAmountType(rec.type) && !match.explicit && rec.type !== match.type) {
-        corrections.push(`Amount ${match.raw}: type "${match.type}" relabelled "${rec.type}" by AI (rules had to guess).`);
+        corrections.push(`Amount ${match.raw}: type "${match.type}" relabelled "${rec.type}" by ArthaMind (rules had to guess).`);
         match.type = rec.type;
       }
     }
@@ -12418,7 +12423,7 @@ function mergeAi(rules, ai, question) {
     const h = /^(\d+(?:\.\d+)?)\s*(y|m)$/i.exec(ai.time_horizon.trim());
     const digits = question.match(/\d+(?:\.\d+)?/g) ?? [];
     if (h?.[1] && h[2] && digits.includes(h[1])) horizon = `${Number(h[1])}${h[2].toLowerCase()}`;
-    else if (ai.time_horizon.trim()) corrections.push(`Dropped AI horizon "${ai.time_horizon}": not stated in the question.`);
+    else if (ai.time_horizon.trim()) corrections.push(`Dropped ArthaMind horizon "${ai.time_horizon}": not stated in the question.`);
   }
   return {
     intent,
@@ -12432,7 +12437,7 @@ function mergeAi(rules, ai, question) {
 function withTimeout2(p, ms) {
   let timer;
   const timeout = new Promise((_, reject) => {
-    timer = setTimeout(() => reject(new Error(`AI extraction timed out after ${ms} ms`)), ms);
+    timer = setTimeout(() => reject(new Error(`ArthaMind extraction timed out after ${ms} ms`)), ms);
   });
   return Promise.race([p, timeout]).finally(() => {
     if (timer) clearTimeout(timer);
@@ -12449,11 +12454,11 @@ async function parseQuery(question, opts = {}) {
   if (opts.ai && text) {
     try {
       const ai = await withTimeout2(opts.ai(text), opts.aiTimeoutMs ?? DEFAULT_AI_TIMEOUT_MS);
-      if (!ai || typeof ai !== "object") throw new Error("AI returned no structure");
+      if (!ai || typeof ai !== "object") throw new Error("ArthaMind returned no structure");
       merged = mergeAi(rules, ai, text);
       method = "ai+rules";
     } catch (e) {
-      aiError = e instanceof Error ? e.message : "AI extraction failed";
+      aiError = e instanceof Error ? e.message : "ArthaMind extraction failed";
     }
   }
   const amounts = merged.amounts.map(publicAmount);
@@ -13267,7 +13272,7 @@ function rawSummary(input) {
   return lines.join("\n");
 }
 async function explain(input, llm) {
-  if (!llm) return { text: rawSummary(input), mode: "raw", rejected_numbers: [], attempts: 0, error: "AI explainer not configured" };
+  if (!llm) return { text: rawSummary(input), mode: "raw", rejected_numbers: [], attempts: 0, error: "ArthaMind explainer not configured" };
   const facts = buildFacts(input);
   const sources = [facts, input.question, rawSummary(input)];
   let feedback;
@@ -13285,11 +13290,11 @@ async function explain(input, llm) {
         mode: "raw",
         rejected_numbers: rejected,
         attempts: attempt,
-        error: e instanceof Error ? e.message.slice(0, 200) : "AI failed"
+        error: e instanceof Error ? e.message.slice(0, 200) : "ArthaMind failed"
       };
     }
   }
-  return { text: rawSummary(input), mode: "raw", rejected_numbers: rejected, attempts: 2, error: "AI reply used numbers that could not be traced" };
+  return { text: rawSummary(input), mode: "raw", rejected_numbers: rejected, attempts: 2, error: "ArthaMind reply used numbers that could not be traced" };
 }
 
 // src/advisor/pattern-matcher.ts
@@ -14068,7 +14073,7 @@ function createTimetableRouter(deps = {}) {
       const rows = cleanRows(typeof content === "string" ? JSON.parse(content) : null);
       res.json({
         rows,
-        note: rows.length ? "Read by AI. Check every row against the timetable before publishing." : "No classes could be read from this image. Enter the rows by hand."
+        note: rows.length ? "Read automatically. Check every row against the timetable before publishing." : "No classes could be read from this image. Enter the rows by hand."
       });
     } catch (e) {
       console.warn("[timetable/extract] failed", e instanceof Error ? e.message : e);

@@ -10,7 +10,7 @@ const freeFeatures=[
  'Existing Finance Overview and personal-finance workspace',
  'Existing India and US market snapshots where provider data is available',
  'Delayed, end-of-day and reference data with source disclosures',
- 'Existing educational AI interactions within configured limits',
+ 'Existing educational ArthaMind interactions within configured limits',
  'Existing paper portfolio and learning tools',
  'Existing provider-health and source diagnostics',
 ];

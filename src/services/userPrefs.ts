@@ -11,11 +11,13 @@ export interface UserPrefs {
   level: Level;
   country: string;
   currency: string;
+  /** Language the user reads and listens in (BCP-47, e.g. hi-IN). */
+  language: string;
 }
 
 const KEY = 'arthamind.prefs.v1';
 export const PREFS_EVENT = 'arthamind:prefs';
-const DEFAULT: UserPrefs = { level: 'beginner', country: 'India', currency: 'INR' };
+const DEFAULT: UserPrefs = { level: 'beginner', country: 'India', currency: 'INR', language: 'en-IN' };
 
 export function loadPrefs(): UserPrefs {
   try {
@@ -23,7 +25,7 @@ export function loadPrefs(): UserPrefs {
     if (!raw) return DEFAULT;
     const p = JSON.parse(raw) as Partial<UserPrefs>;
     const level: Level = p.level === 'intermediate' || p.level === 'advanced' ? p.level : 'beginner';
-    return { level, country: typeof p.country === 'string' && p.country ? p.country : DEFAULT.country, currency: typeof p.currency === 'string' && p.currency ? p.currency : DEFAULT.currency };
+    return { level, country: typeof p.country === 'string' && p.country ? p.country : DEFAULT.country, currency: typeof p.currency === 'string' && p.currency ? p.currency : DEFAULT.currency, language: typeof p.language === 'string' && p.language ? p.language : DEFAULT.language };
   } catch {
     return DEFAULT;
   }

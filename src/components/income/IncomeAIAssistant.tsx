@@ -131,7 +131,7 @@ function buildIncomePrompt(
   };
 
   const prompt = `You are ArthaMind Income Intelligence inside ArthaBench Pro. ${modeInstruction[mode]}
-Use only the user-entered snapshot below for specific personal amounts. Never invent income, silently convert currencies, estimate missing tax liability, or change legal income classification. Keep realised investment income separate from unrealised holdings. Deterministic tax outputs are app calculations to explain, not AI values to replace. If a missing fact could materially change the answer, ask up to two targeted follow-up questions and explain why each matters. Do not save, delete, or reclassify records. Separate recorded facts, deterministic calculations, AI interpretation, and items requiring professional review. Educational personal-finance guidance only; no guaranteed outcomes or personalized investment instructions.
+Use only the user-entered snapshot below for specific personal amounts. Never invent income, silently convert currencies, estimate missing tax liability, or change legal income classification. Keep realised investment income separate from unrealised holdings. Deterministic tax outputs are app calculations to explain, not ArthaMind values to replace. If a missing fact could materially change the answer, ask up to two targeted follow-up questions and explain why each matters. Do not save, delete, or reclassify records. Separate recorded facts, deterministic calculations, ArthaMind interpretation, and items requiring professional review. Educational personal-finance guidance only; no guaranteed outcomes or personalized investment instructions.
 Question: ${question.slice(0, 350)}
 Snapshot: ${JSON.stringify(context)}`;
 
@@ -209,8 +209,8 @@ export const IncomeAIAssistant: React.FC<IncomeAIAssistantProps> = ({
         },
       ]);
     } catch (requestError) {
-      console.error('Income AI request failed:', requestError);
-      setError('Artha Income AI could not complete this request. Your recorded income data has not been changed.');
+      console.error('Income ArthaMind request failed:', requestError);
+      setError('ArthaMind Income could not complete this request. Your recorded income data has not been changed.');
     } finally {
       setIsThinking(false);
     }
@@ -235,7 +235,7 @@ export const IncomeAIAssistant: React.FC<IncomeAIAssistantProps> = ({
             </p>
           </div>
 
-          <div className="flex flex-wrap gap-2" aria-label="Income AI analysis mode">
+          <div className="flex flex-wrap gap-2" aria-label="Income ArthaMind analysis mode">
             {Object.entries(MODE_LABELS).map(([value, label]) => (
               <button
                 key={value}
@@ -331,7 +331,7 @@ export const IncomeAIAssistant: React.FC<IncomeAIAssistantProps> = ({
                 maxLength={700}
                 placeholder="Ask about income records, stability, tax-readiness, missing information, or planning…"
                 className="min-h-[52px] flex-1 resize-none bg-transparent px-2 py-2 text-sm text-ink outline-none placeholder:text-secondary/70"
-                aria-label="Ask Artha Income AI"
+                aria-label="Ask ArthaMind Income"
               />
               <MicButton onText={setInput} disabled={isThinking}/>
               <button
@@ -356,7 +356,7 @@ export const IncomeAIAssistant: React.FC<IncomeAIAssistantProps> = ({
         </div>
 
         <aside className="border-t border-line bg-surface p-5 xl:border-l xl:border-t-0">
-          <div className="flex items-center gap-2"><MessageSquareText className="h-4 w-4 text-interactive" /><h3 className="font-black text-ink">AI review queue</h3></div>
+          <div className="flex items-center gap-2"><MessageSquareText className="h-4 w-4 text-interactive" /><h3 className="font-black text-ink">ArthaMind review queue</h3></div>
           <p className="mt-2 text-xs leading-5 text-secondary">These follow-up questions come from gaps or patterns in the records already present.</p>
           <div className="mt-4 space-y-2">
             {adaptiveQuestions.map((question) => (
@@ -375,8 +375,8 @@ export const IncomeAIAssistant: React.FC<IncomeAIAssistantProps> = ({
             <div className="flex items-center gap-2 text-sm font-black text-ink"><CheckCircle2 className="h-4 w-4 text-brand" /> Intelligence boundaries</div>
             <ul className="mt-3 space-y-2 text-xs leading-5 text-secondary">
               <li className="flex gap-2"><Lightbulb className="mt-0.5 h-3.5 w-3.5 shrink-0 text-premium" /> User-entered amounts are not independently verified bank data.</li>
-              <li className="flex gap-2"><Lightbulb className="mt-0.5 h-3.5 w-3.5 shrink-0 text-premium" /> Tax estimates remain deterministic engine outputs; AI explains but does not overwrite them.</li>
-              <li className="flex gap-2"><Lightbulb className="mt-0.5 h-3.5 w-3.5 shrink-0 text-premium" /> AI cannot save, delete, or silently reclassify income records.</li>
+              <li className="flex gap-2"><Lightbulb className="mt-0.5 h-3.5 w-3.5 shrink-0 text-premium" /> Tax estimates remain deterministic engine outputs; ArthaMind explains but does not overwrite them.</li>
+              <li className="flex gap-2"><Lightbulb className="mt-0.5 h-3.5 w-3.5 shrink-0 text-premium" /> ArthaMind cannot save, delete, or silently reclassify income records.</li>
             </ul>
           </div>
         </aside>

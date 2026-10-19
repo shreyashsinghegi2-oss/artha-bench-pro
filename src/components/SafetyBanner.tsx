@@ -9,7 +9,7 @@ interface SafetyBannerProps {
 
 export const SafetyBanner: React.FC<SafetyBannerProps> = ({
   title = 'Educational & Learning Safety Notice',
-  message = 'Artha Bench content, AI tutoring, news explanations, and market analytics are for educational and benchmarking purposes only. Nothing here constitutes personalized financial, investment, legal, or tax advice. Past performance does not guarantee future results.',
+  message = 'Artha Bench content, ArthaMind tutoring, news explanations, and market analytics are for educational and benchmarking purposes only. Nothing here constitutes personalized financial, investment, legal, or tax advice. Past performance does not guarantee future results.',
   type = 'warning',
 }) => {
   const isWarning = type === 'warning';

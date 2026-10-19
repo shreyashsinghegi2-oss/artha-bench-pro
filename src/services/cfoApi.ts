@@ -18,7 +18,7 @@ const TIMEOUT_MS = 45_000;
 /** Asks the ArthaMind AI CFO (server task "cfo") with the recent conversation for context. */
 export async function askAiCfo(prompt: string, history: CfoTurn[] = [], language: CfoLanguage = 'english', options: { replyLanguage?: string; voice?: boolean } = {}): Promise<CfoReply> {
   const trimmed = prompt.trim();
-  if (!trimmed) throw new Error('Type a question for your AI CFO.');
+  if (!trimmed) throw new Error('Type a question for your ArthaMind CFO.');
   const controller = new AbortController();
   const timer = window.setTimeout(() => controller.abort(), TIMEOUT_MS);
   try {
@@ -35,7 +35,7 @@ export async function askAiCfo(prompt: string, history: CfoTurn[] = [], language
     });
     const data = await response.json().catch(() => ({}));
     if (response.status === 429) throw new Error(data.error || 'You are asking quickly. Please wait a minute and try again.');
-    if (!response.ok) throw new Error(data.error || 'The AI CFO could not answer right now. Please try again.');
+    if (!response.ok) throw new Error(data.error || 'The ArthaMind CFO could not answer right now. Please try again.');
     return {
       answer: String(data.answer || data.structuredAnswer?.directAnswer || ''),
       structured: data.structuredAnswer ?? null,
@@ -44,7 +44,7 @@ export async function askAiCfo(prompt: string, history: CfoTurn[] = [], language
       fallback: data.ok === false || Boolean(data.fallbackUsed && data.provider === 'Local fallback'),
     };
   } catch (error) {
-    if (error instanceof DOMException && error.name === 'AbortError') throw new Error('The AI CFO took too long to respond. Please try again.');
+    if (error instanceof DOMException && error.name === 'AbortError') throw new Error('The ArthaMind CFO took too long to respond. Please try again.');
     if (error instanceof TypeError) throw new Error('Network problem: check your connection and try again.');
     throw error;
   } finally {

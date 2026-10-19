@@ -63,10 +63,10 @@ export const IncomeWorkspaceView: React.FC = () => {
         type="button"
         onClick={() => assistantRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
         className="fixed bottom-5 right-5 z-40 inline-flex min-h-12 items-center gap-2 rounded-2xl border border-interactive/25 bg-interactive px-4 py-3 text-sm font-black text-white shadow-lg transition-transform focus:outline-none focus:ring-2 focus:ring-interactive focus:ring-offset-2 focus:ring-offset-canvas"
-        aria-label="Open Artha Income AI assistant"
+        aria-label="Open ArthaMind Income assistant"
       >
         <Bot className="h-5 w-5" />
-        <span className="hidden sm:inline">Ask Artha Income AI</span>
+        <span className="hidden sm:inline">Ask ArthaMind Income</span>
       </button>
     </div>
   );

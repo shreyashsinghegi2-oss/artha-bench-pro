@@ -32,7 +32,7 @@ export const ConnectionsView: React.FC = () => {
               <Radio className="w-6 h-6" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-ink">AI Connections & Health Diagnostics</h1>
+              <h1 className="text-2xl font-bold text-ink">Connections & Health Diagnostics</h1>
               <p className="text-xs text-secondary">
                 Live server-side checks for Groq, NewsData.io, Twelve Data, Finnhub, FRED, and World Bank India data. Secrets never reach the browser.
               </p>
@@ -81,7 +81,7 @@ export const ConnectionsView: React.FC = () => {
             ))
           ) : (
             <div className="p-6 bg-canvas border border-line rounded-2xl text-center text-xs text-secondary">
-              Loading AI connection telemetry...
+              Loading ArthaMind connection telemetry...
             </div>
           )}
         </div>

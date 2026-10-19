@@ -16,7 +16,7 @@ export interface LandingReview {
 }
 
 export const LANDING_REVIEWS: LandingReview[] = [
-  { name: 'r01', role: 'Product designer', city: 'Bengaluru', rating: 5, feature: 'AI CFO', illustrative: true, quote: 'The health check showed my EMIs were fine but my emergency fund was thin, with an exact rupee gap.' },
+  { name: 'r01', role: 'Product designer', city: 'Bengaluru', rating: 5, feature: 'ArthaMind CFO', illustrative: true, quote: 'The health check showed my EMIs were fine but my emergency fund was thin, with an exact rupee gap.' },
   { name: 'r02', role: 'Chartered accountant', city: 'Pune', rating: 5, feature: 'Reliability Lab', illustrative: true, quote: 'Answers show the formula and sources, so I can check the working instead of trusting a paragraph.' },
   { name: 'r03', role: 'First-time investor', city: 'Hyderabad', rating: 4.5, feature: 'Tutor', illustrative: true, quote: 'Explained SIPs and the tax regimes in Hinglish without making me feel silly for asking.' },
   { name: 'r04', role: 'Shop owner', city: 'Ahmedabad', rating: 5, feature: 'Cash flow', illustrative: true, quote: 'Monthly surplus next to EMIs and GST outflows changed how I plan purchases.' },
@@ -29,7 +29,7 @@ export const LANDING_REVIEWS: LandingReview[] = [
   { name: 'r11', role: 'NRI engineer', city: 'Dubai', rating: 4.5, feature: 'Global planner', illustrative: true, quote: 'Comparing retiring in India vs abroad side by side is exactly what I needed.' },
   { name: 'r12', role: 'HR manager', city: 'Noida', rating: 4.5, feature: 'Portfolio', illustrative: true, quote: 'CAS import worked well. Took a moment to understand XIRR, the tutor helped.' },
   { name: 'r13', role: 'Pharmacist', city: 'Jaipur', rating: 5, feature: 'Insurance', illustrative: true, quote: 'It showed my term cover was half of what my family would need. Fixed it.' },
-  { name: 'r14', role: 'Startup founder', city: 'Bengaluru', rating: 4.5, feature: 'AI CFO', illustrative: true, quote: 'Fast answers with assumptions listed. I can see what it did not know.' },
+  { name: 'r14', role: 'Startup founder', city: 'Bengaluru', rating: 4.5, feature: 'ArthaMind CFO', illustrative: true, quote: 'Fast answers with assumptions listed. I can see what it did not know.' },
   { name: 'r15', role: 'Homemaker', city: 'Nagpur', rating: 5, feature: 'Goals', illustrative: true, quote: 'Child education goal broken into a monthly SIP I can actually afford.' },
   { name: 'r16', role: 'Data analyst', city: 'Kolkata', rating: 4.5, feature: 'Crypto', illustrative: true, quote: 'Live BTC chart and plain explanations, without pushing me to trade.' },
   { name: 'r17', role: 'Retired professor', city: 'Mysuru', rating: 4.5, feature: 'Tutor', illustrative: true, quote: 'Good explanations. Font could be larger on my tablet, but very clear.' },
@@ -41,7 +41,7 @@ export const LANDING_REVIEWS: LandingReview[] = [
   { name: 'r23', role: 'Government officer', city: 'Patna', rating: 5, feature: 'Retirement', illustrative: true, quote: 'NPS and PPF in one retirement view. Very easy to understand.' },
   { name: 'r24', role: 'Young professional', city: 'Pune', rating: 5, feature: 'Budgeting', illustrative: true, quote: 'First salary, first budget. It told me exactly how much to save.' },
   { name: 'r25', role: 'Chartered accountant', city: 'Delhi', rating: 4.5, feature: 'Tax', illustrative: true, quote: 'The regime comparison matches my own working. I share it with clients.' },
-  { name: 'r26', role: 'Designer', city: 'Goa', rating: 5, feature: 'AI CFO', illustrative: true, quote: 'Asked by voice in Konkani-English mix and still got a clear answer.' },
+  { name: 'r26', role: 'Designer', city: 'Goa', rating: 5, feature: 'ArthaMind CFO', illustrative: true, quote: 'Asked by voice in Konkani-English mix and still got a clear answer.' },
   { name: 'r27', role: 'Professor', city: 'Varanasi', rating: 4.5, feature: 'Tutor', illustrative: true, quote: 'Good lessons on mutual funds. My students use it before class.' },
   { name: 'r28', role: 'Logistics manager', city: 'Visakhapatnam', rating: 5, feature: 'Insurance', illustrative: true, quote: 'Showed the cover gap for my family in rupees, not jargon.' },
   { name: 'r29', role: 'Architect', city: 'Chandigarh', rating: 5, feature: 'Goals', illustrative: true, quote: 'House, car and travel goals all planned without stretching too thin.' },

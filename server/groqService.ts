@@ -219,7 +219,7 @@ function generateFallbackChatResponse(userPrompt: string): string {
   }
 
   return `### Here is how to think about it\n\n` +
-    `The live AI adviser is not connected right now, so this is a general framework rather than a tailored answer to "*${userPrompt.trim()}*".\n\n` +
+    `The live ArthaMind adviser is not connected right now, so this is a general framework rather than a tailored answer to "*${userPrompt.trim()}*".\n\n` +
     `1. **Start with your numbers:** note your monthly take-home, fixed costs, EMIs and savings, since every money decision depends on them.\n` +
     `2. **Check the basics first:** keep EMIs under about 40% of take-home, aim to save 20% or more, and hold 6 months of expenses as an emergency fund.\n` +
     `3. **Compare options on the same terms:** use after-tax, inflation-adjusted figures over the same time period.\n` +

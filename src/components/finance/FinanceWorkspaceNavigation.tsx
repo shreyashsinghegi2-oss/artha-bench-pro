@@ -8,7 +8,7 @@ type Props = { currentDestination: AppNavigationDestination; onNavigate: (destin
 // Grouped so the rail reads left to right: see everything, plan, then track the details.
 const tabs: Array<{ id: AppNavigationDestination; label: string; description: string; icon: React.ComponentType<{ className?: string }>; group?: string; }> = [
   { id: 'my-dashboard', label: 'Dashboard', description: 'Everything at a glance: net worth, investments, savings, tax, loans, health and goals.', icon: LayoutDashboard, group: 'Overview' },
-  { id: 'overview', label: 'Home & report', description: 'Your money report, plan and AI CFO in one place.', icon: Gauge },
+  { id: 'overview', label: 'Home & report', description: 'Your money report, plan and ArthaMind CFO in one place.', icon: Gauge },
   { id: 'portfolio', label: 'Portfolio', description: 'Net worth, mutual funds, stocks and loans in one place. Import your CAS statement.', icon: PieChart, group: 'Plan' },
   { id: 'money-planner', label: 'Planner', description: 'Have a lump sum? See where each rupee should go, step by step.', icon: Coins },
   { id: 'financial-health', label: 'Health score', description: 'Explainable financial health indicators from your recorded data.', icon: HeartPulse },

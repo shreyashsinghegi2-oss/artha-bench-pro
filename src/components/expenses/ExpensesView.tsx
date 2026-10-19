@@ -272,7 +272,7 @@ export const ExpensesView: React.FC = () => {
               <span className="rounded-full border border-line bg-canvas px-3 py-1 text-[10px] font-bold text-secondary">Private on this device</span>
             </div>
             <h1 className="mt-4 text-3xl font-black tracking-tight text-ink sm:text-4xl">Expenses</h1>
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-secondary">Record, review, and understand personal or business spending with evidence-grounded AI assistance. Educational guidance only — not financial advice.</p>
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-secondary">Record, review, and understand personal or business spending with evidence-grounded ArthaMind assistance. Educational guidance only — not financial advice.</p>
           </div>
           <button type="button" onClick={openCreate} className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand px-5 py-3 text-sm font-black text-white shadow-sm hover:bg-brand-hover">
             <Plus className="h-4 w-4" /> Add Expense

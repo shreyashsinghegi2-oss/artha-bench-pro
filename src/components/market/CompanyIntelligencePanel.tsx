@@ -461,7 +461,7 @@ export const CompanyIntelligencePanel: React.FC<CompanyIntelligencePanelProps> =
             <AssistantLogo size={40}/>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-base font-bold text-ink">ArthaBench Company AI Assistant</h3>
+                <h3 className="text-base font-bold text-ink">ArthaBench Company Assistant</h3>
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-success-soft border border-success-fill text-[9px] font-bold text-success">
                   <Sparkles className="w-2.5 h-2.5" /> GROUNDED
                 </span>

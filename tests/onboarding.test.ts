@@ -114,3 +114,12 @@ describe('new questions: spending split, loans, tax and the plan', () => {
     expect(p.steps.at(-1)?.title).toBe('Grow what is left');
   });
 });
+
+import { pdfMoney } from '../src/services/financialReport';
+describe('report amounts', () => {
+  it('writes rupees in a font-safe way with Indian grouping', () => {
+    expect(pdfMoney(1_200_000)).toBe('Rs 12,00,000');
+    expect(pdfMoney(-5000)).toBe('-Rs 5,000');
+    expect(pdfMoney(1_200_000, 'USD')).toBe('USD 1,200,000');
+  });
+});

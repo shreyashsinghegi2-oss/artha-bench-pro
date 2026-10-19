@@ -65,9 +65,9 @@ export const LandingAiCfo: React.FC<{ onEnter: (destination: AppNavigationDestin
 
   return <section id="ai-cfo" className="cl-section cfo-land cl-reveal-section">
     <div className="cl-wrap">
-      <div className="cl-eyebrow">AI CFO</div>
+      <div className="cl-eyebrow">ArthaMind CFO</div>
       <h2>Your personal CFO, in plain rupees.</h2>
-      <p className="cl-sub">Get an instant, verified health check of your money, then ask the AI CFO anything: tax regime, EMIs, goals or business cash flow.</p>
+      <p className="cl-sub">Get an instant, verified health check of your money, then ask the ArthaMind CFO anything: tax regime, EMIs, goals or business cash flow.</p>
       <div className="cfo-land-grid">
         <div className="cfo-check cl-card">
           <div className="cfo-check-head"><span className="cfo-check-icon"><Gauge size={17}/></span><div><b>Instant CFO health check</b><small>Calculated on your device. Nothing is stored or sent.</small></div></div>
@@ -105,7 +105,7 @@ export const LandingAiCfo: React.FC<{ onEnter: (destination: AppNavigationDestin
               <span className="cfo-horizon">{action.horizon}</span><b>{action.title}{action.amount != null && action.amount > 0 && <em>{formatInr(action.amount)}</em>}</b><p>{action.detail}</p>
             </li>)}</ol>
             <div className="cfo-check-cta">
-              <button type="button" className="cl-primary" onClick={askForCommentary}><Sparkles size={15}/>Get AI CFO commentary</button>
+              <button type="button" className="cl-primary" onClick={askForCommentary}><Sparkles size={15}/>Get ArthaMind CFO commentary</button>
               <button type="button" className="cl-secondary" onClick={() => onEnter('financial-health')}>Track this in my workspace<ArrowRight size={15}/></button>
             </div>
           </>}

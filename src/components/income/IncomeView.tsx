@@ -266,7 +266,7 @@ export const IncomeView: React.FC = () => {
         <aside className="space-y-5">
           <section className="rounded-3xl border border-line bg-surface p-5 shadow-sm">
             <div className="flex items-center gap-2"><ShieldCheck className="h-5 w-5 text-brand" /><h2 className="font-black text-ink">Smart checks</h2></div>
-            <p className="mt-2 text-xs leading-5 text-secondary">Rule-based MVP guidance. It does not change your tax treatment or call an AI provider.</p>
+            <p className="mt-2 text-xs leading-5 text-secondary">Rule-based MVP guidance. It does not change your tax treatment or call external model provider.</p>
             <ul className="mt-4 space-y-3">
               {recommendations.map((recommendation) => <li key={recommendation} className="flex gap-2 text-sm leading-5 text-secondary"><Lightbulb className="mt-0.5 h-4 w-4 shrink-0 text-premium" /><span>{recommendation}</span></li>)}
             </ul>

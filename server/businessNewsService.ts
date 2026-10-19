@@ -201,7 +201,7 @@ Please explain:
     structuredAnswer,
     keyTakeaways: structuredAnswer.keyTakeaways,
     disclaimer:
-      'AI explanation generated from the supplied headline and summary for educational analysis only. Not investment advice.',
+      'ArthaMind explanation generated from the supplied headline and summary for educational analysis only. Not investment advice.',
   };
 }
 

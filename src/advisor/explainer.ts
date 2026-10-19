@@ -207,7 +207,7 @@ export function rawSummary(input: ExplainerInput): string {
 // ---------------------------------------------------------------------------------------------------------
 
 export async function explain(input: ExplainerInput, llm: Llm | undefined): Promise<Explanation> {
-  if (!llm) return { text: rawSummary(input), mode: 'raw', rejected_numbers: [], attempts: 0, error: 'AI explainer not configured' };
+  if (!llm) return { text: rawSummary(input), mode: 'raw', rejected_numbers: [], attempts: 0, error: 'ArthaMind explainer not configured' };
   const facts = buildFacts(input);
   const sources = [facts, input.question, rawSummary(input)];
   let feedback: string | undefined;
@@ -225,9 +225,9 @@ export async function explain(input: ExplainerInput, llm: Llm | undefined): Prom
         mode: 'raw',
         rejected_numbers: rejected,
         attempts: attempt,
-        error: e instanceof Error ? e.message.slice(0, 200) : 'AI failed',
+        error: e instanceof Error ? e.message.slice(0, 200) : 'ArthaMind failed',
       };
     }
   }
-  return { text: rawSummary(input), mode: 'raw', rejected_numbers: rejected, attempts: 2, error: 'AI reply used numbers that could not be traced' };
+  return { text: rawSummary(input), mode: 'raw', rejected_numbers: rejected, attempts: 2, error: 'ArthaMind reply used numbers that could not be traced' };
 }

@@ -152,7 +152,7 @@ export async function translateText(text: string, lang: string): Promise<{ text:
         `You translate personal-finance answers for Indian families. Translate the user's text into simple, everyday ${l.name}${lang === 'en' ? '' : ` in its own script`}, the way a patient family elder would say it aloud. Keep every number and amount exactly, in digits with Indian grouping (₹12,00,000). Keep names of funds, companies and schemes as they are. Output only the translation, no notes.`,
         src,
       );
-      if (out && out.trim().length > 5 && !/unavailable|fallback/i.test(out.slice(0, 80))) return { text: out.trim(), provider: 'AI translation' };
+      if (out && out.trim().length > 5 && !/unavailable|fallback/i.test(out.slice(0, 80))) return { text: out.trim(), provider: 'ArthaMind translation' };
     } catch { /* fall back */ }
   }
   return { text: await publicTranslate(src, l.tts), provider: 'Google Translate' };

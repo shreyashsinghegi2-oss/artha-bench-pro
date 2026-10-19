@@ -45,7 +45,7 @@ const store = new AsyncLocalStorage<GroundingState>();
 export function stripUserProfile(req: Request, _res: Response, next: NextFunction) {
   const body = req.body as Record<string, unknown> | undefined;
   if (body && typeof body === 'object' && typeof body.userProfile === 'string') {
-    (req as Request & { arthaUserProfile?: string }).arthaUserProfile = body.userProfile.replace(/[<>]/g, '').slice(0, 2400);
+    (req as Request & { arthaUserProfile?: string }).arthaUserProfile = body.userProfile.replace(/[<>]/g, '').slice(0, 3600);
     delete body.userProfile;
   }
   next();
@@ -341,7 +341,10 @@ export async function gatherLiveContext(query: string, mode: WebSearchMode = 'au
 /** House number style for every assistant: users of all backgrounds read full amounts more easily than shorthand. */
 export const NUMBER_STYLE = 'NUMBER STYLE: write every rupee amount in full with Indian digit grouping (₹12,00,000; ₹1,20,200; ₹5,000). Never abbreviate amounts as k, K, L, lakh, Cr, crore, M or bn.';
 
-export interface AnswerPrefs { level: 'beginner' | 'intermediate' | 'advanced'; country: string; currency: string }
+export interface AnswerPrefs { level: 'beginner' | 'intermediate' | 'advanced'; country: string; currency: string; language?: string }
+
+/** Languages ArthaMind answers in, by their code (hi-IN → Hindi). */
+const LANGUAGE_NAMES: Record<string, string> = { hi: 'Hindi', mr: 'Marathi', bn: 'Bengali', ta: 'Tamil', te: 'Telugu', gu: 'Gujarati', kn: 'Kannada', ml: 'Malayalam', pa: 'Punjabi', ur: 'Urdu', or: 'Odia', od: 'Odia', as: 'Assamese', es: 'Spanish', fr: 'French', de: 'German', ar: 'Arabic', pt: 'Portuguese', it: 'Italian', ja: 'Japanese' };
 
 /** Reads the x-artha-prefs header (level, country, home currency). Unknown values fall back to safe defaults. */
 export function parsePrefs(raw: string | undefined): AnswerPrefs | undefined {
@@ -351,7 +354,8 @@ export function parsePrefs(raw: string | undefined): AnswerPrefs | undefined {
     const level = p.level === 'intermediate' || p.level === 'advanced' ? p.level : 'beginner';
     const country = typeof p.country === 'string' ? p.country.replace(/[^A-Za-z .'-]/g, '').slice(0, 40) || 'India' : 'India';
     const currency = typeof p.currency === 'string' && /^[A-Z]{3}$/.test(p.currency) ? p.currency : 'INR';
-    return { level, country, currency };
+    const language = typeof p.language === 'string' && /^[a-z]{2}(-[A-Z]{2})?$/.test(p.language) ? p.language : undefined;
+    return language ? { level, country, currency, language } : { level, country, currency };
   } catch {
     return undefined;
   }
@@ -370,7 +374,9 @@ export function numberStyleFor(prefs?: AnswerPrefs): string {
   const home = indian
     ? `${prefs.currency === 'INR' ? 'rupees (₹)' : prefs.currency} with Indian digit grouping (₹12,00,000; ₹1,20,200), and add the amount in words in brackets for big amounts (₹12,00,000 (12 lakh); ₹2,50,00,000 (2.5 crore))`
     : `${prefs.currency} with international digit grouping (1,200,000), and add the amount in words in brackets for big amounts (1,200,000 (1.2 million); 3,000,000,000 (3 billion))`;
-  return `CURRENCY AND NUMBERS: the reader lives in ${prefs.country}; their home currency is ${prefs.currency}. If the question names a currency (₹, rupees, INR, $, dollars, USD, £, €, AED…), answer in THAT currency. Otherwise answer in ${home}. Never mix currencies in one answer unless the question compares them, and never convert at a made-up exchange rate (say the rate must be checked). Do not use k, K, L, Cr, M or bn shorthand.\n${LEVEL_STYLE[prefs.level]}`;
+  const lang = prefs.language ? LANGUAGE_NAMES[prefs.language.split('-')[0]] : undefined;
+  const languageRule = lang ? `\nLANGUAGE: write every word of the answer (all fields) in simple everyday ${lang}, in its own script, as a patient family elder would say it. Keep numbers and amounts as digits. Keep names of funds, companies and schemes as they are.` : '';
+  return `CURRENCY AND NUMBERS: the reader lives in ${prefs.country}; their home currency is ${prefs.currency}. If the question names a currency (₹, rupees, INR, $, dollars, USD, £, €, AED…), answer in THAT currency. Otherwise answer in ${home}. Never mix currencies in one answer unless the question compares them, and never convert at a made-up exchange rate (say the rate must be checked). Do not use k, K, L, Cr, M or bn shorthand.\n${LEVEL_STYLE[prefs.level]}${languageRule}`;
 }
 
 /**

@@ -97,13 +97,13 @@ export const PlanAI: React.FC<{ title: string; summary: string; questions: strin
         context: { country: 'India', currency: 'INR', language: 'english', detail: 'detailed' },
       }) });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || 'The AI could not answer right now.');
+      if (!res.ok) throw new Error(data.error || 'ArthaMind could not answer right now.');
       if (data.structuredAnswer) setAnswer(data.structuredAnswer); else throw new Error('No answer came back. Please try again.');
     } catch (e) { setError(e instanceof Error ? e.message : 'Please try again.'); }
     finally { setBusy(false); }
   };
   return <article className="pk-card info pk-ai">
-    <header><h3><AssistantLogo size={20}/> ArthaMind Planner Intelligence</h3><span className="pk-status info"><Sparkles size={11}/> Live data</span><small>The AI reads every number here plus current rates, fees and news.</small></header>
+    <header><h3><AssistantLogo size={20}/> ArthaMind Planner Intelligence</h3><span className="pk-status info"><Sparkles size={11}/> Live data</span><small>ArthaMind reads every number here plus current rates, fees and news.</small></header>
     <div className="pk-ai-quick">{questions.map((x, i) => <button key={x} type="button" className={i === 0 ? 'primary' : ''} disabled={busy} onClick={() => void ask(x)}>{x}</button>)}</div>
     <form className="pk-ai-form" onSubmit={(e) => { e.preventDefault(); void ask(q); }}><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Ask anything about this plan…" aria-label="Ask about this plan"/><button type="submit" disabled={busy || !q.trim()}>Ask</button></form>
     <ThinkingSteps active={busy}/>

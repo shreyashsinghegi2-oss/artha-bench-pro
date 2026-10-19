@@ -612,7 +612,7 @@ export const EconomicDashboardView: React.FC = () => {
               ['Values', `Each number is a historical observation retrieved from ${providerShortName}, not a forecast.`],
               ['Dates', country === 'us' ? 'Release frequencies differ: GDP is quarterly, CPI and unemployment are monthly, and Treasury yields are daily.' : 'World Bank India indicators are generally annual and may have different latest available years.'],
               ['Inflation', country === 'us' ? 'ArthaBench calculates the displayed year-over-year percentage from the official CPI index observations.' : 'India inflation is the annual percentage change in consumer prices reported through World Development Indicators.'],
-              ['Use', 'Compare trends and economic context for education and AI verification—not personalized investment decisions.'],
+              ['Use', 'Compare trends and economic context for education and ArthaMind verification—not personalized investment decisions.'],
             ].map(([title, text], index) => (
               <div key={title} className="flex gap-3">
                 <div className="w-6 h-6 rounded-lg bg-interactive/15 border border-interactive/25 flex items-center justify-center text-[10px] font-bold text-interactive shrink-0">

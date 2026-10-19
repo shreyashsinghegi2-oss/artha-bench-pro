@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { openAnswersEditor } from '../../services/answersEditor';
 import { ArrowRight } from 'lucide-react';
 import type { AppNavigationDestination } from '../../navigationTypes';
 import { loadMoneyProfile, onMoneyProfileChange } from '../../services/moneyProfile';
@@ -98,11 +99,21 @@ export const FeatureStats: React.FC<{ destination: AppNavigationDestination; onN
   const [tick, setTick] = useState(0);
   useEffect(() => onMoneyProfileChange(setProfile), []);
   useEffect(() => { const on = () => setTick((t) => t + 1); window.addEventListener(EMI_RECORDS_CHANGED_EVENT, on); window.addEventListener('storage', on); return () => { window.removeEventListener(EMI_RECORDS_CHANGED_EVENT, on); window.removeEventListener('storage', on); }; }, []);
-  const d = useMemo(() => { if (!profile) return null; try { return buildCompleteDashboard({ profile, loans: loadEmiRecords(), income: loadIncomeSources(), expenses: loadExpenses() }); } catch { return null; } }, [profile, tick, destination]); // eslint-disable-line react-hooks/exhaustive-deps
+  const d = useMemo(() => {
+    // Read the profile fresh (it may have been saved after this strip mounted).
+    const p = profile ?? loadMoneyProfile();
+    if (!p) return null;
+    try { return buildCompleteDashboard({ profile: p, loans: loadEmiRecords(), income: loadIncomeSources(), expenses: loadExpenses() }); }
+    catch (error) {
+      // One bad record must not hide the user's numbers: fall back to the profile alone.
+      console.warn('Feature stats: records skipped', error);
+      try { return buildCompleteDashboard({ profile: p, loans: [], income: [], expenses: [] }); } catch { return null; }
+    }
+  }, [profile, tick, destination]); // eslint-disable-line react-hooks/exhaustive-deps
   if (EVALUATION_DESTINATIONS.has(destination)) return <EvaluationHub destination={destination} onNavigate={onNavigate}/>;
   if (SKIP.has(destination)) return null;
   if (MARKET_PAGES.has(destination)) return <MarketStats/>;
-  if (!d) return <section className="fs fs-empty"><span>Set up your money profile once and every page shows your own numbers here, colour-coded.</span><button type="button" onClick={() => onNavigate('overview')}>Set up in 2 minutes <ArrowRight size={13}/></button></section>;
+  if (!d) return <section className="fs fs-empty"><span>Your answers fill this page with your own numbers.</span><button type="button" onClick={openAnswersEditor}>Open my answers <ArrowRight size={13}/></button></section>;
   return <section className="fs" aria-label="Your numbers for this page">{statsFor(destination, d).map((s) => <article key={s.label} className={`fs-stat ${s.tone}`}><small>{s.label}</small><b>{s.value}</b>{s.note && <span>{s.note}</span>}</article>)}
     <button type="button" className="fs-more" onClick={() => onNavigate('my-dashboard')}>Full dashboard <ArrowRight size={13}/></button></section>;
 };

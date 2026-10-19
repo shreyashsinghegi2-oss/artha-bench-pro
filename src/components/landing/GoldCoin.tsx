@@ -12,7 +12,7 @@ export const CoinFace: React.FC<{ id: string }> = ({ id }) => <svg viewBox="0 0 
   <circle cx="60" cy="60" r="59" fill={`url(#${id}-rim)`}/>
   <circle cx="60" cy="60" r="54.5" fill={`url(#${id}-g)`}/>
   <circle cx="60" cy="60" r="53" fill="none" stroke="#7a5410" strokeWidth="1.1" strokeDasharray="1 2.1" opacity=".75"/>
-  <text fontSize="7" fontWeight="900" letterSpacing="2.1" fill="#6b4a0c" opacity=".9"><textPath href={`#${id}-t`}>ARTHAMIND AI · ARTHA BENCH PRO · INDIA ·</textPath></text>
+  <text fontSize="7" fontWeight="900" letterSpacing="2.1" fill="#6b4a0c" opacity=".9"><textPath href={`#${id}-t`}>ARTHAMIND · ARTHA BENCH PRO · INDIA ·</textPath></text>
   <circle cx="60" cy="60" r="36" fill={`url(#${id}-c)`} stroke="#8f6310" strokeWidth="1.4"/>
   <circle cx="60" cy="60" r="34.5" fill="none" stroke="#fff3c4" strokeWidth=".8" opacity=".55"/>
   <ellipse cx="46" cy="36" rx="30" ry="18" fill={`url(#${id}-spec)`}/>

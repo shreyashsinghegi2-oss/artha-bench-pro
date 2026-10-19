@@ -21,7 +21,7 @@ const BOARD = [
   ['Save tax', 'Old vs new regime, picked for you'],
   ['Money health', 'Your score in 2 minutes'],
   ['Plan every goal', 'Retirement, kids, home'],
-  ['Experts check', 'CA-reviewed, not just AI'],
+  ['Experts check', 'CA-reviewed, not just software'],
   ['Your language', '13 Indian languages by voice'],
 ] as const;
 
@@ -147,7 +147,7 @@ export const LandingHero: React.FC = () => {
           {/* Billboard */}
           <div className="hc-board" aria-hidden="true">
             <div className="hc-board-in">
-              <span className="hc-board-brand"><ArthaMindLogoMark size={14} /> ArthaMind <em>AI</em></span>
+              <span className="hc-board-brand"><ArthaMindLogoMark size={14} /> ArthaMind</span>
               <b key={slide}>{BOARD[slide][0]}</b>
               <small key={`s${slide}`}>{BOARD[slide][1]}</small>
             </div>

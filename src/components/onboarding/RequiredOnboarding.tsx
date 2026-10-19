@@ -1,5 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, ArrowRight, Check, CircleHelp, Loader2, LogOut, Pencil, Sparkles, TriangleAlert } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, CircleHelp, Loader2, Pencil, Sparkles, TriangleAlert, X } from 'lucide-react';
+import { ArthaMindLogoMark } from '../branding/ArthaMindBrand';
+import { setSiteLanguage, siteCode } from '../LanguageSelector';
+import { VOICE_LANGUAGES } from '../../services/voice';
 import { useAuth } from '../../auth/AuthContext';
 import { getOnboarding, saveOnboardingRow } from '../../services/supabaseRest';
 import { loadMoneyProfile, saveMoneyProfile } from '../../services/moneyProfile';
@@ -8,8 +11,18 @@ import {
   GOAL_OPTIONS, ONBOARDING_VERSION, SCENARIOS, WORK_OPTIONS, checkAnswers, incomeBand, isEarning, loadOnboardingRecord,
   buildPath, scoreMindset, storeOnboardingRecord, toMoneyProfile, totalSpend, type Issue, type OnboardingAnswers, type OnboardingRecord,
 } from '../../services/onboarding';
-import { startTour } from './GuidedTour';
+import { loadTourStarted, startTour } from './GuidedTour';
 import './requiredOnboarding.css';
+
+// ---------------- Editing saved answers ----------------
+
+export { EDIT_ANSWERS_EVENT, openAnswersEditor } from '../../services/answersEditor';
+
+/** The money profile always follows the saved answers, so no page ever asks for the same numbers again. */
+function ensureProfileFrom(answers: OnboardingAnswers) {
+  const p = loadMoneyProfile();
+  if (!p || p.source === 'sample') { try { saveMoneyProfile(toMoneyProfile(answers)); } catch { /* storage blocked */ } }
+}
 
 // ---------------- Gate status ----------------
 
@@ -28,6 +41,7 @@ export function useRequiredOnboarding(): { status: Status; complete: (a: Onboard
     if (!userId || !token) { setStatus('none'); return; }
     const local = loadOnboardingRecord();
     if (local && local.userId === userId) {
+      ensureProfileFrom(local.answers);
       setStatus('done');
       // A save that failed earlier (offline) is sent again quietly.
       if (!(local as OnboardingRecord & { synced?: boolean }).synced) void pushRecord(token, local).then((ok) => { if (ok) storeOnboardingRecord({ ...local, synced: true } as OnboardingRecord); });
@@ -41,7 +55,8 @@ export function useRequiredOnboarding(): { status: Status; complete: (a: Onboard
         if (!row || row.version < ONBOARDING_VERSION) return false;
         const answers = row.answers as OnboardingAnswers;
         storeOnboardingRecord({ userId, version: row.version, answers, result: row.result as OnboardingRecord['result'], completedAt: row.completed_at, synced: true } as OnboardingRecord);
-        savePrefs({ level: answers.level ?? 'beginner', country: answers.country ?? 'India', currency: answers.currency ?? 'INR' });
+        savePrefs({ level: answers.level ?? 'beginner', country: answers.country ?? 'India', currency: answers.currency ?? 'INR', language: answers.language ?? 'en-IN' });
+        ensureProfileFrom(answers);
         return true;
       }).catch(() => false);
       remoteChecks.set(userId, check);
@@ -55,8 +70,9 @@ export function useRequiredOnboarding(): { status: Status; complete: (a: Onboard
     const record: OnboardingRecord = { userId, version: ONBOARDING_VERSION, answers, result: scoreMindset(answers), completedAt: new Date().toISOString() };
     storeOnboardingRecord(record);
     remoteChecks.set(userId, Promise.resolve(true));
-    savePrefs({ level: answers.level ?? 'beginner', country: answers.country ?? 'India', currency: answers.currency ?? 'INR' });
-    try { saveMoneyProfile(toMoneyProfile(answers)); } catch { /* storage blocked */ }
+    savePrefs({ level: answers.level ?? 'beginner', country: answers.country ?? 'India', currency: answers.currency ?? 'INR', language: answers.language ?? 'en-IN' });
+    // Edited answers replace the profile, keeping investments/cash the portfolio added since.
+    try { const prev = loadMoneyProfile(); const next = toMoneyProfile(answers); saveMoneyProfile(prev && prev.source !== 'sample' ? { ...prev, ...next } : next); } catch { /* storage blocked */ }
     if (token) {
       const ok = await pushRecord(token, record);
       if (ok) storeOnboardingRecord({ ...record, synced: true } as OnboardingRecord);
@@ -74,7 +90,7 @@ export function useRequiredOnboarding(): { status: Status; complete: (a: Onboard
         onboarding_completed: true,
       });
     } catch { /* the answers are already saved; the account profile catches up next time */ }
-    startTour();
+    if (!loadTourStarted()) startTour();
     setStatus('done');
   }, [userId, token, auth]);
 
@@ -92,7 +108,7 @@ async function pushRecord(token: string, r: OnboardingRecord): Promise<boolean> 
 
 // ---------------- Questions ----------------
 
-type Kind = 'intro' | 'text' | 'level' | 'country' | 'choice' | 'multi' | 'number' | 'money' | 'scenarioIntro' | 'scenario' | 'review';
+type Kind = 'language' | 'intro' | 'text' | 'level' | 'country' | 'choice' | 'multi' | 'number' | 'money' | 'scenarioIntro' | 'scenario' | 'review';
 type Chip = { label: string; value: number | string };
 interface Step {
   id: string;
@@ -127,6 +143,7 @@ const india = (a: OnboardingAnswers) => (a.currency ?? 'INR') === 'INR';
 const isBusiness = (a: OnboardingAnswers) => a.work === 'business' || a.work === 'self-employed' || a.work === 'freelancer';
 
 export const STEPS: Step[] = [
+  { id: 'language', field: 'language', kind: 'language', section: 'Start', title: () => 'Choose your language · अपनी भाषा चुनें', why: 'Every question, every page and every answer from ArthaMind will be in this language. You can change it later.' },
   { id: 'intro', kind: 'intro', section: 'Start', title: () => 'Let’s set up your money plan', why: '' },
   // About you
   { id: 'name', field: 'name', kind: 'text', section: 'About you', title: () => 'What should we call you?', why: 'So we can talk to you by name. Your first name is enough.', placeholder: 'Your first name' },
@@ -139,6 +156,8 @@ export const STEPS: Step[] = [
   // Income
   { id: 'work', field: 'work', kind: 'choice', section: 'Income', title: () => 'What do you do?', why: 'A job, a business and studies all need different money plans. For example, business income changes more, so you need a bigger safety fund.',
     chips: () => WORK_OPTIONS.map((w) => ({ label: w.label, value: w.value })) },
+  { id: 'jobTitle', field: 'jobTitle', kind: 'text', section: 'Income', show: (a) => isEarning(a.work), title: (a) => (a.work === 'business' ? 'What business do you run?' : 'What is your job?'), why: 'Your kind of work changes the plan: how steady the income is, what insurance you need, and which tax rules apply.', placeholder: 'e.g. Teacher, Software engineer, Shop owner',
+    chips: (a) => (a.work === 'business' || a.work === 'self-employed' ? ['Shop / retail', 'Trading', 'Manufacturing', 'Restaurant / food', 'Doctor / clinic', 'CA / lawyer', 'Consultant', 'Agriculture'] : a.work === 'freelancer' ? ['Designer', 'Developer', 'Writer', 'Driver / delivery', 'Tutor', 'Content creator'] : ['Software / IT', 'Teacher', 'Bank / finance', 'Sales', 'Doctor / nurse', 'Engineer', 'Government officer', 'Office staff', 'Factory / skilled work']).map((v) => ({ label: v, value: v })) },
   { id: 'jobYears', field: 'jobYears', kind: 'number', section: 'Income', show: (a) => isEarning(a.work), title: (a) => `How long have you been ${workVerb(a)}?`, why: 'A longer, steady job usually means steadier income. It helps us decide how big your safety fund should be.', suffix: 'years', placeholder: 'Type years (e.g. 2.5)',
     chips: () => yearsChips([0.5, 1, 2, 3, 5, 8, 10, 15, 20]) },
   { id: 'totalYears', field: 'totalYears', kind: 'number', section: 'Income', show: (a) => isEarning(a.work), title: () => 'In total, how many years have you been earning?', why: 'All your jobs together. This helps us check that your savings match your years of work.', suffix: 'years', placeholder: 'Type years',
@@ -261,6 +280,7 @@ const valueText = (step: Step, a: OnboardingAnswers): string => {
   }
   const v = step.field ? a[step.field] : undefined;
   if (v === undefined || v === '') return 'Skipped';
+  if (step.kind === 'language') { const l = VOICE_LANGUAGES.find((x) => x.code === v); return l ? `${l.native} (${l.name})` : String(v); }
   if (step.kind === 'money') return formatMoney(Number(v), a.currency ?? 'INR');
   if (step.kind === 'level') return LEVELS.find((l) => l.value === v)?.title ?? String(v);
   if (step.kind === 'choice') return String(step.chips?.(a).find((c) => c.value === v)?.label ?? v);
@@ -271,14 +291,17 @@ const valueText = (step: Step, a: OnboardingAnswers): string => {
 
 // ---------------- Screen ----------------
 
-export const RequiredOnboarding: React.FC<{ onComplete: (a: OnboardingAnswers) => Promise<void> }> = ({ onComplete }) => {
+export const RequiredOnboarding: React.FC<{ onComplete: (a: OnboardingAnswers) => Promise<void>; editing?: boolean; onClose?: () => void }> = ({ onComplete, editing = false, onClose }) => {
   const auth = useAuth();
   const [answers, setAnswers] = useState<OnboardingAnswers>(() => {
+    const saved = loadOnboardingRecord();
+    if (editing && saved) return { ...saved.answers };
     const prefs = loadPrefs();
-    return initialAnswers(auth.profile?.full_name?.split(' ')[0], auth.profile?.country, auth.profile?.currency || prefs.currency, undefined);
+    return { ...initialAnswers(auth.profile?.full_name?.split(' ')[0], auth.profile?.country, auth.profile?.currency || prefs.currency, undefined), language: prefs.language !== 'en-IN' ? prefs.language : undefined };
   });
   const visible = useMemo(() => STEPS.filter((s) => !s.show || s.show(answers)), [answers]);
-  const [stepId, setStepId] = useState('intro');
+  // Editing opens on the summary, where every answer has an Edit link.
+  const [stepId, setStepId] = useState(editing ? 'review' : 'language');
   const index = Math.max(0, visible.findIndex((s) => s.id === stepId));
   const step = visible[index];
   const [draft, setDraft] = useState('');
@@ -386,19 +409,27 @@ export const RequiredOnboarding: React.FC<{ onComplete: (a: OnboardingAnswers) =
   return (
     <div className="ro-screen" role="dialog" aria-modal="true" aria-labelledby="ro-title">
       <header className="ro-top">
-        <span className="ro-brand">ArthaMind</span>
+        <span className="ro-brand notranslate" translate="no"><ArthaMindLogoMark size={30} tone="app" /> ArthaMind</span>
         <div className="ro-sections" aria-hidden="true">
           {SECTIONS.map((s, i) => <span key={s} className={i < sectionIndex ? 'is-done' : i === sectionIndex ? 'is-now' : ''}>{s}</span>)}
         </div>
-        <button type="button" className="ro-signout" onClick={() => void auth.signOut()}><LogOut size={14} /> Sign out</button>
+        {editing && onClose && <button type="button" className="ro-signout" onClick={onClose}><X size={14} /> Close</button>}
       </header>
       <div className="ro-bar" aria-label={`${progress}% done`}><span style={{ width: `${progress}%` }} /></div>
 
       <main className="ro-card">
-        {step.kind !== 'intro' && step.kind !== 'review' && (
+        {step.kind !== 'intro' && step.kind !== 'review' && step.kind !== 'language' && (
           <p className="ro-kicker">{step.section}{step.optional ? ' · you can skip this' : ' · required'}</p>
         )}
         <h1 id="ro-title" className="ro-title">{step.title(answers)}</h1>
+
+        {step.kind === 'language' && (
+          <div className="ro-langs">{VOICE_LANGUAGES.map((l) => (
+            <button key={l.code} type="button" translate="no" className={`ro-lang notranslate ${answers.language === l.code ? 'is-on' : ''}`} onClick={() => { setSiteLanguage(siteCode(l.code)); savePrefs({ language: l.code }); commit(l.code); }}>
+              <b>{l.native}</b><span>{l.name}</span>
+            </button>
+          ))}</div>
+        )}
 
         {step.kind === 'intro' && (
           <div className="ro-intro">
@@ -534,7 +565,7 @@ export const RequiredOnboarding: React.FC<{ onComplete: (a: OnboardingAnswers) =
         })()}
 
         {step.kind === 'review' && (
-          <Review answers={answers} visible={visible} errors={errors} unconfirmed={unconfirmed} missing={missing} busy={busy}
+          <Review editing={editing} answers={answers} visible={visible} errors={errors} unconfirmed={unconfirmed} missing={missing} busy={busy}
             onEdit={(id) => { setReturnToReview(true); goTo(id); }}
             onConfirmAll={() => setConfirmed(new Set([...confirmed, ...unconfirmed.map((i) => `${i.field}:${i.message}`)]))}
             onFinish={() => void finish()} />
@@ -564,9 +595,10 @@ const Problem: React.FC<{ problem: Issue | { kind: 'error'; message: string } | 
 };
 
 const Review: React.FC<{
+  editing?: boolean;
   answers: OnboardingAnswers; visible: Step[]; errors: Issue[]; unconfirmed: Issue[]; missing: Step[]; busy: boolean;
   onEdit: (id: string) => void; onConfirmAll: () => void; onFinish: () => void;
-}> = ({ answers, visible, errors, unconfirmed, missing, busy, onEdit, onConfirmAll, onFinish }) => {
+}> = ({ editing, answers, visible, errors, unconfirmed, missing, busy, onEdit, onConfirmAll, onFinish }) => {
   const mind = scoreMindset(answers);
   const cur = answers.currency ?? 'INR';
   const income = answers.monthlyIncome ?? 0;
@@ -609,7 +641,7 @@ const Review: React.FC<{
         ))}
       </dl>
       <button type="button" className="ro-primary ro-finish" disabled={!ready || busy} onClick={onFinish}>
-        {busy ? <><Loader2 size={16} className="animate-spin" /> Saving…</> : <>Open my workspace <ArrowRight size={16} /></>}
+        {busy ? <><Loader2 size={16} className="animate-spin" /> Saving…</> : <>{editing ? 'Save my answers' : 'Open my workspace'} <ArrowRight size={16} /></>}
       </button>
       {!ready && <p className="ro-note">Fix the points above to continue.</p>}
     </div>

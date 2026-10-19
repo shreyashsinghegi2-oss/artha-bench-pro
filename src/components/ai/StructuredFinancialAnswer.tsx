@@ -64,7 +64,7 @@ export const StructuredFinancialAnswerView: React.FC<{ answer: StructuredFinanci
     <header className="sa-head">
       <span className="sa-ico"><Icon className="h-4 w-4"/></span>
       <div className="min-w-0 flex-1"><div className="sa-kind">{K.label}</div><h3 className="mt-0.5 text-base font-extrabold leading-snug sm:text-lg">{clean(answer.title)}</h3></div>
-      <span className={`sa-badge ${live ? 'live' : ''}`}>{live ? <><CheckCircle2 className="h-3 w-3"/>Checked with live data</> : <><Sparkles className="h-3 w-3"/>AI answer</>}</span>
+      <span className={`sa-badge ${live ? 'live' : ''}`}>{live ? <><CheckCircle2 className="h-3 w-3"/>Checked with live data</> : <><Sparkles className="h-3 w-3"/>ArthaMind answer</>}</span>
     </header>
     <div className="space-y-3.5 p-4">
       {direct && <section className="sa-direct"><RichFinancialText value={direct}/></section>}
@@ -100,7 +100,7 @@ export const StructuredFinancialAnswerView: React.FC<{ answer: StructuredFinanci
       </section>}
 
       {(answer.verifiedNumbers?.length ?? 0) > 0 && <section className="sa-sources">
-        <div className="sa-label"><Calculator className="h-3.5 w-3.5"/>Calculated by the app, not the AI</div>
+        <div className="sa-label"><Calculator className="h-3.5 w-3.5"/>Calculated by the app, not a language model</div>
         <div className="flex flex-wrap gap-2">{answer.verifiedNumbers!.map((v) => <span key={v.id} className="rounded-lg border border-line bg-subtle px-2 py-1 text-[10px] text-secondary" title={v.assumptions.join(' ')}><b className="text-ink">{v.display}</b> · {v.label}{v.certified && v.badge ? <> · <CheckCircle2 className="inline h-3 w-3 align-[-2px]"/> {v.badge}</> : null}</span>)}</div>
       </section>}
 

@@ -73,7 +73,7 @@ export const LearningView: React.FC = () => {
               <span>Structured Finance Curriculum</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-ink tracking-tight">
-              Financial AI Learning Workspace
+              Financial Learning Workspace
             </h1>
             <p className="text-xs sm:text-sm text-secondary max-w-2xl leading-relaxed">
               Interactive educational modules covering financial reasoning, valuation, reporting, corporate finance and risk.

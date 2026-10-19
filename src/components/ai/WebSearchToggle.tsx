@@ -13,7 +13,7 @@ const LABEL: Record<WebSearchMode, string> = { auto: 'Auto', on: 'On', off: 'Off
 const HELP: Record<WebSearchMode, string> = {
   auto: 'Searches the web when a question needs current facts, such as prices, rates, news or new rules.',
   on: 'Searches the web for every question and cites what it finds.',
-  off: 'Answers from the AI and your app data only, with live market data where available.',
+  off: 'Answers from ArthaMind and your app data only, with live market data where available.',
 };
 
 export const WebSearchToggle: React.FC<{ className?: string; compact?: boolean }> = ({ className = '', compact = false }) => {
@@ -39,7 +39,7 @@ export const WebSearchToggle: React.FC<{ className?: string; compact?: boolean }
 export const MyDataToggle: React.FC<{ compact?: boolean }> = ({ compact }) => {
   const [on, setOn] = useState(useMyDataEnabled);
   useEffect(() => { const s = (e: Event) => setOn(Boolean((e as CustomEvent<boolean>).detail)); window.addEventListener(USE_MY_DATA_EVENT, s); return () => window.removeEventListener(USE_MY_DATA_EVENT, s); }, []);
-  const title = on ? 'Your saved numbers (income, spending, loans, portfolio, plans) are used in every AI answer. Click to turn off.' : 'Turn on to let every AI answer use your saved numbers from all features. Off by default.';
+  const title = on ? 'Your saved numbers (income, spending, loans, portfolio, plans) are used in every ArthaMind answer. Click to turn off.' : 'Turn on to let every ArthaMind answer use your saved numbers from all features. Off by default.';
   return <button type="button" onClick={() => setUseMyData(!on)} title={title} aria-label={title} aria-pressed={on}
     className={`inline-flex h-7 shrink-0 items-center gap-1.5 rounded-full border px-2.5 text-[11px] font-bold transition-colors ${on ? 'border-[#2563eb]/40 bg-[#2563eb]/10 text-[#2563eb]' : 'border-line bg-surface text-secondary'}`}>
     <UserRoundCheck className="h-3.5 w-3.5" aria-hidden="true"/>{compact ? (on ? 'My data' : 'My data off') : <>Use my data · {on ? 'On' : 'Off'}</>}

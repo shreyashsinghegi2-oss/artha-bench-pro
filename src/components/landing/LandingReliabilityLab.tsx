@@ -64,7 +64,7 @@ export const LandingReliabilityLab: React.FC = () => {
 
   const replay = () => { setElapsed(0); setRun((r) => r + 1); };
 
-  return <div ref={ref} className="rl" aria-label="AI Reliability Lab demo, playing automatically">
+  return <div ref={ref} className="rl" aria-label="Reliability Lab demo, playing automatically">
     <ol className="rl-steps" aria-label="Evaluation steps">
       {STEPS.map((s, i) => <li key={s} className={i < step ? 'done' : i === step ? 'on' : ''} aria-current={i === step ? 'step' : undefined}>
         <span className="rl-step-n">{i + 1}</span>{s}
@@ -76,7 +76,7 @@ export const LandingReliabilityLab: React.FC = () => {
       <section className={`rl-card ${step === 0 ? 'active' : ''}`}>
         <small className="rl-kicker">Question</small>
         <p className="rl-q">{QUESTION}</p>
-        <small className="rl-kicker">AI answer</small>
+        <small className="rl-kicker">ArthaMind answer</small>
         <p className="rl-a">{ANSWER.slice(0, typed)}{typed < ANSWER.length && <span className="rl-caret" aria-hidden="true"/>}</p>
       </section>
 

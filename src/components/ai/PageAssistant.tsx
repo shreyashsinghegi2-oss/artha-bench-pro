@@ -88,7 +88,7 @@ export const PageAssistant: React.FC<{ destination: AppNavigationDestination; sn
 
     {turns.map((t, i) => <div key={i} className="pa-turn">
       <p className="pa-you">{t.q}</p>
-      {t.reply.offline && <p className="pa-offline">AI is offline right now; this is a basic answer.</p>}
+      {t.reply.offline && <p className="pa-offline">ArthaMind is offline right now; this is a basic answer.</p>}
       {t.reply.structured ? <StructuredFinancialAnswerView answer={t.reply.structured} compact/> : <><p className="pa-text">{t.reply.text}</p><ListenBar text={t.reply.text} compact/></>}
     </div>)}
 

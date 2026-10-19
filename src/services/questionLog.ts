@@ -5,7 +5,7 @@ export const QUESTION_LOG_EVENT = 'arthamind:question-log';
 
 const AREA: Array<[RegExp, string]> = [
   [/tutor/, 'Tutor'], [/crypto/, 'Crypto'], [/company/, 'Company research'], [/dashboard/, 'Dashboard'],
-  [/personal|finance/, 'Money'], [/news/, 'News'], [/ai\/chat/, 'AI CFO'],
+  [/personal|finance/, 'Money'], [/news/, 'News'], [/ai\/chat/, 'ArthaMind CFO'],
 ];
 
 /** The user's words inside a composed prompt: a labelled question, else the last short paragraph. */

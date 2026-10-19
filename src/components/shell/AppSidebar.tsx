@@ -49,14 +49,14 @@ export const NAV_GROUPS: Group[] = [
     { id: 'news', label: 'Business news', icon: Newspaper },
     { id: 'economy', label: 'Economy', icon: Briefcase },
   ] },
-  { title: 'Learn & AI', items: [
-    { id: 'tutor', label: 'AI tutor', icon: Bot },
+  { title: 'Learn', items: [
+    { id: 'tutor', label: 'ArthaMind tutor', icon: Bot },
     { id: 'learning', label: 'Courses', icon: GraduationCap },
     { id: 'markets-learn', label: 'Market lessons', icon: BookOpen },
     { id: 'dashboard', label: 'Research desk', icon: LayoutDashboard },
     { id: 'scenarios', label: 'Scenario lab', icon: FlaskConical },
   ] },
-  { title: 'AI reliability lab', collapsed: true, items: [
+  { title: 'answer reliability lab', collapsed: true, items: [
     { id: 'evaluation-lab', label: 'Evaluation lab', icon: FlaskConical },
     { id: 'quick-check', label: 'Quick check', icon: AlertTriangle },
     { id: 'comparison', label: 'Compare answers', icon: Activity },

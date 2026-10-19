@@ -95,7 +95,7 @@ export const DashboardAssistant: React.FC<DashboardAssistantProps> = ({ snapshot
         await saveAiMessage(auth.session.access_token, auth.user.id, conversationId, 'assistant', response.answer, reference);
       }
     } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : 'ArthaMind AI is temporarily unavailable.');
+      setError(requestError instanceof Error ? requestError.message : 'ArthaMind is temporarily unavailable.');
     } finally { setLoading(false); }
   };
 
@@ -112,7 +112,7 @@ export const DashboardAssistant: React.FC<DashboardAssistantProps> = ({ snapshot
   const deleteAllHistory = async () => {
     if (!auth.session) return;
     try { await deleteAllAiHistory(auth.session.access_token); conversationIdRef.current = null; setError(null); }
-    catch (requestError) { setError(requestError instanceof Error ? requestError.message : 'Could not delete AI history.'); }
+    catch (requestError) { setError(requestError instanceof Error ? requestError.message : 'Could not delete ArthaMind history.'); }
   };
 
   return (
@@ -135,7 +135,7 @@ export const DashboardAssistant: React.FC<DashboardAssistantProps> = ({ snapshot
 
         <div className="mt-4 rounded-2xl border border-line bg-canvas">
           <button type="button" onClick={() => setContextOpen((value) => !value)} className="flex w-full items-center justify-between gap-3 px-3.5 py-2.5 text-left" aria-expanded={contextOpen}>
-            <span><span className="block text-[10px] font-black text-ink">AI Data Context</span><span className="block text-[9px] text-secondary">Public market & economic data: Enabled · Personal sources: {personalEnabled ? 'Enabled by you' : 'Off'}</span></span>
+            <span><span className="block text-[10px] font-black text-ink">Assistant Data Context</span><span className="block text-[9px] text-secondary">Public market & economic data: Enabled · Personal sources: {personalEnabled ? 'Enabled by you' : 'Off'}</span></span>
             <ChevronDown className={`h-4 w-4 text-secondary transition ${contextOpen ? 'rotate-180' : ''}`} />
           </button>
           {contextOpen && <div className="grid gap-2 border-t border-line p-3 sm:grid-cols-2">
@@ -169,13 +169,13 @@ export const DashboardAssistant: React.FC<DashboardAssistantProps> = ({ snapshot
         <div className="scrollbar-thin mb-3 flex gap-2 overflow-x-auto pb-1">{suggestions.slice(0, 4).map((suggestion) => <button key={suggestion} type="button" disabled={!ready || loading} onClick={() => void submitQuestion(suggestion)} className="shrink-0 rounded-full border border-line bg-subtle px-3 py-1.5 text-[10px] font-semibold text-secondary transition hover:bg-interactive-soft hover:text-interactive disabled:opacity-45">{suggestion}</button>)}</div>
         <div className="mb-2"><WebSearchToggle/></div>
         <form onSubmit={handleSubmit} className="relative">
-          <label htmlFor="dashboard-assistant-question" className="sr-only">Ask ArthaMind AI about this dashboard</label>
+          <label htmlFor="dashboard-assistant-question" className="sr-only">Ask ArthaMind about this dashboard</label>
           <textarea id="dashboard-assistant-question" value={question} onChange={(event) => setQuestion(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); void submitQuestion(question); } }} rows={3} maxLength={1200} disabled={!ready || loading} placeholder="Ask about public data or your explicitly enabled personal context…" className="w-full resize-none rounded-2xl border border-line-strong bg-surface px-4 py-3 pr-12 text-xs leading-5 text-ink outline-none placeholder:text-secondary focus:border-interactive focus:ring-2 focus:ring-interactive disabled:opacity-60" />
           <MicButton className="absolute bottom-3 right-14" onText={setQuestion} disabled={!ready || loading}/>
           <button type="submit" disabled={!ready || loading || !question.trim()} aria-label="Send dashboard question" className="absolute bottom-3 right-3 flex h-8 w-8 items-center justify-center rounded-xl bg-brand text-brand-foreground hover:text-white transition hover:bg-brand-hover disabled:opacity-40"><ArrowUp className="h-4 w-4" /></button>
         </form>
         <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-[9px] text-secondary"><div className="flex items-center gap-1.5"><ShieldCheck className="h-3 w-3 text-success" />Educational analysis only — not investment, tax, legal, or financial advice.</div><button type="button" onClick={() => onNavigate('tutor')} className="inline-flex items-center gap-1 font-semibold text-interactive">Open full tutor <ExternalLink className="h-3 w-3" /></button></div>
-        {auth.user && <div className="mt-2 flex flex-wrap gap-2"><button type="button" disabled={!conversationIdRef.current} onClick={() => void deleteCurrentConversation()} className="inline-flex items-center gap-1 rounded-lg border border-line px-2 py-1 text-[9px] text-secondary disabled:opacity-40"><Trash2 className="h-3 w-3" />Delete conversation</button><button type="button" onClick={() => void deleteAllHistory()} className="inline-flex items-center gap-1 rounded-lg border border-line px-2 py-1 text-[9px] text-secondary"><Trash2 className="h-3 w-3" />Delete all AI history</button></div>}
+        {auth.user && <div className="mt-2 flex flex-wrap gap-2"><button type="button" disabled={!conversationIdRef.current} onClick={() => void deleteCurrentConversation()} className="inline-flex items-center gap-1 rounded-lg border border-line px-2 py-1 text-[9px] text-secondary disabled:opacity-40"><Trash2 className="h-3 w-3" />Delete conversation</button><button type="button" onClick={() => void deleteAllHistory()} className="inline-flex items-center gap-1 rounded-lg border border-line px-2 py-1 text-[9px] text-secondary"><Trash2 className="h-3 w-3" />Delete all ArthaMind history</button></div>}
         {sourceLabels.length > 0 && <div className="mt-3 flex items-center gap-2 border-t border-line pt-3 text-[9px] text-secondary"><Database className="h-3 w-3 shrink-0" /><span className="truncate">Grounded in {sourceLabels.join(' · ')}</span></div>}
       </div>
     </section>

@@ -79,8 +79,8 @@ function TickerItem({ item }: { item: IndiaMarketTickerItem }) {
       </span>
       <span
         className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-bold ${sentimentClass}`}
-        aria-label={`AI sentiment ${sentiment}`}
-        title="ArthaMind AI sentiment derived from the displayed price-change direction"
+        aria-label={`ArthaMind sentiment ${sentiment}`}
+        title="ArthaMind sentiment derived from the displayed price-change direction"
       >
         <span className={`h-1.5 w-1.5 rounded-full ${sentimentDot}`} aria-hidden="true" />
         {sentiment}

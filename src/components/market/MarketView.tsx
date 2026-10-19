@@ -195,7 +195,7 @@ export const MarketView: React.FC = () => {
               <span>Company Intelligence Search</span>
             </h2>
             <p className="text-[11px] text-secondary mb-3">
-              Load a provider-labelled quote, Finnhub fundamentals, earnings, analyst trends, charts, and grounded AI explanation.
+              Load a provider-labelled quote, Finnhub fundamentals, earnings, analyst trends, charts, and grounded ArthaMind explanation.
             </p>
             <form onSubmit={handleSearch} className="flex gap-2">
               <input

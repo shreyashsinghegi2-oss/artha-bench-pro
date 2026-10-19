@@ -167,7 +167,7 @@ export const CryptoAssistant: React.FC<CryptoAssistantProps> = ({ candle, symbol
     <section className="rounded-3xl border border-line bg-surface p-4 shadow-sm">
       <div className="flex items-start gap-3">
         <AssistantLogo size={38}/>
-        <div><h2 className="text-base font-black text-ink">ArthaMind Crypto Intelligence</h2><p className="mt-1 text-xs leading-5 text-secondary">Color-coded Artha AI research guidance grounded in the selected Binance candle.</p></div>
+        <div><h2 className="text-base font-black text-ink">ArthaMind Crypto Intelligence</h2><p className="mt-1 text-xs leading-5 text-secondary">Color-coded ArthaMind research guidance grounded in the selected Binance candle.</p></div>
       </div>
       <div className="mt-3 max-h-[480px] overflow-y-auto rounded-2xl border border-line bg-canvas p-3">
         {pendingAction ? <ThinkingSteps active compact/>

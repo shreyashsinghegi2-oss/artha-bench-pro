@@ -284,7 +284,7 @@ function AnswerView({ answer, showWork }: { answer: AdvisorAnswer; showWork: boo
           className={`mb-2 inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold ${ex.mode === 'raw' ? 'bg-subtle text-secondary' : 'bg-success-soft text-success'}`}
         >
           {ex.mode === 'raw' ? <Calculator className="h-3.5 w-3.5" aria-hidden /> : <ShieldCheck className="h-3.5 w-3.5" aria-hidden />}
-          {ex.mode === 'raw' ? 'Computed data (AI explanation unavailable)' : 'AI explanation · every number checked'}
+          {ex.mode === 'raw' ? 'Computed data (ArthaMind explanation unavailable)' : 'ArthaMind explanation · every number checked'}
         </p>
         <div className="whitespace-pre-line break-words text-[15px] leading-relaxed text-ink">{ex.text}</div>
       </div>
@@ -331,7 +331,7 @@ function AnswerView({ answer, showWork }: { answer: AdvisorAnswer; showWork: boo
           </div>
           {ex.rejected_numbers.length > 0 && (
             <p className="text-secondary">
-              The AI draft used numbers that could not be traced ({ex.rejected_numbers.join(', ')}), so the computed data is shown instead.
+              ArthaMind draft used numbers that could not be traced ({ex.rejected_numbers.join(', ')}), so the computed data is shown instead.
             </p>
           )}
           <p className="text-secondary">
@@ -474,7 +474,7 @@ export default function AdvisorChat({ onHome, shareId }: { onHome: () => void; s
           <section className="grid gap-3">
             <h2 className="text-2xl font-bold text-ink">Ask a money question</h2>
             <p className="text-sm text-secondary">
-              Every number is calculated, not guessed by AI. Past market patterns are shown as history, never as predictions. Educational information, not
+              Every number is calculated, not guessed by ArthaMind. Past market patterns are shown as history, never as predictions. Educational information, not
               SEBI-registered investment advice.
             </p>
             <ul className="flex flex-wrap gap-2">

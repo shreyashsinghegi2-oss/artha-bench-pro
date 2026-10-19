@@ -72,7 +72,7 @@ export async function cfoBrief(
       latency_ms: r.latencyMs,
       structured: r.structuredAnswer,
     },
-    r.ok ? `ArthaBench AI gateway · ${r.provider}` : 'ArthaBench offline fallback (no AI model answered)',
+    r.ok ? `ArthaMind gateway · ${r.provider}` : 'ArthaBench offline fallback (no model answered)',
     aiReliability(r),
     false,
   );
@@ -135,7 +135,7 @@ export async function runBenchmark(
       results,
       scoring: 'An answer is correct when any number in it is within tolerance_pct of the expected value. Scoring is deterministic; the answers are not.',
     },
-    'ArthaBench benchmark runner · AI gateway',
+    'ArthaBench benchmark runner · gateway',
     results.every((x) => x.answered_by_ai) ? 90 : 50,
     false,
   );

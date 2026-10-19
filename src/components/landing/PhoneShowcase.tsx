@@ -104,7 +104,7 @@ export const PhoneShowcase: React.FC<{ onTry: () => void }> = ({ onTry }) => {
             <div className="ps-notch" aria-hidden="true"/>
             <div className="ps-status" aria-hidden="true"><span>9:41</span><span className="ps-signal"><i/><i/><i/><i/></span></div>
             <div className="ps-viewport">
-              <div className="ps-appbar" aria-hidden="true"><ArthaMindLogoMark size={20} tone="app"/><b>ArthaMind <em>AI</em></b></div>
+              <div className="ps-appbar" aria-hidden="true"><ArthaMindLogoMark size={20} tone="app"/><b>ArthaMind</b></div>
               <motion.div className="ps-strip" animate={{ y: `-${(active * 100) / SCREENS}%` }} transition={{ type: 'spring', stiffness: 120, damping: 22 }}>
                 {screens}
               </motion.div>

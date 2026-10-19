@@ -89,7 +89,7 @@ const TOPICS: Array<{ id: string; label: string; re: RegExp; area: string; watch
   { id: 'trade', label: 'Trade & tariffs', re: /\b(tariff|trade|export|import|duty|sanction)\b/i, area: 'Trade & supply chains',
     why: 'Tariffs and trade rules shift costs and demand for exporters, importers and their suppliers.',
     watch: ['Official notifications and effective dates', 'Response from trading partners', 'Export order and shipment data'] },
-  { id: 'tech', label: 'Technology & AI', re: /\b(AI|artificial intelligence|chip|semiconductor|software|cloud|data centre|data center)\b/i, area: 'Technology',
+  { id: 'tech', label: 'Technology', re: /\b(AI|artificial intelligence|chip|semiconductor|software|cloud|data centre|data center)\b/i, area: 'Technology',
     why: 'Technology spending cycles drive revenue for IT services, chipmakers and cloud providers.',
     watch: ['Capital-expenditure plans of large tech firms', 'Order books and deal wins for IT services', 'Chip supply and pricing'] },
   { id: 'banking', label: 'Banking & credit', re: /\b(bank|lender|loan|credit|NPA|deposit|NBFC)\b/i, area: 'Financials',

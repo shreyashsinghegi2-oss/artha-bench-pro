@@ -1,4 +1,5 @@
 import { IdleWarning, LogoutNotice, rememberLogoutReason, type LogoutReason } from './SessionNotices';
+import { savePrefs } from '../services/userPrefs';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import {
   AuthSession,
@@ -133,11 +134,11 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
     if (!nextProfile) nextProfile = await upsertProfile(nextSession.access_token, defaultProfile(nextSession.user));
     setSession(nextSession);
     setProfile(nextProfile);
+    // Reading level and currency follow the account to every device.
+    savePrefs({ level: nextProfile.learning_level || 'beginner', country: nextProfile.country || 'India', currency: nextProfile.currency || 'INR' });
     fingerprintRef.current = workspaceFingerprint();
-    if (!suppressOnboarding && !nextProfile.onboarding_completed) {
-      setAuthScreen('onboarding');
-      setAuthOpen(true);
-    }
+    // New users answer the required questions on a full screen (RequiredOnboarding), not in this modal.
+    void suppressOnboarding;
     return nextProfile;
   }, []);
 
@@ -259,7 +260,7 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
       // One device per account: signing in here ends the account's sessions on other devices.
       void signOutOtherSessions(next.access_token);
       const nextProfile = await establishSession(next, remember);
-      if (nextProfile.onboarding_completed) setAuthOpen(false);
+      void nextProfile; setAuthOpen(false);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unable to sign in.';
       if (/email not confirmed/i.test(message)) {
@@ -307,7 +308,7 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
     markSignedIn();
     void signOutOtherSessions(next.access_token);
     const nextProfile = await establishSession(next, pendingOtp.remember);
-    if (nextProfile.onboarding_completed) setAuthOpen(false);
+    void nextProfile; setAuthOpen(false);
   };
 
   const resendOtp = async () => {
@@ -333,7 +334,7 @@ export const AuthProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
       return;
     }
     const result = await signUpWithPassword({ email: input.email.trim(), password: input.password, fullName: input.fullName, country: input.country, financialDataConsent: input.financialDataConsent });
-    if (result.session) { markSignedIn(); void signOutOtherSessions(result.session.access_token); await establishSession(result.session, true); return; }
+    if (result.session) { markSignedIn(); void signOutOtherSessions(result.session.access_token); await establishSession(result.session, true); setAuthOpen(false); return; }
     setAuthMessage('Account created. Check your email and verify it once, then return here to sign in.');
     setAuthScreen('verify');
     setAuthOpen(true);

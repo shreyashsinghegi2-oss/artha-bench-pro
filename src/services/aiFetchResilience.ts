@@ -179,6 +179,8 @@ export function installAiFetchResilience() {
     if (AI_PATHS.has(path)) {
       const headers = new Headers(originalInit?.headers ?? (input instanceof Request ? input.headers : undefined));
       headers.set('x-artha-web-search', getWebSearchMode());
+      // Level, country and currency (not personal data): every answer uses the right words and currency.
+      try { const { loadPrefs } = await import('./userPrefs'); const p = loadPrefs(); headers.set('x-artha-prefs', JSON.stringify({ level: p.level, country: p.country, currency: p.currency })); } catch { /* ignore */ }
       init = { ...originalInit, headers };
       logFromRequestBody(originalInit?.body, path);
       // With the user's consent, attach one summary of their data from every feature.

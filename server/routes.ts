@@ -847,8 +847,11 @@ const handleQuickCheck = async (req: Request, res: Response, next: NextFunction)
 
     const evalReport = await runMultiModelEvaluation(query, { profile: profile || 'US' });
 
+    // The answer the user asked for comes first; the scores explain how far it can be trusted.
     res.json({
-      answer: evalReport.dimensions.find((d) => d.id === 'numericalAccuracy')?.reason || evalReport.riskFlags.join('; '),
+      answer: evalReport.primaryResponse || evalReport.dimensions.find((d) => d.id === 'numericalAccuracy')?.reason || '',
+      score: Math.round(evalReport.overallScore),
+      riskFlags: evalReport.riskFlags,
       report: evalReport,
     });
   } catch (err) {

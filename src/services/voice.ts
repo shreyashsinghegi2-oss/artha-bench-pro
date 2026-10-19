@@ -5,6 +5,8 @@
  * to the browser's own speech recognition. Visitors who are not signed in are asked to sign up.
  */
 import { getStoredAccessToken } from './supabaseRest';
+import { speakNumbers } from '../lib/spokenNumbers';
+import { loadPrefs, numberSystemFor } from './userPrefs';
 
 export interface VoiceLanguage {
   /** BCP-47 tag used for recognition and voices. */
@@ -184,7 +186,8 @@ export function pickVoice(voices: SpeechSynthesisVoice[], code: string): SpeechS
 
 /** Text that reads well aloud: no markdown, symbols or bracketed references. */
 export function speakableText(text: string): string {
-  return text
+  // Amounts first, so "₹12,00,000" is read as "12 lakh rupees" (or "1.2 million dollars" style abroad).
+  return speakNumbers(text, numberSystemFor(loadPrefs().currency))
     .replace(/\[[0-9]+\]/g, '')
     .replace(/[*_#`>|]/g, ' ')
     .replace(/\s*[•·–—]\s*/g, '. ')
@@ -211,7 +214,7 @@ export function speechChunks(text: string, max = 180): string[] {
 }
 
 /** Read text aloud with the given voice. Resolves when finished or stopped. */
-export function speak(text: string, voice: SpeechSynthesisVoice, rate = 0.95, onProgress?: (index: number, total: number) => void): Promise<void> {
+export function speak(text: string, voice: SpeechSynthesisVoice, rate = NORMAL_SPEED, onProgress?: (index: number, total: number) => void): Promise<void> {
   const synth = window.speechSynthesis;
   synth.cancel();
   const chunks = speechChunks(text);
@@ -255,11 +258,13 @@ export async function cloudSpeech(text: string, code: string, rate = 1): Promise
 }
 
 let currentAudio: HTMLAudioElement | null = null;
-const SPEED_KEY = 'arthamind-voice-rate';
-/** The listening speed chosen anywhere in the app (0.75× to 1.75×). */
-export function voiceSpeed(): number { try { const v = Number(localStorage.getItem(SPEED_KEY)); return v >= 0.5 && v <= 2 ? v : 1; } catch { return 1; } }
+// v2: "Normal" is now 1.25× (1× felt too slow). A new key so everyone starts at the new normal.
+const SPEED_KEY = 'arthamind-voice-rate-v2';
+export const NORMAL_SPEED = 1.25;
+/** The listening speed chosen anywhere in the app (1× to 2×; normal is 1.25×). */
+export function voiceSpeed(): number { try { const raw = localStorage.getItem(SPEED_KEY); const v = Number(raw); return raw && v >= 0.75 && v <= 2 ? v : NORMAL_SPEED; } catch { return NORMAL_SPEED; } }
 export function setVoiceSpeed(v: number) { try { localStorage.setItem(SPEED_KEY, String(v)); } catch { /* ignore */ } if (currentAudio) currentAudio.playbackRate = v; }
-export const SPEEDS: Array<[number, string]> = [[0.75, 'Slow'], [1, 'Normal'], [1.25, 'Fast'], [1.5, 'Faster'], [1.75, 'Fastest']];
+export const SPEEDS: Array<[number, string]> = [[1, 'Slow'], [1.25, 'Normal'], [1.5, 'Fast'], [1.75, 'Faster'], [2, 'Fastest']];
 /**
  * Play an audio blob at the chosen speed (applied in the browser, so every voice and provider
  * honours it, pitch preserved); stops anything already playing. Changing speed mid-play applies at once.

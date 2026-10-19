@@ -24,6 +24,10 @@ export const CLOUD_SYNC_KEYS = [
   'arthabench_ai_context_v1',
   'arthabench_notifications_v1',
   'arthabench_dashboard_preferences_v1',
+  // Required sign-up answers, reading level and currency, and the getting-started tour progress.
+  'arthamind.onboarding.v2',
+  'arthamind.prefs.v1',
+  'arthamind.tour.v1',
   // Money profile, portfolio and planners: synced so the workspace follows the user to every device,
   // and cleared from a shared device at sign-out like the rest.
   'arthamind.moneyProfile.v1',

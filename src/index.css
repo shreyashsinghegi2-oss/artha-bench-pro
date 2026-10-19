@@ -33,3 +33,15 @@
 @media (prefers-reduced-motion:reduce){.sr{opacity:1;transform:none;transition:none}}
 .app-shell main [class*="rounded-3xl"][class*="border"]{border-top-color:color-mix(in srgb,var(--tone-edge,#0f9d8a) 55%,transparent)}
 .app-shell main [class*="rounded-3xl"][class*="border"]:hover{}
+/* Calm workspace: one accent colour (brand teal) for links and highlights, green only for gains, red only
+   for losses, amber only for warnings. No tinted background washes. */
+.app-shell{background-image:none;--interactive:var(--brand-hover);--interactive-soft:var(--brand-soft);--premium:var(--text-primary);--premium-foreground:var(--text-primary);--premium-soft:var(--bg-subtle);--chart-primary:var(--brand-primary);--chart-comparison:var(--text-secondary)}
+:root.dark .app-shell,:root[data-theme='dark'] .app-shell{--interactive:var(--brand-primary)}
+.app-shell .wd{--teal:var(--brand-hover);--indigo:var(--brand-hover);--violet:var(--brand-hover);--gold:var(--text-primary)}
+.app-shell .fs .info{--t:var(--brand-hover)}
+.app-shell .fs-stat{background:var(--bg-surface)}
+.app-shell .fs-empty{border-color:var(--border-strong);background:var(--bg-surface);color:var(--text-primary)}
+.app-shell .fs-empty button{background:var(--brand-hover)}
+.app-shell .fs-more{color:var(--brand-hover)}
+.risk-note{margin:0;font-size:11.5px;line-height:1.5;color:var(--text-secondary)}
+.risk-note b{color:var(--text-primary)}

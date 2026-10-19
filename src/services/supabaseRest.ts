@@ -424,6 +424,22 @@ export async function upsertProfile(token: string, profile: Partial<UserProfile>
   return rows[0];
 }
 
+/** Answers to the required sign-up questions (table user_onboarding, one row per user, RLS: own row only). */
+export interface OnboardingRow { user_id: string; version: number; answers: unknown; result: unknown; completed_at: string }
+
+export async function getOnboarding(token: string): Promise<OnboardingRow | null> {
+  const rows = await rest<OnboardingRow[]>('user_onboarding?select=user_id,version,answers,result,completed_at&limit=1', token);
+  return rows[0] ?? null;
+}
+
+export async function saveOnboardingRow(token: string, row: OnboardingRow): Promise<void> {
+  await rest<OnboardingRow[]>('user_onboarding?on_conflict=user_id', token, {
+    method: 'POST',
+    headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
+    body: JSON.stringify(row),
+  });
+}
+
 export interface WorkspaceRow { storage_key: string; payload: string | null; updated_at?: string; }
 
 export async function fetchWorkspaceRows(token: string): Promise<WorkspaceRow[]> {

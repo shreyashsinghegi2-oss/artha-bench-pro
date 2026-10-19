@@ -5156,7 +5156,7 @@ function stripUserProfile(req, _res, next) {
 function groundingMiddleware(req, _res, next) {
   const raw = String(req.header("x-artha-web-search") ?? (req.body && typeof req.body === "object" ? req.body.webSearch : "") ?? "auto").toLowerCase();
   const mode = raw === "on" || raw === "true" ? "on" : raw === "off" || raw === "false" ? "off" : "auto";
-  store2.run({ mode, sources: [], used: false, numbered: [], verified: [], userProfile: req.arthaUserProfile }, next);
+  store2.run({ mode, sources: [], used: false, numbered: [], verified: [], userProfile: req.arthaUserProfile, prefs: parsePrefs(req.header("x-artha-prefs")) }, next);
 }
 var currentWebSearchMode = () => store2.getStore()?.mode ?? "auto";
 var currentGroundingSources = () => store2.getStore()?.sources ?? [];
@@ -5378,6 +5378,30 @@ ${parts.join("\n\n")}` : "";
   return value;
 }
 var NUMBER_STYLE = "NUMBER STYLE: write every rupee amount in full with Indian digit grouping (\u20B912,00,000; \u20B91,20,200; \u20B95,000). Never abbreviate amounts as k, K, L, lakh, Cr, crore, M or bn.";
+function parsePrefs(raw) {
+  if (!raw) return void 0;
+  try {
+    const p = JSON.parse(raw);
+    const level = p.level === "intermediate" || p.level === "advanced" ? p.level : "beginner";
+    const country = typeof p.country === "string" ? p.country.replace(/[^A-Za-z .'-]/g, "").slice(0, 40) || "India" : "India";
+    const currency = typeof p.currency === "string" && /^[A-Z]{3}$/.test(p.currency) ? p.currency : "INR";
+    return { level, country, currency };
+  } catch {
+    return void 0;
+  }
+}
+var LEVEL_STYLE = {
+  beginner: 'READER LEVEL: beginner. Write so a 10-year-old could follow: short sentences, everyday words, one idea at a time. Explain every money word the first time in brackets (for example "EMI (the fixed amount you pay the bank every month)"). Use a tiny real-life example. No jargon without an explanation.',
+  intermediate: "READER LEVEL: intermediate. The reader knows basics like SIP, EMI, FD and tax regime. Be clear and practical; explain only less common terms.",
+  advanced: "READER LEVEL: advanced. The reader is comfortable with finance terms (XIRR, asset allocation, duration, LTCG). Be precise and concise; show formulas and assumptions."
+};
+function numberStyleFor(prefs) {
+  if (!prefs) return NUMBER_STYLE;
+  const indian = ["INR", "NPR", "PKR", "BDT", "LKR"].includes(prefs.currency);
+  const home = indian ? `${prefs.currency === "INR" ? "rupees (\u20B9)" : prefs.currency} with Indian digit grouping (\u20B912,00,000; \u20B91,20,200), and add the amount in words in brackets for big amounts (\u20B912,00,000 (12 lakh); \u20B92,50,00,000 (2.5 crore))` : `${prefs.currency} with international digit grouping (1,200,000), and add the amount in words in brackets for big amounts (1,200,000 (1.2 million); 3,000,000,000 (3 billion))`;
+  return `CURRENCY AND NUMBERS: the reader lives in ${prefs.country}; their home currency is ${prefs.currency}. If the question names a currency (\u20B9, rupees, INR, $, dollars, USD, \xA3, \u20AC, AED\u2026), answer in THAT currency. Otherwise answer in ${home}. Never mix currencies in one answer unless the question compares them, and never convert at a made-up exchange rate (say the rate must be checked). Do not use k, K, L, Cr, M or bn shorthand.
+${LEVEL_STYLE[prefs.level]}`;
+}
 async function groundSystemPrompt(systemPrompt2, userPrompt) {
   const state = store2.getStore();
   const profile = state?.userProfile ? `
@@ -5389,7 +5413,7 @@ ${state.userProfile}` : "";
 ${IDENTITY_BLOCK}
 ${SCOPE_BLOCK}
 
-${NUMBER_STYLE}${profile}`;
+${numberStyleFor(state?.prefs)}${profile}`;
   if (!state) return styled;
   try {
     const [live, verified] = await Promise.all([
@@ -9282,7 +9306,9 @@ var handleQuickCheck = async (req, res, next) => {
     }
     const evalReport = await runMultiModelEvaluation(query, { profile: profile || "US" });
     res.json({
-      answer: evalReport.dimensions.find((d) => d.id === "numericalAccuracy")?.reason || evalReport.riskFlags.join("; "),
+      answer: evalReport.primaryResponse || evalReport.dimensions.find((d) => d.id === "numericalAccuracy")?.reason || "",
+      score: Math.round(evalReport.overallScore),
+      riskFlags: evalReport.riskFlags,
       report: evalReport
     });
   } catch (err) {
@@ -9955,7 +9981,7 @@ var VOICE_STYLE = "VOICE MODE: the answer will be read aloud to someone who may 
 function cfoSystemPrompt(c2) {
   const chosen = c2.replyLanguage && REPLY_LANGUAGES[c2.replyLanguage];
   const language = chosen ? chosen : c2.language === "hinglish" ? "natural Roman Hindi mixed with simple English" : c2.language === "hindi" ? "simple Hindi (Devanagari)" : "clear, warm, plain English";
-  return `You are ArthaMind CFO, a calm, experienced personal finance adviser for Indian households, freelancers and small businesses. Respond in ${language}. Default currency is INR: write every amount in full as \u20B9 with Indian digit grouping (\u20B912,00,000, \u20B91,20,200, \u20B95,000); never abbreviate amounts as k, K, L, lakh, Cr or crore. Think like a CFO: cash flow first, then debt and EMIs, emergency runway and insurance, tax efficiency (old vs new regime, 80C/80D/NPS where relevant), then goals and investments.
+  return `You are ArthaMind CFO, a calm, experienced personal finance adviser for Indian households, freelancers and small businesses. Respond in ${language}. Currency: use the currency the person asks in; otherwise their home currency from the CURRENCY AND NUMBERS rule (INR by default). For rupees write every amount in full as \u20B9 with Indian digit grouping (\u20B912,00,000, \u20B91,20,200, \u20B95,000); never abbreviate amounts as k, K, L or Cr. Think like a CFO: cash flow first, then debt and EMIs, emergency runway and insurance, tax efficiency (old vs new regime, 80C/80D/NPS where relevant), then goals and investments.
 Voice: talk to one person, the way a trusted adviser would across the table. Use "you" and short sentences. Explain any jargon in a few words the first time (for example "emergency runway, meaning how many months your savings would last"). Be specific and kind; acknowledge what is already going well before what needs work. Do not use filler or robotic phrases such as "As an AI", "Certainly!", "Great question", "I hope this helps", "delve" or "in today's fast-paced world". No emojis.
 Structure every answer as a CFO brief using the JSON fields:
 - title: "CFO brief: <topic>" (max 8 words after the colon). For a request containing "PERSONAL CFO PLAN" use exactly "Your personal CFO plan".

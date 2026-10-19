@@ -1,3 +1,4 @@
+import type { QuickCheckResponse } from '../types';
 import type { LearningLanguage } from '../types';
 import {
   NormalizedMarketQuote,
@@ -120,14 +121,35 @@ export async function askDashboardAssistant(params: { question: string; snapshot
 export async function fetchCompanyIntelligence(symbol: string): Promise<CompanyIntelligence> { return fetchJSON<CompanyIntelligence>(`/api/company/intelligence?symbol=${encodeURIComponent(symbol)}`); }
 export async function askCompanyIntelligenceAI(params: { symbol: string; question: string; history?: Array<{ role: 'user' | 'assistant'; content: string }>; }) { return fetchJSON<CompanyAssistantResponse>('/api/company/assistant', { method: 'POST', body: JSON.stringify(params) }); }
 
-export async function performQuickCheck(query: string) {
-  const isBuySellAdvice = /buy|sell|target price|guaranteed|trade signal/i.test(query);
+/**
+ * Prompt Safety check: the server first screens the question (guarantees, tips, prompt tricks), then answers
+ * it and scores the answer. A blocked question comes back as HTTP 400 with the reason, shown in plain words.
+ */
+export async function performQuickCheck(query: string): Promise<QuickCheckResponse> {
+  const disclaimer = 'Investments are subject to market risks. ArthaMind is for learning, not personal investment advice.';
+  let res: Response;
   try {
-    const res = await fetchJSON<{ answer: string; metrics: any; report: VerificationReport }>('/api/quick-check', { method: 'POST', body: JSON.stringify({ query }) });
-    return { safe: !isBuySellAdvice, answer: res.answer || 'The evaluation service returned no answer.', explanation: isBuySellAdvice ? 'Direct buy/sell trading queries are not supported.' : 'Query processed by the configured evaluation service.', disclaimer: 'ArthaMind does not provide personalized investment advice.' };
+    res = await fetch('/api/quick-check', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ query }) });
   } catch {
-    return { safe: !isBuySellAdvice, answer: isBuySellAdvice ? 'I can explain the evidence, calculations, risks and assumptions, but I cannot give a personalized buy/sell instruction.' : 'The AI service is temporarily unavailable. Please retry; ArthaBench will not invent an unsupported answer.', explanation: isBuySellAdvice ? 'Direct trading advice is not supported.' : 'Provider unavailable; safe fallback shown.', disclaimer: 'Educational material only. Does not constitute investment advice.' };
+    throw new Error('Could not reach ArthaMind. Check your internet and try again.');
   }
+  const data = await res.json().catch(() => ({})) as { answer?: string; score?: number; riskFlags?: string[]; error?: string; safety?: { reason?: string } };
+  if (res.status === 400 && (data.safety || data.error)) {
+    return { safe: false, answer: 'ArthaMind will not answer this one as asked.', explanation: data.safety?.reason || data.error || 'This question asks for something unsafe, such as a guaranteed return or a buy/sell tip.', disclaimer };
+  }
+  if (!res.ok) throw new Error(data.error || 'The check could not run right now. Please try again in a minute.');
+  const flags = (data.riskFlags ?? []).filter((f) => !/^no /i.test(f));
+  const asksForTip = /\b(buy|sell)\b.*\b(now|today|stock|share)\b|target price|guaranteed|trade signal|double my/i.test(query);
+  const safe = !asksForTip && flags.length === 0;
+  const score = typeof data.score === 'number' ? ` Reliability score: ${data.score}/100.` : '';
+  return {
+    safe,
+    answer: (data.answer || '').trim() || 'No answer came back. Please try again.',
+    explanation: safe
+      ? `This is a safe learning question.${score}`
+      : `Be careful: ${flags.length ? flags.join('; ') : 'this asks for a tip or a promise of returns. No one can promise returns; ArthaMind explains the risks instead.'}.${score}`,
+    disclaimer,
+  };
 }
 
 const DEFAULT_TUTOR_PREFERENCES: TutorPreferences = { country: 'US', currency: 'USD', language: 'english', level: 'beginner', mode: 'explain', detail: 'detailed', useOfficialSources: true };

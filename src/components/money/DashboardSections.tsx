@@ -184,7 +184,7 @@ export const DashboardAI: React.FC<{ summary: string }> = ({ summary }) => {
     try {
       const res = await fetch('/api/ai/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
         task: 'cfo',
-        prompt: `You are analysing the user's complete financial dashboard. Use every number below, today's market and news context, and answer the question for this person specifically. Rank issues by urgency, show the numbers behind each point, and give concrete next steps with amounts.\n\nDASHBOARD\n${summary}\n\nQuestion: ${q}`,
+        prompt: `You are this person's CFO, writing their complete advisory. Use every number and answer below plus today's market and news context. Cover, in order: the verdict; strengths to keep; weaknesses ranked by urgency with the numbers behind each; cash flow, debt, emergency fund, insurance, tax regime, goals and retirement, and an investment mix that fits their risk mindset and timeline; the limits of this analysis (what was self-reported or assumed); and a 30/60/90-day action plan with amounts.\n\nDASHBOARD\n${summary}\n\nQuestion: ${q}`,
         context: { detail: 'detailed' },
       }) });
       const data = await res.json().catch(() => ({}));
@@ -196,8 +196,12 @@ export const DashboardAI: React.FC<{ summary: string }> = ({ summary }) => {
     finally { setBusy(false); }
   };
   return <article className="wd-card wd-ai info" id="dash-ai">
-    <header><h2><AssistantLogo size={22}/> ArthaMind CFO Intelligence · analysis of your complete dashboard</h2><span className="wd-status info"><Sparkles size={11}/> Live data</span><small className="wd-sub">ArthaMind reads every figure on this page plus live markets and news, then ranks what matters most for you.</small></header>
-    <div className="wd-ai-quick">{QUICK.map((q, i) => <button key={q} type="button" className={i === 0 ? 'primary' : ''} onClick={() => void ask(q)} disabled={busy}>{q}</button>)}</div>
+    <header><h2><AssistantLogo size={22}/> ArthaMind Advisor · your complete advisory</h2><span className="wd-status info"><Sparkles size={11}/> Live data</span><small className="wd-sub">ArthaMind reads every figure on this page plus live markets and news, then ranks what matters most for you.</small></header>
+    <div className="wd-ai-quick">
+      <button type="button" className="primary" onClick={() => void ask(QUICK[0], true)} disabled={busy}>{answer ? 'Refresh my complete advisory' : 'Get my complete advisory'}</button>
+      {QUICK.slice(1).map((q) => <button key={q} type="button" onClick={() => void ask(q)} disabled={busy}>{q}</button>)}
+    </div>
+    {answer && <p className="wd-note">Tap <b>Listen</b> under the advisory to hear it in your language.</p>}
     <ThinkingSteps active={busy}/>
     {error && <p className="wd-note neg">{error}</p>}
     {answer && <StructuredFinancialAnswerView answer={answer} compact/>}

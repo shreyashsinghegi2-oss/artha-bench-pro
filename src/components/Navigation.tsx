@@ -119,7 +119,7 @@ export const Navigation: React.FC<NavigationProps> = ({ currentDestination, onNa
         <NavigationGroup title="Markets" items={MARKET_ITEMS} currentDestination={currentDestination} onNavigate={onNavigate} />
         <NavigationGroup title="Learn & ask" items={LEARN_ITEMS} currentDestination={currentDestination} onNavigate={onNavigate} />
         <details className="dashboard-nav-lab" open={LAB_ITEMS.some((item) => item.id === currentDestination) || undefined}>
-          <summary>answer reliability lab</summary>
+          <summary>Answer reliability lab</summary>
           <NavigationGroup title="Lab tools" items={LAB_ITEMS} currentDestination={currentDestination} onNavigate={onNavigate} />
         </details>
         <NavigationGroup title="Account" items={SYSTEM_ITEMS} currentDestination={currentDestination} onNavigate={onNavigate} />

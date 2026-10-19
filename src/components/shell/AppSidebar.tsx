@@ -56,7 +56,7 @@ export const NAV_GROUPS: Group[] = [
     { id: 'dashboard', label: 'Research desk', icon: LayoutDashboard },
     { id: 'scenarios', label: 'Scenario lab', icon: FlaskConical },
   ] },
-  { title: 'answer reliability lab', collapsed: true, items: [
+  { title: 'Answer reliability lab', collapsed: true, items: [
     { id: 'evaluation-lab', label: 'Evaluation lab', icon: FlaskConical },
     { id: 'quick-check', label: 'Quick check', icon: AlertTriangle },
     { id: 'comparison', label: 'Compare answers', icon: Activity },

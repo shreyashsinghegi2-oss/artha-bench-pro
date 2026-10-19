@@ -123,11 +123,24 @@ function corpusNeededAt(annualExpenseToday: number, age: number, retireAge: numb
   return { expense, corpus };
 }
 
+/**
+ * Only impossible inputs stop the report. Real situations the sign-up questions allow are handled:
+ * ages 14–110, no income (students, homemakers), and people already past their retirement age.
+ * (validateMoneyCheck stays stricter for the quick landing form.)
+ */
+export function hardInputError(inputs: MoneyCheckInputs): string | null {
+  if (!Number.isFinite(inputs.age) || inputs.age < 14 || inputs.age > 110) return 'Enter an age between 14 and 110.';
+  if (!Number.isFinite(inputs.annualSalary) || inputs.annualSalary < 0) return 'Income cannot be negative.';
+  if (!(inputs.monthlyExpenses >= 0) || !(inputs.monthlyEmi >= 0)) return 'Expenses and EMIs cannot be negative.';
+  return null;
+}
+
 export function buildMoneyCheck(inputs: MoneyCheckInputs): MoneyCheckReport {
-  const error = validateMoneyCheck(inputs);
+  const error = hardInputError(inputs);
   if (error) throw new Error(error);
   const A = MONEY_CHECK_ASSUMPTIONS;
-  const retireAge = inputs.retireAge ?? 60;
+  // Already at or past the planned age: plan from today (no years left to save).
+  const retireAge = Math.max(inputs.retireAge ?? 60, inputs.age);
   const loan = nn(inputs.loanOutstanding);
   const liquid = nn(inputs.liquidSavings);
   const invested = nn(inputs.investments);
@@ -145,10 +158,10 @@ export function buildMoneyCheck(inputs: MoneyCheckInputs): MoneyCheckReport {
   const oldTax = Number(comparison.old.totalTaxLiability);
   const newTax = Number(comparison.new.totalTaxLiability);
   const bestTax = Math.min(oldTax, newTax);
-  const monthlyTakeHome = (inputs.annualSalary - bestTax) / 12;
+  const monthlyTakeHome = Math.max(0, (inputs.annualSalary - bestTax) / 12);
 
   // Cash flow and health score on take-home.
-  const health = buildCfoHealthReport({ monthlyIncome: monthlyTakeHome, monthlyExpenses: inputs.monthlyExpenses, monthlyEmi: inputs.monthlyEmi, emergencySavings: liquid });
+  const health = buildCfoHealthReport({ monthlyIncome: monthlyTakeHome, monthlyExpenses: inputs.monthlyExpenses, monthlyEmi: inputs.monthlyEmi, emergencySavings: liquid }, { allowNoIncome: true });
   const surplus = monthlyTakeHome - inputs.monthlyExpenses - inputs.monthlyEmi;
   const monthlyOutflow = inputs.monthlyExpenses + inputs.monthlyEmi;
 
@@ -160,7 +173,7 @@ export function buildMoneyCheck(inputs: MoneyCheckInputs): MoneyCheckReport {
   const annualExpenseToday = inputs.monthlyExpenses * 12;
   const { expense: expenseAtRetirement, corpus: corpusNeeded } = corpusNeededAt(annualExpenseToday, inputs.age, retireAge);
   const projectedFromInvestments = invested * (1 + A.preRetirementReturn) ** yearsToRetire;
-  const monthlySipNeeded = sipForTarget(Math.max(0, corpusNeeded - projectedFromInvestments), A.preRetirementReturn, yearsToRetire * 12);
+  const monthlySipNeeded = yearsToRetire > 0 ? sipForTarget(Math.max(0, corpusNeeded - projectedFromInvestments), A.preRetirementReturn, yearsToRetire * 12) : 0;
 
   let freedomAge: number | null = null;
   const sip = Math.max(0, surplus);
@@ -192,7 +205,8 @@ export function buildMoneyCheck(inputs: MoneyCheckInputs): MoneyCheckReport {
       warnings: Array.from(new Set([...comparison.old.warnings, ...comparison.new.warnings])),
     },
     health,
-    cashflow: { surplus: round(surplus), savingsRate: surplus / monthlyTakeHome, emiLoad: inputs.monthlyEmi / monthlyTakeHome },
+    // With no take-home pay, rates are shown as 0% (or -100% when money still goes out), never as NaN.
+    cashflow: { surplus: round(surplus), savingsRate: monthlyTakeHome > 0 ? surplus / monthlyTakeHome : surplus < 0 ? -1 : 0, emiLoad: monthlyTakeHome > 0 ? inputs.monthlyEmi / monthlyTakeHome : inputs.monthlyEmi > 0 ? 1 : 0 },
     netWorth: round(liquid + invested - loan),
     runwayMonths: monthlyOutflow > 0 ? (liquid + invested) / monthlyOutflow : Infinity,
     emergency: { target: round(emergencyTarget), gap: round(Math.max(0, emergencyTarget - liquid)), months: monthlyOutflow > 0 ? liquid / monthlyOutflow : Infinity },

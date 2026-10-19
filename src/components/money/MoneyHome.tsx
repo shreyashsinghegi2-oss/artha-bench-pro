@@ -10,6 +10,11 @@ import { MoneyReportView, moneyAskPrompt, shortInr } from './MoneyReport';
 import { MoneySetup } from './MoneySetup';
 import { openAnswersEditor } from '../../services/answersEditor';
 import { DownloadReportButton } from './DownloadReportButton';
+import { FinancialPicture } from './FinancialPicture';
+import { buildCompleteDashboard } from '../../services/completeDashboard';
+import { loadEmiRecords } from '../../services/emiStorage';
+import { loadIncomeSources } from '../../services/incomeStorage';
+import { loadExpenses } from '../../services/personalFinanceStorage';
 import { CalculatorsHub, CALCULATOR_COUNT } from './CalculatorsHub';
 import './moneyHome.css';
 
@@ -71,6 +76,12 @@ export const MoneyHome: React.FC<{ onNavigate: (destination: AppNavigationDestin
   const cfoRef = useRef<HTMLElement>(null);
 
   useEffect(() => onMoneyProfileChange(setProfile), []);
+  // The same complete picture as the dashboard (charts, strengths, weak spots, about you).
+  const pictureData = useMemo(() => {
+    if (!profile) return null;
+    try { return buildCompleteDashboard({ profile, loans: loadEmiRecords(), income: loadIncomeSources(), expenses: loadExpenses() }); }
+    catch { try { return buildCompleteDashboard({ profile, loans: [], income: [], expenses: [] }); } catch { return null; } }
+  }, [profile]);
   const report = useMemo(() => {
     if (!profile) return null;
     try { return buildMoneyCheck(profile); } catch { return null; }
@@ -140,6 +151,8 @@ export const MoneyHome: React.FC<{ onNavigate: (destination: AppNavigationDestin
           <small>{k}</small><b>{v}</b><span>{sub}</span>
         </motion.div>)}
       </section>
+
+      {pictureData && <FinancialPicture profile={profile} d={pictureData}/>}
 
       <section id="mh-report" className="mh-report mh-anchor" aria-labelledby="mh-report-title">
         <h2 id="mh-report-title">Your money report</h2>

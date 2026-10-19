@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { openAnswersEditor } from '../../services/answersEditor';
 import { DownloadReportButton } from './DownloadReportButton';
+import { FinancialPicture } from './FinancialPicture';
 import { ArrowRight, PieChart, BadgeIndianRupee, CalendarClock, Coins, Gauge, Landmark, PiggyBank, ReceiptText, ShieldCheck, Sparkles, Target, TrendingUp, Wallet } from 'lucide-react';
 import { SAMPLE_MONEY_CHECK } from '../../services/moneyCheck';
 import { loadMoneyProfile, onMoneyProfileChange, saveMoneyProfile, type MoneyProfile } from '../../services/moneyProfile';
@@ -109,6 +110,8 @@ export const CompleteDashboardView: React.FC<{ onNavigate: (d: AppNavigationDest
         <span className="wd-tile-sub">{r.health.status}</span>
       </article>
     </section>
+
+    <FinancialPicture profile={profile} d={d}/>
 
     <section className="wd-signals" aria-label="Colour guide">
       <span className="good">Green · growth, healthy</span><span className="bad">Red · loss, debt, risk</span><span className="warn">Amber · needs attention</span><span className="info">Blue · information</span>

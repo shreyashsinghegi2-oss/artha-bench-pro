@@ -73,15 +73,16 @@ export function validateCfoInputs(inputs: CfoInputs): string | null {
   return null;
 }
 
-export function buildCfoHealthReport(inputs: CfoInputs): CfoHealthReport {
+/** `allowNoIncome`: students, homemakers and others with no take-home pay still get a (low) score. */
+export function buildCfoHealthReport(inputs: CfoInputs, opts: { allowNoIncome?: boolean } = {}): CfoHealthReport {
   const error = validateCfoInputs(inputs);
-  if (error) throw new Error(error);
+  if (error && !(opts.allowNoIncome && inputs.monthlyIncome === 0 && validateCfoInputs({ ...inputs, monthlyIncome: 1 }) === null)) throw new Error(error);
   const { monthlyIncome: income, monthlyExpenses: expenses, monthlyEmi: emi, emergencySavings: savings } = inputs;
 
   const outflow = expenses + emi;
   const surplus = income - outflow;
-  const savingsRate = surplus / income;
-  const emiLoad = emi / income;
+  const savingsRate = income > 0 ? surplus / income : surplus < 0 ? -1 : 0;
+  const emiLoad = income > 0 ? emi / income : emi > 0 ? 1 : 0;
   const runway = outflow > 0 ? savings / outflow : Number.POSITIVE_INFINITY;
 
   // Scores: savings rate reaches full marks at 20%; EMI load is full marks up to 30% and zero at 50%+;

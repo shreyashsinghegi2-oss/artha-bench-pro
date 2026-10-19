@@ -2,12 +2,16 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Download, Languages, Loader2, Square, Volume2 } from 'lucide-react';
 import { SPEEDS, setVoiceSpeed, voiceSpeed, cloudSpeech, downloadBlob, playBlob, stopAudio, translateFor, VOICE_LANGUAGES, voiceLanguageFor } from '../../services/voice';
 import { currentPageLanguage } from '../LanguageSelector';
+import { loadPrefs } from '../../services/userPrefs';
 import './listenBar.css';
 
 const KEY = 'arthamind-listen-language';
 function initialCode(): string {
   try { const saved = window.localStorage.getItem(KEY); if (saved && VOICE_LANGUAGES.some((l) => l.code === saved)) return saved; } catch { /* storage blocked */ }
-  return voiceLanguageFor(currentPageLanguage())?.code ?? 'hi-IN';
+  // The language the user chose in the setup questions; English when they have not chosen one.
+  const chosen = loadPrefs().language;
+  if (VOICE_LANGUAGES.some((l) => l.code === chosen)) return chosen;
+  return voiceLanguageFor(currentPageLanguage())?.code ?? 'en-IN';
 }
 
 /**

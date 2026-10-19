@@ -28,6 +28,7 @@ export const CLOUD_SYNC_KEYS = [
   'arthamind.onboarding.v2',
   'arthamind.prefs.v1',
   'arthamind.tour.v1',
+  'arthamind.featureIntro.v1',
   // Money profile, portfolio and planners: synced so the workspace follows the user to every device,
   // and cleared from a shared device at sign-out like the rest.
   'arthamind.moneyProfile.v1',

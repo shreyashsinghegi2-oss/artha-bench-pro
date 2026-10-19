@@ -197,3 +197,46 @@ export const GettingStarted: React.FC<{ onNavigate: (d: AppNavigationDestination
     </aside>
   );
 };
+
+// ---------------- First visit to each feature ----------------
+
+const SEEN_KEY = 'arthamind.featureIntro.v1';
+const NO_INTRO = new Set<AppNavigationDestination>(['account', 'settings', 'connections', 'go-pro', 'platform-guide']);
+const loadSeen = (): string[] => { try { const v = JSON.parse(localStorage.getItem(SEEN_KEY) || '[]'); return Array.isArray(v) ? v : []; } catch { return []; } };
+
+/**
+ * The first time someone opens a feature, a short card with a bouncing arrow explains what the page is for
+ * and what they can do there, and awards points ("explorer" progress across all features).
+ */
+export const FeatureIntro: React.FC<{ destination: AppNavigationDestination; onNavigate: (d: AppNavigationDestination) => void }> = ({ destination }) => {
+  const [seen, setSeen] = useState<string[]>(loadSeen);
+  const [tour] = useTourState();
+  const [guide, setGuide] = useState<{ title: string; intro: string; can: string[] } | null>(null);
+  useEffect(() => {
+    let alive = true;
+    void import('../../data/assistantGuides').then(({ guideFor }) => {
+      if (!alive) return;
+      const g = guideFor(destination);
+      const can = g.questions.find((q) => q.id === 'goal')?.options.slice(0, 4) ?? g.starters.slice(0, 3);
+      setGuide({ title: g.title, intro: g.intro, can });
+    });
+    return () => { alive = false; };
+  }, [destination]);
+  if (!tour.done.includes('profile') || tour.active || NO_INTRO.has(destination) || seen.includes(destination) || !guide) return null;
+  const close = () => { const next = [...seen, destination]; setSeen(next); try { localStorage.setItem(SEEN_KEY, JSON.stringify(next)); } catch { /* ignore */ } };
+  const explored = seen.length + 1;
+  return (
+    <div className="fi-card" role="dialog" aria-labelledby="fi-title">
+      <span className="fi-arrow" aria-hidden="true"><ArrowUp size={22}/></span>
+      <div className="fi-head"><small>New here · +5 points</small><button type="button" onClick={close} aria-label="Close"><X size={16}/></button></div>
+      <h2 id="fi-title">Welcome to {guide.title}</h2>
+      <p>{guide.intro.replace(/^I can /, 'ArthaMind can ')}</p>
+      {guide.can.length > 0 && <><b className="fi-sub">What you can do here</b><ol>{guide.can.map((c) => <li key={c}>{c}</li>)}</ol></>}
+      <p className="fi-note">Your numbers are already filled in from your answers. Features explored: {explored}.</p>
+      <div className="fi-actions">
+        <button type="button" className="gt-ghost" onClick={() => { close(); document.querySelector<HTMLElement>('.pai-launch')?.click(); }}>Ask a question here</button>
+        <button type="button" className="gt-next" onClick={close}>Got it <Check size={14}/></button>
+      </div>
+    </div>
+  );
+};

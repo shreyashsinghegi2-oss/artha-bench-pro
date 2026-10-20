@@ -11,7 +11,6 @@ import { MoneySetup } from './MoneySetup';
 import { openAnswersEditor } from '../../services/answersEditor';
 import { DownloadReportButton } from './DownloadReportButton';
 import { FinancialPicture } from './FinancialPicture';
-import { ProfileAvatar } from './ProfileAvatar';
 import { buildCompleteDashboard } from '../../services/completeDashboard';
 import { loadEmiRecords } from '../../services/emiStorage';
 import { loadIncomeSources } from '../../services/incomeStorage';
@@ -117,7 +116,6 @@ export const MoneyHome: React.FC<{ onNavigate: (destination: AppNavigationDestin
     <div className="mh-sticky" data-keep-clear>
     <header className="mh-head">
       <div className="wd-who">
-        {profile && <ProfileAvatar name={profile.name} size={52}/>}
         <div>
         <small className="mh-kicker">Home</small>
         <h1>{profile ? `${hello} Here is your money, worked out.` : 'Your money, in one clear place.'}</h1>

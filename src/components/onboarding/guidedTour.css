@@ -19,31 +19,6 @@
 .gt-ghost{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--border-subtle);background:transparent;color:var(--text-secondary);border-radius:10px;padding:8px 12px;font-size:13px;font-weight:700;cursor:pointer}
 .gt-next{display:inline-flex;align-items:center;gap:6px;border:0;background:var(--brand-hover);color:#fff;border-radius:10px;padding:8px 14px;font-size:13.5px;font-weight:800;cursor:pointer}
 
-/* Getting-started checklist */
-.gs-card{position:fixed;left:16px;bottom:16px;z-index:60;width:min(320px,calc(100vw - 32px));background:var(--bg-surface);color:var(--text-primary);border:1px solid var(--border-subtle);border-radius:16px;box-shadow:0 16px 40px -22px rgba(15,23,42,.45);overflow:hidden}
-@media (max-width:1023px){.gs-card{bottom:84px}}
-.gs-head{display:flex;align-items:center;gap:10px;width:100%;border:0;background:transparent;color:inherit;padding:12px 14px 8px;cursor:pointer;text-align:left}
-.gs-head svg:first-child{color:var(--brand-hover)}
-.gs-head span{flex:1;display:grid}
-.gs-head b{font-size:14px}
-.gs-head small{font-size:12px;color:var(--text-secondary);font-variant-numeric:tabular-nums}
-.gs-bar{height:5px;margin:0 14px 10px;border-radius:999px;background:var(--bg-subtle);overflow:hidden}
-.gs-bar span{display:block;height:100%;background:var(--brand-primary);transition:width .4s ease}
-.gs-list{list-style:none;margin:0;padding:0 8px;display:grid;gap:2px}
-.gs-list li{display:flex;align-items:center;gap:10px;padding:8px 6px;border-radius:10px;font-size:13px}
-.gs-list li.is-next{background:var(--brand-soft)}
-.gs-list li.is-done .gs-label b{color:var(--text-secondary);text-decoration:line-through}
-.gs-tick{width:18px;height:18px;flex:none;border-radius:50%;border:1.5px solid var(--border-strong);display:grid;place-items:center}
-.gs-list li.is-done .gs-tick{background:var(--brand-hover);border-color:var(--brand-hover);color:#fff}
-.gs-label{flex:1;display:grid;min-width:0}
-.gs-label small{color:var(--text-secondary);font-size:12px}
-.gs-pts{font-size:11.5px;font-weight:800;color:var(--text-secondary)}
-.gs-go{display:grid;place-items:center;width:30px;height:30px;border:0;border-radius:50%;background:var(--brand-hover);color:#fff;cursor:pointer;animation:gs-nudge 1.4s ease-in-out infinite}
-@keyframes gs-nudge{0%,100%{transform:translateX(0)}50%{transform:translateX(3px)}}
-.gs-foot{display:flex;justify-content:space-between;align-items:center;padding:8px 14px 12px;font-size:12px;color:var(--text-secondary)}
-.gs-foot button{border:0;background:none;color:var(--text-secondary);font-weight:700;cursor:pointer;text-decoration:underline}
-@media (prefers-reduced-motion:reduce){.gt-arrow,.gs-go{animation:none}.gt-spot,.gt-card{transition:none}}
-
 /* First visit to a feature */
 .fi-card{position:fixed;z-index:70;top:calc(var(--ws-head-h,72px) + 14px);right:24px;width:min(360px,calc(100vw - 32px));background:var(--bg-surface);color:var(--text-primary);border:1px solid var(--border-subtle);border-top:4px solid var(--brand-primary);border-radius:16px;padding:14px 16px;box-shadow:0 20px 50px -24px rgba(15,23,42,.55);animation:fi-in .3s ease-out}
 .fi-arrow{position:absolute;top:-34px;left:24px;color:var(--brand-primary);animation:gt-bounce 1s ease-in-out infinite}

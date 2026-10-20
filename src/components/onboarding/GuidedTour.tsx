@@ -122,15 +122,6 @@ export const GuidedTour: React.FC = () => {
 
 // ---------------- Getting started checklist ----------------
 
-const QUESTS: Array<{ id: string; label: string; points: number; go?: AppNavigationDestination; hint: string }> = [
-  { id: 'profile', label: 'Answer the setup questions', points: 20, hint: 'Done when you finished the questions.' },
-  { id: 'tour', label: 'Take the quick tour', points: 10, hint: 'A 1-minute look around.' },
-  { id: 'dashboard', label: 'Open your dashboard', points: 20, go: 'my-dashboard', hint: 'See all your money on one page.' },
-  { id: 'expense', label: 'Add one real expense', points: 25, go: 'expenses', hint: 'Write down something you paid for today.' },
-  { id: 'ask', label: 'Ask ArthaMind one question', points: 25, hint: 'Tap “Ask” at the bottom and type any money question.' },
-];
-const TOTAL = QUESTS.reduce((s, q) => s + q.points, 0);
-
 /** Marks tasks done from what the user does in the workspace. */
 export function useQuestTracking(destination: AppNavigationDestination) {
   useEffect(() => {
@@ -151,52 +142,6 @@ export function useQuestTracking(destination: AppNavigationDestination) {
     return () => { window.removeEventListener(QUESTION_LOG_EVENT, check); window.clearInterval(id); };
   }, []);
 }
-
-export const GettingStarted: React.FC<{ onNavigate: (d: AppNavigationDestination) => void }> = ({ onNavigate }) => {
-  const [state, setState] = useTourState();
-  if (state.hidden || state.active || !state.done.includes('profile')) return null;
-  const points = QUESTS.filter((q) => state.done.includes(q.id)).reduce((s, q) => s + q.points, 0);
-  const nextQuest = QUESTS.find((q) => !state.done.includes(q.id));
-  const doneCount = QUESTS.filter((q) => state.done.includes(q.id)).length;
-  const finished = !nextQuest;
-  const runQuest = (q: typeof QUESTS[number]) => {
-    if (q.id === 'tour') return setState({ ...state, active: true, step: 0 });
-    if (q.go) onNavigate(q.go);
-    if (q.id === 'ask') document.querySelector<HTMLElement>('.pai-launch')?.click();
-  };
-  return (
-    <aside className={`gs-card ${state.collapsed ? 'is-collapsed' : ''}`} aria-label="Getting started">
-      <button type="button" className="gs-head" onClick={() => setState({ ...state, collapsed: !state.collapsed })} aria-expanded={!state.collapsed}>
-        <Trophy size={16} aria-hidden="true" />
-        <span><b>{finished ? 'Money Starter badge earned!' : 'Getting started'}</b><small>{doneCount}/{QUESTS.length} done · {points}/{TOTAL} points</small></span>
-        {state.collapsed ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-      </button>
-      <div className="gs-bar"><span style={{ width: `${(points / TOTAL) * 100}%` }} /></div>
-      {!state.collapsed && (
-        <>
-          <ol className="gs-list">
-            {QUESTS.map((q) => {
-              const done = state.done.includes(q.id);
-              const isNext = q === nextQuest;
-              return (
-                <li key={q.id} className={done ? 'is-done' : isNext ? 'is-next' : ''}>
-                  <span className="gs-tick" aria-hidden="true">{done ? <Check size={12} /> : null}</span>
-                  <span className="gs-label"><b>{q.label}</b>{isNext && <small>{q.hint}</small>}</span>
-                  <span className="gs-pts">+{q.points}</span>
-                  {isNext && <button type="button" className="gs-go" onClick={() => runQuest(q)} aria-label={`Do this: ${q.label}`}><ArrowRight size={14} /></button>}
-                </li>
-              );
-            })}
-          </ol>
-          <div className="gs-foot">
-            {finished ? <span>All done. You know your way around ArthaMind.</span> : <span>Next step has the arrow →</span>}
-            <button type="button" onClick={() => setState({ ...state, hidden: true })}>Hide</button>
-          </div>
-        </>
-      )}
-    </aside>
-  );
-};
 
 // ---------------- First visit to each feature ----------------
 

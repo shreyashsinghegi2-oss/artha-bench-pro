@@ -3,6 +3,11 @@
 /* Desktop sidebar */
 .sb{position:sticky;top:var(--header-h,72px);align-self:flex-start;display:flex;flex-direction:column;gap:8px;width:248px;flex:none;height:calc(100vh - var(--header-h,72px));padding:14px 10px 10px;border-right:1px solid var(--border-subtle);background:var(--bg-surface);overflow:hidden}
 .sb.narrow{width:68px}
+/* Rail: 68px in the page layout; the full menu floats over the page while hovered (no layout shift). */
+.sb-rail{position:sticky;top:var(--header-h,72px);align-self:flex-start;flex:none;width:68px;height:calc(100vh - var(--header-h,72px));z-index:45}
+.sb-rail .sb{position:absolute;top:0;left:0;height:100%;background:var(--bg-surface);transition:width .18s ease,box-shadow .18s ease}
+.sb-rail:hover .sb,.sb-rail:focus-within .sb{width:248px;box-shadow:0 20px 40px -18px rgba(15,23,42,.35)}
+.sb-rail:hover .sb .sb-item span,.sb-rail:focus-within .sb .sb-item span{display:block}
 .sb-nav{flex:1;overflow-y:auto;scrollbar-width:thin;display:grid;align-content:start;gap:6px;padding-right:2px}
 .sb-group ul{list-style:none;margin:0;padding:0;display:grid;gap:1px}
 .sb-group-title{display:flex;width:100%;align-items:center;justify-content:space-between;padding:8px 10px 4px;border:0;background:none;color:var(--text-secondary);font:800 10.5px/1 Inter,system-ui,sans-serif;letter-spacing:.12em;text-transform:uppercase;cursor:pointer}
@@ -21,6 +26,7 @@
 /* Phone tab bar */
 .tb{display:none}
 @media (max-width:1023px){
+  .sb-rail{display:none}
   .sb{display:none}
   .tb{position:fixed;left:0;right:0;bottom:0;z-index:70;display:grid;grid-template-columns:repeat(5,1fr);padding:6px 6px calc(6px + env(safe-area-inset-bottom));border-top:1px solid var(--border-subtle);background:color-mix(in srgb,var(--bg-surface) 94%,transparent);backdrop-filter:blur(12px)}
   .tb a,.tb button{display:grid;justify-items:center;gap:2px;padding:4px 0;border:0;background:none;color:var(--text-secondary);font:700 10.5px Inter,system-ui,sans-serif;text-decoration:none;cursor:pointer}

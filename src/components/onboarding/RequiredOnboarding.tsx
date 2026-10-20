@@ -1,6 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, ArrowRight, Check, CircleHelp, Loader2, Pencil, Sparkles, TriangleAlert, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Camera, Check, CircleHelp, Loader2, Pencil, Sparkles, TriangleAlert, X } from 'lucide-react';
 import { ArthaMindLogoMark } from '../branding/ArthaMindBrand';
+import { CameraCapture } from './CameraCapture';
+import { loadProfilePhoto, saveProfilePhoto } from '../../services/profilePhoto';
 import { setSiteLanguage, siteCode } from '../LanguageSelector';
 import { VOICE_LANGUAGES } from '../../services/voice';
 import { useAuth } from '../../auth/AuthContext';
@@ -108,7 +110,7 @@ async function pushRecord(token: string, r: OnboardingRecord): Promise<boolean> 
 
 // ---------------- Questions ----------------
 
-type Kind = 'language' | 'intro' | 'text' | 'level' | 'country' | 'choice' | 'multi' | 'number' | 'money' | 'scenarioIntro' | 'scenario' | 'review';
+type Kind = 'photo' | 'language' | 'intro' | 'text' | 'level' | 'country' | 'choice' | 'multi' | 'number' | 'money' | 'scenarioIntro' | 'scenario' | 'review';
 type Chip = { label: string; value: number | string };
 interface Step {
   id: string;
@@ -245,6 +247,7 @@ export const STEPS: Step[] = [
     chips: () => ['Saving & budgeting', 'Loans & credit score', 'Tax', 'Insurance', 'Mutual funds & SIP', 'Shares', 'Retirement', 'Crypto'].map((v) => ({ label: v, value: v })) },
   { id: 'scenarioIntro', kind: 'scenarioIntro', section: 'Money mindset', title: () => `Last part: ${SCENARIOS.length} quick “what would you do?” questions`, why: 'There are no right or wrong answers. They show how you think about money, so our ideas fit you. You can skip them.' },
   ...SCENARIOS.map((s): Step => ({ id: `scenario:${s.id}`, kind: 'scenario', section: 'Money mindset', optional: true, title: () => s.question, why: s.why })),
+  { id: 'photo', kind: 'photo', section: 'Check', title: () => 'Last step: take your photo', why: 'This photo becomes your profile picture and appears on your report, so the report is clearly yours. It is taken live with your camera; uploads are not accepted. It stays on this device.' },
   { id: 'review', kind: 'review', section: 'Check', title: () => 'Check your answers and see your plan', why: '' },
 ];
 
@@ -564,6 +567,13 @@ export const RequiredOnboarding: React.FC<{ onComplete: (a: OnboardingAnswers) =
           );
         })()}
 
+        {step.kind === 'photo' && (
+          <>
+            <CameraCapture current={loadProfilePhoto()?.dataUrl} onUse={(url) => { saveProfilePhoto(url); goTo(nextOf(answers)); }}/>
+            <div className="ro-actions"><button type="button" className="ro-ghost" onClick={back}><ArrowLeft size={15} /> Back</button></div>
+          </>
+        )}
+
         {step.kind === 'review' && (
           <Review editing={editing} answers={answers} visible={visible} errors={errors} unconfirmed={unconfirmed} missing={missing} busy={busy}
             onEdit={(id) => { setReturnToReview(true); goTo(id); }}
@@ -607,7 +617,8 @@ const Review: React.FC<{
   const path = buildPath(answers, (n) => formatMoney(n, cur));
   const rows = visible.filter((s) => s.field || s.kind === 'scenario');
   const stepFor = (field: keyof OnboardingAnswers) => visible.find((s) => s.field === field)?.id ?? 'intro';
-  const ready = !errors.length && !unconfirmed.length && !missing.length;
+  const hasPhoto = !!loadProfilePhoto();
+  const ready = !errors.length && !unconfirmed.length && !missing.length && hasPhoto;
   return (
     <div className="ro-review">
       <div className="ro-summary">
@@ -626,6 +637,7 @@ const Review: React.FC<{
       {mind.answered > 0 && (
         <div className="ro-mind"><Sparkles size={16} aria-hidden="true" /><div><b>Your money mindset</b><p>{mind.riskLabel}.</p><p>{mind.habitLabel}.</p></div></div>
       )}
+      {!hasPhoto && <div className="ro-problem is-error" role="alert"><TriangleAlert size={16} /><div><p>Your live photo is missing. Take it on the last step.</p><div className="ro-problem-actions"><button type="button" onClick={() => onEdit('photo')}><Camera size={13} /> Take photo</button></div></div></div>}
       {missing.length > 0 && <div className="ro-problem is-error" role="alert"><TriangleAlert size={16} /><div><p>Please answer: {missing.map((m) => m.title(answers)).join(' · ')}</p><div className="ro-problem-actions"><button type="button" onClick={() => onEdit(missing[0].id)}><Pencil size={13} /> Answer now</button></div></div></div>}
       {errors.map((e) => <div key={e.message} className="ro-problem is-error" role="alert"><TriangleAlert size={16} /><div><p>{e.message}</p><div className="ro-problem-actions"><button type="button" onClick={() => onEdit(stepFor(e.field))}><Pencil size={13} /> Fix it</button></div></div></div>)}
       {unconfirmed.length > 0 && (

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import {
-  Activity, AlertTriangle, Bell, BookOpen, Bot, Briefcase, CalendarClock, ChevronDown, ChevronsLeft, ChevronsRight, Coins, Crown, DollarSign, FileBarChart2,
+  Activity, AlertTriangle, Bell, BookOpen, Bot, Briefcase, CalendarClock, ChevronDown, Coins, Crown, DollarSign, FileBarChart2,
   FlaskConical, Gauge, GraduationCap, HeartPulse, Home, Landmark, LayoutDashboard, LineChart, Lock, Menu, Newspaper, PieChart, Plug, ReceiptText,
   Settings, Sparkles, Star, Timer, TrendingUp, User, WalletCards, Waves, X, Sunset, BriefcaseBusiness } from 'lucide-react';
 import type { AppNavigationDestination } from '../../navigationTypes';
@@ -72,7 +72,6 @@ export const NAV_GROUPS: Group[] = [
   ] },
 ];
 
-const COLLAPSE_KEY = 'arthamind-sidebar-collapsed';
 const GROUP_KEY = 'arthamind-sidebar-groups';
 
 function readJson<T>(key: string, fallback: T): T { try { const raw = window.localStorage.getItem(key); return raw ? JSON.parse(raw) as T : fallback; } catch { return fallback; } }
@@ -105,16 +104,17 @@ const NavList: React.FC<{ current: AppNavigationDestination; onNavigate: (d: App
   </nav>;
 };
 
-/** Desktop: a collapsible left sidebar. */
+/**
+ * Desktop: a slim icon rail. It opens (over the page, not pushing it) only while the cursor is on it,
+ * so the page always keeps its full width.
+ */
 export const AppSidebar: React.FC<{ current: AppNavigationDestination; onNavigate: (d: AppNavigationDestination) => void; signedIn: boolean }> = (props) => {
-  const [narrow, setNarrow] = useState<boolean>(() => readJson(COLLAPSE_KEY, false));
-  useEffect(() => writeJson(COLLAPSE_KEY, narrow), [narrow]);
-  return <aside className={`sb ${narrow ? 'narrow' : ''}`}>
-    <NavList {...props} narrow={narrow}/>
-    <button type="button" className="sb-collapse" onClick={() => setNarrow((n) => !n)} aria-label={narrow ? 'Expand sidebar' : 'Collapse sidebar'}>
-      {narrow ? <ChevronsRight size={16}/> : <><ChevronsLeft size={16}/><span>Collapse</span></>}
-    </button>
-  </aside>;
+  const [hover, setHover] = useState(false);
+  return <div className="sb-rail" onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)} onFocus={() => setHover(true)} onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setHover(false); }}>
+    <aside className={`sb ${hover ? '' : 'narrow'}`}>
+      <NavList {...props} narrow={!hover}/>
+    </aside>
+  </div>;
 };
 
 const TABS: Array<{ id: AppNavigationDestination; label: string; icon: Icon }> = [

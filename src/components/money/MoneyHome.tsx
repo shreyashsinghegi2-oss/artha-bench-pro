@@ -11,6 +11,7 @@ import { MoneySetup } from './MoneySetup';
 import { openAnswersEditor } from '../../services/answersEditor';
 import { DownloadReportButton } from './DownloadReportButton';
 import { FinancialPicture } from './FinancialPicture';
+import { ProfileAvatar } from './ProfileAvatar';
 import { buildCompleteDashboard } from '../../services/completeDashboard';
 import { loadEmiRecords } from '../../services/emiStorage';
 import { loadIncomeSources } from '../../services/incomeStorage';
@@ -115,11 +116,13 @@ export const MoneyHome: React.FC<{ onNavigate: (destination: AppNavigationDestin
   return <div className="mh">
     <div className="mh-sticky" data-keep-clear>
     <header className="mh-head">
-      <div>
+      <div className="wd-who">
+        {profile && <ProfileAvatar name={profile.name} size={52}/>}
+        <div>
         <small className="mh-kicker">Home</small>
         <h1>{profile ? `${hello} Here is your money, worked out.` : 'Your money, in one clear place.'}</h1>
         <p>{profile ? `Built ${SOURCE_LABEL[profile.source]} · updated ${updated} · saved on this device only.` : 'Answer a few simple questions, or scan a payslip, and get a complete report: tax, freedom number, insurance, emergency fund and a plan.'}</p>
-      </div>
+      </div></div>
       {profile && <div className="mh-head-actions">
         <DownloadReportButton/>
         <button type="button" className="mh-btn" onClick={openAnswersEditor}><UserRound size={15}/> Edit my answers</button>

@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { openAnswersEditor } from '../../services/answersEditor';
 import { DownloadReportButton } from './DownloadReportButton';
 import { FinancialPicture } from './FinancialPicture';
+import { ProfileAvatar } from './ProfileAvatar';
 import { ArrowRight, PieChart, BadgeIndianRupee, CalendarClock, Coins, Gauge, Landmark, PiggyBank, ReceiptText, ShieldCheck, Sparkles, Target, TrendingUp, Wallet } from 'lucide-react';
 import { SAMPLE_MONEY_CHECK } from '../../services/moneyCheck';
 import { loadMoneyProfile, onMoneyProfileChange, saveMoneyProfile, type MoneyProfile } from '../../services/moneyProfile';
@@ -81,11 +82,15 @@ export const CompleteDashboardView: React.FC<{ onNavigate: (d: AppNavigationDest
   const monthTone: Tone = d.spendThisMonth == null ? 'info' : d.spendThisMonth > d.monthlyExpenses.value ? 'bad' : 'good';
 
   return <div className="wd">
+    <div className="wd-stick">
     <header className="wd-head">
-      <div>
+      <div className="wd-who">
+        <ProfileAvatar name={profile.name} size={52}/>
+        <div>
         <small className="wd-kicker">Dashboard</small>
         <h1>{profile.name ? `${profile.name}, here is everything at a glance.` : 'Everything at a glance.'}</h1>
         <p>As of {today} · {profile.source === 'sample' ? 'sample profile' : 'your numbers'} · saved on this device only</p>
+        </div>
       </div>
       <div className="wd-head-actions">
         <DownloadReportButton className="wd-btn primary"/>
@@ -94,6 +99,7 @@ export const CompleteDashboardView: React.FC<{ onNavigate: (d: AppNavigationDest
       </div>
     </header>
     <SectionNav/>
+    </div>
 
     <div id="dash-overview" className="wd-anchor"/>
     <section className="wd-tiles" aria-label="Key figures">

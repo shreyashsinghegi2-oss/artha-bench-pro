@@ -37,7 +37,7 @@ function stepTone(title: string) {
 
 /** Rupee or plain numbers in "Label: value" inputs, drawn as a small bar chart when there are 2 to 6. */
 function chartData(a: StructuredFinancialAnswer): Array<{ label: string; value: number; text: string }> {
-  const rows = [...(a.example?.inputs ?? []), ...(a.example?.calculation ?? [])].flatMap((line) => {
+  const rows = [...(a.example?.inputs ?? [])].flatMap((line) => {
     const m = clean(line).match(/^([^:=]{2,40})[:=]\s*(-?₹?\s?[\d,]+(?:\.\d+)?)(\s*(?:%|lakh|crore)?)/i);
     if (!m) return [];
     const value = Number(m[2].replace(/[₹,\s]/g, ''));
@@ -82,7 +82,7 @@ export const StructuredFinancialAnswerView: React.FC<{ answer: StructuredFinanci
         </div>)}</div>
       </section>}
 
-      {showFormula && <section className="sa-formula">
+      {false && showFormula && <section className="sa-formula">
         <div className="sa-label"><Calculator className="h-3.5 w-3.5"/>Formula</div>
         <div className="rounded-lg bg-surface p-3 font-mono text-xs font-semibold text-violet-700"><RichFinancialText value={formula}/></div>
         {answer.formula.variables?.length > 0 && <div className="mt-2 grid gap-2 sm:grid-cols-2">{answer.formula.variables.map((v, i) => <div key={i} className="rounded-lg border border-line bg-surface p-2"><b className="font-mono text-violet-700">{clean(v.symbol)}</b><div className="text-[10px] text-secondary">{clean(v.meaning)}</div></div>)}</div>}
@@ -91,7 +91,7 @@ export const StructuredFinancialAnswerView: React.FC<{ answer: StructuredFinanci
       {answer.example?.result && <section className="sa-result">
         <div className="sa-label">Result</div>
         <div className="mt-1 font-bold"><RichFinancialText value={clean(answer.example.result)}/></div>
-        {answer.example.calculation?.length > 0 && <ul className="mt-2 space-y-1 text-xs text-secondary">{answer.example.calculation.map((x, i) => <li key={i}>• <RichFinancialText value={clean(x)}/></li>)}</ul>}
+        {/* Step-by-step arithmetic and formulas are not shown to users: the plain result above is the answer. */}
       </section>}
 
       {answer.keyTakeaways?.length > 0 && <section className="sa-takeaways">

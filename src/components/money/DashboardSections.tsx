@@ -18,7 +18,7 @@ const pct = (v: number) => `${Math.round(v * 100)}%`;
 type Tone = 'good' | 'warn' | 'bad' | 'info';
 
 /** Colours for asset classes and spending categories, used consistently across the dashboard. */
-const PALETTE = ['#0F766E', '#14B8A6', '#5EEAD4', '#64748B', '#115E59', '#0E7490', '#B45309'];
+const PALETTE = ['#0F766E', '#1E3A8A', '#C9A227', '#14B8A6', '#0E7490', '#16A34A', '#B45309'];
 
 export const SECTIONS: Array<[string, string]> = [
   ['dash-overview', 'Overview'], ['dash-ai', 'ArthaMind analysis'], ['dash-profile', 'Profile'], ['dash-cash', 'Cash flow & tax'],

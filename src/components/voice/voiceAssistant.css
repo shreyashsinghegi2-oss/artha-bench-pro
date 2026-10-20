@@ -69,3 +69,10 @@
 .va-gate-cta{border:0;border-radius:12px;padding:12px 16px;background:#0f5c4a;color:#fff;font:inherit;font-size:15px;font-weight:800;cursor:pointer}
 .va-gate-cta:hover{background:#0b4a3b}
 .va-gate-link{border:0;background:none;padding:4px;color:#0f5c4a;font:inherit;font-size:13px;font-weight:700;cursor:pointer;text-decoration:underline}
+
+/* Only the glowing mic shows by default; the "Ask by voice" label opens when the cursor (or keyboard focus) is on it. */
+.va-launch{gap:0;padding:6px}
+.va-launch-text{max-width:0;opacity:0;overflow:hidden;white-space:nowrap;transition:max-width .25s ease,opacity .2s ease}
+.va-launch:hover,.va-launch:focus-visible{gap:8px;padding:6px 16px 6px 6px}
+.va-launch:hover .va-launch-text,.va-launch:focus-visible .va-launch-text{max-width:160px;opacity:1}
+@media (max-width:640px){.va-launch:hover .va-launch-text{display:none}}

@@ -30,10 +30,12 @@ import { runSources } from './fetch/registry';
 import { createSources, type SourceDeps } from './fetch/sources';
 import type { FetchContext, Source, SourceRun } from './fetch/types';
 import { computeVerified, enforceVerified, parseIntents, verifiedBlock, type VerifiedNumber } from './fetch/verifyNumbers';
+import { isSearxngConfigured, publicQuery, searchWeb } from './services/searxngSearch';
 
 export type WebSearchMode = 'auto' | 'on' | 'off';
 export interface GroundingSource { name: string; dataDate: string; freshness: string; url?: string; kind: 'market' | 'news' | 'web' | 'page' | 'fund' | 'doc'; n?: number }
-interface GroundingState { mode: WebSearchMode; sources: GroundingSource[]; used: boolean; userProfile?: string; prefs?: AnswerPrefs; numbered: NumberedSource[]; verified: VerifiedNumber[]; report?: GroundingReport }
+export interface WebStatus { state: 'live' | 'cached' | 'unavailable'; provider: string; fetchedAt?: string }
+interface GroundingState { mode: WebSearchMode; sources: GroundingSource[]; used: boolean; userProfile?: string; prefs?: AnswerPrefs; numbered: NumberedSource[]; verified: VerifiedNumber[]; report?: GroundingReport; web?: WebStatus }
 
 const store = new AsyncLocalStorage<GroundingState>();
 
@@ -209,7 +211,28 @@ async function duckduckgo(q: string): Promise<WebResult[]> {
  * then keyless Google News (dated, newest first). Wikipedia is not used as a source of current facts.
  */
 export async function webSearch(query: string): Promise<{ provider: string; results: WebResult[] }> {
-  const q = query.slice(0, 300);
+  const st = store.getStore();
+  // Only a neutral, public version of the question leaves the server (amounts and personal words removed).
+  const q = publicQuery(query.slice(0, 300) || '') ?? '';
+  if (!q) {
+    if (st) st.web = { state: 'unavailable', provider: 'none' };
+    return { provider: 'none', results: [] };
+  }
+  // Default, free provider: self-hosted SearXNG (SEARXNG_BASE_URL). Paid keys below are only fallbacks.
+  if (isSearxngConfigured()) {
+    try {
+      const r = await searchWeb(q);
+      if (r.results.length) {
+        if (st) st.web = { state: r.cached ? 'cached' : 'live', provider: 'SearXNG', fetchedAt: r.fetched_at };
+        return {
+          provider: r.cached ? 'SearXNG (cached)' : 'SearXNG',
+          results: r.results.map((x) => ({ title: x.title, url: x.url, snippet: x.snippet, source: x.publisher, publishedAt: x.date ? new Date(x.date).toISOString() : undefined })),
+        };
+      }
+    } catch {
+      /* SearXNG unavailable: fall through to the other providers, then to the profile-only answer */
+    }
+  }
   const keyed: Array<[string, string | undefined, (q: string, k: string) => Promise<WebResult[]>]> = [
     ['Google (Serper)', process.env.SERPER_API_KEY?.trim(), serper],
     ['Tavily', process.env.TAVILY_API_KEY?.trim(), tavily],
@@ -220,7 +243,9 @@ export async function webSearch(query: string): Promise<{ provider: string; resu
     try { const results = await fn(googleQuery(q) || q, key); if (results.length) return { provider: name, results }; } catch { /* try the next provider */ }
   }
   const [news, ddg] = await Promise.all([withTimeout(googleNews(q), 6500), withTimeout(duckduckgo(q), 5000)]);
-  return { provider: 'Google News (live, newest first)', results: [...(news ?? []), ...(ddg ?? []).slice(0, 1)].slice(0, 6) };
+  const results = [...(news ?? []), ...(ddg ?? []).slice(0, 1)].slice(0, 6);
+  if (st) st.web = results.length ? { state: 'live', provider: 'Google News' } : { state: 'unavailable', provider: 'none' };
+  return { provider: 'Google News (live, newest first)', results };
 }
 
 // ---------- Context assembly ----------
@@ -416,7 +441,8 @@ export function finalizeGroundedAnswer(answer: StructuredFinancialAnswer): Struc
   const state = store.getStore();
   if (!state) return answer;
   const { answer: cited, report } = validateCitations(answer, state.numbered);
-  const { answer: fixed, corrections } = enforceVerified(cited, state.verified);
+  const { answer: verified, corrections } = enforceVerified(cited, state.verified);
+  const fixed = state.web ? { ...verified, webStatus: state.web } : verified;
   if (corrections.length) console.info(JSON.stringify({ scope: 'artha-grounding', event: 'verified-number-corrected', corrections }));
   const live = state.sources.map(({ name, dataDate, freshness, url }) => ({ name, dataDate, freshness, ...(url ? { url } : {}) }));
   const seen = new Set(live.map((s) => s.name));

@@ -19,14 +19,18 @@ const cleanupTimer = setInterval(() => {
 // Do not keep a process (tests, CLI builds) alive just for this housekeeping timer.
 cleanupTimer.unref?.();
 
-export function createRateLimiter(options: { windowMs: number; max: number; message?: string }) {
-  const { windowMs, max, message = 'Too many requests from this IP, please try again later.' } = options;
+/** The caller's address (first hop of x-forwarded-for when behind a proxy). */
+export function clientIp(req: Request): string {
+  return (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.socket.remoteAddress || '127.0.0.1';
+}
+
+export function createRateLimiter(options: { windowMs: number; max: number; message?: string; keyFor?: (req: Request) => string }) {
+  const { windowMs, max, message = 'Too many requests from this IP, please try again later.', keyFor } = options;
 
   return (req: Request, res: Response, next: NextFunction) => {
-    const ip = (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.socket.remoteAddress || '127.0.0.1';
     const now = Date.now();
 
-    const key = `${windowMs}:${max}:${ip}`;
+    const key = `${windowMs}:${max}:${keyFor ? keyFor(req) : clientIp(req)}`;
     let record = store.get(key);
     if (!record || now > record.resetTime) {
       record = { count: 0, resetTime: now + windowMs };

@@ -78,7 +78,7 @@ async function advisorAnalysis(summary: string): Promise<StructuredFinancialAnsw
 
 // ---------------- Charts (drawn on a canvas, placed in the PDF as images) ----------------
 
-const PALETTE = ['#0F766E', '#2DD4BF', '#F59E0B', '#64748B', '#16A34A', '#0EA5E9', '#B45309'];
+const PALETTE = ['#0F766E', '#1E3A8A', '#C9A227', '#14B8A6', '#0E7490', '#16A34A', '#B45309'];
 
 function canvas(w: number, h: number): [HTMLCanvasElement, CanvasRenderingContext2D] {
   const c = document.createElement('canvas');
@@ -222,34 +222,46 @@ export async function downloadFinancialReport(summary: string): Promise<void> {
     lines.forEach((line, i) => { ensure(15); if (i === 0) { doc.setFillColor(...color); doc.circle(X + 3, y - 3.5, 1.8, 'F'); } doc.text(line, X + 14, y); y += 15; });
     y += 2;
   };
-  /** Two-column table: label on the left, value on the right, shaded every other row. */
+  /** Two-column table: label on the left, value on the right, shaded every other row. Long text wraps inside its row. */
   const table = (rows: Array<[string, string]>, width = maxW, left = X) => {
     doc.setFontSize(10.5);
     rows.forEach(([k, v], i) => {
-      ensure(20);
-      if (i % 2 === 0) { doc.setFillColor(244, 247, 250); doc.rect(left, y - 13, width, 20, 'F'); }
-      doc.setFont('helvetica', 'normal'); doc.setTextColor(...MUTED); doc.text(clean(k), left + 8, y, { maxWidth: width * 0.56 });
-      doc.setFont('helvetica', 'bold'); doc.setTextColor(...INK); doc.text(clean(v), left + width - 8, y, { align: 'right', maxWidth: width * 0.42 });
-      y += 20;
+      doc.setFont('helvetica', 'normal');
+      const kl = doc.splitTextToSize(clean(k), width * 0.56 - 8) as string[];
+      doc.setFont('helvetica', 'bold');
+      const vl = doc.splitTextToSize(clean(v), width * 0.42) as string[];
+      const h = Math.max(20, Math.max(kl.length, vl.length) * 13 + 7);
+      ensure(h);
+      if (i % 2 === 0) { doc.setFillColor(244, 247, 250); doc.rect(left, y - 13, width, h, 'F'); }
+      doc.setFont('helvetica', 'normal'); doc.setTextColor(...MUTED);
+      kl.forEach((ln, li) => doc.text(ln, left + 8, y + li * 13));
+      doc.setFont('helvetica', 'bold'); doc.setTextColor(...INK);
+      vl.forEach((ln, li) => doc.text(ln, left + width - 8, y + li * 13, { align: 'right' }));
+      y += h;
     });
     y += 8;
   };
-  /** Multi-column table with a shaded header row. */
+  /** Multi-column table with a teal header row. Each cell wraps inside its own column and row height grows to fit. */
   const grid = (headers: string[], rows: string[][], widths: number[], align: Array<'left' | 'right'> = []) => {
     const total = widths.reduce((s, w) => s + w, 0), scale = maxW / total, ws = widths.map((w) => w * scale);
     const cellX = (i: number) => X + ws.slice(0, i).reduce((s, w) => s + w, 0);
-    ensure(24);
-    doc.setFillColor(...TEAL); doc.rect(X, y - 13, maxW, 20, 'F');
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5); doc.setTextColor(255, 255, 255);
-    headers.forEach((h, i) => doc.text(clean(h), align[i] === 'right' ? cellX(i) + ws[i] - 6 : cellX(i) + 6, y, { align: align[i] === 'right' ? 'right' : 'left', maxWidth: ws[i] - 10 }));
-    y += 20;
-    rows.forEach((row, ri) => {
-      ensure(20);
-      if (ri % 2 === 0) { doc.setFillColor(244, 247, 250); doc.rect(X, y - 13, maxW, 20, 'F'); }
-      doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5); doc.setTextColor(...INK);
-      row.forEach((cell, i) => doc.text(clean(cell), align[i] === 'right' ? cellX(i) + ws[i] - 6 : cellX(i) + 6, y, { align: align[i] === 'right' ? 'right' : 'left', maxWidth: ws[i] - 10 }));
-      y += 20;
-    });
+    const xOf = (i: number) => (align[i] === 'right' ? cellX(i) + ws[i] - 6 : cellX(i) + 6);
+    const drawRow = (cells: string[], style: 'head' | 'shade' | 'plain') => {
+      doc.setFontSize(9.5);
+      const lines = cells.map((c, i) => { doc.setFont('helvetica', style === 'head' ? 'bold' : 'normal'); return doc.splitTextToSize(clean(c), ws[i] - 12) as string[]; });
+      const h = Math.max(20, Math.max(...lines.map((l) => l.length)) * 12 + 8);
+      ensure(h);
+      if (style === 'head') { doc.setFillColor(...TEAL); doc.rect(X, y - 13, maxW, h, 'F'); }
+      else if (style === 'shade') { doc.setFillColor(244, 247, 250); doc.rect(X, y - 13, maxW, h, 'F'); }
+      lines.forEach((cellLines, i) => cellLines.forEach((ln, li) => {
+        doc.setFont('helvetica', style === 'head' ? 'bold' : 'normal');
+        doc.setTextColor(...(style === 'head' ? ([255, 255, 255] as RGB) : INK));
+        doc.text(ln, xOf(i), y + li * 12, { align: align[i] === 'right' ? 'right' : 'left' });
+      }));
+      y += h;
+    };
+    drawRow(headers, 'head');
+    rows.forEach((row, ri) => drawRow(row, ri % 2 === 0 ? 'shade' : 'plain'));
     y += 8;
   };
   const picture = (src: string, w: number, h: number) => { ensure(h + 8); doc.addImage(src, 'PNG', X, y, w, h); y += h + 8; };

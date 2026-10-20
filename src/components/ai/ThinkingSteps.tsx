@@ -5,9 +5,10 @@ import './assistantTools.css';
 /** What the server does for every assistant question, in order (see server/liveGrounding.ts). */
 const STEPS = [
   { at: 0, text: 'Understanding your question' },
-  { at: 700, text: 'Fetching live market prices and news' },
-  { at: 1700, text: 'Searching the web and reading sources' },
-  { at: 3000, text: 'Analysing with your numbers and the formulas' },
+  { at: 700, text: 'Checking current market information…' },
+  { at: 1700, text: 'Fetching verified sources…' },
+  { at: 3000, text: 'Reviewing latest financial updates…' },
+  { at: 3900, text: 'Analysing with your numbers and the formulas' },
   { at: 4600, text: 'Checking the maths and writing your answer' },
 ];
 

@@ -40,6 +40,8 @@ const verifiedNumberSchema = z
 
 export const structuredFinancialAnswerSchema = z
   .object({
+    // Set by the grounding layer after web search (SearXNG); never written by the model.
+    webStatus: z.object({ state: z.enum(['live', 'cached', 'unavailable']), provider: z.string().max(60), fetchedAt: z.string().max(40).optional() }).strict().optional(),
     title: z.string().min(1).max(160),
     directAnswer: z.string().min(1).max(2400),
     steps: z.array(answerStepSchema).min(1).max(7),

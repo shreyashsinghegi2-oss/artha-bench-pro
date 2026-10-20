@@ -27,7 +27,7 @@ type Props = { onNavigate: (destination: AppNavigationDestination) => void };
 type PeriodMode = 'this-month' | 'last-month' | '3-months' | 'custom';
 type TransactionType = 'all' | 'income' | 'expense';
 
-const PIE_COLORS = ['#0F766E', '#2563EB', '#B7791F', '#9F4A54', '#64748B', '#0F766E', '#15803D', '#C2410C'];
+const PIE_COLORS = ['#0F766E', '#1E3A8A', '#B7791F', '#9F4A54', '#14B8A6', '#15803D', '#C2410C', '#0E7490'];
 
 function monthsBetween(start: string, end: string): string[] {
   const result: string[] = [];

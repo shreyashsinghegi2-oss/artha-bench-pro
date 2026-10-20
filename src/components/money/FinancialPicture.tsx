@@ -11,7 +11,7 @@ import { InvestmentPlanCard } from './InvestmentPlanCard';
 import './financialPicture.css';
 
 /** One accent family (brand teal) plus amber for debt/tax and slate for the rest, so slices stay readable. */
-export const CHART_COLORS = ['#0F766E', '#2DD4BF', '#F59E0B', '#64748B', '#16A34A', '#0EA5E9', '#B45309'];
+export const CHART_COLORS = ['#0F766E', '#1E3A8A', '#C9A227', '#14B8A6', '#0E7490', '#16A34A', '#B45309'];
 const inr = (v: number) => `₹${Math.round(v).toLocaleString('en-IN')}`;
 const short = (v: number) => (Math.abs(v) >= 1e5 ? `₹${moneyInWords(v, 'INR')}` : inr(v));
 

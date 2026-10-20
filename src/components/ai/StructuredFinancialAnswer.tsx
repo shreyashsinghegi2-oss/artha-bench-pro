@@ -1,6 +1,6 @@
 import React from 'react';
 import { BarChart3, Calculator, CheckCircle2, Database, GitCompare, Lightbulb, LineChart, ListChecks, Newspaper, ShieldAlert, Sparkles, Stethoscope } from 'lucide-react';
-import { StructuredFinancialAnswer } from '../../types';
+import { StructuredFinancialAnswer, WebSearchStatus } from '../../types';
 import { RichFinancialText } from './RichFinancialText';
 import { ListenBar } from '../voice/ListenBar';
 import './structuredAnswer.css';
@@ -48,7 +48,7 @@ function chartData(a: StructuredFinancialAnswer): Array<{ label: string; value: 
   return unique.length >= 2 && unique.length <= 6 ? unique : [];
 }
 
-const COLORS = ['#0F766E', '#14B8A6', '#5EEAD4', '#64748B', '#115E59', '#0E7490', '#B45309'];
+const COLORS = ['#0F766E', '#1E3A8A', '#C9A227', '#14B8A6', '#0E7490', '#16A34A', '#B45309'];
 
 export const StructuredFinancialAnswerView: React.FC<{ answer: StructuredFinancialAnswer; disclaimer?: string; compact?: boolean }> = ({ answer, disclaimer = 'Educational material only. Verify consequential financial, tax, legal or investment decisions with an appropriate official source.', compact = false }) => {
   const kind = kindOf(answer);
@@ -104,14 +104,18 @@ export const StructuredFinancialAnswerView: React.FC<{ answer: StructuredFinanci
         <div className="flex flex-wrap gap-2">{answer.verifiedNumbers!.map((v) => <span key={v.id} className="rounded-lg border border-line bg-subtle px-2 py-1 text-[10px] text-secondary" title={v.assumptions.join(' ')}><b className="text-ink">{v.display}</b> · {v.label}{v.certified && v.badge ? <> · <CheckCircle2 className="inline h-3 w-3 align-[-2px]"/> {v.badge}</> : null}</span>)}</div>
       </section>}
 
+      <WebStatusLine status={answer.webStatus}/>
       {answer.sources?.length > 0 && <section className="sa-sources">
         <div className="sa-label"><Database className="h-3.5 w-3.5"/>{kind === 'market' ? <><Newspaper className="h-3.5 w-3.5"/>Live sources</> : 'Sources'}</div>
         <div className="flex flex-wrap gap-2">{answer.sources.map((s, i) => {
-          const body = <><b className="text-ink">{clean(s.name)}</b>{s.dataDate ? ` · as of ${s.dataDate}` : ''}{s.freshness ? ` · ${s.freshness}` : ''}</>;
+          // Short chip label: "[n] Publisher"; the full title and date appear as the tooltip.
+          const [head = '', ...rest] = clean(s.name).split(' · ');
+          const label = head.trim();
+          const detail = [rest.join(' · '), s.dataDate ? `as of ${s.dataDate}` : ''].filter(Boolean).join(' · ');
           const safe = s.url && /^https?:\/\//i.test(s.url) ? s.url : undefined;
           return safe
-            ? <a key={i} href={safe} target="_blank" rel="noopener noreferrer nofollow" className="rounded-lg border border-line bg-subtle px-2 py-1 text-[10px] text-secondary underline-offset-2 hover:underline">{body}</a>
-            : <span key={i} className="rounded-lg border border-line bg-subtle px-2 py-1 text-[10px] text-secondary">{body}</span>;
+            ? <a key={i} href={safe} target="_blank" rel="noopener noreferrer nofollow" title={detail} className="sa-chip">{label}</a>
+            : <span key={i} title={detail} className="sa-chip is-static">{label}</span>;
         })}</div>
       </section>}
 
@@ -124,4 +128,17 @@ export const StructuredFinancialAnswerView: React.FC<{ answer: StructuredFinanci
       <div className="border-t border-line pt-3 text-[10px] text-secondary">{disclaimer}</div>
     </div>
   </article>;
+};
+
+/** Live or cached web data, with the time the cached copy was fetched (IST). */
+export const WebStatusLine: React.FC<{ status?: WebSearchStatus }> = ({ status }) => {
+  if (!status) return null;
+  if (status.state === 'unavailable') {
+    return <p className="sa-web-status is-unavailable" role="status">Live web data unavailable. Answer based on saved profile and verified calculations.</p>;
+  }
+  if (status.state === 'cached') {
+    const when = status.fetchedAt ? new Date(status.fetchedAt).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit' }) + ' IST' : '';
+    return <p className="sa-web-status">Cached web data{when ? ` · as of ${when}` : ''}</p>;
+  }
+  return <p className="sa-web-status">Live web data</p>;
 };

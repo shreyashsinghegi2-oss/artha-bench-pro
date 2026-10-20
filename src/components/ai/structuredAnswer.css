@@ -31,3 +31,15 @@
 @keyframes sa-grow{from{width:0!important}}
 html.dark .sa-step.bad,html.dark .sa-step.warn,html.dark .sa-step.good,html.dark .sa-formula,html.dark .sa-result,html.dark .sa-takeaways,html.dark .sa-risks{background:var(--bg-subtle)}
 @media (prefers-reduced-motion:reduce){.sa-bar b{animation:none}}
+
+/* Answer text: near-black and larger, so it reads clearly on white and in the dark theme. */
+.sa{color:#05080d;font-size:16px;line-height:1.6}
+.sa .text-secondary,.sa .sa-label,.sa-kind,.sa-badge{color:#1f2937!important}
+.sa-direct{font-size:17px;color:#05080d}
+.sa-step b,.sa-direct b,.sa-step strong,.sa-direct strong{color:#05080d}
+.sa-chip{display:inline-flex;align-items:center;min-height:30px;padding:0 12px;border-radius:999px;border:1px solid #94a3b8;background:#fff;color:#05080d;font-size:13.5px;font-weight:700;text-decoration:none;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sa-chip:hover{border-color:#0f766e;color:#0f766e}
+.sa-chip:focus-visible{outline:2px solid #0f766e;outline-offset:2px}
+.sa-chip.is-static{cursor:default}
+.sa-web-status{margin:10px 0 0;font-size:13px;font-weight:700;color:#05080d}
+.sa-web-status.is-unavailable{color:#92400e}

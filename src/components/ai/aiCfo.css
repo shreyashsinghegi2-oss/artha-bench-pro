@@ -96,3 +96,9 @@
 .cfo-web{display:flex;justify-content:flex-start;padding:8px 10px 0;border-top:1px solid var(--cfo-bd);background:#fff}.cfo-web+.cfo-compose{border-top:0}
 .cfo-block-sources ul{list-style:none;margin:0;padding:0;display:grid;gap:4px}.cfo-block-sources li{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:var(--cfo-mut,#475569)}.cfo-block-sources li small{flex:none;color:#94a3b8;font-size:11px}
 .cfo-orb.cfo-orb-brand{width:64px;height:64px;border-radius:20px;background:#fff;border:1px solid #e3e8e6;box-shadow:0 14px 30px -12px rgba(15,23,42,.25)}
+
+/* Chat: darker, larger text for every message. */
+.cfo-chat{--cfo-ink:#05080d;--cfo-mut:#1f2937}
+.cfo-msg{font-size:16px;line-height:1.6;color:#05080d}
+.cfo-msg-ai{color:#05080d}
+.cfo-msg-user{font-size:16px}

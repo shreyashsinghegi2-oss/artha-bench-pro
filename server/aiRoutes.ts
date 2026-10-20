@@ -1,11 +1,36 @@
 import { Router,Request,Response } from 'express';
 import { z } from 'zod';
 import { runAiGateway } from './aiGateway';
-import { createRateLimiter } from './rateLimiter';
+import { createRateLimiter, clientIp } from './rateLimiter';
+import { createHash } from 'crypto';
+import { searchWeb, isFinanceTopic, WebSearchUnavailable } from './services/searxngSearch';
 // Public chat endpoints call paid model APIs; cap each IP to protect the provider quota.
 const aiChatLimiter=createRateLimiter({windowMs:60_000,max:20,message:'You are sending questions quickly. Please wait a minute and try again.'});
 import { calculateEMI,calculateEmergencyFund,calculateBudget503020,calculateSavingsTarget } from './financialCalculations';
 export const aiRouter=Router();
+
+/* ---------- Web search (SearXNG, through the backend only) ---------- */
+
+const webSearchKey=(req:Request)=>{const auth=req.headers.authorization;return auth?`user:${createHash('sha256').update(auth).digest('hex').slice(0,24)}`:`ip:${clientIp(req)}`;};
+const WEB_LIMIT_MESSAGE='You’ve reached the short-term web-search limit. Please try again shortly.';
+const webMinuteLimiter=createRateLimiter({windowMs:60_000,max:10,message:WEB_LIMIT_MESSAGE,keyFor:webSearchKey});
+const webHourLimiter=createRateLimiter({windowMs:60*60_000,max:50,message:WEB_LIMIT_MESSAGE,keyFor:webSearchKey});
+
+async function handleWebSearch(req:Request,res:Response){
+  const query=typeof req.body?.query==='string'?req.body.query.trim():'';
+  if(query.length<3||query.length>200)return res.status(400).json({error:'Type a question of 3 to 200 characters.'});
+  if(!isFinanceTopic(query))return res.status(400).json({error:'Ask a financial or economic question to search the web.'});
+  try{
+    const result=await searchWeb(query);
+    return res.status(200).json(result);
+  }catch(error){
+    // Calm fallback: the answer is then built from the saved profile and verified calculations.
+    const unavailable=error instanceof WebSearchUnavailable;
+    logEvent({requestId:'web-search',provider:'SearXNG',model:'',fallbackUsed:true,latencyMs:0,status:'fallback'});
+    return res.status(503).json({error:'Live web search is temporarily unavailable. I can still help using your saved financial profile and verified platform calculations.',unavailable:unavailable});
+  }
+}
+aiRouter.post('/ai/web-search',webMinuteLimiter,webHourLimiter,handleWebSearch);
 // Every context field is optional and falls back to undefined when a client sends a value this server does not know,
 // so a newer UI option can never turn a learner's question into a 400.
 const context=z.object({country:z.enum(['India','US','Global']).optional().catch(undefined),currency:z.enum(['INR','USD','EUR','GBP']).optional().catch(undefined),language:z.enum(['english','hindi','hinglish']).optional().catch(undefined),replyLanguage:z.string().max(40).optional().catch(undefined),voice:z.boolean().optional().catch(undefined),level:z.enum(['beginner','intermediate','advanced']).optional().catch(undefined),mode:z.enum(['explain','quiz','calc']).optional().catch(undefined),detail:z.enum(['short','standard','detailed']).optional().catch(undefined),useOfficialSources:z.boolean().optional().catch(undefined),highContrast:z.boolean().optional().catch(undefined),reducedMotion:z.boolean().optional().catch(undefined),learningGoal:z.string().max(200).optional().catch(undefined),learningStyle:z.enum(['visual','practical','reading','socratic','example-first','step-by-step','challenge-based','deep-dive']).optional().catch(undefined),activityType:z.enum(['lesson','quiz','calculation','scenario','flashcards','revision','mock-test']).optional().catch(undefined),quizType:z.enum(['mcq','mixed','true-false','fill-blank','short-answer','scenario','calculation']).optional().catch(undefined),quizLength:z.union([z.literal(5),z.literal(10),z.literal(20),z.literal(50)]).optional().catch(undefined),adaptiveDifficulty:z.boolean().optional().catch(undefined),sessionLength:z.union([z.literal(2),z.literal(5),z.literal(10),z.literal(15),z.literal(20),z.literal(30),z.literal(45),z.literal(60)]).optional().catch(undefined),learnerProfile:z.string().max(500).optional().catch(undefined)});

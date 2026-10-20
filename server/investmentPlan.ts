@@ -113,11 +113,12 @@ async function pickFunds(key: BucketKey): Promise<PlanFund[]> {
   const matches = results.filter((s) => info.hint.test(`${s.category} ${s.name}`) && /direct/i.test(s.name) && /growth/i.test(s.name));
   const seen = new Set<string>();
   const picked: AmfiScheme[] = [];
+  // One fund per bucket keeps the page fast; the factsheet link in the notes covers the rest.
   for (const s of matches) {
     if (seen.has(s.house)) continue;
     seen.add(s.house);
     picked.push(s);
-    if (picked.length === 2) break;
+    if (picked.length === 1) break;
   }
   return Promise.all(picked.map(async (s) => {
     const detail = await fundDetail(s.code).catch(() => null);

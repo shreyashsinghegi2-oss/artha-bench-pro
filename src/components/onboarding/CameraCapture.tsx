@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Camera, Check, RotateCcw } from 'lucide-react';
+import { removeBackground } from '../../services/photoCutout';
 
 /**
  * Live photo from the device camera (front camera on phones). No file upload: the photo is taken now.
@@ -11,6 +12,8 @@ export const CameraCapture: React.FC<{ current?: string | null; onUse: (dataUrl:
   const [state, setState] = useState<'idle' | 'starting' | 'live' | 'preview' | 'error'>('idle');
   const [shot, setShot] = useState<string | null>(null);
   const [error, setError] = useState('');
+  const [cutting, setCutting] = useState(false);
+  const [removed, setRemoved] = useState(false);
 
   const stop = useCallback(() => {
     streamRef.current?.getTracks().forEach((t) => t.stop());
@@ -67,7 +70,10 @@ export const CameraCapture: React.FC<{ current?: string | null; onUse: (dataUrl:
     const url = c.toDataURL('image/jpeg', 0.86);
     stop();
     setShot(url);
+    setRemoved(false);
+    setCutting(true);
     setState('preview');
+    void removeBackground(url).then((r) => { setShot(r.dataUrl); setRemoved(r.removed); }).finally(() => setCutting(false));
   };
 
   return <div className="ro-camera">
@@ -82,10 +88,11 @@ export const CameraCapture: React.FC<{ current?: string | null; onUse: (dataUrl:
       <button type="button" className="ro-primary" onClick={capture}><Camera size={16}/> Take photo</button>
     </>}
     {state === 'preview' && shot && <>
-      <img className="ro-photo-current" src={shot} alt="Photo taken for your profile"/>
+      <img className="ro-photo-current ro-photo-cut" src={shot} alt="Photo taken for your profile"/>
+      <p className="ro-note" role="status">{cutting ? 'Cleaning up the background…' : removed ? 'Background removed. Your face is kept as it is.' : 'The background could not be separated, so the photo is kept as taken. Retake it in good light if you prefer.'}</p>
       <div className="ro-actions">
         <button type="button" className="ro-ghost" onClick={() => void start()}><RotateCcw size={15}/> Retake</button>
-        <button type="button" className="ro-primary" onClick={() => onUse(shot)}><Check size={16}/> Use this photo</button>
+        <button type="button" className="ro-primary" disabled={cutting} onClick={() => onUse(shot)}><Check size={16}/> Use this photo</button>
       </div>
     </>}
     {state === 'error' && <>

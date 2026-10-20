@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 /**
  * The user's live photo, taken with their device camera at the end of sign-up (no uploads). It is the profile
  * picture and appears on the report as proof of who the report is for. Stored only on this device.
@@ -38,4 +39,19 @@ export function circleCrop(dataUrl: string, size = 320): Promise<string> {
     img.onerror = () => reject(new Error('photo could not be read'));
     img.src = dataUrl;
   });
+}
+
+/** The saved profile photo, kept up to date whenever it is taken, replaced or removed. */
+export function useProfilePhoto(): string | null {
+  const [src, setSrc] = useState<string | null>(() => loadProfilePhoto()?.dataUrl ?? null);
+  useEffect(() => {
+    const update = () => setSrc(loadProfilePhoto()?.dataUrl ?? null);
+    window.addEventListener(PHOTO_EVENT, update);
+    window.addEventListener('storage', update);
+    return () => {
+      window.removeEventListener(PHOTO_EVENT, update);
+      window.removeEventListener('storage', update);
+    };
+  }, []);
+  return src;
 }

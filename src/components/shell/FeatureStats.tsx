@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { cachedGet } from '../../services/requestCache';
 import { openAnswersEditor } from '../../services/answersEditor';
 import { ArrowRight } from 'lucide-react';
 import type { AppNavigationDestination } from '../../navigationTypes';
@@ -81,7 +82,7 @@ const MarketStats: React.FC = () => {
   const [tried, setTried] = useState(false);
   useEffect(() => {
     let alive = true;
-    const load = () => fetch(`/api/markets/batch?symbols=${encodeURIComponent(MARKETS.map((m) => m.s).join(','))}`).then((r) => r.json()).then((d: { results?: Array<{ symbol: string; quote?: { price: number; changePercent: number | null } }> }) => {
+    const load = () => cachedGet<{ results?: Array<{ symbol: string; quote?: { price: number; changePercent: number | null } }> }>(`/api/markets/batch?symbols=${encodeURIComponent(MARKETS.map((m) => m.s).join(','))}`, 60_000).then((d) => {
       if (!alive) return;
       setRows(Object.fromEntries((d.results ?? []).filter((x) => x.quote).map((x) => [x.symbol, { price: x.quote!.price, ch: x.quote!.changePercent }])));
     }).catch(() => undefined).finally(() => { if (alive) setTried(true); });

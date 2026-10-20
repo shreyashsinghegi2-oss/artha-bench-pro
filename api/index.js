@@ -8099,7 +8099,7 @@ async function pickFunds(key) {
     if (seen.has(s2.house)) continue;
     seen.add(s2.house);
     picked.push(s2);
-    if (picked.length === 2) break;
+    if (picked.length === 1) break;
   }
   return Promise.all(picked.map(async (s2) => {
     const detail = await fundDetail(s2.code).catch(() => null);

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Activity, AlertTriangle, Bell, BookOpen, Bot, Briefcase, CalendarClock, ChevronDown, Coins, Crown, DollarSign, FileBarChart2,
   FlaskConical, Gauge, GraduationCap, HeartPulse, Home, Landmark, LayoutDashboard, LineChart, Lock, Menu, Newspaper, PieChart, Plug, ReceiptText,
@@ -110,7 +110,22 @@ const NavList: React.FC<{ current: AppNavigationDestination; onNavigate: (d: App
  */
 export const AppSidebar: React.FC<{ current: AppNavigationDestination; onNavigate: (d: AppNavigationDestination) => void; signedIn: boolean }> = (props) => {
   const [hover, setHover] = useState(false);
-  return <div className="sb-rail" onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)} onFocus={() => setHover(true)} onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setHover(false); }}>
+  const timer = useRef<number | undefined>(undefined);
+  // The menu opens only after real pointer movement, so a cursor that is already parked on the rail
+  // when the page loads does not pop the menu over the content.
+  const moved = useRef(false);
+  const openSoon = () => {
+    if (!moved.current) return;
+    window.clearTimeout(timer.current);
+    timer.current = window.setTimeout(() => setHover(true), 250);
+  };
+  const close = () => { window.clearTimeout(timer.current); setHover(false); };
+  useEffect(() => () => window.clearTimeout(timer.current), []);
+  return <div className={`sb-rail ${hover ? 'is-open' : ''}`}
+    onPointerMove={() => { moved.current = true; if (!hover) openSoon(); }}
+    onMouseEnter={openSoon} onMouseLeave={close}
+    onFocus={(e) => { if (e.target.matches(':focus-visible')) setHover(true); }}
+    onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) close(); }}>
     <aside className={`sb ${hover ? '' : 'narrow'}`}>
       <NavList {...props} narrow={!hover}/>
     </aside>

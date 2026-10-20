@@ -6,7 +6,7 @@ import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from 
  * The user clears a conversation with its own "New conversation" button.
  */
 export const CHAT_THREADS_KEY = 'arthamind.chatThreads.v1';
-const MAX_MESSAGES = 200;
+const MAX_MESSAGES = 60;
 
 type Threads = Record<string, unknown[]>;
 

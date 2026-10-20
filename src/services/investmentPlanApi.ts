@@ -20,7 +20,16 @@ export function planInputFrom(profile: MoneyProfile, d: CompleteDashboard, recor
   };
 }
 
+const CACHE_KEY = 'arthamind.investmentPlan.v1';
+const CACHE_MS = 6 * 60 * 60 * 1000;
+
+/** The same answers give the same plan for six hours, so visiting the dashboard again costs no network call. */
 export async function fetchInvestmentPlan(input: PlanInput, signal?: AbortSignal): Promise<InvestmentPlan> {
+  const key = JSON.stringify(input);
+  try {
+    const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null') as { key: string; at: number; plan: InvestmentPlan } | null;
+    if (cached && cached.key === key && Date.now() - cached.at < CACHE_MS) return cached.plan;
+  } catch { /* storage unavailable: fetch again */ }
   const res = await fetch('/api/plan/investments', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -29,5 +38,6 @@ export async function fetchInvestmentPlan(input: PlanInput, signal?: AbortSignal
   });
   const data = (await res.json().catch(() => ({}))) as InvestmentPlan & { error?: string };
   if (!res.ok) throw new Error(data.error || 'Fund data is unavailable right now. Try again shortly.');
+  try { localStorage.setItem(CACHE_KEY, JSON.stringify({ key, at: Date.now(), plan: data })); } catch { /* storage full */ }
   return data;
 }

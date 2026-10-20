@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { cachedGet } from '../../services/requestCache';
 import { ArrowDownRight, ArrowRight, ArrowUpRight, Loader2, Newspaper, PieChart, RefreshCw, Search } from 'lucide-react';
 import type { AppNavigationDestination } from '../../navigationTypes';
 import { loadPortfolio, PORTFOLIO_EVENT, sipBacktest, summarise } from '../../services/portfolio';
@@ -44,8 +45,7 @@ export const LiveBoard: React.FC<{ onNavigate: (d: AppNavigationDestination) => 
   const load = async () => {
     setLoading(true);
     try {
-      const r = await fetch(`/api/markets/batch?symbols=${encodeURIComponent(TILES.map((t) => t.symbol).join(','))}`);
-      const d = await r.json() as { results?: Row[]; items?: Row[] } | Row[];
+      const d = await cachedGet<{ results?: Row[]; items?: Row[] } | Row[]>(`/api/markets/batch?symbols=${encodeURIComponent(TILES.map((t) => t.symbol).join(','))}`, 60_000);
       const list = Array.isArray(d) ? d : d.results ?? d.items ?? [];
       setRows(list); setAsOf(new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }));
     } catch { setRows([]); }
@@ -57,7 +57,7 @@ export const LiveBoard: React.FC<{ onNavigate: (d: AppNavigationDestination) => 
     return () => window.clearInterval(t);
   }, []);
   useEffect(() => {
-    fetch('/api/news?region=india&category=business').then((r) => r.json()).then((d) => setNews((d.items ?? d.articles ?? d.news ?? []).slice(0, 4))).catch(() => setNews([]));
+    cachedGet<{ items?: unknown[]; articles?: unknown[]; news?: unknown[] }>('/api/news?region=india&category=business', 5 * 60_000).then((d) => setNews(((d.items ?? d.articles ?? d.news ?? []) as typeof news).slice(0, 4))).catch(() => setNews([]));
   }, []);
   useEffect(() => { const sync = () => setPortfolio(loadPortfolio()); window.addEventListener(PORTFOLIO_EVENT, sync); return () => window.removeEventListener(PORTFOLIO_EVENT, sync); }, []);
 

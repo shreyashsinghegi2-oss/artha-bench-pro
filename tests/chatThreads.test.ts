@@ -22,11 +22,11 @@ describe('saved conversations', () => {
     expect(loadThread('unknown')).toEqual([]);
   });
 
-  it('keeps only the latest 200 messages in a thread', () => {
+  it('keeps only the latest 60 messages in a thread', () => {
     saveThread('cfo', Array.from({ length: 250 }, (_, i) => ({ i })));
     const kept = loadThread<{ i: number }>('cfo');
-    expect(kept).toHaveLength(200);
-    expect(kept[0].i).toBe(50);
+    expect(kept).toHaveLength(60);
+    expect(kept[0].i).toBe(190);
   });
 
   it('clears one thread without touching the others', () => {

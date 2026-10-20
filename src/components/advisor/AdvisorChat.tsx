@@ -23,6 +23,7 @@ import type { ProfileMatch } from '../../advisor/profile-matcher';
 import type { PatternResult } from '../../advisor/pattern-matcher';
 import { loadMoneyProfile } from '../../services/moneyProfile';
 import { SimulationCard } from '../simulation/SimulationCard';
+import { usePersistedThread, newId } from '../../services/chatThreads';
 
 /* ---------- Formatting (Indian digit grouping) ---------- */
 
@@ -359,7 +360,13 @@ interface Turn {
 
 export default function AdvisorChat({ onHome, shareId }: { onHome: () => void; shareId?: string }) {
   const auth = useAuth();
-  const [turns, setTurns] = useState<Turn[]>([]);
+  const [turns, setTurns] = usePersistedThread<Turn>('advisor');
+  // A question still being answered when the page was refreshed can never finish; say so instead of spinning.
+  useEffect(() => {
+    setTurns((ts) => (ts.some((t) => !t.result && !t.error)
+      ? ts.map((t) => (t.result || t.error ? t : { ...t, error: 'This answer was cut off when the page was refreshed. Ask it again and it will be answered.' }))
+      : ts));
+  }, [setTurns]);
   const [question, setQuestion] = useState('');
   const [busy, setBusy] = useState(false);
   const [useProfile, setUseProfile] = useState(true);
@@ -367,7 +374,6 @@ export default function AdvisorChat({ onHome, shareId }: { onHome: () => void; s
   const [shared, setShared] = useState<SharedAdviceView | null>(null);
   const [sharedError, setSharedError] = useState<string | null>(null);
   const [sharedWork, setSharedWork] = useState(false);
-  const nextId = useRef(1);
   const endRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -384,11 +390,13 @@ export default function AdvisorChat({ onHome, shareId }: { onHome: () => void; s
     async (q: string) => {
       const text = q.trim();
       if (text.length < 2 || busy) return;
-      const id = nextId.current++;
+      const id = newId();
       setTurns((ts) => [...ts, { id, question: text, events: [], result: null, error: null, showWork: false, shareUrl: null, shareState: 'idle' }]);
       setQuestion('');
       setBusy(true);
-      requestAnimationFrame(() => endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' }));
+      // Scroll to the new question only when the reader is already at the bottom, so older answers stay put.
+      const nearBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 240;
+      if (nearBottom) requestAnimationFrame(() => endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' }));
       try {
         const result = await askAdvisor(text, {
           token: auth.session?.access_token ?? null,

@@ -1,5 +1,5 @@
 /* Landing AI CFO section: instant health check + live chat. */
-.cfo-land{position:relative;overflow:hidden;background:radial-gradient(900px 400px at 10% 0%,rgba(20,184,166,.08),transparent 70%),radial-gradient(700px 360px at 100% 100%,rgba(99,102,241,.07),transparent 70%),#fff}
+.cfo-land{position:relative;overflow:hidden;background:radial-gradient(900px 400px at 10% 0%,rgba(20,184,166,.08),transparent 70%),radial-gradient(700px 360px at 100% 100%,rgba(15,118,110,.07),transparent 70%),#fff}
 .cfo-land-grid{display:grid;grid-template-columns:minmax(0,.95fr) minmax(0,1.05fr);gap:22px;margin-top:34px;align-items:stretch}
 .cfo-chat-wrap{height:min(760px,calc(100vh - 110px));min-height:560px;display:flex;align-self:start;position:sticky;top:90px}
 .cfo-chat-wrap .cfo-thread{max-height:none}
@@ -41,7 +41,7 @@
 .cfo-actions b{display:flex;justify-content:space-between;gap:10px;font-size:13.5px}
 .cfo-actions em{font-style:normal;color:#0f7b6c;font-variant-numeric:tabular-nums}
 .cfo-actions p{margin:3px 0 0;font-size:12.5px;color:#475569}
-.cfo-horizon{display:inline-block;margin-bottom:3px;font-size:10px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:#6366f1}
+.cfo-horizon{display:inline-block;margin-bottom:3px;font-size:10px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:#0F766E}
 .cfo-check-cta{display:flex;flex-wrap:wrap;gap:10px}
 .cfo-check-cta .cl-primary,.cfo-check-cta .cl-secondary{display:inline-flex;align-items:center;gap:8px}
 .cfo-land .cl-secondary{color:var(--g);border-color:var(--bd);background:#fff}

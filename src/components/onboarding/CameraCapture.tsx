@@ -28,7 +28,6 @@ export const CameraCapture: React.FC<{ current?: string | null; onUse: (dataUrl:
     try {
       const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 960 }, height: { ideal: 960 } }, audio: false });
       streamRef.current = s;
-      if (videoRef.current) { videoRef.current.srcObject = s; await videoRef.current.play().catch(() => undefined); }
       setState('live');
     } catch (e) {
       const name = (e as DOMException)?.name;
@@ -41,9 +40,22 @@ export const CameraCapture: React.FC<{ current?: string | null; onUse: (dataUrl:
     }
   };
 
+  // The preview element only exists once the camera is live, so the stream is attached here, after render.
+  useEffect(() => {
+    if (state !== 'live') return;
+    const v = videoRef.current;
+    const s = streamRef.current;
+    if (!v || !s) return;
+    v.srcObject = s;
+    void v.play().catch(() => undefined);
+  }, [state]);
+
   const capture = () => {
     const v = videoRef.current;
-    if (!v || !v.videoWidth) return;
+    if (!v || !v.videoWidth) {
+      setError('The camera is still warming up. Wait a second, then tap Take photo.');
+      return;
+    }
     const side = Math.min(v.videoWidth, v.videoHeight);
     const size = 512;
     const c = document.createElement('canvas');

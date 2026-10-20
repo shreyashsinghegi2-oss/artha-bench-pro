@@ -3,6 +3,8 @@ import { AssistantLogo } from '../ai/AssistantLogo';
 import { ThinkingSteps } from '../ai/ThinkingSteps';
 import React, { FormEvent, useEffect, useRef, useState } from 'react';
 import { WebSearchToggle } from '../ai/WebSearchToggle';
+import { JumpToLatest, useStickToBottom } from '../ai/chatScroll';
+import { usePersistedThread } from '../../services/chatThreads';
 import {
   ArrowUp, Bot, ChevronDown, Database, ExternalLink, LoaderCircle, LockKeyhole,
   ShieldCheck, Sparkles, Trash2, User, Wrench,
@@ -38,9 +40,9 @@ const STARTER_QUESTIONS = [
 
 export const DashboardAssistant: React.FC<DashboardAssistantProps> = ({ snapshot, ready, onNavigate }) => {
   const auth = useAuth();
-  const [messages, setMessages] = useState<AssistantMessage[]>([{
+  const [messages, setMessages] = usePersistedThread<AssistantMessage>('dashboard', [{
     role: 'assistant',
-    content: 'I can explain the live market, economic, provider-health, and reliability data currently visible on this dashboard—grounded in SEBI-compliant Indian data where available. Signed-in users can explicitly enable personal data sources below.',
+    content: 'Hi. I can walk you through what is on this dashboard: the markets, the economy, and how fresh each number is. Ask me in your own words.',
   }]);
   const [question, setQuestion] = useState('');
   const [loading, setLoading] = useState(false);
@@ -49,10 +51,10 @@ export const DashboardAssistant: React.FC<DashboardAssistantProps> = ({ snapshot
   const [sourceLabels, setSourceLabels] = useState<string[]>([]);
   const [contextOpen, setContextOpen] = useState(false);
   const [contextPreferences, setContextPreferences] = useState<AiDataContextPreferences>(() => loadAiDataContext());
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
   const conversationIdRef = useRef<string | null>(null);
 
-  useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }, [messages, loading]);
+  const { behind, jump } = useStickToBottom(listRef, messages.length + (loading ? 1 : 0));
 
   const updateContext = (key: keyof AiDataContextPreferences, checked: boolean) => {
     const next = { ...contextPreferences, [key]: checked };
@@ -150,7 +152,7 @@ export const DashboardAssistant: React.FC<DashboardAssistantProps> = ({ snapshot
         </div>
       </div>
 
-      <div className="scrollbar-thin flex-1 space-y-5 overflow-y-auto bg-canvas p-4 sm:p-5" aria-live="polite">
+      <div ref={listRef} className="scrollbar-thin flex-1 space-y-5 overflow-y-auto bg-canvas p-4 sm:p-5" aria-live="polite">
         {messages.map((message, index) => (
           <div key={`${message.role}-${index}`} className={`flex items-start gap-2.5 ${message.role === 'user' ? 'flex-row-reverse' : ''}`}>
             <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-interactive/30 bg-interactive/10 text-interactive">{message.role === 'user' ? <User className="h-3.5 w-3.5" /> : <Bot className="h-3.5 w-3.5" />}</div>
@@ -161,7 +163,7 @@ export const DashboardAssistant: React.FC<DashboardAssistantProps> = ({ snapshot
           </div>
         ))}
         <ThinkingSteps active={loading} compact/>
-        <div ref={messagesEndRef} />
+        <JumpToLatest show={behind} onClick={jump}/>
       </div>
 
       <div className="border-t border-line bg-surface p-4 sm:p-5">

@@ -23,7 +23,7 @@ export interface PortfolioData { holdings: Holding[]; liabilities: Liability[]; 
 
 export const KIND_LABEL: Record<HoldingKind, string> = { mf: 'Mutual fund', stock: 'Stock', fd: 'Fixed deposit', ppf: 'PPF', epf: 'EPF', nps: 'NPS', gold: 'Gold', cash: 'Cash & savings', property: 'Property', crypto: 'Crypto', other: 'Other' };
 export const KIND_CLASS: Record<HoldingKind, AssetClass> = { mf: 'Other', stock: 'Equity', fd: 'Debt', ppf: 'Debt', epf: 'Debt', nps: 'Hybrid', gold: 'Gold & commodities', cash: 'Cash', property: 'Real estate', crypto: 'Crypto', other: 'Other' };
-export const CLASS_COLOR: Record<AssetClass, string> = { Equity: '#2563eb', Debt: '#0f9d8a', Hybrid: '#7c3aed', 'Gold & commodities': '#d4a017', 'Real estate': '#b45309', Cash: '#64748b', Crypto: '#f97316', Other: '#94a3b8' };
+export const CLASS_COLOR: Record<AssetClass, string> = { Equity: '#2563eb', Debt: '#0f9d8a', Hybrid: '#0F766E', 'Gold & commodities': '#d4a017', 'Real estate': '#b45309', Cash: '#64748b', Crypto: '#f97316', Other: '#94a3b8' };
 
 const KEY = 'arthamind-portfolio-v1';
 export const PORTFOLIO_EVENT = 'arthamind:portfolio-changed';

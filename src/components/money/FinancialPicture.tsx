@@ -7,6 +7,7 @@ import { analyseFinances, type Slice } from '../../services/financialAnalysis';
 import { GOAL_OPTIONS, WORK_OPTIONS, loadOnboardingRecord } from '../../services/onboarding';
 import { moneyInWords } from '../../services/userPrefs';
 import { openAnswersEditor } from '../../services/answersEditor';
+import { InvestmentPlanCard } from './InvestmentPlanCard';
 import './financialPicture.css';
 
 /** One accent family (brand teal) plus amber for debt/tax and slate for the rest, so slices stay readable. */
@@ -102,6 +103,8 @@ export const FinancialPicture: React.FC<{ profile: MoneyProfile; d: CompleteDash
         </ResponsiveContainer> : <p className="fp-empty">You are at or past your planned retirement age. Your plan focuses on making savings last.</p>}
       </article>
     </div>
+
+    <InvestmentPlanCard profile={profile} d={d}/>
 
     <div className="fp-grid three">
       <article className="fp-card">

@@ -9,6 +9,8 @@ import './aiCfo.css';
 import { ArthaMindLogoMark } from '../branding/ArthaMindBrand';
 import { MicButton } from './MicButton';
 import { ThinkingSteps } from './ThinkingSteps';
+import { usePersistedThread, newId } from '../../services/chatThreads';
+import { JumpToLatest, useStickToBottom } from './chatScroll';
 
 export const CFO_STARTER_PROMPTS = [
   'Old vs new tax regime for a ₹18,00,000 salary',
@@ -19,7 +21,7 @@ export const CFO_STARTER_PROMPTS = [
   'My EMIs are 45% of salary. What should I do?',
 ];
 
-const THINKING_STEPS = ['Reading your numbers…', 'Checking cash flow and EMIs…', 'Looking at tax angles…', 'Drafting your action plan…'];
+const THINKING_STEPS = ['Reading your numbers…', 'Checking your monthly cash flow…', 'Looking at the tax side…', 'Putting the answer together…'];
 
 export interface CfoSuggestion { label: string; onOpen: () => void }
 
@@ -119,13 +121,12 @@ const ProfileCard: React.FC<{ profile: CfoProfile; report: CfoHealthReport }> = 
 </article>;
 
 export const AiCfoChat: React.FC<Props> = ({ suggestFor, externalPrompt, compact = false, autoFocus = false, offerPlan = true }) => {
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = usePersistedThread<Message>('cfo');
   const [draft, setDraft] = useState('');
   const [busy, setBusy] = useState(false);
   const [thinking, setThinking] = useState(0);
   const [language, setLanguage] = useState<CfoLanguage>('english');
   const [intake, setIntake] = useState(false);
-  const nextId = useRef(1);
   const scroller = useRef<HTMLDivElement>(null);
   const input = useRef<HTMLTextAreaElement>(null);
   const lastExternal = useRef<number | null>(null);
@@ -137,20 +138,20 @@ export const AiCfoChat: React.FC<Props> = ({ suggestFor, externalPrompt, compact
     const id = window.setInterval(() => setThinking((value) => (value + 1) % THINKING_STEPS.length), 1400);
     return () => window.clearInterval(id);
   }, [busy]);
-  useEffect(() => { const el = scroller.current; if (el) el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' }); }, [messages, busy]);
+  const { behind, jump } = useStickToBottom(scroller, messages.length + (busy ? 1 : 0));
 
   const send = useCallback(async (text: string, display?: string) => {
     const question = text.trim();
     if (!question || busy) return;
     const history: CfoTurn[] = messages.filter((message) => !message.error && !message.reply?.fallback && !message.profile).map((message) => ({ role: message.role, content: message.role === 'user' ? message.text : (message.reply?.answer || message.text) }));
-    setMessages((current) => [...current, { id: nextId.current++, role: 'user', text: display || question }]);
+    setMessages((current) => [...current, { id: newId(), role: 'user', text: display || question }]);
     setDraft('');
     setBusy(true);
     try {
       const reply = await askAiCfo(question, history, language);
-      setMessages((current) => [...current, { id: nextId.current++, role: 'assistant', text: reply.answer, reply, prompt: question }]);
+      setMessages((current) => [...current, { id: newId(), role: 'assistant', text: reply.answer, reply, prompt: question }]);
     } catch (error) {
-      setMessages((current) => [...current, { id: nextId.current++, role: 'assistant', text: '', error: error instanceof Error ? error.message : 'Something went wrong. Please try again.', prompt: question, display }]);
+      setMessages((current) => [...current, { id: newId(), role: 'assistant', text: '', error: error instanceof Error ? error.message : 'Something went wrong. Please try again.', prompt: question, display }]);
     } finally {
       setBusy(false);
     }
@@ -166,7 +167,7 @@ export const AiCfoChat: React.FC<Props> = ({ suggestFor, externalPrompt, compact
   const completeIntake = (profile: CfoProfile) => {
     setIntake(false);
     const report = buildCfoHealthReport({ monthlyIncome: profile.monthlyIncome, monthlyExpenses: profile.monthlyExpenses, monthlyEmi: profile.monthlyEmi, emergencySavings: profile.savings });
-    setMessages((current) => [...current, { id: nextId.current++, role: 'assistant', text: '', profile: { profile, report } }]);
+    setMessages((current) => [...current, { id: newId(), role: 'assistant', text: '', profile: { profile, report } }]);
     void send(cfoPlanPrompt(profile, report), 'Draft my personal CFO plan');
   };
 
@@ -196,7 +197,7 @@ export const AiCfoChat: React.FC<Props> = ({ suggestFor, externalPrompt, compact
       {intake && <CfoIntake onComplete={completeIntake} onCancel={() => setIntake(false)}/>}
       {!intake && messages.length === 0 && <div className="cfo-empty">
         <span className="cfo-orb cfo-orb-brand" aria-hidden="true"><ArthaMindLogoMark size={34}/></span>
-        <b>Ask anything a CFO would answer.</b>
+        <b>Ask me about your money.</b>
         <p>Salary, tax regime, EMIs, emergency fund, goals or your business cash flow, answered in ₹ with a clear action plan.</p>
         {offerPlan && <button type="button" className="cfo-plan-cta" onClick={() => setIntake(true)}><ClipboardList size={16}/>Build my CFO plan<span>{CFO_QUESTIONS.length} quick questions · about 2 minutes</span></button>}
         {offerPlan && <small className="cfo-or">or ask directly</small>}
@@ -208,6 +209,7 @@ export const AiCfoChat: React.FC<Props> = ({ suggestFor, externalPrompt, compact
         ? <div key={message.id} className="cfo-msg cfo-msg-user">{message.text}</div>
         : <CfoAnswer key={message.id} message={message} latest={index === messages.length - 1} suggestion={message.prompt && suggestFor ? suggestFor(message.prompt) : null} onRetry={() => retry(message)}/>)}
       {busy && <div className="cfo-msg cfo-msg-ai cfo-thinking-steps" role="status"><ThinkingSteps active compact/></div>}
+      <JumpToLatest show={behind} onClick={jump}/>
     </div>
     <div className="cfo-web"><WebSearchToggle/></div>
     <form className="cfo-compose" onSubmit={(event) => { event.preventDefault(); void send(draft); }}>

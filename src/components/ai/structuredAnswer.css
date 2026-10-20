@@ -1,6 +1,6 @@
 /* AI answer card: colour and icon follow the kind of answer. */
 .sa{--k:#0f766e}
-.sa-calc{--k:#7c3aed}.sa-market{--k:#059669}.sa-plan{--k:#d97706}.sa-compare{--k:#2563eb}.sa-analysis{--k:#dc2626}.sa-concept{--k:#0891b2}
+.sa-calc,.sa-market,.sa-plan,.sa-compare,.sa-analysis,.sa-concept{--k:#0F766E}
 .sa{border-top:3px solid var(--k)!important}
 .sa-head{display:flex;align-items:flex-start;gap:10px;padding:14px 16px;border-bottom:1px solid var(--border-subtle);background:linear-gradient(135deg,color-mix(in srgb,var(--k) 8%,var(--bg-surface)),var(--bg-surface) 60%)}
 .sa-ico{display:grid;place-items:center;flex:none;width:34px;height:34px;border-radius:11px;background:color-mix(in srgb,var(--k) 14%,transparent);color:var(--k)}

@@ -1,4 +1,5 @@
 import { ThinkingSteps } from '../ai/ThinkingSteps';
+import { usePersistedThread } from '../../services/chatThreads';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useDraggable } from '../../hooks/useDraggable';
 import { Download, Loader2, Mic, RotateCcw, Send, Square, Volume2, X } from 'lucide-react';
@@ -58,7 +59,7 @@ function VoicePanelSignedIn({ initialLanguage, onClose }: { initialLanguage: Voi
   const [phase, setPhase] = useState<Phase>('idle');
   const [heard, setHeard] = useState('');
   const [draft, setDraft] = useState('');
-  const [turns, setTurns] = useState<Turn[]>([]);
+  const [turns, setTurns] = usePersistedThread<Turn>('voice');
   const [error, setError] = useState('');
   const [voice, setVoice] = useState<SpeechSynthesisVoice | null>(null);
   const [englishVoice, setEnglishVoice] = useState<SpeechSynthesisVoice | null>(null);

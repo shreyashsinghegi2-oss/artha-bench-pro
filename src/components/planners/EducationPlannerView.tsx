@@ -9,7 +9,7 @@ const goalFrom = (presetId: string): EducationGoal & { presetId: string } => {
   return { id: `${c.id}-${Math.random().toString(36).slice(2, 7)}`, presetId: c.id, label: c.label, costToday: c.costToday, startAge: c.startAge, inflation: c.inflation, savedSoFar: 0 };
 };
 const initial = (): EduState => ({ childName: '', childAge: 5, annualReturn: 0.11, stepUp: 0.05, goals: [goalFrom('btech-india'), goalFrom('ms-us')] });
-const COLORS = ['#059669', '#2563eb', '#7c3aed', '#d97706', '#0891b2'];
+const COLORS = ['#0F766E', '#14B8A6', '#5EEAD4', '#64748B', '#115E59', '#0E7490', '#B45309'];
 
 /** Child education planner: bachelors, masters and professional courses in India or abroad, each a goal with its own SIP. */
 export const EducationPlannerView: React.FC = () => {

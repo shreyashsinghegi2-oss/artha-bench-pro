@@ -2,7 +2,7 @@ export const MARKET_CHART_COLORS = {
   positive: '#16A34A',
   negative: '#DC2626',
   neutral: '#64748B',
-  comparison: '#7C3AED',
+  comparison: '#0F766E',
 } as const;
 
 export function marketMovementColor(rangeReturn: number | null | undefined): string {

@@ -63,7 +63,7 @@
 .td-course-top{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px}
 .td-course-top b{font-size:15px;color:var(--text-primary)}
 .td-level{padding:2px 9px;border-radius:999px;font-size:10.5px;font-weight:800}
-.td-level.beginner{background:#d1fae5;color:#047857}.td-level.intermediate{background:#dbeafe;color:#1d4ed8}.td-level.advanced{background:#ede9fe;color:#6d28d9}
+.td-level.beginner{background:#d1fae5;color:#047857}.td-level.intermediate{background:#dbeafe;color:#1d4ed8}.td-level.advanced{background:#ede9fe;color:#0F766E}
 .td-meta{font-size:11.5px;color:var(--text-secondary)}
 .td-course p{margin:0;font-size:13px;line-height:1.5;color:var(--text-primary)}
 .td-course-actions{display:flex;flex-wrap:wrap;gap:8px}

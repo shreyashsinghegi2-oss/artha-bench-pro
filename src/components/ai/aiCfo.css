@@ -14,7 +14,7 @@
 .cfo-empty{margin:auto;text-align:center;max-width:520px;display:flex;flex-direction:column;align-items:center;gap:8px;padding:10px 0}
 .cfo-empty b{font-size:17px}
 .cfo-empty p{margin:0;color:var(--cfo-mut);font-size:13px}
-.cfo-orb{width:52px;height:52px;border-radius:16px;display:grid;place-items:center;color:#fff;background:linear-gradient(135deg,var(--cfo-g),var(--cfo-g2) 60%,#6366f1);box-shadow:0 12px 30px rgba(15,123,108,.3);animation:cfo-orb 5s ease-in-out infinite}
+.cfo-orb{width:52px;height:52px;border-radius:16px;display:grid;place-items:center;color:#fff;background:linear-gradient(135deg,var(--cfo-g),var(--cfo-g2));box-shadow:0 12px 30px rgba(15,123,108,.3);animation:cfo-orb 5s ease-in-out infinite}
 @keyframes cfo-orb{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-5px) rotate(-4deg)}}
 .cfo-chips{display:flex;flex-wrap:wrap;justify-content:center;gap:7px;margin-top:8px}
 .cfo-chips button{border:1px solid var(--cfo-bd);background:#fff;border-radius:999px;padding:7px 12px;font:inherit;font-size:12px;font-weight:700;color:var(--cfo-ink);cursor:pointer;opacity:0;animation:cfo-in .5s cubic-bezier(.2,.7,.2,1) forwards;animation-delay:calc(var(--i,0) * 70ms + 150ms);transition:border-color .2s,background .2s,transform .2s,color .2s}

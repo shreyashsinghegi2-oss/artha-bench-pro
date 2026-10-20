@@ -17,6 +17,7 @@ import { loadPrefs } from './userPrefs';
 import { analyseFinances, type Slice } from './financialAnalysis';
 import { loadProfilePhoto, circleCrop } from './profilePhoto';
 import { MONEY_CHECK_ASSUMPTIONS } from './moneyCheck';
+import { fetchInvestmentPlan, planInputFrom, type InvestmentPlan } from './investmentPlanApi';
 
 const DASH_ANALYSIS_KEY = 'arthamind.dashAnalysis.v1';
 
@@ -167,9 +168,10 @@ export async function downloadFinancialReport(summary: string): Promise<void> {
   const mShort = (v: number) => (Math.abs(v) >= 1e7 ? `Rs ${(v / 1e7).toFixed(2)} cr` : Math.abs(v) >= 1e5 ? `Rs ${(v / 1e5).toFixed(2)} lakh` : m(v));
   const r = d.report;
   const x = analyseFinances(profile, d, a);
-  const [{ jsPDF }, logo, markets, analysis, avatar] = await Promise.all([
+  const [{ jsPDF }, logo, markets, analysis, avatar, plan] = await Promise.all([
     import('jspdf'), logoPng(), liveMarkets(), advisorAnalysis(summary),
     photo ? circleCrop(photo.dataUrl, 320).catch(() => null) : Promise.resolve(null),
+    fetchInvestmentPlan(planInputFrom(profile, d, record)).catch((): InvestmentPlan | null => null),
   ]);
 
   // ---- derived figures used across sections (all calculated, none generated) ----
@@ -315,7 +317,7 @@ export async function downloadFinancialReport(summary: string): Promise<void> {
   y += 84;
   if (!photo) para('Note: the live photo has not been taken on this device yet. It is required for the report to be complete; take it on the last step of the setup questions.', 9.5, AMBER);
   h3('What this report contains');
-  ['1. Executive summary and the verdict', '2. About you, with your photo', '3. Your monthly money, line by line', '4. Savings and the safety fund', '5. What you own and what you owe', '6. Loans and a debt plan', '7. Income tax, old and new regime', '8. Insurance and protection', '9. Goals', '10. The road to retirement', '11. What if: stress tests', '12. Health score and money mindset', '13. The advisor analysis', '14. Your action plan', '15. Markets, method, assumptions, sources, glossary'].forEach((t) => bullet(t, MUTED));
+  ['1. Executive summary and the verdict', '2. About you, with your photo', '3. Your monthly money, line by line', '4. Savings and the safety fund', '5. What you own and what you owe', '6. Loans and a debt plan', '7. Income tax, old and new regime', '8. Insurance and protection', '9. Goals', '10. Where to invest, by your profile', '11. The road to retirement', '12. What if: stress tests', '13. Health score and money mindset', '14. The advisor analysis', '15. Your action plan', '16. Markets, method, assumptions, sources, glossary'].forEach((t) => bullet(t, MUTED));
 
   // ================= Page 2: contents (filled in at the end) =================
   newPage();
@@ -510,7 +512,30 @@ export async function downloadFinancialReport(summary: string): Promise<void> {
     ['Financially free by age (investing the full surplus)', r.freedom.freedomAge ? `${r.freedom.freedomAge}` : 'Not on this plan'],
   ], [3.6, 2.2], ['left', 'right']);
 
-  // ================= 10. Retirement road =================
+  // ================= 10. Where to invest =================
+  startSection('Where to invest, by your profile');
+  para('The monthly surplus is split by two rules: how soon the money is needed, and how much risk the answers say is acceptable. The funds below are official AMFI schemes that fit each part of the split. They are a starting point to check, not a recommendation to buy.');
+  if (plan) {
+    para(`${plan.headline}. Monthly to invest: ${m(plan.monthlyToInvest)}.`, 11, INK, true);
+    if (plan.fixFirst) callout('First', plan.fixFirst, AMBER);
+    grid(['Part of the plan', 'Share', 'Per month', 'Why'], plan.allocation.map((r) => [r.label, `${r.percent}%`, m(r.monthly), r.reason]), [2.3, 0.9, 1.2, 3.6], ['left', 'right', 'right', 'left']);
+    if (plan.funds.length) {
+      h3('Funds that match this split');
+      grid(['Fund', 'House', 'NAV (date)', '1-year', '3-year (yearly)'], plan.funds.map((f) => [f.name, f.house, `Rs ${f.nav.toFixed(2)} (${f.navDate})`, f.oneYear == null ? '-' : pct(f.oneYear), f.threeYear == null ? '-' : pct(f.threeYear)]), [3.4, 1.6, 1.8, 0.9, 1.1], ['left', 'left', 'right', 'right', 'right']);
+    }
+    if (plan.sectors.length) {
+      h3('Sectors to research first');
+      plan.sectors.forEach((sec) => bullet(`${sec.name}: ${sec.why}${sec.check.length ? ` Check: ${sec.check.join('; ')}.` : ''}`));
+      para('These are starting points for your own research, not stock picks. Ask a SEBI-registered adviser before buying any single company.', 9.5, MUTED);
+    }
+    h3('Rules to follow');
+    plan.notes.forEach((t) => bullet(t));
+    para(`Sources: ${plan.sources.join('; ')}. Generated ${new Date(plan.generatedAt).toLocaleDateString('en-IN')}.`, 9, MUTED);
+  } else {
+    para('Live fund data could not be fetched when this report was made, so the funds are not listed. The split above is set by the rules; download the report again while online to add them.', 10, MUTED);
+  }
+
+  // ================= 11. Retirement road =================
   startSection('The road to retirement');
   para('This chart projects the investments forward, assuming the current monthly surplus is invested each month and grows at about 10% a year before retirement. The dashed line is the money needed at retirement, which assumes spending rises with inflation and lasts to age 85.');
   if (x.retirementPath.length > 1) {

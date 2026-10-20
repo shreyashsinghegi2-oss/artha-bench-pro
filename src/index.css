@@ -26,8 +26,8 @@
 /* Workspace colour tones: a soft, professional wash behind each product area instead of flat white. */
 .app-shell{background-color:var(--bg-canvas);background-image:radial-gradient(900px 520px at 100% -10%,var(--tone-a),transparent 60%),radial-gradient(760px 480px at -10% 30%,var(--tone-b),transparent 60%),radial-gradient(900px 600px at 60% 110%,var(--tone-c),transparent 60%);background-attachment:fixed}
 .app-shell[data-tone="finance"]{--tone-a:rgba(16,185,129,.2);--tone-b:rgba(14,165,233,.13);--tone-c:rgba(245,158,11,.1);--tone-edge:#10b981}
-.app-shell[data-tone="markets"]{--tone-a:rgba(99,102,241,.2);--tone-b:rgba(14,165,233,.14);--tone-c:rgba(16,185,129,.1);--tone-edge:#6366f1}
-.app-shell[data-tone="research"]{--tone-a:rgba(14,165,233,.2);--tone-b:rgba(139,92,246,.13);--tone-c:rgba(16,185,129,.1);--tone-edge:#0ea5e9}
+.app-shell[data-tone="markets"]{--tone-a:rgba(15,118,110,.2);--tone-b:rgba(14,165,233,.14);--tone-c:rgba(16,185,129,.1);--tone-edge:#0F766E}
+.app-shell[data-tone="research"]{--tone-a:rgba(14,165,233,.2);--tone-b:rgba(15,118,110,.13);--tone-c:rgba(16,185,129,.1);--tone-edge:#0ea5e9}
 :root.dark .app-shell[data-tone]{--tone-a:rgba(43,196,154,.10);--tone-b:rgba(96,165,250,.08);--tone-c:rgba(167,139,250,.06)}
 .app-shell main .bg-surface{background-color:color-mix(in srgb,var(--bg-surface) 92%,transparent);backdrop-filter:saturate(1.2)}
 @media (prefers-reduced-motion:reduce){.sr{opacity:1;transform:none;transition:none}}

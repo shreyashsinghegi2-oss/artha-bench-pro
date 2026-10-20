@@ -1,6 +1,6 @@
 /* Complete dashboard and money planner. Uses the workspace theme tokens so night mode works. */
 .wd{--ink:var(--text-primary);--mut:var(--text-secondary);--bd:var(--border-subtle);--sf:var(--bg-surface);--cv:var(--bg-canvas);
-  --g:#1f8f4e;--gl:#34c46f;--teal:#0e7490;--amber:#d97706;--red:#dc2626;--indigo:#4f46e5;--violet:#7c3aed;--gold:#c08a1e;--inkc:#334155;
+  --g:#1f8f4e;--gl:#34c46f;--teal:#0e7490;--amber:#d97706;--red:#dc2626;--indigo:#0F766E;--violet:#0F766E;--gold:#c08a1e;--inkc:#334155;
   max-width:1240px;margin:0 auto;padding:32px 20px 64px;color:var(--ink)}
 .wd-head{display:flex;justify-content:space-between;align-items:flex-end;gap:18px;flex-wrap:wrap;margin-bottom:22px}
 .wd-kicker{font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--g)}

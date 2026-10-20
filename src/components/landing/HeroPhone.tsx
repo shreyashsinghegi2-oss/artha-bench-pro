@@ -177,7 +177,7 @@ const CandleChart: React.FC<{ animate: boolean }> = ({ animate }) => {
       <line x1={x} x2={x} y1={y(c.high)} y2={y(c.low)} stroke={up ? '#059669' : '#dc2626'} strokeWidth="1.2"/>
       <rect x={x - step * 0.3} y={Math.min(y(c.open), y(c.close))} width={step * 0.6} height={Math.max(1.5, Math.abs(y(c.open) - y(c.close)))} rx="1" fill={up ? '#10b981' : '#f87171'}/>
     </motion.g>; })}
-    <motion.path d={ma.map(([px, py], i) => `${i ? 'L' : 'M'}${px.toFixed(1)} ${py.toFixed(1)}`).join(' ')} fill="none" stroke="#4f46e5" strokeWidth="1.6" strokeLinecap="round" initial={animate ? { pathLength: 0 } : false} animate={{ pathLength: 1 }} transition={{ delay: animate ? 0.5 : 0, duration: 1.2, ease: 'easeOut' }}/>
+    <motion.path d={ma.map(([px, py], i) => `${i ? 'L' : 'M'}${px.toFixed(1)} ${py.toFixed(1)}`).join(' ')} fill="none" stroke="#0F766E" strokeWidth="1.6" strokeLinecap="round" initial={animate ? { pathLength: 0 } : false} animate={{ pathLength: 1 }} transition={{ delay: animate ? 0.5 : 0, duration: 1.2, ease: 'easeOut' }}/>
     <line x1="0" x2={W} y1={y(last.close)} y2={y(last.close)} stroke="#059669" strokeDasharray="3 3" opacity=".6"/>
     <circle className="hp-candle-ping" cx={step * (CANDLES.length - 0.5)} cy={y(last.close)} r="3" fill="#10b981"/>
   </svg>;
@@ -217,12 +217,12 @@ const StockChart: React.FC<{ animate: boolean }> = ({ animate }) => {
 
 /** Illustrated news thumbnails (drawn, not photos). */
 const NewsThumb: React.FC<{ theme: 'bank' | 'chip' | 'oil' }> = ({ theme }) => {
-  const bg = { bank: ['#1e3a8a', '#0f766e'], chip: ['#312e81', '#7c3aed'], oil: ['#78350f', '#0b0f14'] }[theme];
+  const bg = { bank: ['#1e3a8a', '#0f766e'], chip: ['#0F766E', '#0F766E'], oil: ['#78350f', '#0b0f14'] }[theme];
   return <svg className="hp-news-img" viewBox="0 0 64 64" aria-hidden="true">
     <defs><linearGradient id={`hp-n-${theme}`} x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor={bg[0]}/><stop offset="1" stopColor={bg[1]}/></linearGradient></defs>
     <rect width="64" height="64" rx="12" fill={`url(#hp-n-${theme})`}/>
     {theme === 'bank' && <g fill="#fff"><path d="M14 26 L32 15 L50 26 Z" opacity=".95"/>{[18, 26, 34, 42].map((x) => <rect key={x} x={x} y="29" width="4" height="16" rx="1" opacity=".85"/>)}<rect x="13" y="47" width="38" height="4" rx="1"/><path d="M40 20 l7 -6 m0 0 h-5 m5 0 v5" stroke="#34c46f" strokeWidth="2.4" fill="none" strokeLinecap="round"/></g>}
-    {theme === 'chip' && <g><rect x="20" y="20" width="24" height="24" rx="4" fill="#fff" opacity=".95"/><rect x="26" y="26" width="12" height="12" rx="2" fill="#7c3aed"/>{[24, 30, 36].flatMap((v) => [<rect key={`t${v}`} x={v + 1} y="13" width="2" height="6" fill="#fff"/>, <rect key={`b${v}`} x={v + 1} y="45" width="2" height="6" fill="#fff"/>, <rect key={`l${v}`} x="13" y={v + 1} width="6" height="2" fill="#fff"/>, <rect key={`r${v}`} x="45" y={v + 1} width="6" height="2" fill="#fff"/>])}</g>}
+    {theme === 'chip' && <g><rect x="20" y="20" width="24" height="24" rx="4" fill="#fff" opacity=".95"/><rect x="26" y="26" width="12" height="12" rx="2" fill="#0F766E"/>{[24, 30, 36].flatMap((v) => [<rect key={`t${v}`} x={v + 1} y="13" width="2" height="6" fill="#fff"/>, <rect key={`b${v}`} x={v + 1} y="45" width="2" height="6" fill="#fff"/>, <rect key={`l${v}`} x="13" y={v + 1} width="6" height="2" fill="#fff"/>, <rect key={`r${v}`} x="45" y={v + 1} width="6" height="2" fill="#fff"/>])}</g>}
     {theme === 'oil' && <g><path d="M22 50 L28 20 H36 L42 50 Z" fill="none" stroke="#fde68a" strokeWidth="2.2"/><path d="M25 36 H39 M24 43 H40 M27 28 H37" stroke="#fde68a" strokeWidth="1.6"/><path d="M46 18 c0 0 -6 7 -6 11 a6 6 0 0 0 12 0 c0 -4 -6 -11 -6 -11z" fill="#f59e0b"/></g>}
   </svg>;
 };

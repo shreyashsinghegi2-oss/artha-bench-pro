@@ -39,6 +39,8 @@ export const CLOUD_SYNC_KEYS = [
   'arthamind-tutor-progress-v1',
   'arthamind-use-my-data-v1',
   'artha_crypto_observations_v1',
+  // Every assistant conversation (questions and answers), so nothing is lost on refresh.
+  'arthamind.chatThreads.v1',
 ] as const;
 
 const LEGACY_GUEST_BACKUP_KEY = 'arthabench_guest_workspace_backup_v1';

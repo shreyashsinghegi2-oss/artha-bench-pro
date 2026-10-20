@@ -8033,6 +8033,123 @@ async function getTerminalSnapshot() {
   return snapshotInflight;
 }
 
+// server/investmentPlan.ts
+var BUCKETS = {
+  liquid: { label: "Liquid fund", query: "liquid fund direct growth", hint: /liquid/i, reason: "Money you may need within months. Easy to withdraw, low price swings." },
+  debt: { label: "Short-duration debt fund", query: "short duration direct growth", hint: /short duration|low duration|corporate bond|banking (and|&) psu/i, reason: "Steadier than shares. Returns track interest rates, so expect small ups and downs." },
+  hybrid: { label: "Conservative hybrid fund", query: "conservative hybrid direct growth", hint: /conservative hybrid|balanced/i, reason: "Mostly debt with a small share of shares. Smooths the ride between debt and equity." },
+  index: { label: "Index fund (Nifty 50)", query: "nifty 50 index direct growth", hint: /index|nifty 50/i, reason: "Owns the 50 largest listed Indian companies at very low cost. A simple long-term core." },
+  flexi: { label: "Flexi-cap fund", query: "flexi cap direct growth", hint: /flexi cap/i, reason: "A diversified equity fund that can move across company sizes. Higher swings than an index fund." }
+};
+var SPLIT = {
+  short: {
+    low: [["liquid", 60], ["debt", 40]],
+    moderate: [["liquid", 50], ["debt", 50]],
+    high: [["liquid", 50], ["debt", 50]]
+  },
+  medium: {
+    low: [["debt", 50], ["hybrid", 30], ["liquid", 20]],
+    moderate: [["hybrid", 40], ["index", 40], ["debt", 20]],
+    high: [["index", 50], ["flexi", 30], ["hybrid", 20]]
+  },
+  long: {
+    low: [["index", 30], ["debt", 50], ["liquid", 20]],
+    moderate: [["index", 45], ["flexi", 25], ["debt", 20], ["liquid", 10]],
+    high: [["index", 40], ["flexi", 40], ["debt", 10], ["liquid", 10]]
+  }
+};
+function bandFor(years) {
+  if (years < 3) return "short";
+  if (years <= 5) return "medium";
+  return "long";
+}
+var roundTo100 = (v) => Math.round(v / 100) * 100;
+function allocationFor(input) {
+  const band = bandFor(input.horizonYears);
+  const surplus = Math.max(0, input.monthlySurplus);
+  const rows = SPLIT[band][input.risk].map(([key, percent]) => ({
+    key,
+    label: BUCKETS[key].label,
+    percent,
+    monthly: roundTo100(surplus * percent / 100),
+    reason: BUCKETS[key].reason
+  }));
+  return { band, rows };
+}
+function sectorsFor(band) {
+  if (band === "short") {
+    return [{ name: "No single-sector bets yet", why: "Money needed within three years should not depend on how one industry does. Keep it in cash-like funds.", check: [] }];
+  }
+  const checks = ["Revenue and profit growth over 5 years", "Debt levels and interest cover", "Valuation against its own history", "Competition and government policy risk"];
+  return [
+    { name: "Banks and financial services", why: "Benefit when loans and deposits grow with the economy.", check: ["Gross and net bad-loan ratios", "Loan growth and margins", ...checks.slice(1, 2)] },
+    { name: "Capital goods and infrastructure", why: "Follow public and private investment in roads, power and factories.", check: ["Order book size and its timing", checks[1], checks[3]] },
+    { name: "Consumer staples", why: "Steady demand for everyday products, so earnings tend to be less volatile.", check: ["Volume growth, not just price", checks[0], checks[2]] },
+    { name: "Healthcare", why: "Demand grows with age and with health spending.", check: ["Regulatory approvals and inspections", checks[1], checks[2]] }
+  ];
+}
+var SOURCE = "AMFI daily NAV file (amfiindia.com)";
+async function pickFunds(key) {
+  const info = BUCKETS[key];
+  const { results } = await searchFunds(info.query, 12).catch(() => ({ results: [], source: "" }));
+  const matches = results.filter((s2) => info.hint.test(`${s2.category} ${s2.name}`) && /direct/i.test(s2.name) && /growth/i.test(s2.name));
+  const seen = /* @__PURE__ */ new Set();
+  const picked = [];
+  for (const s2 of matches) {
+    if (seen.has(s2.house)) continue;
+    seen.add(s2.house);
+    picked.push(s2);
+    if (picked.length === 2) break;
+  }
+  return Promise.all(picked.map(async (s2) => {
+    const detail = await fundDetail(s2.code).catch(() => null);
+    const r = detail?.returns ?? {};
+    return {
+      bucket: key,
+      code: s2.code,
+      name: s2.name,
+      house: s2.house,
+      category: s2.category,
+      nav: s2.nav,
+      navDate: s2.navDate,
+      oneYear: typeof r["1Y"] === "number" ? r["1Y"] : null,
+      threeYear: typeof r["3Y"] === "number" ? r["3Y"] : null,
+      source: SOURCE
+    };
+  }));
+}
+var cache5 = /* @__PURE__ */ new Map();
+var CACHE_MS2 = 60 * 60 * 1e3;
+async function buildInvestmentPlan(input) {
+  const key = JSON.stringify(input);
+  const hit = cache5.get(key);
+  if (hit && Date.now() - hit.at < CACHE_MS2) return hit.plan;
+  const { band, rows } = allocationFor(input);
+  const fixFirst = input.emergencyGap > 0 || input.highCostDebt ? input.highCostDebt ? "Clear the high-interest debt first. A credit-card balance costs more than most funds earn." : "Fill the safety fund first. Until then, park the surplus in a liquid fund." : null;
+  const usedKeys = fixFirst ? ["liquid"] : [...new Set(rows.map((r) => r.key))];
+  const funds = (await Promise.all(usedKeys.map(pickFunds))).flat();
+  const plan = {
+    band,
+    headline: fixFirst ? "Protect first, then invest" : band === "short" ? "Keep it safe: the money is needed soon" : band === "medium" ? "A balanced mix for a medium-term goal" : "Grow it for the long term, in steps",
+    fixFirst,
+    monthlyToInvest: input.monthlySurplus > 0 ? roundTo100(input.monthlySurplus) : 0,
+    allocation: fixFirst ? [{ key: "liquid", label: BUCKETS.liquid.label, percent: 100, monthly: roundTo100(Math.max(0, input.monthlySurplus)), reason: BUCKETS.liquid.reason }] : rows,
+    funds: funds.length ? funds : [],
+    sectors: fixFirst ? [] : sectorsFor(band),
+    notes: [
+      "Start with a SIP (a fixed amount every month) so you invest through ups and downs.",
+      "Choose the Direct plan with Growth; the Regular plan pays a distributor commission from your returns.",
+      "Past returns do not guarantee future returns. Check each fund\u2019s factsheet before you invest.",
+      "Equity and index funds can fall 20% or more in a bad year. Only use them for money you will not need for several years."
+    ],
+    sources: [SOURCE, "Fund returns: NAV history from AMFI and mfapi.in (3-year return needs 3 years of data)"],
+    generatedAt: (/* @__PURE__ */ new Date()).toISOString()
+  };
+  cache5.set(key, { at: Date.now(), plan });
+  if (cache5.size > 200) cache5.delete(cache5.keys().next().value);
+  return plan;
+}
+
 // server/voiceService.ts
 var VOICE_LANGS = {
   en: { name: "English", tts: "en", cloud: "en-IN" },
@@ -8738,6 +8855,24 @@ apiRouter.get("/mf/scheme/:code", async (req, res) => {
   } catch (error) {
     const msg = error instanceof Error ? error.message : "Unavailable";
     res.status(/invalid|not found/i.test(msg) ? 404 : 503).json({ error: msg });
+  }
+});
+var planLimiter = createRateLimiter({ windowMs: 6e4, max: 20, message: "Too many plan requests. Please wait a minute." });
+apiRouter.post("/plan/investments", planLimiter, async (req, res) => {
+  const b = req.body ?? {};
+  const num2 = (v, lo, hi) => typeof v === "number" && Number.isFinite(v) && v >= lo && v <= hi ? v : null;
+  const risk = b.risk === "low" || b.risk === "moderate" || b.risk === "high" ? b.risk : null;
+  const age = num2(b.age, 14, 110), surplus = num2(b.monthlySurplus, -1e9, 1e9), horizon = num2(b.horizonYears, 0, 60);
+  const gap = num2(b.emergencyGap, 0, 1e12);
+  if (age === null || surplus === null || horizon === null || gap === null || !risk) {
+    return res.status(400).json({ error: "Check the age, surplus, horizon and risk answers and try again." });
+  }
+  try {
+    const plan = await buildInvestmentPlan({ age, monthlySurplus: surplus, risk, horizonYears: horizon, emergencyGap: gap, highCostDebt: b.highCostDebt === true });
+    res.setHeader("Cache-Control", "private, max-age=300");
+    res.json(plan);
+  } catch (error) {
+    res.status(503).json({ error: "Fund data is unavailable right now. Try again shortly.", detail: error instanceof Error ? error.message : void 0 });
   }
 });
 apiRouter.post("/mf/isin", async (req, res) => {
@@ -12686,12 +12821,12 @@ function computeFeatures(series) {
 }
 
 // server/advisor/fetchers.ts
-var cache5 = /* @__PURE__ */ new Map();
+var cache6 = /* @__PURE__ */ new Map();
 async function cached(key, ttlMs, fn) {
-  const hit = cache5.get(key);
+  const hit = cache6.get(key);
   if (hit && Date.now() - hit.at < ttlMs) return hit.value;
   const value = await fn();
-  cache5.set(key, { at: Date.now(), value });
+  cache6.set(key, { at: Date.now(), value });
   return value;
 }
 async function yahoo(symbol, name) {

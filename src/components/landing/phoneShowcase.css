@@ -73,7 +73,7 @@
 .ps-copy h2 span{color:var(--ps-green)}
 .ps-steps li.on{background:#fff;border-color:#d7eadf;box-shadow:0 18px 40px -30px rgba(31,143,78,.55)}
 .ps-steps li.on .ps-step-n{background:var(--ps-green);border-color:var(--ps-green)}
-.ps-steps li:nth-child(1).on small{color:#1f8f4e}.ps-steps li:nth-child(2).on small{color:#4f46e5}.ps-steps li:nth-child(3).on small{color:#0e7490}.ps-steps li:nth-child(4).on small{color:#b45309}
+.ps-steps li:nth-child(1).on small{color:#1f8f4e}.ps-steps li:nth-child(2).on small{color:#0F766E}.ps-steps li:nth-child(3).on small{color:#0e7490}.ps-steps li:nth-child(4).on small{color:#b45309}
 .ps-try{background:var(--ps-ink)}
 .ps-try:hover{box-shadow:0 16px 30px -14px rgba(31,143,78,.7)}
 .ps-phone{background:var(--ps-ink);box-shadow:0 0 0 2px #1f2937,0 50px 90px -40px rgba(11,15,20,.55),0 30px 60px -30px rgba(31,143,78,.25)}
@@ -85,7 +85,7 @@
 .ps-screen{padding-top:92px}
 .ps-app-kicker{display:inline-flex;align-self:flex-start;padding:4px 9px;border-radius:999px}
 .t-health .ps-app-kicker{color:#1f8f4e;background:#e3f5ea}
-.t-tax .ps-app-kicker{color:#4338ca;background:#e8e7fd}
+.t-tax .ps-app-kicker{color:#0F766E;background:#e8e7fd}
 .t-freedom .ps-app-kicker{color:#0e7490;background:#dff4f8}
 .t-protect .ps-app-kicker{color:#b45309;background:#fdf0dc}
 .ps-ring{background:radial-gradient(closest-side,#f7f9fb 78%,transparent 79%),conic-gradient(#34c46f 0,#1f8f4e var(--deg),#e2e8f0 0)}

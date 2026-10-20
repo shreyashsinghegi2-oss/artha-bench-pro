@@ -23,7 +23,7 @@ const SECTIONS: Array<{ title: string; icon: React.ComponentType<{ size?: number
     { title: 'Expenses & budget', what: 'Where the money goes, against your plan.', how: 'Record spending; the dashboard colours categories that run over.', to: 'expenses' },
     { title: 'EMI & loans', what: 'Every loan, EMI load and prepayment options.', how: 'Add each loan with its rate; EMI load turns red above 40% of take-home.', to: 'emi-manager' },
   ] },
-  { title: 'Markets and news', icon: LineChart, color: '#7c3aed', steps: [
+  { title: 'Markets and news', icon: LineChart, color: '#0F766E', steps: [
     { title: 'Market overview', what: 'NIFTY, SENSEX, stocks, forex and crypto with sources.', how: 'Prices are delayed quotes from the connected providers, labelled with their time.', to: 'markets' },
     { title: 'Business news', what: 'Headlines explained in plain words.', how: 'Open any story and ask ArthaMind what it means for you.', to: 'news' },
   ] },

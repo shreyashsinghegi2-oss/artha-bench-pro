@@ -245,10 +245,10 @@ export const STEPS: Step[] = [
   { id: 'lostMoney', field: 'lostMoney', kind: 'choice', section: 'Habits', optional: true, title: () => 'Have you ever lost money on an investment?', why: 'Past losses shape how we feel about risk. We take that into account.', chips: () => yesNo() },
   { id: 'knowledgeGaps', field: 'knowledgeGaps', kind: 'multi', section: 'Habits', optional: true, title: () => 'Which of these would you like to understand better?', why: 'We will teach these first, in simple words.',
     chips: () => ['Saving & budgeting', 'Loans & credit score', 'Tax', 'Insurance', 'Mutual funds & SIP', 'Shares', 'Retirement', 'Crypto'].map((v) => ({ label: v, value: v })) },
-  { id: 'scenarioIntro', kind: 'scenarioIntro', section: 'Money mindset', title: () => `Last part: ${SCENARIOS.length} quick “what would you do?” questions`, why: 'There are no right or wrong answers. They show how you think about money, so our ideas fit you. You can skip them.' },
+  { id: 'scenarioIntro', kind: 'scenarioIntro', section: 'Money mindset', title: () => `A few quick ones: what would you do? (${SCENARIOS.length})`, why: 'There are no right or wrong answers. They show how you think about money, so our ideas fit you. You can skip them.' },
   ...SCENARIOS.map((s): Step => ({ id: `scenario:${s.id}`, kind: 'scenario', section: 'Money mindset', optional: true, title: () => s.question, why: s.why })),
-  { id: 'photo', kind: 'photo', section: 'Check', title: () => 'Last step: take your photo', why: 'This photo becomes your profile picture and appears on your report, so the report is clearly yours. It is taken live with your camera; uploads are not accepted. It stays on this device.' },
-  { id: 'review', kind: 'review', section: 'Check', title: () => 'Check your answers and see your plan', why: '' },
+  { id: 'photo', kind: 'photo', section: 'Check', title: () => 'One last thing: a quick photo', why: 'This photo becomes your profile picture and appears on your report, so the report is clearly yours. It is taken live with your camera; uploads are not accepted. It stays on this device.' },
+  { id: 'review', kind: 'review', section: 'Check', title: () => 'Here is what we found', why: '' },
 ];
 
 const SECTIONS = ['About you', 'Income', 'Spending', 'Own & owe', 'Safety', 'Goals', 'Tax & legal', 'Habits', 'Money mindset'];
@@ -451,8 +451,8 @@ export const RequiredOnboarding: React.FC<{ onComplete: (a: OnboardingAnswers) =
 
         {(step.kind === 'text' || step.kind === 'number' || step.kind === 'money') && (
           <form className="ro-form" onSubmit={(e) => { e.preventDefault(); submitTyped(); }}>
-            {step.chips && <div className="ro-chips">{step.chips(answers).map((c) => (
-              <button key={String(c.value)} type="button" className={`ro-chip ${answers[step.field!] === c.value ? 'is-on' : ''}`} onClick={() => { setDraft(String(c.value)); commit(c.value as never); }}>{c.label}</button>
+            {step.chips && <div className="ro-chips">{step.chips(answers).map((c, i) => (
+              <button key={String(c.value)} type="button" style={{ animationDelay: `${i * 70}ms` }} className={`ro-chip ro-chip-in ${answers[step.field!] === c.value ? 'is-on' : ''}`} onClick={() => { setDraft(String(c.value)); commit(c.value as never); }}>{c.label}</button>
             ))}</div>}
             <label className="ro-type">
               <span>{step.chips ? 'Or type it:' : 'Type here:'}</span>
@@ -520,9 +520,9 @@ export const RequiredOnboarding: React.FC<{ onComplete: (a: OnboardingAnswers) =
           };
           return (
             <>
-              <div className="ro-chips">{step.chips!(answers).map((c) => {
+              <div className="ro-chips">{step.chips!(answers).map((c, i) => {
                 const at = picked.indexOf(String(c.value));
-                return <button key={String(c.value)} type="button" aria-pressed={at >= 0} className={`ro-chip ${at >= 0 ? 'is-on' : ''}`} onClick={() => toggle(String(c.value))}>{at >= 0 && max < 99 ? `${at + 1}. ` : ''}{c.label}</button>;
+                return <button key={String(c.value)} type="button" aria-pressed={at >= 0} style={{ animationDelay: `${i * 70}ms` }} className={`ro-chip ro-chip-in ${at >= 0 ? 'is-on' : ''}`} onClick={() => toggle(String(c.value))}>{at >= 0 && max < 99 ? `${at + 1}. ` : ''}{c.label}</button>;
               })}</div>
               {max < 99 && <p className="ro-note">{picked.length}/{max} picked. Tap in order of importance.</p>}
               <Problem problem={problem} onConfirm={confirmProblem} onChange={() => setProblem(null)} />

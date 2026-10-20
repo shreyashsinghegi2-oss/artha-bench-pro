@@ -55,6 +55,7 @@ import { CRYPTO_INTERVALS, CRYPTO_SYMBOLS } from '../src/components/crypto/crypt
 import { candleTtlMs, findInstrument, getTerminalCandles, getTerminalSnapshot, TERMINAL_INTERVALS } from './marketTerminal';
 
 import { fundDetail, fundsByIsin, searchFunds } from './mutualFundService';
+import { buildInvestmentPlan } from './investmentPlan';
 import { synthesize, translateText, VOICE_LANGS } from './voiceService';
 import { speechToText, sttConfigured, sttDailyLimit, useVoiceCredit } from './sarvamService';
 import { bearer } from './personalAccountRoutes';
@@ -154,6 +155,24 @@ apiRouter.get('/mf/scheme/:code', async (req: Request, res: Response) => {
   } catch (error) {
     const msg = error instanceof Error ? error.message : 'Unavailable';
     res.status(/invalid|not found/i.test(msg) ? 404 : 503).json({ error: msg });
+  }
+});
+const planLimiter = createRateLimiter({ windowMs: 60_000, max: 20, message: 'Too many plan requests. Please wait a minute.' });
+apiRouter.post('/plan/investments', planLimiter, async (req: Request, res: Response) => {
+  const b = (req.body ?? {}) as Record<string, unknown>;
+  const num = (v: unknown, lo: number, hi: number) => (typeof v === 'number' && Number.isFinite(v) && v >= lo && v <= hi ? v : null);
+  const risk = b.risk === 'low' || b.risk === 'moderate' || b.risk === 'high' ? b.risk : null;
+  const age = num(b.age, 14, 110), surplus = num(b.monthlySurplus, -1e9, 1e9), horizon = num(b.horizonYears, 0, 60);
+  const gap = num(b.emergencyGap, 0, 1e12);
+  if (age === null || surplus === null || horizon === null || gap === null || !risk) {
+    return res.status(400).json({ error: 'Check the age, surplus, horizon and risk answers and try again.' });
+  }
+  try {
+    const plan = await buildInvestmentPlan({ age, monthlySurplus: surplus, risk, horizonYears: horizon, emergencyGap: gap, highCostDebt: b.highCostDebt === true });
+    res.setHeader('Cache-Control', 'private, max-age=300');
+    res.json(plan);
+  } catch (error) {
+    res.status(503).json({ error: 'Fund data is unavailable right now. Try again shortly.', detail: error instanceof Error ? error.message : undefined });
   }
 });
 apiRouter.post('/mf/isin', async (req: Request, res: Response) => {

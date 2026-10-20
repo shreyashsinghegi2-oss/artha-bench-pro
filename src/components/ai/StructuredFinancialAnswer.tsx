@@ -48,7 +48,7 @@ function chartData(a: StructuredFinancialAnswer): Array<{ label: string; value: 
   return unique.length >= 2 && unique.length <= 6 ? unique : [];
 }
 
-const COLORS = ['#059669', '#2563eb', '#d97706', '#7c3aed', '#0891b2', '#dc2626'];
+const COLORS = ['#0F766E', '#14B8A6', '#5EEAD4', '#64748B', '#115E59', '#0E7490', '#B45309'];
 
 export const StructuredFinancialAnswerView: React.FC<{ answer: StructuredFinancialAnswer; disclaimer?: string; compact?: boolean }> = ({ answer, disclaimer = 'Educational material only. Verify consequential financial, tax, legal or investment decisions with an appropriate official source.', compact = false }) => {
   const kind = kindOf(answer);
@@ -84,8 +84,8 @@ export const StructuredFinancialAnswerView: React.FC<{ answer: StructuredFinanci
 
       {false && showFormula && <section className="sa-formula">
         <div className="sa-label"><Calculator className="h-3.5 w-3.5"/>Formula</div>
-        <div className="rounded-lg bg-surface p-3 font-mono text-xs font-semibold text-violet-700"><RichFinancialText value={formula}/></div>
-        {answer.formula.variables?.length > 0 && <div className="mt-2 grid gap-2 sm:grid-cols-2">{answer.formula.variables.map((v, i) => <div key={i} className="rounded-lg border border-line bg-surface p-2"><b className="font-mono text-violet-700">{clean(v.symbol)}</b><div className="text-[10px] text-secondary">{clean(v.meaning)}</div></div>)}</div>}
+        <div className="rounded-lg bg-surface p-3 font-mono text-xs font-semibold text-teal-700"><RichFinancialText value={formula}/></div>
+        {answer.formula.variables?.length > 0 && <div className="mt-2 grid gap-2 sm:grid-cols-2">{answer.formula.variables.map((v, i) => <div key={i} className="rounded-lg border border-line bg-surface p-2"><b className="font-mono text-teal-700">{clean(v.symbol)}</b><div className="text-[10px] text-secondary">{clean(v.meaning)}</div></div>)}</div>}
       </section>}
 
       {answer.example?.result && <section className="sa-result">

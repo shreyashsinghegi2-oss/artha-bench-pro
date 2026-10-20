@@ -1,5 +1,5 @@
 /* Module pipeline: inputs → four stages → CFO plan. Monochrome (black and white) overrides at the end of this file. */
-.connected-landing #modules.mp-section{background:radial-gradient(1000px 520px at 12% -10%,#0f766e40,transparent 60%),radial-gradient(900px 520px at 100% 110%,#4338ca40,transparent 60%),linear-gradient(170deg,#070d1a 0%,#0b1426 55%,#0a1a22 100%);color:#e2e8f0;border:0}
+.connected-landing #modules.mp-section{background:radial-gradient(1000px 520px at 12% -10%,#0f766e40,transparent 60%),radial-gradient(900px 520px at 100% 110%,#0F766E40,transparent 60%),linear-gradient(170deg,#070d1a 0%,#0b1426 55%,#0a1a22 100%);color:#e2e8f0;border:0}
 .connected-landing #modules.mp-section h2{background:linear-gradient(90deg,#fff,#a7f3d0 55%,#c7d2fe);-webkit-background-clip:text;background-clip:text;color:transparent}
 .connected-landing #modules.mp-section .cl-eyebrow{color:#5eead4}
 .connected-landing #modules.mp-section .cl-sub{color:#9fb0c7}

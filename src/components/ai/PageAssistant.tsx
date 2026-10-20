@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { usePersistedThread } from '../../services/chatThreads';
 import { ArrowRight, RotateCcw, SkipForward } from 'lucide-react';
 import { AssistantLogo } from './AssistantLogo';
 import type { AppNavigationDestination } from '../../navigationTypes';
@@ -40,7 +41,7 @@ export const PageAssistant: React.FC<{ destination: AppNavigationDestination; sn
   const [draft, setDraft] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const [turns, setTurns] = useState<Array<{ q: string; reply: Reply }>>([]);
+  const [turns, setTurns] = usePersistedThread<{ q: string; reply: Reply }>(`page:${destination}`);
   const question = guide.questions[step];
   const doneAsking = step >= guide.questions.length;
 

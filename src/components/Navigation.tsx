@@ -127,7 +127,7 @@ export const Navigation: React.FC<NavigationProps> = ({ currentDestination, onNa
 
       <div className="dashboard-sidebar-note">
         <ShieldCheck className="h-4 w-4 shrink-0" aria-hidden="true" />
-        <span>Your money profile stays on this device. Data sources are labelled on every page.</span>
+        <span>Your money profile is private to you. Data sources are labelled on every page.</span>
       </div>
     </div>
 

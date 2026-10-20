@@ -119,7 +119,7 @@ export const MoneyHome: React.FC<{ onNavigate: (destination: AppNavigationDestin
         <div>
         <small className="mh-kicker">Home</small>
         <h1>{profile ? `${hello} Here is your money, worked out.` : 'Your money, in one clear place.'}</h1>
-        <p>{profile ? `Built ${SOURCE_LABEL[profile.source]} · updated ${updated} · saved on this device only.` : 'Answer a few simple questions, or scan a payslip, and get a complete report: tax, freedom number, insurance, emergency fund and a plan.'}</p>
+        <p>{profile ? `Built ${SOURCE_LABEL[profile.source]} · updated ${updated} · kept privately in your account.` : 'Answer a few simple questions, or scan a payslip, and get a complete report: tax, freedom number, insurance, emergency fund and a plan.'}</p>
       </div></div>
       {profile && <div className="mh-head-actions">
         <DownloadReportButton/>

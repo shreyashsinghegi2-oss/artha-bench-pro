@@ -28,6 +28,22 @@ export const CLOUD_SYNC_KEYS = [
   'arthamind.onboarding.v2',
   'arthamind.prefs.v1',
   'arthamind.tour.v1',
+  // Financial records and personal details that must follow the account to any device.
+  'arthamind.profilePhoto.v1',
+  'arthabench_emi_audit_v1',
+  'arthabench_emi_detection_candidates_v1',
+  'arthabench_emi_documents_v1',
+  'arthabench_emi_reminders_v1',
+  'arthabench_emi_replay_intent_v1',
+  'arthabench_artha_pilot_handoff_v1',
+  'arthabench_artha_pilot_recent_v1',
+  'arthabench_artha_pilot_saved_plans_v1',
+  'arthabench_market_alerts_v1',
+  'arthabench_fx_favourites_v1',
+  'arthamind-notifications-v1',
+  'arthamind-question-log-v1',
+  'arthamind-voice-language',
+  'arthamind-listen-language',
   'arthamind.featureIntro.v1',
   // Money profile, portfolio and planners: synced so the workspace follows the user to every device,
   // and cleared from a shared device at sign-out like the rest.
@@ -118,6 +134,9 @@ export async function hydrateCloudWorkspace(token: string, userId: string): Prom
 
 export async function syncCloudWorkspace(token: string, userId: string): Promise<void> {
   if (!browserReady()) return;
+  // Only after this account's saved data has been loaded into the browser. Otherwise an empty local copy
+  // could overwrite the saved records.
+  if (!isCloudWorkspaceActiveFor(userId)) return;
   const snapshot = captureManagedWorkspace();
   await upsertWorkspaceRows(
     token,

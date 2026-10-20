@@ -269,7 +269,7 @@ export const ExpensesView: React.FC = () => {
           <div>
             <div className="flex flex-wrap items-center gap-2">
               <span className="rounded-full bg-brand-soft px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-brand-hover">ArthaMind · Personal Finance</span>
-              <span className="rounded-full border border-line bg-canvas px-3 py-1 text-[10px] font-bold text-secondary">Private on this device</span>
+              <span className="rounded-full border border-line bg-canvas px-3 py-1 text-[10px] font-bold text-secondary">Private to you</span>
             </div>
             <h1 className="mt-4 text-3xl font-black tracking-tight text-ink sm:text-4xl">Expenses</h1>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-secondary">Record, review, and understand personal or business spending with evidence-grounded ArthaMind assistance. Educational guidance only — not financial advice.</p>

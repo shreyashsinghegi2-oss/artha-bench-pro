@@ -56,7 +56,7 @@ export const ProfileCard: React.FC<{ profile: MoneyProfile; d: CompleteDashboard
     ['Data', `${profile.source === 'sample' ? 'Sample profile' : profile.source === 'scan' ? 'From a scanned document' : 'From your answers'} · ${new Date(profile.updatedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}`],
   ];
   return <article className="wd-card info">
-    <header><h2><UserRound size={16}/> Your financial profile</h2><span className="wd-status info">Personal</span><small className="wd-sub">Kept on this device only</small></header>
+    <header><h2><UserRound size={16}/> Your financial profile</h2><span className="wd-status info">Personal</span><small className="wd-sub">Kept privately in your account only</small></header>
     <ul className="wd-kv wd-profile">{rows.map(([k, v, t]) => <li key={k}><span>{k}</span><b className={t ? `wd-chip ${t}` : ''}>{v}</b></li>)}</ul>
     <button type="button" className="wd-link" onClick={() => onNavigate('overview')}>Edit your details <ArrowRight size={13}/></button>
   </article>;

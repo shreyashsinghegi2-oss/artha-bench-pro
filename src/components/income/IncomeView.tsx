@@ -151,7 +151,7 @@ export const IncomeView: React.FC = () => {
           <div>
             <div className="flex flex-wrap items-center gap-2">
               <span className="rounded-full bg-brand-soft px-3 py-1 text-xs font-black uppercase tracking-[0.14em] text-brand-hover">ArthaMind · Personal Finance</span>
-              <span className="rounded-full border border-line bg-canvas px-3 py-1 text-xs font-semibold text-secondary">Private on this device</span>
+              <span className="rounded-full border border-line bg-canvas px-3 py-1 text-xs font-semibold text-secondary">Private to you</span>
             </div>
             <h1 className="mt-4 text-3xl font-black tracking-tight text-ink sm:text-4xl">Income workspace</h1>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-secondary sm:text-base">

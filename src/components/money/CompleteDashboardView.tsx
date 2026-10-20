@@ -87,7 +87,7 @@ export const CompleteDashboardView: React.FC<{ onNavigate: (d: AppNavigationDest
         <div>
         <small className="wd-kicker">Dashboard</small>
         <h1>{profile.name ? `${profile.name}, here is everything at a glance.` : 'Everything at a glance.'}</h1>
-        <p>As of {today} · {profile.source === 'sample' ? 'sample profile' : 'your numbers'} · saved on this device only</p>
+        <p>As of {today} · {profile.source === 'sample' ? 'sample profile' : 'your numbers'} · kept privately in your account</p>
         </div>
       </div>
       <div className="wd-head-actions">

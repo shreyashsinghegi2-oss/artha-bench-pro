@@ -118,7 +118,7 @@ export const PortfolioView: React.FC<{ onNavigate?: (d: AppNavigationDestination
       <div>
         <small>Portfolio & net worth</small>
         <h1>{empty ? 'See all your money in one place' : inr(summary.netWorth)}</h1>
-        <p>{empty ? 'Import your mutual fund statement in a minute, or add stocks, deposits, gold, PPF, EPF and loans. Everything stays on this device.' : `Net worth · ${data.holdings.length} holding${data.holdings.length === 1 ? '' : 's'}${data.liabilities.length ? ` · ${data.liabilities.length} loan${data.liabilities.length === 1 ? '' : 's'}` : ''}${isSample ? ' · sample data' : ''}`}</p>
+        <p>{empty ? 'Import your mutual fund statement in a minute, or add stocks, deposits, gold, PPF, EPF and loans. Everything stays private to you.' : `Net worth · ${data.holdings.length} holding${data.holdings.length === 1 ? '' : 's'}${data.liabilities.length ? ` · ${data.liabilities.length} loan${data.liabilities.length === 1 ? '' : 's'}` : ''}${isSample ? ' · sample data' : ''}`}</p>
       </div>
       {!empty && <div className="pf-hero-actions">
         <button type="button" className="pf-btn" onClick={() => void refresh(data)} disabled={refreshing}>{refreshing ? <Loader2 size={15} className="pf-spin"/> : <RefreshCw size={15}/>} Refresh prices</button>

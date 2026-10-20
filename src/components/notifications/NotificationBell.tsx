@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { AlertTriangle, ArrowDownRight, ArrowUpRight, Bell, CheckCheck, Info, Newspaper, Trash2, X } from 'lucide-react';
 import type { AppNavigationDestination } from '../../navigationTypes';
-import { checkMarkets, checkMoney, checkNews, clearNotices, loadNotices, markAllRead, markRead, NOTICES_EVENT, type Notice, type NoticeKind } from '../../services/notifications';
+import { ARTHAMIND_NOTICE_ICON, checkMarkets, checkMoney, checkNews, clearNotices, deviceAlertPermission, loadNotices, markAllRead, markRead, NOTICES_EVENT, requestDeviceAlerts, showDeviceNotice, type Notice, type NoticeKind } from '../../services/notifications';
 import './notifications.css';
 
 const ICON: Record<NoticeKind, React.ComponentType<{ size?: number }>> = { up: ArrowUpRight, down: ArrowDownRight, alert: AlertTriangle, news: Newspaper, info: Info };
@@ -22,11 +22,16 @@ export const NotificationBell: React.FC<{ onNavigate: (d: AppNavigationDestinati
   const first = useRef(true);
   const root = useRef<HTMLDivElement>(null);
 
+  const [alerts, setAlerts] = useState(() => deviceAlertPermission());
+
   const run = useCallback(async () => {
-    if (document.visibilityState !== 'visible') return;
     const fresh = [...checkMoney(), ...(await checkMarkets().catch(() => [])), ...(await checkNews().catch(() => []))];
-    // The first check fills the list quietly; later checks announce what is new.
-    if (!first.current && fresh.length) setToast(fresh[0]);
+    // The first check fills the list quietly; later checks announce what is new: a device alert when the
+    // tab is in the background, otherwise the toast on screen.
+    if (!first.current && fresh.length) {
+      if (document.visibilityState === 'visible') setToast(fresh[0]);
+      else showDeviceNotice(fresh[0]);
+    }
     first.current = false;
   }, []);
 
@@ -53,8 +58,10 @@ export const NotificationBell: React.FC<{ onNavigate: (d: AppNavigationDestinati
     if (n.url) window.open(n.url, '_blank', 'noopener,noreferrer'); else if (n.to) onNavigate(n.to);
   };
   const Row: React.FC<{ n: Notice }> = ({ n }) => { const Icon = ICON[n.kind]; return <button type="button" className={`nb-item k-${n.kind} ${n.read ? '' : 'unread'}`} onClick={() => openNotice(n)}>
-    <span className="nb-ico"><Icon size={15}/></span><span className="nb-txt"><b>{n.title}</b><small>{n.body}</small><em>{ago(n.at)}</em></span>
+    <span className="nb-logo"><img src={ARTHAMIND_NOTICE_ICON} alt="" width={36} height={36}/><span className="nb-kind"><Icon size={11}/></span></span>
+    <span className="nb-txt"><b>{n.title}</b><small>{n.body}</small><em>ArthaMind · {ago(n.at)}</em></span>
   </button>; };
+  const enableAlerts = async () => setAlerts(await requestDeviceAlerts());
 
   return <div className="nb-root" ref={root}>
     <button type="button" className="nb-bell" onClick={() => setOpen((o) => !o)} aria-label={`Notifications${unread ? `, ${unread} unread` : ''}`} aria-expanded={open}>
@@ -66,8 +73,10 @@ export const NotificationBell: React.FC<{ onNavigate: (d: AppNavigationDestinati
         <button type="button" onClick={clearNotices} disabled={!list.length} title="Clear all"><Trash2 size={15}/></button>
       </span></header>
       <div className="nb-legend"><span className="k-up">Growth</span><span className="k-down">Loss / risk</span><span className="k-alert">Needs attention</span><span className="k-news">News & info</span></div>
+      {alerts === 'default' && <button type="button" className="nb-enable" onClick={enableAlerts}>Turn on device alerts</button>}
+      {alerts === 'denied' && <p className="nb-enable-note">Device alerts are blocked in this browser. Allow notifications in site settings to receive them.</p>}
       <div className="nb-list">{list.length ? list.map((n) => <Row key={n.id} n={n}/>) : <p className="nb-empty">You are all caught up. Money alerts, big market moves and new headlines will appear here.</p>}</div>
     </div>}
-    {toast && !open && <div className="nb-toast" role="status"><Row n={toast}/><button type="button" className="nb-toast-x" onClick={() => setToast(null)} aria-label="Dismiss"><X size={14}/></button></div>}
+    {toast && !open && <div className="nb-toast" role="status"><img className="nb-toast-logo" src={ARTHAMIND_NOTICE_ICON} alt="" width={22} height={22}/><Row n={toast}/><button type="button" className="nb-toast-x" onClick={() => setToast(null)} aria-label="Dismiss"><X size={14}/></button></div>}
   </div>;
 };

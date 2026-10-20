@@ -78,3 +78,49 @@ export function checkMoney(): Notice[] {
   if (d.monthlySurplus.value < 0) items.push({ id: `money:deficit:${stamp}`, kind: 'down', title: 'You are spending more than you earn', body: 'Close the monthly gap before anything else.', to: 'budgeting' });
   return addNotices(items);
 }
+
+/* ---------- Device alerts (browser notifications) ---------- */
+
+/** ArthaMind logo used as the icon and badge of every notification, in the bell, toasts and device alerts. */
+export const ARTHAMIND_NOTICE_ICON = '/brand/arthamind-192.png';
+export const ARTHAMIND_NOTICE_BADGE = '/brand/arthamind-96.png';
+
+export function deviceAlertsSupported(): boolean {
+  return typeof window !== 'undefined' && 'Notification' in window;
+}
+
+export function deviceAlertPermission(): NotificationPermission | 'unsupported' {
+  return deviceAlertsSupported() ? Notification.permission : 'unsupported';
+}
+
+/** Asks the browser for permission. Call from a button click so the browser allows the prompt. */
+export async function requestDeviceAlerts(): Promise<NotificationPermission | 'unsupported'> {
+  if (!deviceAlertsSupported()) return 'unsupported';
+  return Notification.requestPermission();
+}
+
+/**
+ * Shows a notice as a device notification with the ArthaMind logo. Only works while the page is open
+ * (browsers do not allow background notifications without a server push service).
+ */
+export function showDeviceNotice(n: Pick<Notice, 'id' | 'title' | 'body' | 'to' | 'url'>): boolean {
+  if (deviceAlertPermission() !== 'granted') return false;
+  try {
+    const note = new Notification(`ArthaMind · ${n.title}`, {
+      body: n.body,
+      icon: ARTHAMIND_NOTICE_ICON,
+      badge: ARTHAMIND_NOTICE_BADGE,
+      tag: n.id,
+      silent: false,
+    });
+    note.onclick = () => {
+      window.focus();
+      if (n.url) window.open(n.url, '_blank', 'noopener,noreferrer');
+      else if (n.to) window.location.hash = `#${n.to}`;
+      note.close();
+    };
+    return true;
+  } catch {
+    return false;
+  }
+}

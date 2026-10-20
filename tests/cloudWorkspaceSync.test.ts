@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const upsert = vi.fn(async () => undefined);
+const upsert = vi.fn(async (..._args: unknown[]) => undefined);
 const fetchRows = vi.fn(async () => []);
 vi.mock('../src/services/supabaseRest', () => ({
   upsertWorkspaceRows: (...args: unknown[]) => upsert(...(args as [])),

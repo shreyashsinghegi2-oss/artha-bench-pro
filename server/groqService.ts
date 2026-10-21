@@ -405,7 +405,8 @@ export async function callGroqStructuredFinancialAnswer(
     }
   })();
   const parsed = structuredFinancialAnswerSchema.safeParse(decoded);
-  if (!parsed.success) return fail('Groq answer failed schema validation.', content);
+  // Never show the raw model reply to the user: it may be JSON. The caller gets a safe fallback instead.
+  if (!parsed.success) return fail('Groq answer failed schema validation.');
 
   return withGroundingSources(sanitizeStructuredFinancialAnswer(parsed.data));
 }

@@ -4,6 +4,7 @@ import { WebSearchToggle } from './WebSearchToggle';
 import { ArrowRight, ArrowUp, BriefcaseBusiness, CircleAlert, ClipboardList, Globe, ListChecks, RotateCcw, ShieldAlert, Sparkles, UserRound } from 'lucide-react';
 import { askAiCfo, type CfoLanguage, type CfoReply, type CfoTurn } from '../../services/cfoApi';
 import { buildCfoHealthReport, cfoPlanPrompt, formatInr, type CfoHealthReport } from '../../services/cfoAnalysis';
+import { freedomConflict, freedomPromptLines, verifiedFreedomFromStorage } from '../../services/verifiedFreedom';
 import { CFO_QUESTIONS, CfoIntake, type CfoProfile } from './CfoIntake';
 import './aiCfo.css';
 import { ArthaMindLogoMark } from '../branding/ArthaMindBrand';
@@ -149,6 +150,8 @@ export const AiCfoChat: React.FC<Props> = ({ suggestFor, externalPrompt, compact
     setBusy(true);
     try {
       const reply = await askAiCfo(question, history, language);
+      const note = freedomConflict(reply.answer, verifiedFreedomFromStorage());
+      if (note) reply.answer = `${reply.answer}\n\n${note}`;
       setMessages((current) => [...current, { id: newId(), role: 'assistant', text: reply.answer, reply, prompt: question }]);
     } catch (error) {
       setMessages((current) => [...current, { id: newId(), role: 'assistant', text: '', error: error instanceof Error ? error.message : 'Something went wrong. Please try again.', prompt: question, display }]);
@@ -168,7 +171,7 @@ export const AiCfoChat: React.FC<Props> = ({ suggestFor, externalPrompt, compact
     setIntake(false);
     const report = buildCfoHealthReport({ monthlyIncome: profile.monthlyIncome, monthlyExpenses: profile.monthlyExpenses, monthlyEmi: profile.monthlyEmi, emergencySavings: profile.savings });
     setMessages((current) => [...current, { id: newId(), role: 'assistant', text: '', profile: { profile, report } }]);
-    void send(cfoPlanPrompt(profile, report), 'Draft my personal CFO plan');
+    void send(cfoPlanPrompt(profile, report, freedomPromptLines(verifiedFreedomFromStorage())), 'Draft my personal CFO plan');
   };
 
   const retry = (message: Message) => {

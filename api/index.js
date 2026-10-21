@@ -6003,7 +6003,7 @@ Return one valid JSON object only with exactly this contract: ${JSON.stringify(S
     }
   })();
   const parsed = structuredFinancialAnswerSchema.safeParse(decoded);
-  if (!parsed.success) return fail("Groq answer failed schema validation.", content);
+  if (!parsed.success) return fail("Groq answer failed schema validation.");
   return withGroundingSources(sanitizeStructuredFinancialAnswer(parsed.data));
 }
 function withGroundingSources(answer) {
@@ -10339,7 +10339,19 @@ function systemPrompt(task, c2) {
 function sanitizeText(text) {
   return text.replace(/```(?:json|markdown|text)?/gi, "").replace(/```/g, "").replace(/^\s*(JSON|Answer):\s*/i, "").replace(/\\text\{([^}]*)\}/g, "$1").replace(/\\times/g, "\xD7").replace(/\\cdot/g, "\xB7").replace(/\\%/g, "%").replace(/\\#/g, "#").replace(/\\frac\{([^}]*)\}\{([^}]*)\}/g, "($1) / ($2)").replace(/\\\[|\\\]/g, "").trim();
 }
+function safeAnswerText(text) {
+  const trimmed = String(text ?? "").trim();
+  if (!/^[\[{]/.test(trimmed)) return text;
+  try {
+    const obj = JSON.parse(trimmed);
+    const direct = typeof obj.directAnswer === "string" ? obj.directAnswer.trim() : "";
+    if (direct) return direct;
+  } catch {
+  }
+  return "I could not present that answer cleanly. Please ask the question again.";
+}
 function presentationFromText(text, task) {
+  text = safeAnswerText(text);
   return { title: task === "cfo" ? "CFO brief" : task === "calculation" ? "Verified financial calculation" : task === "quiz" ? "Financial learning check" : "ArthaBench financial explanation", directAnswer: sanitizeText(text), steps: [], formula: { expression: "Shown when relevant.", variables: [], whenToUse: "Use a formula when the question requires a calculation." }, example: { title: "Context applied", dataStatus: "not_applicable", dataAsOf: (/* @__PURE__ */ new Date()).toISOString(), inputs: [], calculation: [], result: sanitizeText(text) }, interpretation: [], risks: ["Automated explanations should be verified for consequential decisions."], keyTakeaways: [], sources: currentGroundingSources().map(({ name, dataDate, freshness }) => ({ name, dataDate, freshness })) };
 }
 async function runAiGateway(request) {

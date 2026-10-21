@@ -22,7 +22,7 @@
 .va-a footer{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:6px}
 .va-a footer button{display:inline-flex;align-items:center;gap:4px;border:0;background:none;padding:0;color:#0f9d8a;font:700 12px/1 inherit;cursor:pointer}
 .va-a footer button:disabled{opacity:.45;cursor:default}
-.va-tag{font-size:11px;font-weight:700;color:#92400e;background:#fffbeb;border-radius:999px;padding:2px 8px}
+.va-tag{font-size:12px;font-weight:700;color:#92400e;background:#fffbeb;border-radius:999px;padding:2px 8px}
 .va-thinking{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-secondary,#64748b)}
 .va-spin{animation:va-rot 1s linear infinite}@keyframes va-rot{to{transform:rotate(360deg)}}
 .va-mic-row{display:flex;align-items:center;gap:14px;padding:6px 2px}
@@ -46,7 +46,7 @@
 .va-foot select{margin-left:4px;border:1px solid var(--border-subtle,#e2e8f0);border-radius:8px;padding:2px 4px;background:var(--bg-surface,#fff);color:inherit;font:inherit}
 .va-foot button{display:inline-flex;align-items:center;gap:4px;border:0;background:none;color:inherit;font:600 12px inherit;cursor:pointer}
 .va-note{margin:0;padding:7px 10px;border-radius:10px;background:#fffbeb;color:#92400e;font-size:12px;line-height:1.45}
-.va-fine{margin:0;font-size:10.5px;line-height:1.4;color:var(--text-secondary,#64748b)}
+.va-fine{margin:0;font-size:12px;line-height:1.4;color:var(--text-secondary,#64748b)}
 @media (max-width:640px){
   .va-launch{left:12px;bottom:12px;padding:5px}
   .va-launch-text{display:none}

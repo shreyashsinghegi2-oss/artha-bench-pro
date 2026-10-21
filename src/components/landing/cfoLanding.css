@@ -11,7 +11,7 @@
 .cfo-check-icon{width:36px;height:36px;border-radius:11px;display:grid;place-items:center;color:#fff;background:linear-gradient(135deg,#0f7b6c,#14b8a6)}
 .cfo-fields{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .cfo-field{display:grid;gap:4px;font-size:12px;font-weight:800;color:var(--ink)}
-.cfo-field small{font-weight:500;color:var(--mut);font-size:11px}
+.cfo-field small{font-weight:500;color:var(--mut);font-size:12px}
 .cfo-input{display:flex;align-items:center;border:1px solid var(--bd);border-radius:11px;background:#fff;transition:border-color .2s,box-shadow .2s}
 .cfo-input:focus-within{border-color:#14b8a6;box-shadow:0 0 0 4px rgba(20,184,166,.14)}
 .cfo-input i{font-style:normal;padding:0 0 0 11px;color:var(--mut);font-weight:800}
@@ -32,7 +32,7 @@
 .cfo-metric[data-tone=ok]{--tone:#0d9488}.cfo-metric[data-tone=warn]{--tone:#d97706}.cfo-metric[data-tone=bad]{--tone:#dc2626}
 .cfo-metric>div:first-child{display:flex;justify-content:space-between;font-size:13px;font-weight:700}
 .cfo-metric b{color:var(--tone);font-variant-numeric:tabular-nums}
-.cfo-metric small{font-size:11px;color:var(--mut)}
+.cfo-metric small{font-size:12px;color:var(--mut)}
 .cfo-bar{height:7px;border-radius:999px;background:#edf2f1;overflow:hidden}
 .cfo-bar i{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,var(--tone),color-mix(in srgb,var(--tone) 60%,#fff));transform-origin:0 50%;transition:transform .9s cubic-bezier(.2,.7,.2,1)}
 .cfo-summary{margin:0;padding:10px 12px;border-radius:11px;background:#f5f9f8;font-size:13px;color:#1e293b}
@@ -41,7 +41,7 @@
 .cfo-actions b{display:flex;justify-content:space-between;gap:10px;font-size:13.5px}
 .cfo-actions em{font-style:normal;color:#0f7b6c;font-variant-numeric:tabular-nums}
 .cfo-actions p{margin:3px 0 0;font-size:12.5px;color:#475569}
-.cfo-horizon{display:inline-block;margin-bottom:3px;font-size:10px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:#0F766E}
+.cfo-horizon{display:inline-block;margin-bottom:3px;font-size:12px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:#0F766E}
 .cfo-check-cta{display:flex;flex-wrap:wrap;gap:10px}
 .cfo-check-cta .cl-primary,.cfo-check-cta .cl-secondary{display:inline-flex;align-items:center;gap:8px}
 .cfo-land .cl-secondary{color:var(--g);border-color:var(--bd);background:#fff}
@@ -62,10 +62,10 @@
 .cfo-ring svg{width:100%;height:100%;transform:rotate(-90deg);filter:none}
 .cfo-ring-num{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1}
 .cfo-ring-num b{font-size:36px;font-weight:800;color:#0b1220!important;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
-.cfo-ring-num small{margin-top:3px;font-size:11px;font-weight:700;color:#64748b}
+.cfo-ring-num small{margin-top:3px;font-size:12px;font-weight:700;color:#64748b}
 .cfo-score-copy{display:flex;flex-direction:column;gap:8px;min-width:0}
 .cfo-score-copy p{margin:0;font-size:13px;line-height:1.55;color:#334155}
-.cfo-chip{align-self:flex-start;padding:4px 10px;border-radius:999px;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--tone);background:color-mix(in srgb,var(--tone) 12%,#fff)}
+.cfo-chip{align-self:flex-start;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--tone);background:color-mix(in srgb,var(--tone) 12%,#fff)}
 .cfo-score>div:not(.cfo-ring){display:flex}
 .cfo-metric{grid-template-columns:auto minmax(0,1fr);align-items:start;gap:10px;padding:10px 12px;border-radius:14px;background:#fff;border:1px solid #edf2ef;transition:transform .25s,box-shadow .25s}
 .cfo-metric:hover{transform:translateY(-2px);box-shadow:0 12px 24px -18px rgba(15,42,34,.4)}
@@ -88,6 +88,6 @@
 .cfo-check{min-width:0;overflow:hidden}
 .cfo-fields{grid-template-columns:repeat(2,minmax(0,1fr))}
 .cfo-input{min-width:0}
-.cfo-field>span{font-size:11.5px;line-height:1.25}
+.cfo-field>span{font-size:12px;line-height:1.25}
 @media (max-width:860px){.cfo-check{padding:16px}.cfo-result{padding:12px}}
 .cfo-actions{grid-template-columns:repeat(auto-fit,minmax(min(220px,100%),1fr))}.cfo-actions li{min-width:0}.cfo-actions b{flex-wrap:wrap}

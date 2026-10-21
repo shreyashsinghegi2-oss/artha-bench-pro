@@ -85,7 +85,7 @@ export const StructuredFinancialAnswerView: React.FC<{ answer: StructuredFinanci
       {false && showFormula && <section className="sa-formula">
         <div className="sa-label"><Calculator className="h-3.5 w-3.5"/>Formula</div>
         <div className="rounded-lg bg-surface p-3 font-mono text-xs font-semibold text-teal-700"><RichFinancialText value={formula}/></div>
-        {answer.formula.variables?.length > 0 && <div className="mt-2 grid gap-2 sm:grid-cols-2">{answer.formula.variables.map((v, i) => <div key={i} className="rounded-lg border border-line bg-surface p-2"><b className="font-mono text-teal-700">{clean(v.symbol)}</b><div className="text-[10px] text-secondary">{clean(v.meaning)}</div></div>)}</div>}
+        {answer.formula.variables?.length > 0 && <div className="mt-2 grid gap-2 sm:grid-cols-2">{answer.formula.variables.map((v, i) => <div key={i} className="rounded-lg border border-line bg-surface p-2"><b className="font-mono text-teal-700">{clean(v.symbol)}</b><div className="text-xs text-secondary">{clean(v.meaning)}</div></div>)}</div>}
       </section>}
 
       {answer.example?.result && <section className="sa-result">
@@ -101,7 +101,7 @@ export const StructuredFinancialAnswerView: React.FC<{ answer: StructuredFinanci
 
       {(answer.verifiedNumbers?.length ?? 0) > 0 && <section className="sa-sources">
         <div className="sa-label"><Calculator className="h-3.5 w-3.5"/>Calculated by the app, not a language model</div>
-        <div className="flex flex-wrap gap-2">{answer.verifiedNumbers!.map((v) => <span key={v.id} className="rounded-lg border border-line bg-subtle px-2 py-1 text-[10px] text-secondary" title={v.assumptions.join(' ')}><b className="text-ink">{v.display}</b> · {v.label}{v.certified && v.badge ? <> · <CheckCircle2 className="inline h-3 w-3 align-[-2px]"/> {v.badge}</> : null}</span>)}</div>
+        <div className="flex flex-wrap gap-2">{answer.verifiedNumbers!.map((v) => <span key={v.id} className="rounded-lg border border-line bg-subtle px-2 py-1 text-xs text-secondary" title={v.assumptions.join(' ')}><b className="text-ink">{v.display}</b> · {v.label}{v.certified && v.badge ? <> · <CheckCircle2 className="inline h-3 w-3 align-[-2px]"/> {v.badge}</> : null}</span>)}</div>
       </section>}
 
       <WebStatusLine status={answer.webStatus}/>
@@ -125,7 +125,7 @@ export const StructuredFinancialAnswerView: React.FC<{ answer: StructuredFinanci
       </section>}
 
       <ListenBar compact={compact} text={[direct, ...(answer.keyTakeaways ?? []).map(clean), ...(answer.risks ?? []).slice(0, 2).map(clean)].filter(Boolean).join('\n')}/>
-      <div className="border-t border-line pt-3 text-[10px] text-secondary">{disclaimer}</div>
+      <div className="border-t border-line pt-3 text-xs text-secondary">{disclaimer}</div>
     </div>
   </article>;
 };

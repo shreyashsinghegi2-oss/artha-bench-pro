@@ -29,7 +29,7 @@ export const ArthaBenchLogo: React.FC<ArthaBenchLogoProps> = ({
           ArthaMind
         </span>
         {!compact && (
-          <p className="mt-1 hidden text-[10px] font-semibold tracking-wide text-secondary sm:block">
+          <p className="mt-1 hidden text-xs font-semibold tracking-wide text-secondary sm:block">
             by Artha Bench Pro
           </p>
         )}

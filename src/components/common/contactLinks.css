@@ -2,7 +2,7 @@
 .ct-links a{display:flex;align-items:center;gap:10px;min-height:52px;padding:8px 12px;border-radius:12px;text-decoration:none;border:1px solid #e2e8ee;background:#fff;color:#0f172a;font-size:13.5px;font-weight:700;transition:border-color .2s,transform .2s}
 .ct-links a:hover{border-color:#0f7b6c;transform:translateY(-1px)}
 .ct-links a>span:last-child{display:flex;flex-direction:column;min-width:0;overflow-wrap:anywhere}
-.ct-links small{font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#64748b}
+.ct-links small{font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#64748b}
 .ct-ico{display:grid;place-items:center;width:34px;height:34px;border-radius:10px;flex:none}
 .ct-mail{background:#fdecea;color:#d93025}
 .ct-phone{background:#e8f5f2;color:#0f7b6c}

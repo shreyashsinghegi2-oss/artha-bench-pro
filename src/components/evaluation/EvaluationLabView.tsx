@@ -79,7 +79,7 @@ export const EvaluationLabView: React.FC = () => {
               <p className="mt-1 max-w-3xl text-xs leading-5 text-secondary">Evaluate generated model outputs, a response you paste, or text you upload. Every completed reliability run exposes the centralized seven-dimension scoring breakdown, deterministic math check, risks, strengths and improvement suggestions.</p>
             </div>
           </div>
-          <label className="space-y-1 text-[10px] font-bold text-secondary">
+          <label className="space-y-1 text-xs font-bold text-secondary">
             <span className="block uppercase tracking-wider">Evaluation profile</span>
             <select value={profile} onChange={(event) => { setProfile(event.target.value as typeof profile); setReport(null); }} className="h-10 rounded-xl border border-line-strong bg-canvas px-3 text-xs font-bold text-ink outline-none focus:border-interactive">
               <option value="India">India</option><option value="US">United States</option><option value="Global">Global</option>
@@ -96,14 +96,14 @@ export const EvaluationLabView: React.FC = () => {
         <div className="space-y-3">
           <label className="block text-xs font-semibold text-secondary" htmlFor="evaluation-query">Financial question / claim / evaluation instruction</label>
           <textarea id="evaluation-query" value={query} onChange={(event) => { setQuery(event.target.value.slice(0, 4000)); setReport(null); }} rows={4} maxLength={4000} className="w-full resize-y rounded-xl border border-line bg-canvas p-4 text-xs leading-6 text-ink outline-none focus:border-interactive focus:ring-2 focus:ring-interactive/20" placeholder="Enter the financial question or claim the response should be judged against..." />
-          <div className="text-right font-mono text-[9px] text-secondary">{query.length.toLocaleString()} / 4,000</div>
+          <div className="text-right font-mono text-xs text-secondary">{query.length.toLocaleString()} / 4,000</div>
         </div>
 
         {mode === 'response' && (
           <div className="space-y-2">
             <label className="block text-xs font-semibold text-secondary" htmlFor="supplied-evaluation-response">Automatically generated or external response to evaluate</label>
             <textarea id="supplied-evaluation-response" value={suppliedResponse} onChange={(event) => { setSuppliedResponse(event.target.value.slice(0, 12000)); setReport(null); }} rows={9} maxLength={12000} className="w-full resize-y rounded-xl border border-line bg-canvas p-4 text-xs leading-6 text-ink outline-none focus:border-interactive focus:ring-2 focus:ring-interactive/20" placeholder="Paste the response exactly as produced. Artha Bench will score this supplied text rather than generating a replacement." />
-            <div className="text-right font-mono text-[9px] text-secondary">{suppliedResponse.length.toLocaleString()} / 12,000</div>
+            <div className="text-right font-mono text-xs text-secondary">{suppliedResponse.length.toLocaleString()} / 12,000</div>
           </div>
         )}
 
@@ -112,14 +112,14 @@ export const EvaluationLabView: React.FC = () => {
             <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
               <div>
                 <h3 className="text-xs font-black text-ink">Upload text for reliability evaluation</h3>
-                <p className="mt-1 text-[10px] leading-5 text-secondary">Supported: .txt, .md, .csv, .json · maximum 128 KB. The extracted text is shown below before you evaluate it.</p>
+                <p className="mt-1 text-xs leading-5 text-secondary">Supported: .txt, .md, .csv, .json · maximum 128 KB. The extracted text is shown below before you evaluate it.</p>
               </div>
               <button type="button" onClick={() => uploadRef.current?.click()} className="inline-flex items-center gap-2 rounded-xl border border-line-strong bg-surface px-4 py-2.5 text-xs font-black text-ink transition hover:bg-subtle"><FileUp className="h-4 w-4 text-interactive" /> Choose file</button>
               <input ref={uploadRef} type="file" className="hidden" accept=".txt,.md,.csv,.json,text/plain,text/markdown,text/csv,application/json" onChange={(event) => void handleUpload(event)} />
             </div>
-            {uploadName && <div className="mt-3 rounded-xl border border-success-fill/25 bg-success-soft px-3 py-2 text-[10px] font-bold text-success">Loaded: {uploadName}</div>}
+            {uploadName && <div className="mt-3 rounded-xl border border-success-fill/25 bg-success-soft px-3 py-2 text-xs font-bold text-success">Loaded: {uploadName}</div>}
             {suppliedResponse && <textarea aria-label="Extracted uploaded text" value={suppliedResponse} onChange={(event) => setSuppliedResponse(event.target.value.slice(0, 12000))} rows={8} className="mt-3 w-full resize-y rounded-xl border border-line bg-surface p-3 text-xs leading-6 text-ink outline-none focus:border-interactive" />}
-            <p className="mt-3 text-[9px] leading-4 text-secondary">Do not upload passwords, bank/card numbers, Aadhaar/PAN, OTPs, identity documents, or confidential financial records. Unsupported binary documents are rejected rather than silently misread.</p>
+            <p className="mt-3 text-xs leading-4 text-secondary">Do not upload passwords, bank/card numbers, Aadhaar/PAN, OTPs, identity documents, or confidential financial records. Unsupported binary documents are rejected rather than silently misread.</p>
           </div>
         )}
 
@@ -139,6 +139,6 @@ export const EvaluationLabView: React.FC = () => {
 const ModeButton: React.FC<{ active: boolean; onClick: () => void; icon: React.ReactNode; title: string; description: string }> = ({ active, onClick, icon, title, description }) => (
   <button type="button" role="tab" aria-selected={active} onClick={onClick} className={`rounded-xl border px-3 py-3 text-left transition ${active ? 'border-interactive/35 bg-interactive-soft' : 'border-transparent hover:bg-subtle'}`}>
     <span className={`flex items-center gap-2 text-xs font-black ${active ? 'text-interactive' : 'text-ink'}`}>{icon}{title}</span>
-    <span className="mt-1 block text-[9px] leading-4 text-secondary">{description}</span>
+    <span className="mt-1 block text-xs leading-4 text-secondary">{description}</span>
   </button>
 );

@@ -222,10 +222,10 @@ export const IncomeAIAssistant: React.FC<IncomeAIAssistantProps> = ({
         <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
           <div className="max-w-3xl">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-interactive/25 bg-surface px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-interactive">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-interactive/25 bg-surface px-2.5 py-1 text-xs font-black uppercase tracking-[0.14em] text-interactive">
                 <AssistantLogo size={18}/> ArthaMind Income &amp; Tax Intelligence
               </span>
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-success-fill/25 bg-success-soft px-2.5 py-1 text-[10px] font-bold text-success">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-success-fill/25 bg-success-soft px-2.5 py-1 text-xs font-bold text-success">
                 <ShieldCheck className="h-3.5 w-3.5" /> Workspace-grounded
               </span>
             </div>
@@ -344,7 +344,7 @@ export const IncomeAIAssistant: React.FC<IncomeAIAssistantProps> = ({
                 <Send className="h-4 w-4" />
               </button>
             </div>
-            <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-[10px] text-secondary">
+            <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs text-secondary">
               <span>{sources.length} income record{sources.length === 1 ? '' : 's'} available to this session · currencies stay separate</span>
               {messages.length ? (
                 <button type="button" onClick={() => { setMessages([]); setError(null); }} className="inline-flex items-center gap-1 font-bold hover:text-danger">

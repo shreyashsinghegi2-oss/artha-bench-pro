@@ -30,11 +30,11 @@ export const NewsCard: React.FC<NewsCardProps> = ({ article }) => {
           ) : (
             <div className={`w-full h-full ${getCategorySurface()} flex items-center justify-center`}><Newspaper className="w-12 h-12 opacity-55" aria-hidden="true" /></div>
           )}
-          <span className="absolute bottom-2 left-2 font-bold text-[10px] text-success bg-success-soft border border-success-fill/25 px-2 py-0.5 rounded-full uppercase tracking-wider">{article.category || 'Financial Intelligence'}</span>
+          <span className="absolute bottom-2 left-2 font-bold text-xs text-success bg-success-soft border border-success-fill/25 px-2 py-0.5 rounded-full uppercase tracking-wider">{article.category || 'Financial Intelligence'}</span>
         </div>
         <div className="flex items-center justify-between gap-2 text-xs text-secondary mb-2">
-          <span className="font-semibold text-interactive bg-interactive/15 border border-interactive/30 px-2 py-0.5 rounded-full text-[10px]">{article.sourceName}</span>
-          <div className="flex items-center gap-1.5 text-secondary text-[11px]"><Clock className="w-3 h-3" /><span>{article.publishedAt ? new Date(article.publishedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Recent'}</span></div>
+          <span className="font-semibold text-interactive bg-interactive/15 border border-interactive/30 px-2 py-0.5 rounded-full text-xs">{article.sourceName}</span>
+          <div className="flex items-center gap-1.5 text-secondary text-xs"><Clock className="w-3 h-3" /><span>{article.publishedAt ? new Date(article.publishedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Recent'}</span></div>
         </div>
         <h3 className="font-bold text-ink text-sm leading-snug hover:text-interactive transition-colors">{article.title}</h3>
         <p className="text-xs text-secondary mt-2 line-clamp-3 leading-relaxed">{article.summary}</p>

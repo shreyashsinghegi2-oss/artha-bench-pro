@@ -282,11 +282,11 @@ export const AuthModal: React.FC = () => {
                 <button disabled={busy || !auth.configured} className="am-cta">
                   {busy ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />} {auth.emailOtp ? 'Continue' : 'Sign in securely'}
                 </button>
-                {auth.emailOtp && <p className="text-center text-[11px] leading-5 text-secondary"><ShieldCheck className="mr-1 inline h-3.5 w-3.5 align-[-2px]" />Two-step sign-in: after your password we email you a 6-digit code.</p>}
+                {auth.emailOtp && <p className="text-center text-xs leading-5 text-secondary"><ShieldCheck className="mr-1 inline h-3.5 w-3.5 align-[-2px]" />Two-step sign-in: after your password we email you a 6-digit code.</p>}
                 <div className="rounded-2xl border border-line bg-canvas p-4 text-center text-xs text-secondary">
                   New to ArthaMind? <button type="button" onClick={() => auth.openAuth('signup')} className="font-black text-interactive hover:underline">Create an account</button>
                 </div>
-                <p className="text-center text-[10px] leading-5 text-secondary">Educational analysis only — not investment, tax, legal, or financial advice. Privacy and data controls remain available in Account.</p>
+                <p className="text-center text-xs leading-5 text-secondary">Educational analysis only — not investment, tax, legal, or financial advice. Privacy and data controls remain available in Account.</p>
               </form>
             )}
 
@@ -304,7 +304,7 @@ export const AuthModal: React.FC = () => {
                 <label className="flex items-start gap-3 rounded-xl border border-line bg-canvas p-3 text-xs leading-5 text-secondary"><input className="mt-0.5" type="checkbox" checked={termsConsent} onChange={(e) => setTermsConsent(e.target.checked)} /><span>I agree to the <a href="/terms.html" className="font-bold text-interactive hover:underline">Terms</a> and <a href="/privacy.html" className="font-bold text-interactive hover:underline">Privacy Policy</a>.</span></label>
                 <label className="flex items-start gap-3 rounded-xl border border-line bg-canvas p-3 text-xs leading-5 text-secondary"><input className="mt-0.5" type="checkbox" checked={financialConsent} onChange={(e) => setFinancialConsent(e.target.checked)} /><span>I allow ArthaMind to use financial data categories I explicitly authorize for personalized educational analysis. I can turn this off later.</span></label>
                 <button disabled={busy || !auth.configured} className="am-cta">{busy && <LoaderCircle className="h-4 w-4 animate-spin" />} Create secure account</button>
-                <p className="text-center text-[10px] leading-5 text-secondary">Your records start empty until you add them. ArthaMind does not add sample income, expenses, balances or EMIs for your account.</p>
+                <p className="text-center text-xs leading-5 text-secondary">Your records start empty until you add them. ArthaMind does not add sample income, expenses, balances or EMIs for your account.</p>
               </form>
             )}
 
@@ -331,7 +331,7 @@ export const AuthModal: React.FC = () => {
                   <button type="button" onClick={() => auth.openAuth('login')} className="inline-flex items-center gap-1 font-bold text-secondary"><ArrowLeft className="h-3.5 w-3.5" /> Use a different email</button>
                   <button type="button" disabled={busy || resendIn > 0} onClick={resendOtp} className="font-bold text-interactive hover:underline disabled:cursor-not-allowed disabled:text-secondary disabled:no-underline">{resendIn > 0 ? `Resend code in ${resendIn}s` : 'Resend code'}</button>
                 </div>
-                <p className="text-center text-[10px] leading-5 text-secondary">Check Spam or Promotions if the email is not in your inbox. Never share this code with anyone; ArthaMind will never ask for it by phone or chat.</p>
+                <p className="text-center text-xs leading-5 text-secondary">Check Spam or Promotions if the email is not in your inbox. Never share this code with anyone; ArthaMind will never ask for it by phone or chat.</p>
               </form>
             )}
 
@@ -363,7 +363,7 @@ export const AuthModal: React.FC = () => {
                   <button type="button" disabled={busy || !email.trim()} onClick={resendVerification} className="rounded-xl border border-line-strong bg-surface px-5 py-3 text-sm font-black text-ink disabled:cursor-not-allowed disabled:opacity-50">{busy ? 'Sending…' : 'Resend verification email'}</button>
                   <button type="button" onClick={() => auth.openAuth('login')} className="am-cta">I verified it — sign in</button>
                 </div>
-                <p className="text-[10px] leading-5 text-secondary">If the email is not visible, check Spam or Promotions. Verification is required once so another person cannot create an account using your email address.</p>
+                <p className="text-xs leading-5 text-secondary">If the email is not visible, check Spam or Promotions. Verification is required once so another person cannot create an account using your email address.</p>
               </div>
             )}
 
@@ -394,6 +394,6 @@ const TrustRow: React.FC<{
 }> = ({ icon: Icon, title, text }) => (
   <div className="flex gap-3 rounded-2xl border border-white/10 bg-white/[0.04] p-4">
     <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-teal-300/10 text-teal-200"><Icon className="h-4 w-4" /></div>
-    <div><div className="text-xs font-black text-white">{title}</div><div className="mt-1 text-[10px] leading-5 text-slate-400">{text}</div></div>
+    <div><div className="text-xs font-black text-white">{title}</div><div className="mt-1 text-xs leading-5 text-slate-400">{text}</div></div>
   </div>
 );

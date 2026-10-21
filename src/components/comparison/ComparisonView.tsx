@@ -114,10 +114,10 @@ export const ComparisonView: React.FC = () => {
       <section className="space-y-6 rounded-3xl border border-line bg-surface p-6 shadow-sm sm:p-8">
         <div className="grid gap-4 sm:grid-cols-[1fr_auto] sm:items-end">
           <div className="space-y-2">
-            <label className="block text-[11px] font-bold uppercase tracking-wider text-secondary" htmlFor="comparison-question">Shared financial question / evaluation prompt</label>
+            <label className="block text-xs font-bold uppercase tracking-wider text-secondary" htmlFor="comparison-question">Shared financial question / evaluation prompt</label>
             <textarea id="comparison-question" value={question} onChange={(event) => { setQuestion(event.target.value); setResult(null); }} rows={3} className="w-full resize-y rounded-xl border border-line bg-canvas p-4 text-xs leading-relaxed text-ink outline-none transition focus:border-interactive focus:ring-2 focus:ring-interactive/20 sm:text-sm" placeholder="Enter the exact question both responses are answering..." />
           </div>
-          <label className="space-y-1 text-[10px] font-bold text-secondary">
+          <label className="space-y-1 text-xs font-bold text-secondary">
             <span className="block uppercase tracking-wider">Evaluation profile</span>
             <select value={profile} onChange={(event) => { setProfile(event.target.value as typeof profile); setResult(null); }} className="h-11 rounded-xl border border-line-strong bg-canvas px-3 text-xs font-bold text-ink outline-none focus:border-interactive">
               <option value="India">India</option><option value="US">United States</option><option value="Global">Global</option>
@@ -140,7 +140,7 @@ export const ComparisonView: React.FC = () => {
             {generating ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4 text-interactive" />}{generating ? 'Generating pair…' : 'Generate dual-model responses'}
           </button>
         </div>
-        <p className="text-[10px] leading-5 text-secondary">Uploads are read locally in the browser before evaluation. Supported here: TXT, Markdown, CSV and JSON up to 128 KB. Avoid uploading passwords, bank/card numbers, identity documents, or other sensitive financial records.</p>
+        <p className="text-xs leading-5 text-secondary">Uploads are read locally in the browser before evaluation. Supported here: TXT, Markdown, CSV and JSON up to 128 KB. Avoid uploading passwords, bank/card numbers, identity documents, or other sensitive financial records.</p>
       </section>
 
       {error && <div role="alert" className="flex items-start gap-2 rounded-2xl border border-danger/30 bg-danger-soft p-4 text-xs leading-5 text-danger"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />{error}</div>}
@@ -154,9 +154,9 @@ const ResponseEditor: React.FC<{ label: string; value: string; onChange: (value:
   <div className="space-y-3 rounded-2xl border border-line bg-canvas p-5 transition">
     <div className="flex items-center justify-between gap-3 border-b border-line pb-3">
       <span className="text-xs font-black uppercase tracking-wide text-interactive">{label}</span>
-      <button type="button" onClick={onUpload} className="inline-flex items-center gap-1.5 rounded-lg border border-line bg-surface px-2.5 py-1.5 text-[10px] font-bold text-secondary transition hover:text-ink"><FileUp className="h-3.5 w-3.5" /> Upload text</button>
+      <button type="button" onClick={onUpload} className="inline-flex items-center gap-1.5 rounded-lg border border-line bg-surface px-2.5 py-1.5 text-xs font-bold text-secondary transition hover:text-ink"><FileUp className="h-3.5 w-3.5" /> Upload text</button>
     </div>
     <textarea value={value} onChange={(event) => onChange(event.target.value.slice(0, 12000))} rows={9} maxLength={12000} className="w-full resize-y bg-transparent text-xs leading-6 text-ink outline-none" placeholder={`${label} content to evaluate...`} aria-label={`${label} content`} />
-    <div className="text-right text-[9px] font-mono text-secondary">{value.length.toLocaleString()} / 12,000</div>
+    <div className="text-right text-xs font-mono text-secondary">{value.length.toLocaleString()} / 12,000</div>
   </div>
 );

@@ -52,7 +52,7 @@ export const PublicFinanceOverview: React.FC<Props> = ({ onSignIn, onNavigate })
       <div className="pointer-events-none absolute -right-24 -top-28 h-72 w-72 rounded-full bg-interactive/5 blur-3xl" aria-hidden="true" />
       <div className="relative grid gap-8 lg:grid-cols-[1.25fr_.75fr] lg:items-end">
         <div>
-          <div className="inline-flex items-center gap-2 rounded-full border border-success-fill/25 bg-success-soft px-3 py-1 text-[10px] font-black uppercase tracking-[0.15em] text-success">
+          <div className="inline-flex items-center gap-2 rounded-full border border-success-fill/25 bg-success-soft px-3 py-1 text-xs font-black uppercase tracking-[0.15em] text-success">
             <ShieldCheck className="h-3.5 w-3.5" /> Private when you sign in
           </div>
           <h1 className="mt-5 text-3xl font-black tracking-tight text-ink sm:text-4xl">Financial Workspace</h1>
@@ -91,7 +91,7 @@ export const PublicFinanceOverview: React.FC<Props> = ({ onSignIn, onNavigate })
           <div className="flex items-center gap-2 text-xs font-black text-ink">
             <ShieldCheck className="h-4 w-4 text-success" /> Public vs private
           </div>
-          <div className="mt-4 space-y-3 text-[11px] leading-5 text-secondary">
+          <div className="mt-4 space-y-3 text-xs leading-5 text-secondary">
             <p><strong className="text-ink">Open without an account:</strong> market research, crypto, learning and answer reliability tools.</p>
             <p><strong className="text-ink">Sign-in required:</strong> income, expenses, budgets, EMIs, personal reports and private assistant context.</p>
             <p className="rounded-xl border border-success-fill/20 bg-success-soft p-3 text-success">Personal records are isolated to your authenticated account and are not mixed with public market data.</p>
@@ -103,7 +103,7 @@ export const PublicFinanceOverview: React.FC<Props> = ({ onSignIn, onNavigate })
     <section aria-labelledby="finance-capabilities-title">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <div className="text-[10px] font-black uppercase tracking-[0.15em] text-interactive">What the workspace helps you do</div>
+          <div className="text-xs font-black uppercase tracking-[0.15em] text-interactive">What the workspace helps you do</div>
           <h2 id="finance-capabilities-title" className="mt-1 text-2xl font-black tracking-tight text-ink">Start with your records, not sample data.</h2>
         </div>
         <button type="button" onClick={onSignIn} className="inline-flex items-center gap-1.5 text-xs font-black text-interactive hover:underline">
@@ -117,7 +117,7 @@ export const PublicFinanceOverview: React.FC<Props> = ({ onSignIn, onNavigate })
               <Icon className="h-5 w-5" />
             </div>
             <h3 className="mt-4 text-sm font-black text-ink">{title}</h3>
-            <p className="mt-2 text-[11px] leading-5 text-secondary">{text}</p>
+            <p className="mt-2 text-xs leading-5 text-secondary">{text}</p>
           </article>
         ))}
       </div>

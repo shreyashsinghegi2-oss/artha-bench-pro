@@ -60,7 +60,7 @@ export const BentoCard: React.FC<BentoCardProps> = ({
             </div>
           </div>
           {badge && (
-            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${badgeStyles[badgeColor]}`}>
+            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${badgeStyles[badgeColor]}`}>
               {badge}
             </span>
           )}

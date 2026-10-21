@@ -52,7 +52,7 @@ export const LearningTrackCard: React.FC<LearningTrackCardProps> = ({
           <div className="w-10 h-10 rounded-xl bg-hover border border-line-strong/80 flex items-center justify-center text-success group-hover:bg-success-soft/60 group- transition-colors">
             <Icon className="w-5 h-5" />
           </div>
-          <span className="text-[10px] font-semibold px-2.5 py-1 rounded-full bg-hover text-secondary border border-line-strong">
+          <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-hover text-secondary border border-line-strong">
             {track.riskLabel}
           </span>
         </div>

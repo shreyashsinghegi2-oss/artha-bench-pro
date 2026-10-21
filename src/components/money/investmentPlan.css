@@ -19,7 +19,7 @@
 .ip-funds{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(230px,1fr))}
 .ip-fund{display:grid;gap:4px;padding:12px;border:1px solid var(--border-subtle);border-radius:12px;min-width:0}
 .ip-fund b{font-size:13px;line-height:1.35;overflow-wrap:anywhere}
-.ip-fund small{font-size:11.5px;color:var(--text-secondary)}
+.ip-fund small{font-size:12px;color:var(--text-secondary)}
 .ip-fund dl{margin:6px 0 0;display:grid;gap:4px}
 .ip-fund dl div{display:flex;justify-content:space-between;gap:8px;font-size:12.5px}
 .ip-fund dt{color:var(--text-secondary)}
@@ -28,6 +28,6 @@
 .ip-sectors{list-style:none;margin:0;padding:0;display:grid;gap:8px}
 .ip-sectors li{display:grid;gap:2px;font-size:13px}
 .ip-sectors span{color:var(--text-secondary);line-height:1.45}
-.ip-sectors small{font-size:11.5px;color:var(--text-secondary)}
+.ip-sectors small{font-size:12px;color:var(--text-secondary)}
 .ip-notes{margin:0;padding-left:18px;display:grid;gap:4px;font-size:12.5px;line-height:1.5;color:var(--text-secondary)}
-.ip-src{margin:0;font-size:11px;line-height:1.5;color:var(--text-secondary)}
+.ip-src{margin:0;font-size:12px;line-height:1.5;color:var(--text-secondary)}

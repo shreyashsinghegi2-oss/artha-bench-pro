@@ -23,7 +23,7 @@ export const LearningModuleList: React.FC<LearningModuleListProps> = ({
         <div key={module.id} className="bg-surface border border-line rounded-2xl p-5 shadow-sm">
           <div className="flex items-center justify-between mb-3 border-b border-line pb-3">
             <div>
-              <span className="text-[10px] font-bold text-success uppercase tracking-wider">
+              <span className="text-xs font-bold text-success uppercase tracking-wider">
                 Module {mIdx + 1}
               </span>
               <h4 className="font-bold text-ink text-sm">{module.title}</h4>
@@ -69,7 +69,7 @@ export const LearningModuleList: React.FC<LearningModuleListProps> = ({
                     )}
                     <span className="truncate">{lesson.title}</span>
                   </div>
-                  <span className="text-[10px] text-secondary shrink-0">~{lesson.estimatedMinutes} min</span>
+                  <span className="text-xs text-secondary shrink-0">~{lesson.estimatedMinutes} min</span>
                 </div>
               );
             })}

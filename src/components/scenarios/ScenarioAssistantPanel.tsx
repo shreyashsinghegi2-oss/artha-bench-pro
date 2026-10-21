@@ -113,17 +113,17 @@ export const ScenarioAssistantPanel: React.FC<ScenarioAssistantPanelProps> = ({
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <div className="flex items-center gap-2 text-sm font-black text-ink"><AssistantLogo size={18}/> ArthaMind Scenario Intelligence</div>
-          <p className="mt-1 max-w-3xl text-[11px] leading-5 text-secondary">Available for every calculator. When you analyze, the server first recalculates the current inputs with Decimal.js and then asks ArthaMind to explain that verified result. Connected provider data is a separate evidence layer and never replaces the deterministic inputs.</p>
+          <p className="mt-1 max-w-3xl text-xs leading-5 text-secondary">Available for every calculator. When you analyze, the server first recalculates the current inputs with Decimal.js and then asks ArthaMind to explain that verified result. Connected provider data is a separate evidence layer and never replaces the deterministic inputs.</p>
         </div>
-        <span className="inline-flex items-center gap-1.5 self-start rounded-full border border-success-fill/25 bg-success-soft px-2.5 py-1 text-[9px] font-black uppercase tracking-wider text-success"><ShieldCheck className="h-3.5 w-3.5" /> Math locked to engine</span>
+        <span className="inline-flex items-center gap-1.5 self-start rounded-full border border-success-fill/25 bg-success-soft px-2.5 py-1 text-xs font-black uppercase tracking-wider text-success"><ShieldCheck className="h-3.5 w-3.5" /> Math locked to engine</span>
       </div>
 
-      <div className="rounded-2xl border border-line bg-canvas p-3 text-[10px] leading-5 text-secondary">
+      <div className="rounded-2xl border border-line bg-canvas p-3 text-xs leading-5 text-secondary">
         <div className="flex items-center gap-2 font-black uppercase tracking-wider text-ink"><Calculator className="h-3.5 w-3.5 text-interactive" /> Feature evidence rule</div>
         <p className="mt-1.5">{FEATURE_CONTEXT[activeTab]}</p>
       </div>
 
-      <div className="flex flex-wrap gap-2 text-[10px] text-secondary">
+      <div className="flex flex-wrap gap-2 text-xs text-secondary">
         <span className="inline-flex items-center gap-1.5 rounded-full border border-line bg-canvas px-2.5 py-1"><Database className="h-3 w-3" /> Decimal.js input/result context</span>
         <span className="inline-flex items-center gap-1.5 rounded-full border border-line bg-canvas px-2.5 py-1"><Globe2 className="h-3 w-3" /> {useExternalContext ? `${profile} connected context enabled` : 'External context disabled'}</span>
         {companySymbol?.trim() && <span className="rounded-full border border-line bg-canvas px-2.5 py-1">Company context: {companySymbol.trim().toUpperCase()}</span>}
@@ -159,7 +159,7 @@ export const ScenarioAssistantPanel: React.FC<ScenarioAssistantPanelProps> = ({
         <div className="space-y-3">
           <StructuredFinancialAnswerView answer={response.structuredAnswer} compact disclaimer={response.disclaimer} />
           {(response.sourceLabels?.length || response.contextNotes?.length) ? (
-            <div className="rounded-2xl border border-line bg-canvas p-3.5 text-[10px] leading-5 text-secondary">
+            <div className="rounded-2xl border border-line bg-canvas p-3.5 text-xs leading-5 text-secondary">
               <div className="font-black uppercase tracking-wider text-ink">Connected context used</div>
               {response.sourceLabels?.length ? <div className="mt-2 flex flex-wrap gap-2">{response.sourceLabels.map((source) => <span key={source} className="rounded-full border border-line bg-surface px-2.5 py-1">{source}</span>)}</div> : null}
               {response.contextNotes?.map((note) => <p key={note} className="mt-2">{note}</p>)}
@@ -167,7 +167,7 @@ export const ScenarioAssistantPanel: React.FC<ScenarioAssistantPanelProps> = ({
             </div>
           ) : null}
           {response.suggestedQuestions?.length ? (
-            <div className="flex flex-wrap gap-2">{response.suggestedQuestions.map((item) => <button key={item} type="button" onClick={() => { setQuestion(item); void analyze(item); }} className="rounded-full border border-line bg-surface px-3 py-1.5 text-[10px] font-bold text-secondary hover:text-interactive">{item}</button>)}</div>
+            <div className="flex flex-wrap gap-2">{response.suggestedQuestions.map((item) => <button key={item} type="button" onClick={() => { setQuestion(item); void analyze(item); }} className="rounded-full border border-line bg-surface px-3 py-1.5 text-xs font-bold text-secondary hover:text-interactive">{item}</button>)}</div>
           ) : null}
         </div>
       )}

@@ -59,16 +59,16 @@ export const ConnectionsView: React.FC = () => {
                   <Cpu className="w-5 h-5 text-interactive" />
                   <div>
                     <h3 className="text-xs font-bold text-ink">{diag.name}</h3>
-                    <p className="text-[10px] text-secondary">{diag.message}</p>
+                    <p className="text-xs text-secondary">{diag.message}</p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-3 shrink-0">
                   {diag.latencyMs !== undefined && (
-                    <span className="text-[10px] font-mono text-secondary">{diag.latencyMs}ms</span>
+                    <span className="text-xs font-mono text-secondary">{diag.latencyMs}ms</span>
                   )}
                   <span
-                    className={`px-3 py-1 rounded-full text-[10px] font-bold border ${
+                    className={`px-3 py-1 rounded-full text-xs font-bold border ${
                       diag.status === 'connected'
                         ? 'bg-success-fill/10 text-success border-success-fill/30'
                         : 'bg-warning-fill/10 text-warning border-warning-fill/30'

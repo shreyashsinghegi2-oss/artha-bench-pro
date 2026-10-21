@@ -141,9 +141,9 @@ export const ReliabilityReportPanel: React.FC<{
     <section className="space-y-5 rounded-3xl border border-line bg-surface p-5 shadow-sm sm:p-6" aria-label={title}>
       <div className="flex flex-col gap-4 border-b border-line pb-5 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <div className="text-[10px] font-black uppercase tracking-[0.14em] text-interactive">Artha Bench reliability framework</div>
+          <div className="text-xs font-black uppercase tracking-[0.14em] text-interactive">Artha Bench reliability framework</div>
           <h2 className="mt-1 text-lg font-black tracking-tight text-ink">{title}</h2>
-          <div className="mt-1 flex flex-wrap items-center gap-2 text-[10px] text-secondary">
+          <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-secondary">
             {report.verificationCode && <span className="font-mono">{report.verificationCode}</span>}
             {report.createdAt && <span>· {new Date(report.createdAt).toLocaleString()}</span>}
             {report.executionDurationMs !== undefined && <span>· {report.executionDurationMs} ms</span>}
@@ -151,9 +151,9 @@ export const ReliabilityReportPanel: React.FC<{
           </div>
         </div>
         <div className={`min-w-36 rounded-2xl border px-4 py-3 text-right ${scoreTone(score)}`}>
-          <div className="text-[10px] font-black uppercase tracking-wider">Overall score</div>
+          <div className="text-xs font-black uppercase tracking-wider">Overall score</div>
           <div className="mt-0.5 text-2xl font-black tabular-nums">{score} / 100</div>
-          <div className="mt-0.5 text-[10px] font-bold">{verdictLabel(report.verdict)}</div>
+          <div className="mt-0.5 text-xs font-bold">{verdictLabel(report.verdict)}</div>
         </div>
       </div>
 
@@ -163,7 +163,7 @@ export const ReliabilityReportPanel: React.FC<{
             <div className="flex items-center justify-between px-2 pt-1">
               <div>
                 <h3 className="text-xs font-black text-ink">Seven-dimension spider chart</h3>
-                <p className="mt-0.5 text-[10px] text-secondary">Scores come from the centralized reliability engine.</p>
+                <p className="mt-0.5 text-xs text-secondary">Scores come from the centralized reliability engine.</p>
               </div>
               <ShieldCheck className="h-4 w-4 text-success" aria-hidden="true" />
             </div>
@@ -177,9 +177,9 @@ export const ReliabilityReportPanel: React.FC<{
                 <details key={dimension.id} className="group rounded-xl border border-line bg-canvas px-3.5 py-3 open:border-interactive/30">
                   <summary className="flex cursor-pointer list-none items-center justify-between gap-3">
                     <span className="min-w-0 text-xs font-bold text-ink">{dimension.name}</span>
-                    <span className={`shrink-0 rounded-lg border px-2 py-1 font-mono text-[11px] font-black ${scoreTone(currentScore)}`}>{currentScore} / 100</span>
+                    <span className={`shrink-0 rounded-lg border px-2 py-1 font-mono text-xs font-black ${scoreTone(currentScore)}`}>{currentScore} / 100</span>
                   </summary>
-                  <div className="mt-3 border-t border-line pt-3 text-[10px] leading-5 text-secondary">
+                  <div className="mt-3 border-t border-line pt-3 text-xs leading-5 text-secondary">
                     <p>{dimension.reason}</p>
                     <p className="mt-1 font-semibold text-ink">Weight: {Math.round(dimension.weight * 100)}%</p>
                     {dimension.limitations && <p className="mt-1 text-warning">Limitation: {dimension.limitations}</p>}
@@ -195,19 +195,19 @@ export const ReliabilityReportPanel: React.FC<{
       <div className="grid gap-4 lg:grid-cols-3">
         <div className="rounded-2xl border border-success-fill/25 bg-success-soft/60 p-4">
           <h3 className="flex items-center gap-2 text-xs font-black text-success"><CheckCircle2 className="h-4 w-4" /> Key strengths</h3>
-          <div className="mt-3 space-y-2 text-[11px] leading-5 text-secondary">
+          <div className="mt-3 space-y-2 text-xs leading-5 text-secondary">
             {strengths.length ? strengths.slice(0, 4).map((dimension) => <p key={dimension.id}><span className="font-bold text-ink">{dimension.name}:</span> {dimension.rawScore}/100 — {dimension.reason}</p>) : <p>No dimension reached the strong-score threshold yet.</p>}
           </div>
         </div>
         <div className="rounded-2xl border border-warning-fill/25 bg-warning-soft/50 p-4">
           <h3 className="flex items-center gap-2 text-xs font-black text-warning"><CircleHelp className="h-4 w-4" /> Needs review</h3>
-          <div className="mt-3 space-y-2 text-[11px] leading-5 text-secondary">
+          <div className="mt-3 space-y-2 text-xs leading-5 text-secondary">
             {issues.length ? issues.slice(0, 4).map((dimension) => <p key={dimension.id}><span className="font-bold text-ink">{dimension.name}:</span> {dimension.reason}</p>) : <p>No dimension is below the review threshold.</p>}
           </div>
         </div>
         <div className="rounded-2xl border border-interactive/25 bg-interactive-soft/70 p-4">
           <h3 className="flex items-center gap-2 text-xs font-black text-interactive"><Lightbulb className="h-4 w-4" /> Suggested improvements</h3>
-          <div className="mt-3 space-y-2 text-[11px] leading-5 text-secondary">
+          <div className="mt-3 space-y-2 text-xs leading-5 text-secondary">
             {suggestions.length ? suggestions.map((dimension) => <p key={dimension.id}>Improve <span className="font-bold text-ink">{dimension.name}</span>: {dimension.limitations || dimension.reason}</p>) : <p>The evaluated response is strong across all seven measured dimensions.</p>}
           </div>
         </div>
@@ -222,10 +222,10 @@ export const ReliabilityReportPanel: React.FC<{
               <Metric label="Expected result" value={report.groundTruth.expectedResult ?? '—'} />
               <Metric label="Response result" value={report.groundTruth.aiResult ?? 'Not detected'} />
               <Metric label="Error / tolerance" value={`${report.groundTruth.numericalErrorPercent ?? '—'}% / ${report.groundTruth.allowedTolerancePercent}%`} />
-              <p className="sm:col-span-4 text-[11px] leading-5 text-secondary">{report.groundTruth.explanation}</p>
+              <p className="sm:col-span-4 text-xs leading-5 text-secondary">{report.groundTruth.explanation}</p>
             </div>
           ) : (
-            <p className="mt-2 text-[11px] leading-5 text-secondary">{report.groundTruth.explanation}</p>
+            <p className="mt-2 text-xs leading-5 text-secondary">{report.groundTruth.explanation}</p>
           )}
         </div>
       )}
@@ -233,7 +233,7 @@ export const ReliabilityReportPanel: React.FC<{
       {risks.length > 0 && (
         <div className="rounded-2xl border border-danger/25 bg-danger-soft p-4">
           <h3 className="flex items-center gap-2 text-xs font-black text-danger"><AlertTriangle className="h-4 w-4" /> Risk & reliability flags</h3>
-          <ul className="mt-2 space-y-1.5 text-[11px] leading-5 text-secondary">
+          <ul className="mt-2 space-y-1.5 text-xs leading-5 text-secondary">
             {risks.map((risk, index) => <li key={`${risk}-${index}`}>• {risk}</li>)}
           </ul>
         </div>
@@ -254,14 +254,14 @@ export const ReliabilityReportPanel: React.FC<{
         </div>
       )}
 
-      <p className="text-[10px] leading-5 text-secondary">Automated evaluation. Scores describe the supplied response under the Artha Bench methodology; they are not financial, investment, tax, or legal advice.</p>
+      <p className="text-xs leading-5 text-secondary">Automated evaluation. Scores describe the supplied response under the Artha Bench methodology; they are not financial, investment, tax, or legal advice.</p>
     </section>
   );
 };
 
 const Metric: React.FC<{ label: string; value: React.ReactNode; tone?: 'success' | 'danger' }> = ({ label, value, tone }) => (
   <div className="rounded-xl border border-line bg-surface p-3">
-    <div className="text-[9px] font-black uppercase tracking-wider text-secondary">{label}</div>
+    <div className="text-xs font-black uppercase tracking-wider text-secondary">{label}</div>
     <div className={`mt-1 break-words text-sm font-black ${tone === 'success' ? 'text-success' : tone === 'danger' ? 'text-danger' : 'text-ink'}`}>{value}</div>
   </div>
 );

@@ -194,7 +194,7 @@ export const MarketView: React.FC = () => {
               <Search className="w-4 h-4 text-interactive" />
               <span>Company Intelligence Search</span>
             </h2>
-            <p className="text-[11px] text-secondary mb-3">
+            <p className="text-xs text-secondary mb-3">
               Load a provider-labelled quote, Finnhub fundamentals, earnings, analyst trends, charts, and grounded ArthaMind explanation.
             </p>
             <form onSubmit={handleSearch} className="flex gap-2">
@@ -221,7 +221,7 @@ export const MarketView: React.FC = () => {
               <div>
                 <div className="flex items-center gap-2">
                   <span className="font-bold text-ink text-sm">{searchedQuote.symbol}</span>
-                  <span className="text-[10px] text-secondary truncate max-w-28">{searchedQuote.name}</span>
+                  <span className="text-xs text-secondary truncate max-w-28">{searchedQuote.name}</span>
                 </div>
                 <div className="text-lg font-extrabold text-ink mt-1">
                   {formatQuoteValue(searchedQuote)}
@@ -234,7 +234,7 @@ export const MarketView: React.FC = () => {
                 </div>
                 <button
                   onClick={() => toggleWatchlist(searchedQuote.symbol)}
-                  className="px-2.5 py-1 bg-hover text-secondary text-[10px] rounded-lg border border-line-strong"
+                  className="px-2.5 py-1 bg-hover text-secondary text-xs rounded-lg border border-line-strong"
                 >
                   {watchlist.includes(searchedQuote.symbol) ? 'Remove watch' : '+ Watchlist'}
                 </button>
@@ -272,7 +272,7 @@ export const MarketView: React.FC = () => {
                     <div>
                       <div className="flex items-center gap-2">
                         <CompanyLogo symbol={q.symbol} size={22} className="rounded-md border border-line" /><span className="font-bold text-ink text-xs">{q.symbol}</span>
-                        <span className="text-[10px] text-secondary truncate max-w-[100px]">{q.name}</span>
+                        <span className="text-xs text-secondary truncate max-w-[100px]">{q.name}</span>
                       </div>
                       <div className="text-sm font-bold text-ink mt-1">${q.price.toFixed(2)}</div>
                     </div>
@@ -290,7 +290,7 @@ export const MarketView: React.FC = () => {
                       <div className="flex items-center gap-1.5">
                         <button
                           onClick={() => toggleWatchlist(q.symbol)}
-                          className={`text-[10px] px-2 py-0.5 rounded ${
+                          className={`text-xs px-2 py-0.5 rounded ${
                             watchlist.includes(q.symbol)
                               ? 'bg-warning-soft/80 text-warning border border-warning-fill/60'
                               : 'bg-hover text-secondary'
@@ -301,7 +301,7 @@ export const MarketView: React.FC = () => {
 
                         <button
                           onClick={() => handlePaperBuy(q.symbol, q.name, q.price)}
-                          className="text-[10px] px-2 py-0.5 rounded bg-success-soft text-success border border-success-fill/60 font-semibold"
+                          className="text-xs px-2 py-0.5 rounded bg-success-soft text-success border border-success-fill/60 font-semibold"
                         >
                           Buy 10
                         </button>
@@ -326,7 +326,7 @@ export const MarketView: React.FC = () => {
 
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               <div>
-                <label className="text-[10px] text-secondary block mb-1">Stock Price ($)</label>
+                <label className="text-xs text-secondary block mb-1">Stock Price ($)</label>
                 <input
                   type="number"
                   value={calcInput.price}
@@ -336,7 +336,7 @@ export const MarketView: React.FC = () => {
               </div>
 
               <div>
-                <label className="text-[10px] text-secondary block mb-1">EPS ($)</label>
+                <label className="text-xs text-secondary block mb-1">EPS ($)</label>
                 <input
                   type="number"
                   value={calcInput.earningsPerShare}
@@ -346,7 +346,7 @@ export const MarketView: React.FC = () => {
               </div>
 
               <div>
-                <label className="text-[10px] text-secondary block mb-1">Total Debt ($)</label>
+                <label className="text-xs text-secondary block mb-1">Total Debt ($)</label>
                 <input
                   type="number"
                   value={calcInput.totalDebt}
@@ -356,7 +356,7 @@ export const MarketView: React.FC = () => {
               </div>
 
               <div>
-                <label className="text-[10px] text-secondary block mb-1">Total Equity ($)</label>
+                <label className="text-xs text-secondary block mb-1">Total Equity ($)</label>
                 <input
                   type="number"
                   value={calcInput.totalEquity}
@@ -366,7 +366,7 @@ export const MarketView: React.FC = () => {
               </div>
 
               <div>
-                <label className="text-[10px] text-secondary block mb-1">Cash & Equivalents ($)</label>
+                <label className="text-xs text-secondary block mb-1">Cash & Equivalents ($)</label>
                 <input
                   type="number"
                   value={calcInput.cash}
@@ -376,7 +376,7 @@ export const MarketView: React.FC = () => {
               </div>
 
               <div>
-                <label className="text-[10px] text-secondary block mb-1">Total Assets ($)</label>
+                <label className="text-xs text-secondary block mb-1">Total Assets ($)</label>
                 <input
                   type="number"
                   value={calcInput.totalAssets}
@@ -397,15 +397,15 @@ export const MarketView: React.FC = () => {
               <div className="p-4 bg-surface border border-line rounded-xl space-y-3 text-xs">
                 <div className="grid grid-cols-3 gap-2 text-center">
                   <div className="bg-subtle p-2 rounded-lg border border-line">
-                    <div className="text-[10px] text-secondary">P/E Ratio</div>
+                    <div className="text-xs text-secondary">P/E Ratio</div>
                     <div className="font-bold text-success mt-0.5">{calcResult.peRatio.toFixed(2)}</div>
                   </div>
                   <div className="bg-subtle p-2 rounded-lg border border-line">
-                    <div className="text-[10px] text-secondary">Debt to Equity</div>
+                    <div className="text-xs text-secondary">Debt to Equity</div>
                     <div className="font-bold text-success mt-0.5">{calcResult.debtToEquity.toFixed(2)}</div>
                   </div>
                   <div className="bg-subtle p-2 rounded-lg border border-line">
-                    <div className="text-[10px] text-secondary">Quick Ratio</div>
+                    <div className="text-xs text-secondary">Quick Ratio</div>
                     <div className="font-bold text-success mt-0.5">{calcResult.quickRatio.toFixed(2)}</div>
                   </div>
                 </div>
@@ -428,12 +428,12 @@ export const MarketView: React.FC = () => {
                 <Briefcase className="w-4 h-4 text-success" />
                 <span>Paper Trading Sandbox</span>
               </h2>
-              <span className="text-[10px] text-secondary bg-hover px-2 py-0.5 rounded">Risk-Free</span>
+              <span className="text-xs text-secondary bg-hover px-2 py-0.5 rounded">Risk-Free</span>
             </div>
 
             <div className="bg-surface border border-line p-4 rounded-xl flex items-center justify-between">
               <div>
-                <div className="text-[10px] text-secondary uppercase tracking-wider">Virtual Balance</div>
+                <div className="text-xs text-secondary uppercase tracking-wider">Virtual Balance</div>
                 <div className="text-lg font-bold text-success mt-0.5">
                   ${portfolio.cashBalance.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                 </div>
@@ -455,7 +455,7 @@ export const MarketView: React.FC = () => {
                     >
                       <div>
                         <div className="font-bold text-ink">{p.symbol}</div>
-                        <div className="text-[10px] text-secondary">{p.quantity} shares @ ${p.averageCost.toFixed(2)}</div>
+                        <div className="text-xs text-secondary">{p.quantity} shares @ ${p.averageCost.toFixed(2)}</div>
                       </div>
                       <div className="text-right">
                         <div className="font-semibold text-secondary">

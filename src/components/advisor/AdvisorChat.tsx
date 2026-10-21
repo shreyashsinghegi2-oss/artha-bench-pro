@@ -63,7 +63,7 @@ function LayerProgress({ events, running }: { events: LayerEvent[]; running: boo
         const active = running && l === next;
         return (
           <li key={l} className="flex min-w-0 items-center gap-2 rounded-lg border border-line bg-surface px-2.5 py-1.5 text-xs">
-            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-subtle text-[11px] font-bold text-secondary" aria-hidden>
+            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-subtle text-xs font-bold text-secondary" aria-hidden>
               {e?.status === 'done' ? (
                 <Check className="h-3.5 w-3.5 text-success" />
               ) : e?.status === 'failed' ? (

@@ -202,12 +202,12 @@ export const CompanyIntelligencePanel: React.FC<CompanyIntelligencePanelProps> =
               </p>
             </div>
           </div>
-          <span className="px-2.5 py-1 rounded-full bg-warning-soft/60 border border-warning-fill/60 text-[10px] font-bold text-warning whitespace-nowrap">
+          <span className="px-2.5 py-1 rounded-full bg-warning-soft/60 border border-warning-fill/60 text-xs font-bold text-warning whitespace-nowrap">
             KEY REQUIRED
           </span>
         </div>
         <div className="bg-surface border border-line rounded-xl px-4 py-3">
-          <p className="text-[10px] text-secondary uppercase tracking-wider">Vercel environment-variable name</p>
+          <p className="text-xs text-secondary uppercase tracking-wider">Vercel environment-variable name</p>
           <code className="text-xs text-interactive font-mono mt-1 block">FINNHUB_API_KEY</code>
         </div>
       </div>
@@ -255,18 +255,18 @@ export const CompanyIntelligencePanel: React.FC<CompanyIntelligencePanelProps> =
               <h2 className="text-base font-bold text-ink truncate">
                 {profile?.name || data.symbol}
               </h2>
-              <span className="text-[10px] font-mono text-interactive bg-interactive-soft px-2 py-0.5 rounded">
+              <span className="text-xs font-mono text-interactive bg-interactive-soft px-2 py-0.5 rounded">
                 {data.symbol}
               </span>
             </div>
-            <p className="text-[11px] text-secondary mt-1">
+            <p className="text-xs text-secondary mt-1">
               {[profile?.exchange, profile?.industry, profile?.country].filter(Boolean).join(' · ') || 'Company intelligence'}
             </p>
           </div>
         </div>
         <div className="flex items-center gap-3">
           <div className="text-right">
-            <p className="text-[10px] text-secondary">Market capitalization</p>
+            <p className="text-xs text-secondary">Market capitalization</p>
             <p className="text-sm font-bold text-success">
               {formatMarketCap(profile?.marketCapitalization, profile?.currency)}
             </p>
@@ -291,17 +291,17 @@ export const CompanyIntelligencePanel: React.FC<CompanyIntelligencePanelProps> =
             <BarChart3 className="w-4 h-4 text-interactive" />
             <h3 className="text-xs font-bold text-ink">Fundamental Metrics</h3>
           </div>
-          <span className="text-[9px] text-secondary font-mono">FINNHUB NORMALIZED DATA</span>
+          <span className="text-xs text-secondary font-mono">FINNHUB NORMALIZED DATA</span>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3">
           {metricCards.map(([label, value]) => (
             <div key={label} className="bg-surface border border-line rounded-xl p-3.5 min-h-20">
-              <p className="text-[10px] text-secondary">{label}</p>
+              <p className="text-xs text-secondary">{label}</p>
               <p className="text-base font-extrabold text-ink mt-1.5">{value}</p>
             </div>
           ))}
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-[10px]">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
           <div className="bg-surface/70 border border-line rounded-xl p-3">
             <p className="text-secondary">52-week low</p>
             <p className="text-ink font-bold mt-1">{formatNumber(metrics?.week52Low ?? null)}</p>
@@ -328,14 +328,14 @@ export const CompanyIntelligencePanel: React.FC<CompanyIntelligencePanelProps> =
               <LineChartIcon className="w-4 h-4 text-success" />
               <h3 className="text-sm font-bold text-ink">Historical Price Trend</h3>
             </div>
-            <p className="text-[10px] text-secondary mt-1">Configured market-data provider · Prices may be delayed</p>
+            <p className="text-xs text-secondary mt-1">Configured market-data provider · Prices may be delayed</p>
           </div>
           <div className="flex items-center gap-1 bg-surface border border-line rounded-xl p-1">
             {['1m', '3m', '6m', '1y'].map((range) => (
               <button
                 key={range}
                 onClick={() => setHistoryRange(range)}
-                className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all ${historyRange === range ? 'bg-interactive-soft text-interactive' : 'text-secondary hover:text-ink'}`}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase transition-all ${historyRange === range ? 'bg-interactive-soft text-interactive' : 'text-secondary hover:text-ink'}`}
               >
                 {range}
               </button>
@@ -390,7 +390,7 @@ export const CompanyIntelligencePanel: React.FC<CompanyIntelligencePanelProps> =
             <CalendarCheck2 className="w-4 h-4 text-success" />
             <div>
               <h3 className="text-sm font-bold text-ink">Earnings: Actual vs Estimate</h3>
-              <p className="text-[10px] text-secondary mt-0.5">Reported earnings per share and consensus estimate</p>
+              <p className="text-xs text-secondary mt-0.5">Reported earnings per share and consensus estimate</p>
             </div>
           </div>
           {earningsChartData.length > 0 ? (
@@ -410,7 +410,7 @@ export const CompanyIntelligencePanel: React.FC<CompanyIntelligencePanelProps> =
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-3">
                 {data.earnings.map((earning, index) => (
-                  <div key={`${earning.period}-${index}`} className="bg-surface border border-line rounded-lg p-2.5 text-[9px]">
+                  <div key={`${earning.period}-${index}`} className="bg-surface border border-line rounded-lg p-2.5 text-xs">
                     <p className="text-secondary">{earning.period || 'Period'}</p>
                     <p className={`font-bold mt-1 ${(earning.surprise ?? 0) >= 0 ? 'text-success' : 'text-danger'}`}>
                       Surprise {earning.surprise === null ? '—' : `${earning.surprise >= 0 ? '+' : ''}${formatNumber(earning.surprise)}`}
@@ -420,7 +420,7 @@ export const CompanyIntelligencePanel: React.FC<CompanyIntelligencePanelProps> =
               </div>
             </>
           ) : (
-            <div className="h-[250px] flex items-center justify-center text-[10px] text-secondary">No earnings observations available.</div>
+            <div className="h-[250px] flex items-center justify-center text-xs text-secondary">No earnings observations available.</div>
           )}
         </section>
 
@@ -429,7 +429,7 @@ export const CompanyIntelligencePanel: React.FC<CompanyIntelligencePanelProps> =
             <Users className="w-4 h-4 text-interactive" />
             <div>
               <h3 className="text-sm font-bold text-ink">Analyst Recommendation History</h3>
-              <p className="text-[10px] text-secondary mt-0.5">Third-party opinion counts—not ArthaBench advice</p>
+              <p className="text-xs text-secondary mt-0.5">Third-party opinion counts—not ArthaBench advice</p>
             </div>
           </div>
           {recommendationChartData.length > 0 ? (
@@ -450,7 +450,7 @@ export const CompanyIntelligencePanel: React.FC<CompanyIntelligencePanelProps> =
               </ResponsiveContainer>
             </div>
           ) : (
-            <div className="h-[320px] flex items-center justify-center text-[10px] text-secondary">No analyst recommendation history is available.</div>
+            <div className="h-[320px] flex items-center justify-center text-xs text-secondary">No analyst recommendation history is available.</div>
           )}
         </section>
       </div>
@@ -462,16 +462,16 @@ export const CompanyIntelligencePanel: React.FC<CompanyIntelligencePanelProps> =
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="text-base font-bold text-ink">ArthaBench Company Assistant</h3>
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-success-soft border border-success-fill text-[9px] font-bold text-success">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-success-soft border border-success-fill text-xs font-bold text-success">
                   <Sparkles className="w-2.5 h-2.5" /> GROUNDED
                 </span>
               </div>
-              <p className="text-[11px] text-secondary mt-1 max-w-3xl leading-relaxed">
+              <p className="text-xs text-secondary mt-1 max-w-3xl leading-relaxed">
                 Ask for educational explanations of {data.symbol}’s loaded Finnhub fundamentals, earnings, analyst history, and market quote. Company-specific answers are grounded in the current dashboard data.
               </p>
             </div>
           </div>
-          <span className="text-[9px] text-secondary lg:text-right">No buy/sell/hold advice<br />No guaranteed forecasts</span>
+          <span className="text-xs text-secondary lg:text-right">No buy/sell/hold advice<br />No guaranteed forecasts</span>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
@@ -481,7 +481,7 @@ export const CompanyIntelligencePanel: React.FC<CompanyIntelligencePanelProps> =
                 <div className="h-full min-h-44 flex flex-col items-center justify-center text-center px-4">
                   <MessageSquareText className="w-8 h-8 text-interactive mb-3" />
                   <p className="text-sm font-bold text-ink">Ask a grounded company-analysis question</p>
-                  <p className="text-[11px] text-secondary mt-1 max-w-md leading-relaxed">Each response is organized into a direct answer, numbered steps, formula or method, worked example, interpretation, risks, and sources.</p>
+                  <p className="text-xs text-secondary mt-1 max-w-md leading-relaxed">Each response is organized into a direct answer, numbered steps, formula or method, worked example, interpretation, risks, and sources.</p>
                 </div>
               ) : (
                 chatMessages.map((message, index) => {
@@ -512,7 +512,7 @@ export const CompanyIntelligencePanel: React.FC<CompanyIntelligencePanelProps> =
             </div>
 
             {assistantError && (
-              <div className="mt-3 p-2.5 rounded-lg bg-danger-soft/40 border border-danger text-[10px] text-danger">{assistantError}</div>
+              <div className="mt-3 p-2.5 rounded-lg bg-danger-soft/40 border border-danger text-xs text-danger">{assistantError}</div>
             )}
 
             <div className="mt-4"><WebSearchToggle/></div>
@@ -537,27 +537,27 @@ export const CompanyIntelligencePanel: React.FC<CompanyIntelligencePanelProps> =
           </div>
 
           <aside className="lg:col-span-3 bg-surface border border-line rounded-2xl p-4 shadow-sm">
-            <h4 className="text-[10px] font-bold uppercase tracking-wider text-secondary">Suggested questions</h4>
+            <h4 className="text-xs font-bold uppercase tracking-wider text-secondary">Suggested questions</h4>
             <div className="space-y-2 mt-3">
               {suggestedQuestions.map((question) => (
                 <button
                   key={question}
                   onClick={() => submitAssistantQuestion(question)}
                   disabled={assistantLoading}
-                  className="w-full text-left p-3 rounded-xl bg-surface border border-line hover:bg-interactive-soft text-[10px] text-secondary leading-relaxed transition-all disabled:opacity-50"
+                  className="w-full text-left p-3 rounded-xl bg-surface border border-line hover:bg-interactive-soft text-xs text-secondary leading-relaxed transition-all disabled:opacity-50"
                 >
                   {question}
                 </button>
               ))}
             </div>
-            <div className="mt-4 p-3 rounded-xl bg-warning-soft/20 border border-warning-fill/50 text-[9px] text-warning leading-relaxed">
+            <div className="mt-4 p-3 rounded-xl bg-warning-soft/20 border border-warning-fill/50 text-xs text-warning leading-relaxed">
               The assistant provides educational analysis only and rejects personalized trading recommendations, target prices, and prompt-injection attempts.
             </div>
           </aside>
         </div>
       </section>
 
-      <div className="flex items-center justify-between gap-4 text-[10px] text-secondary">
+      <div className="flex items-center justify-between gap-4 text-xs text-secondary">
         <span>{data.message}</span>
         <span>Source: Finnhub</span>
       </div>

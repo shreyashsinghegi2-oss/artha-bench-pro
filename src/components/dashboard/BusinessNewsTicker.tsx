@@ -17,7 +17,7 @@ function NewsGroup({ items, onOpenFeed, duplicate = false }: { items: Normalized
           key={`${duplicate ? 'dup-' : ''}${item.id}`}
           type="button"
           onClick={onOpenFeed}
-          className="group flex h-10 max-w-[520px] shrink-0 items-center gap-2 border-r border-slate-700/80 px-5 text-left text-[10px] text-slate-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-teal-300"
+          className="group flex h-10 max-w-[520px] shrink-0 items-center gap-2 border-r border-slate-700/80 px-5 text-left text-xs text-slate-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-teal-300"
           aria-label={`Open business news feed for ${item.title}`}
           tabIndex={duplicate ? -1 : 0}
         >
@@ -41,8 +41,8 @@ export const BusinessNewsTicker: React.FC<{ items: NormalizedNewsItem[]; onOpenF
       >
         <Newspaper className="h-3.5 w-3.5 text-emerald-300" aria-hidden="true" />
         <div className="leading-tight">
-          <p className="text-[10px] font-bold tracking-[0.13em] text-white">BUSINESS BRIEF</p>
-          <p className="hidden text-[9px] text-slate-300 sm:block">Connected news sources · View feed</p>
+          <p className="text-xs font-bold tracking-[0.13em] text-white">BUSINESS BRIEF</p>
+          <p className="hidden text-xs text-slate-300 sm:block">Connected news sources · View feed</p>
         </div>
       </button>
 

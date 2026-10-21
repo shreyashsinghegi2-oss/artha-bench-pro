@@ -145,7 +145,7 @@ export const AppSearch: React.FC<Props> = ({ onNavigate }) => {
         {query ? (
           <button type="button" onClick={() => { setQuery(''); inputRef.current?.focus(); }} className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-md p-1 text-secondary hover:bg-subtle hover:text-ink" aria-label="Clear search"><X className="h-3.5 w-3.5" /></button>
         ) : (
-          <span className="pointer-events-none absolute right-2.5 top-1/2 inline-flex -translate-y-1/2 items-center gap-1 rounded-md border border-line bg-surface px-1.5 py-0.5 text-[9px] font-bold text-secondary">
+          <span className="pointer-events-none absolute right-2.5 top-1/2 inline-flex -translate-y-1/2 items-center gap-1 rounded-md border border-line bg-surface px-1.5 py-0.5 text-xs font-bold text-secondary">
             <Command className="h-3 w-3" aria-hidden="true" />{isMac ? 'K' : 'Ctrl K'}
           </span>
         )}
@@ -165,12 +165,12 @@ export const AppSearch: React.FC<Props> = ({ onNavigate }) => {
               className={`w-full rounded-xl px-3 py-2.5 text-left transition ${activeIndex === index ? 'bg-interactive-soft' : 'hover:bg-subtle'}`}
             >
               <div className="text-xs font-black text-ink">{item.title}</div>
-              <div className="mt-0.5 text-[10px] leading-4 text-secondary">{item.description}</div>
+              <div className="mt-0.5 text-xs leading-4 text-secondary">{item.description}</div>
             </button>
           )) : (
             <div className="px-3 py-7 text-center text-xs text-secondary">No matching workspace found.</div>
           )}
-          <div className="sticky bottom-0 mt-1 border-t border-line bg-surface px-3 py-2 text-[9px] text-secondary">{results.length} workspace{results.length === 1 ? '' : 's'} · ↑ ↓ navigate · Enter open · Esc close</div>
+          <div className="sticky bottom-0 mt-1 border-t border-line bg-surface px-3 py-2 text-xs text-secondary">{results.length} workspace{results.length === 1 ? '' : 's'} · ↑ ↓ navigate · Enter open · Esc close</div>
         </div>
       )}
     </div>

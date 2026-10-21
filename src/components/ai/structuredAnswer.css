@@ -4,14 +4,14 @@
 .sa{border-top:3px solid var(--k)!important}
 .sa-head{display:flex;align-items:flex-start;gap:10px;padding:14px 16px;border-bottom:1px solid var(--border-subtle);background:linear-gradient(135deg,color-mix(in srgb,var(--k) 8%,var(--bg-surface)),var(--bg-surface) 60%)}
 .sa-ico{display:grid;place-items:center;flex:none;width:34px;height:34px;border-radius:11px;background:color-mix(in srgb,var(--k) 14%,transparent);color:var(--k)}
-.sa-kind{font-size:9.5px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--k)}
-.sa-badge{flex:none;display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:999px;font-size:9.5px;font-weight:800;color:#475569;background:#f1f5f9}
+.sa-kind{font-size:12px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--k)}
+.sa-badge{flex:none;display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:999px;font-size:12px;font-weight:800;color:#475569;background:#f1f5f9}
 .sa-badge.live{color:#047857;background:#d1fae5}
 .sa-direct{padding:12px 14px;border-radius:12px;border-left:4px solid var(--k);background:color-mix(in srgb,var(--k) 6%,var(--bg-surface));font-size:1.02em;line-height:1.6}
-.sa-label{display:flex;align-items:center;gap:6px;margin-bottom:6px;font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--text-secondary)}
+.sa-label{display:flex;align-items:center;gap:6px;margin-bottom:6px;font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--text-secondary)}
 .sa-step{display:flex;gap:10px;padding:10px 12px;border-radius:12px;border:1px solid var(--border-subtle);background:var(--bg-subtle);--st:var(--k)}
 .sa-step.bad{--st:#dc2626;background:#fef2f2;border-color:#fecaca}.sa-step.warn{--st:#d97706;background:#fffbeb;border-color:#fde68a}.sa-step.good{--st:#059669;background:#ecfdf5;border-color:#a7f3d0}
-.sa-num{display:grid;place-items:center;flex:none;width:24px;height:24px;border-radius:50%;background:var(--st);color:#fff;font-size:10.5px;font-weight:800}
+.sa-num{display:grid;place-items:center;flex:none;width:24px;height:24px;border-radius:50%;background:var(--st);color:#fff;font-size:12px;font-weight:800}
 .sa-formula{padding:12px;border-radius:12px;border:1px solid #ddd6fe;background:#f5f3ff}
 .sa-result{padding:12px 14px;border-radius:12px;border:1px solid #a7f3d0;background:#ecfdf5}
 .sa-result .sa-label{color:#047857}

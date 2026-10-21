@@ -55,9 +55,9 @@ export const PersonalFinancialIntelligence: React.FC<Props> = ({ onNavigate }) =
     <section className="rounded-3xl border border-interactive/20 bg-surface p-5 shadow-sm sm:p-6" aria-labelledby="my-financial-intelligence-title">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <div className="text-[10px] font-black uppercase tracking-[0.16em] text-interactive">My Financial Intelligence</div>
+          <div className="text-xs font-black uppercase tracking-[0.16em] text-interactive">My Financial Intelligence</div>
           <h2 id="my-financial-intelligence-title" className="mt-1 text-xl font-black text-ink">Welcome back, {firstName}</h2>
-          <p className="mt-1 text-[11px] text-secondary">Private account snapshot · {snapshot.month} · only recorded data is shown.</p>
+          <p className="mt-1 text-xs text-secondary">Private account snapshot · {snapshot.month} · only recorded data is shown.</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <button type="button" onClick={() => onNavigate('financial-health')} className="inline-flex items-center gap-2 rounded-xl border border-line bg-canvas px-3 py-2 text-xs font-black text-ink">
@@ -83,14 +83,14 @@ export const PersonalFinancialIntelligence: React.FC<Props> = ({ onNavigate }) =
 
       <div className="mt-4 grid gap-3 md:grid-cols-2">
         <button type="button" onClick={() => onNavigate('financial-health')} className="rounded-2xl border border-line bg-canvas p-4 text-left transition hover:bg-subtle">
-          <div className="flex items-start justify-between gap-3"><div><div className="flex items-center gap-2 text-[9px] font-black uppercase tracking-wider text-secondary"><HeartPulse className="h-4 w-4 text-interactive" /> Financial Health Profile</div><div className="mt-2 text-base font-black text-ink">{snapshot.health.composite == null ? 'Data needed' : `${snapshot.health.composite}/100 · ${snapshot.health.compositeStatus}`}</div><div className="mt-1 text-[9px] leading-4 text-secondary">Explainable personal financial health indicator from recorded workspace data · not a credit score.</div></div><ArrowRight className="h-4 w-4 text-interactive" /></div>
+          <div className="flex items-start justify-between gap-3"><div><div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-secondary"><HeartPulse className="h-4 w-4 text-interactive" /> Financial Health Profile</div><div className="mt-2 text-base font-black text-ink">{snapshot.health.composite == null ? 'Data needed' : `${snapshot.health.composite}/100 · ${snapshot.health.compositeStatus}`}</div><div className="mt-1 text-xs leading-4 text-secondary">Explainable personal financial health indicator from recorded workspace data · not a credit score.</div></div><ArrowRight className="h-4 w-4 text-interactive" /></div>
         </button>
         <button type="button" onClick={() => onNavigate('emi-manager')} className="rounded-2xl border border-line bg-canvas p-4 text-left transition hover:bg-subtle">
-          <div className="flex items-start justify-between gap-3"><div><div className="flex items-center gap-2 text-[9px] font-black uppercase tracking-wider text-secondary"><CalendarClock className="h-4 w-4 text-interactive" /> Commitment Intelligence</div><div className="mt-2 text-base font-black text-ink">{snapshot.emi.activeCount ? `${formatINR(snapshot.emi.activeMonthlyCommitment)} / month` : 'No active EMI recorded'}</div><div className="mt-1 text-[9px] leading-4 text-secondary">{snapshot.emi.commitmentToIncomePercent == null ? 'Add recorded income for commitment-to-income context.' : `${snapshot.emi.commitmentToIncomePercent}% of recorded monthly income · internal descriptive ratio only.`}</div></div><ArrowRight className="h-4 w-4 text-interactive" /></div>
+          <div className="flex items-start justify-between gap-3"><div><div className="flex items-center gap-2 text-xs font-black uppercase tracking-wider text-secondary"><CalendarClock className="h-4 w-4 text-interactive" /> Commitment Intelligence</div><div className="mt-2 text-base font-black text-ink">{snapshot.emi.activeCount ? `${formatINR(snapshot.emi.activeMonthlyCommitment)} / month` : 'No active EMI recorded'}</div><div className="mt-1 text-xs leading-4 text-secondary">{snapshot.emi.commitmentToIncomePercent == null ? 'Add recorded income for commitment-to-income context.' : `${snapshot.emi.commitmentToIncomePercent}% of recorded monthly income · internal descriptive ratio only.`}</div></div><ArrowRight className="h-4 w-4 text-interactive" /></div>
         </button>
       </div>
 
-      <div className="mt-4 flex flex-col gap-3 rounded-2xl border border-line bg-canvas px-4 py-3 text-[10px] text-secondary sm:flex-row sm:items-center sm:justify-between">
+      <div className="mt-4 flex flex-col gap-3 rounded-2xl border border-line bg-canvas px-4 py-3 text-xs text-secondary sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-2"><PiggyBank className="h-4 w-4 text-brand" /><span><span className="font-semibold text-ink">ArthaMind prompt:</span> Ask about your {new Date(`${snapshot.month}-01`).toLocaleDateString('en-IN', { month: 'long' })} budget after enabling the relevant Assistant Data Context.</span></div>
         <button type="button" onClick={() => onNavigate('decision-replay')} className="inline-flex shrink-0 items-center gap-1.5 font-black text-interactive">Replay a what-if <ArrowRight className="h-3.5 w-3.5" /></button>
       </div>
@@ -101,8 +101,8 @@ export const PersonalFinancialIntelligence: React.FC<Props> = ({ onNavigate }) =
 const Summary: React.FC<{ icon: React.ComponentType<{ className?: string }>; label: string; value: string; note: string; onClick: () => void }> = ({ icon: Icon, label, value, note, onClick }) => (
   <button type="button" onClick={onClick} className="min-h-32 rounded-2xl border border-line bg-canvas p-4 text-left transition hover:bg-subtle">
     <Icon className="h-4 w-4 text-interactive" />
-    <div className="mt-3 text-[9px] font-bold uppercase tracking-wider text-secondary">{label}</div>
+    <div className="mt-3 text-xs font-bold uppercase tracking-wider text-secondary">{label}</div>
     <div className="mt-1 text-sm font-black text-ink">{value}</div>
-    <div className="mt-1 line-clamp-2 text-[9px] leading-4 text-secondary">{note}</div>
+    <div className="mt-1 line-clamp-2 text-xs leading-4 text-secondary">{note}</div>
   </button>
 );

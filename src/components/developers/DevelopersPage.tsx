@@ -363,7 +363,7 @@ export default function DevelopersPage({ onHome }: { onHome: () => void }): Reac
                       className="mt-1 w-full rounded-xl border border-line bg-canvas px-3 py-2 text-sm text-ink"
                     />
                   )}
-                  <p className="mt-1 text-[11px] leading-4 text-secondary">{p.description}</p>
+                  <p className="mt-1 text-xs leading-4 text-secondary">{p.description}</p>
                 </div>
               ))}
               <button

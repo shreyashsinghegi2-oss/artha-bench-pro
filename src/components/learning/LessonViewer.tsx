@@ -124,7 +124,7 @@ export const LessonViewer: React.FC<LessonViewerProps> = ({
       {/* Control Filters: Level, Language, Mode */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-surface/60 p-3 rounded-xl border border-line">
         <div>
-          <label className="text-[10px] uppercase font-bold text-secondary flex items-center gap-1 mb-1">
+          <label className="text-xs uppercase font-bold text-secondary flex items-center gap-1 mb-1">
             <SlidersHorizontal className="w-3 h-3 text-success" />
             Learner Level
           </label>
@@ -140,7 +140,7 @@ export const LessonViewer: React.FC<LessonViewerProps> = ({
         </div>
 
         <div>
-          <label className="text-[10px] uppercase font-bold text-secondary flex items-center gap-1 mb-1">
+          <label className="text-xs uppercase font-bold text-secondary flex items-center gap-1 mb-1">
             <Globe2 className="w-3 h-3 text-interactive" />
             Language Mode
           </label>
@@ -156,7 +156,7 @@ export const LessonViewer: React.FC<LessonViewerProps> = ({
         </div>
 
         <div>
-          <label className="text-[10px] uppercase font-bold text-secondary flex items-center gap-1 mb-1">
+          <label className="text-xs uppercase font-bold text-secondary flex items-center gap-1 mb-1">
             <Sparkles className="w-3 h-3 text-warning" />
             Pedagogy Mode
           </label>
@@ -188,7 +188,7 @@ export const LessonViewer: React.FC<LessonViewerProps> = ({
             {lessonContent.keyConcepts?.map((concept: string, idx: number) => (
               <span
                 key={idx}
-                className="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-success-soft/60 text-success border border-success-fill/60"
+                className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-success-soft/60 text-success border border-success-fill/60"
               >
                 #{concept}
               </span>

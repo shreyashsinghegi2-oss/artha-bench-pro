@@ -12,8 +12,8 @@ const ASSETS: Record<string, Asset> = {
 export const MarketAssetIdentity: React.FC<{ symbol: string; compact?: boolean; showName?: boolean }> = ({ symbol, compact = false, showName = true }) => {
   const asset = ASSETS[symbol.toUpperCase()] ?? { name: symbol, short: symbol.slice(0, 4).toUpperCase(), kind: 'Company' as const };
   return <div className="flex min-w-0 items-center gap-2.5">
-    {hasMarketMark(symbol) ? <CompanyLogo symbol={symbol} size={compact ? 28 : 36} className="rounded-xl border border-line" /> : <div role="img" aria-label={`${asset.name} identity mark`} className={`${compact ? 'h-7 w-7 text-[8px]' : 'h-9 w-9 text-[9px]'} flex shrink-0 items-center justify-center rounded-xl border border-line bg-canvas font-black tracking-tight text-interactive`}>{asset.short.slice(0,4)}</div>}
-    {showName && <div className="min-w-0"><div className="truncate text-[10px] font-black text-ink">{asset.name}</div><div className="text-[8px] font-bold uppercase tracking-wider text-secondary">{asset.short} · {asset.kind}</div></div>}
+    {hasMarketMark(symbol) ? <CompanyLogo symbol={symbol} size={compact ? 28 : 36} className="rounded-xl border border-line" /> : <div role="img" aria-label={`${asset.name} identity mark`} className={`${compact ? 'h-7 w-7 text-xs' : 'h-9 w-9 text-xs'} flex shrink-0 items-center justify-center rounded-xl border border-line bg-canvas font-black tracking-tight text-interactive`}>{asset.short.slice(0,4)}</div>}
+    {showName && <div className="min-w-0"><div className="truncate text-xs font-black text-ink">{asset.name}</div><div className="text-xs font-bold uppercase tracking-wider text-secondary">{asset.short} · {asset.kind}</div></div>}
   </div>;
 };
 

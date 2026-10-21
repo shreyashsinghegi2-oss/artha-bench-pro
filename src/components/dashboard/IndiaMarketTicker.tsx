@@ -78,7 +78,7 @@ function TickerItem({ item }: { item: IndiaMarketTickerItem }) {
         <span>({signedNumber(changePercent, '%')})</span>
       </span>
       <span
-        className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-bold ${sentimentClass}`}
+        className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-bold ${sentimentClass}`}
         aria-label={`ArthaMind sentiment ${sentiment}`}
         title="ArthaMind sentiment derived from the displayed price-change direction"
       >
@@ -170,8 +170,8 @@ export const IndiaMarketTicker: React.FC = () => {
           aria-hidden="true"
         />
         <div className="leading-tight">
-          <p className="text-[10px] font-bold tracking-[0.13em] text-white">INDIA MARKETS</p>
-          <p className="hidden text-[9px] text-slate-300 sm:block">
+          <p className="text-xs font-bold tracking-[0.13em] text-white">INDIA MARKETS</p>
+          <p className="hidden text-xs text-slate-300 sm:block">
             {sourceLabel}
             {retrievedTime && <span className="hidden 2xl:inline"> · {retrievedTime} IST</span>}
           </p>

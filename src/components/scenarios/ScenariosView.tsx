@@ -113,7 +113,7 @@ export const ScenariosView: React.FC = () => {
               <p className="text-xs text-secondary">Calculate instantly with Decimal.js, verify on the server, then ask ArthaMind to explain the exact result with connected feature-specific context.</p>
             </div>
           </div>
-          <div className="flex flex-wrap gap-2 text-[9px] font-black uppercase tracking-wider">
+          <div className="flex flex-wrap gap-2 text-xs font-black uppercase tracking-wider">
             <span className="rounded-full border border-success-fill/25 bg-success-soft px-2.5 py-1 text-success">Decimal.js deterministic</span>
             <span className="rounded-full border border-interactive bg-interactive-soft px-2.5 py-1 text-interactive">Server verification</span>
             <span className="rounded-full border border-interactive bg-interactive-soft px-2.5 py-1 text-interactive">ArthaMind analysis</span>
@@ -121,20 +121,20 @@ export const ScenariosView: React.FC = () => {
         </div>
 
         <div className="grid gap-3 rounded-2xl border border-line bg-canvas p-4 sm:grid-cols-2 lg:grid-cols-4">
-          <label className="text-[11px] text-secondary">Profile / data region
+          <label className="text-xs text-secondary">Profile / data region
             <select value={profile} onChange={(event) => setProfile(event.target.value as ScenarioProfile)} className={`${INPUT_CLASS} mt-1`}>
               <option value="US">United States</option><option value="India">India</option><option value="Global">Global</option>
             </select>
           </label>
-          <label className="text-[11px] text-secondary">Display currency
+          <label className="text-xs text-secondary">Display currency
             <select value={currency} onChange={(event) => setCurrency(event.target.value as ScenarioCurrency)} className={`${INPUT_CLASS} mt-1`}>
               <option value="USD">USD ($)</option><option value="INR">INR (₹)</option><option value="EUR">EUR (€)</option><option value="GBP">GBP (£)</option>
             </select>
           </label>
-          {companyContextRelevant ? <label className="text-[11px] text-secondary">Optional company symbol for connected context
+          {companyContextRelevant ? <label className="text-xs text-secondary">Optional company symbol for connected context
             <input value={companySymbol} onChange={(event) => setCompanySymbol(event.target.value)} maxLength={20} placeholder="AAPL or RELIANCE.NS" className={`${INPUT_CLASS} mt-1 uppercase`} />
-          </label> : <div className="text-[11px] leading-5 text-secondary"><div className="mb-1 font-bold text-ink">External context</div>Official macro observations can be supplied separately to ArthaMind. They never replace the rate, income, debt, or other inputs you enter.</div>}
-          <label className="flex items-center gap-2 self-end rounded-xl border border-line bg-surface px-3 py-2.5 text-[11px] font-semibold text-secondary">
+          </label> : <div className="text-xs leading-5 text-secondary"><div className="mb-1 font-bold text-ink">External context</div>Official macro observations can be supplied separately to ArthaMind. They never replace the rate, income, debt, or other inputs you enter.</div>}
+          <label className="flex items-center gap-2 self-end rounded-xl border border-line bg-surface px-3 py-2.5 text-xs font-semibold text-secondary">
             <input type="checkbox" checked={useExternalContext} onChange={(event) => setUseExternalContext(event.target.checked)} className="h-4 w-4 accent-current" />
             <Globe2 className="h-4 w-4 text-interactive" /> Use connected provider context
           </label>
@@ -156,7 +156,7 @@ export const ScenariosView: React.FC = () => {
             <NumberField label="Annual Interest Rate (%)" value={rate} onChange={setRate} min={0} step={0.01} />
             <NumberField label="Time Horizon (Years)" value={years} onChange={setYears} min={0.01} step={0.25} />
             <NumberField label={`Monthly Deposit (${symbol})`} value={monthlyContribution} onChange={setMonthlyContribution} min={0} />
-            <label className="text-[11px] text-secondary">Compounding frequency
+            <label className="text-xs text-secondary">Compounding frequency
               <select value={compoundingFrequency} onChange={(event) => setCompoundingFrequency(Number(event.target.value))} className={`${INPUT_CLASS} mt-1`}><option value={1}>Annual</option><option value={4}>Quarterly</option><option value={12}>Monthly</option><option value={365}>Daily</option></select>
             </label>
           </div>}
@@ -220,5 +220,5 @@ export const ScenariosView: React.FC = () => {
 };
 
 const NumberField: React.FC<{ label: string; value: number; onChange: (value: number) => void; min?: number; step?: number }> = ({ label, value, onChange, min, step }) => (
-  <label className="text-[11px] text-secondary">{label}<input type="number" inputMode="decimal" value={Number.isFinite(value) ? value : ''} min={min} step={step || 1} onChange={(event) => onChange(event.target.value === '' ? Number.NaN : Number(event.target.value))} className={`${INPUT_CLASS} mt-1`} /></label>
+  <label className="text-xs text-secondary">{label}<input type="number" inputMode="decimal" value={Number.isFinite(value) ? value : ''} min={min} step={step || 1} onChange={(event) => onChange(event.target.value === '' ? Number.NaN : Number(event.target.value))} className={`${INPUT_CLASS} mt-1`} /></label>
 );

@@ -8,7 +8,7 @@
 @keyframes gt-bounce-down{0%,100%{transform:translateY(0)}50%{transform:translateY(8px)}}
 .gt-card{position:fixed;background:var(--bg-surface);color:var(--text-primary);border:1px solid var(--border-subtle);border-radius:18px;padding:16px 18px;box-shadow:0 18px 50px -20px rgba(0,0,0,.5);transition:top .3s ease,left .3s ease}
 .gt-head{display:flex;justify-content:space-between;align-items:center}
-.gt-head small{font-size:11.5px;font-weight:800;color:var(--brand-hover)}
+.gt-head small{font-size:12px;font-weight:800;color:var(--brand-hover)}
 .gt-head button{border:0;background:none;color:var(--text-secondary);cursor:pointer;padding:4px}
 .gt-card h2{margin:6px 0 4px;font-size:18px;font-weight:900}
 .gt-card p{margin:0;font-size:14.5px;line-height:1.5;color:var(--text-secondary)}
@@ -23,7 +23,7 @@
 .fi-card{position:fixed;z-index:70;top:calc(var(--ws-head-h,72px) + 14px);right:24px;width:min(360px,calc(100vw - 32px));background:var(--bg-surface);color:var(--text-primary);border:1px solid var(--border-subtle);border-top:4px solid var(--brand-primary);border-radius:16px;padding:14px 16px;box-shadow:0 20px 50px -24px rgba(15,23,42,.55);animation:fi-in .3s ease-out}
 .fi-arrow{position:absolute;top:-34px;left:24px;color:var(--brand-primary);animation:gt-bounce 1s ease-in-out infinite}
 .fi-head{display:flex;justify-content:space-between;align-items:center}
-.fi-head small{font-size:11.5px;font-weight:800;color:var(--brand-hover)}
+.fi-head small{font-size:12px;font-weight:800;color:var(--brand-hover)}
 .fi-head button{border:0;background:none;color:var(--text-secondary);cursor:pointer}
 .fi-card h2{margin:4px 0;font-size:17px;font-weight:900}
 .fi-card p{margin:0 0 8px;font-size:13.5px;line-height:1.5;color:var(--text-secondary)}

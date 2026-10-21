@@ -68,7 +68,7 @@ export const LearningView: React.FC = () => {
       <div className="space-y-6">
         <div className="bg-surface border border-line p-6 sm:p-8 rounded-3xl shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-interactive/15 border border-interactive/30 text-interactive text-[11px] font-bold tracking-wide uppercase">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-interactive/15 border border-interactive/30 text-interactive text-xs font-bold tracking-wide uppercase">
               <BookOpen className="w-3.5 h-3.5" />
               <span>Structured Finance Curriculum</span>
             </div>

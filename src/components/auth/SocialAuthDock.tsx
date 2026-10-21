@@ -15,7 +15,7 @@ export const SocialAuthDock: React.FC = () => {
 
   return (
     <div className="fixed inset-x-0 bottom-4 z-[120] mx-auto w-[calc(100%-2rem)] max-w-xl rounded-2xl border border-line bg-surface/95 p-3 shadow-2xl backdrop-blur">
-      <div className="mb-2 flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-secondary">
+      <div className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-secondary">
         <ShieldCheck className="h-3.5 w-3.5 text-success" /> Social sign-in via Supabase Auth
       </div>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -31,7 +31,7 @@ export const SocialAuthDock: React.FC = () => {
           </button>
         ))}
       </div>
-      <p className="mt-2 text-[9px] leading-4 text-secondary">A provider must also be enabled with its own OAuth client credentials in Supabase before authentication can complete.</p>
+      <p className="mt-2 text-xs leading-4 text-secondary">A provider must also be enabled with its own OAuth client credentials in Supabase before authentication can complete.</p>
     </div>
   );
 };

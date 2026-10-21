@@ -96,16 +96,16 @@ export const FinancialResearchWorkspace: React.FC<Props> = ({ onEnter }) => {
             <ArthaMindLogo className="h-7 w-7" compact />
             <div>
               <div className="text-[12px] font-bold text-slate-900">Research workspace</div>
-              <div className="text-[9px] text-slate-500">Market question → evidence view</div>
+              <div className="text-xs text-slate-500">Market question → evidence view</div>
             </div>
           </div>
-          <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[9px] font-semibold text-slate-600">Research preview</span>
+          <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-600">Research preview</span>
         </div>
 
         <div className="grid lg:grid-cols-[24%_51%_25%]">
           <aside className="border-b border-slate-200 p-3 sm:p-4 lg:border-b-0 lg:border-r" aria-label="Sample market watchlist">
             <div className="mb-3">
-              <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">Watchlist</span>
+              <span className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">Watchlist</span>
             </div>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-5 lg:block lg:space-y-1.5">
               {watchlist.map((item, index) => {
@@ -124,10 +124,10 @@ export const FinancialResearchWorkspace: React.FC<Props> = ({ onEnter }) => {
                   >
                     <div className="flex items-start justify-between gap-2 lg:items-center">
                       <div className="min-w-0">
-                        <div className="truncate text-[10px] font-bold text-slate-800">{item.symbol}</div>
-                        <div className="mt-0.5 hidden text-[8px] text-slate-400 lg:block">{item.label}</div>
+                        <div className="truncate text-xs font-bold text-slate-800">{item.symbol}</div>
+                        <div className="mt-0.5 hidden text-xs text-slate-400 lg:block">{item.label}</div>
                       </div>
-                      <span className={`shrink-0 text-[9px] font-semibold ${item.direction === 'up' ? 'text-emerald-700' : 'text-rose-700'}`}>
+                      <span className={`shrink-0 text-xs font-semibold ${item.direction === 'up' ? 'text-emerald-700' : 'text-rose-700'}`}>
                         {item.change > 0 ? '+' : ''}{item.change.toFixed(2)}% {item.direction === 'up' ? '↑' : '↓'}
                       </span>
                     </div>
@@ -140,13 +140,13 @@ export const FinancialResearchWorkspace: React.FC<Props> = ({ onEnter }) => {
           <div className="border-b border-slate-200 p-3 sm:p-4 lg:border-b-0 lg:border-r">
             <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
               <div>
-                <div className="text-[11px] font-bold text-slate-900">NIFTY 50 · 1D</div>
-                <div className="mt-0.5 text-[9px] text-slate-400">Research chart</div>
+                <div className="text-xs font-bold text-slate-900">NIFTY 50 · 1D</div>
+                <div className="mt-0.5 text-xs text-slate-400">Research chart</div>
               </div>
               <button
                 type="button"
                 onClick={() => onEnter('markets')}
-                className="artha-preview-action inline-flex items-center gap-1 text-[9px] font-bold text-teal-700"
+                className="artha-preview-action inline-flex items-center gap-1 text-xs font-bold text-teal-700"
               >
                 Open Market Data <ArrowRight className="h-3 w-3" aria-hidden="true" />
               </button>
@@ -204,19 +204,19 @@ export const FinancialResearchWorkspace: React.FC<Props> = ({ onEnter }) => {
                 </g>
               </g>
             </svg>
-            <p className="mt-2 text-[8px] leading-4 text-slate-400">Sample chart for product preview — not live market data.</p>
+            <p className="mt-2 text-xs leading-4 text-slate-400">Sample chart for product preview — not live market data.</p>
           </div>
 
           <aside className="p-4 sm:p-5" aria-label="Sample ArthaMind response panel">
             <div className="artha-answer-reveal" style={{ animationDelay: '3.1s' }}>
-              <div className="text-[10px] font-bold uppercase tracking-[0.13em] text-teal-700">ArthaMind response</div>
+              <div className="text-xs font-bold uppercase tracking-[0.13em] text-teal-700">ArthaMind response</div>
               <h3 className="mt-3 text-[12px] font-bold leading-5 text-slate-900">What may be driving today’s NIFTY movement?</h3>
             </div>
-            <p className="artha-answer-reveal mt-3 text-[10px] leading-5 text-slate-600" style={{ animationDelay: '3.35s' }}>
+            <p className="artha-answer-reveal mt-3 text-xs leading-5 text-slate-600" style={{ animationDelay: '3.35s' }}>
               The move may reflect broader market sentiment and sector performance.
             </p>
 
-            <div className="mt-5 space-y-2.5 text-[9px] text-slate-600">
+            <div className="mt-5 space-y-2.5 text-xs text-slate-600">
               <div className="artha-answer-reveal flex items-center justify-between border-b border-slate-100 pb-2" style={{ animationDelay: '3.6s' }}><span>Market context</span><span className="font-semibold text-slate-800">Included</span></div>
               <div className="artha-answer-reveal flex items-center justify-between border-b border-slate-100 pb-2" style={{ animationDelay: '3.82s' }}><span>Sources</span><span className="font-semibold text-slate-800">3 reviewed</span></div>
               <div className="artha-answer-reveal flex items-center justify-between border-b border-slate-100 pb-2" style={{ animationDelay: '4.02s' }}><span>Verification</span><span className="font-semibold text-amber-700">Required</span></div>
@@ -225,7 +225,7 @@ export const FinancialResearchWorkspace: React.FC<Props> = ({ onEnter }) => {
             <button
               type="button"
               onClick={() => onEnter('evaluation-lab')}
-              className="artha-answer-reveal artha-preview-action mt-5 inline-flex items-center gap-1.5 rounded-lg border border-teal-200 bg-teal-50 px-3 py-2 text-[10px] font-bold text-teal-800"
+              className="artha-answer-reveal artha-preview-action mt-5 inline-flex items-center gap-1.5 rounded-lg border border-teal-200 bg-teal-50 px-3 py-2 text-xs font-bold text-teal-800"
               style={{ animationDelay: '4.18s' }}
             >
               Inspect evidence <ArrowRight className="h-3 w-3" aria-hidden="true" />
@@ -233,7 +233,7 @@ export const FinancialResearchWorkspace: React.FC<Props> = ({ onEnter }) => {
           </aside>
         </div>
 
-        <div className="artha-context-boundary relative flex flex-col gap-2 border-t border-slate-200 bg-slate-50 px-4 py-2.5 text-[9px] text-slate-600 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+        <div className="artha-context-boundary relative flex flex-col gap-2 border-t border-slate-200 bg-slate-50 px-4 py-2.5 text-xs text-slate-600 sm:flex-row sm:items-center sm:justify-between sm:px-5">
           <span><strong className="font-semibold text-slate-800">Public market context:</strong> active</span>
           <span className="flex items-center gap-1.5">
             <strong className="font-semibold text-slate-800">Personal context:</strong> off by default
@@ -251,7 +251,7 @@ export const FinancialResearchWorkspace: React.FC<Props> = ({ onEnter }) => {
               <span
                 id="personal-context-tooltip"
                 role="tooltip"
-                className={`pointer-events-none absolute bottom-full right-0 z-10 mb-2 w-52 rounded-lg bg-slate-900 px-3 py-2 text-[9px] leading-4 text-white shadow-lg transition-opacity ${privacyTipOpen ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 group-focus-within:opacity-100'}`}
+                className={`pointer-events-none absolute bottom-full right-0 z-10 mb-2 w-52 rounded-lg bg-slate-900 px-3 py-2 text-xs leading-4 text-white shadow-lg transition-opacity ${privacyTipOpen ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 group-focus-within:opacity-100'}`}
               >
                 Personal categories are used only after you enable them.
               </span>

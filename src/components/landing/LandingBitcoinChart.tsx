@@ -63,21 +63,21 @@ export const LandingBitcoinChart: React.FC = () => {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[9px] font-black tracking-[.12em] text-white/65">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-xs font-black tracking-[.12em] text-white/65">
               <Wifi className="h-3 w-3" />{label}
             </span>
-            <span className="text-[9px] font-semibold text-white/35">Binance · Bitcoin / USDT · 15m</span>
+            <span className="text-xs font-semibold text-white/35">Binance · Bitcoin / USDT · 15m</span>
           </div>
           <h3 className="mt-2 text-xl font-black text-white">Bitcoin live candlestick</h3>
           <p className="mt-1 text-xs text-white/45">Public OHLC market stream with provider-backed status.</p>
         </div>
         <div className="flex items-center gap-3">
           <div className="text-right">
-            <div className="text-[9px] uppercase tracking-[.12em] text-white/35">Latest close</div>
+            <div className="text-xs uppercase tracking-[.12em] text-white/35">Latest close</div>
             <div className="text-lg font-black text-white">{latest ? `$${latest.close.toLocaleString(undefined, { maximumFractionDigits: 2 })}` : '—'}</div>
-            <div className={`text-[9px] font-bold ${change >= 0 ? 'text-[#00ff88]' : 'text-[#ff3b3b]'}`}>{latest ? `${change >= 0 ? '+' : ''}${change.toFixed(2)}%` : 'Waiting for data'}</div>
+            <div className={`text-xs font-bold ${change >= 0 ? 'text-[#00ff88]' : 'text-[#ff3b3b]'}`}>{latest ? `${change >= 0 ? '+' : ''}${change.toFixed(2)}%` : 'Waiting for data'}</div>
           </div>
-          <button type="button" onClick={retry} className="inline-flex items-center gap-1.5 rounded-xl border border-white/10 px-3 py-2 text-[9px] font-black text-white/60 hover:border-white/25 hover:text-white">
+          <button type="button" onClick={retry} className="inline-flex items-center gap-1.5 rounded-xl border border-white/10 px-3 py-2 text-xs font-black text-white/60 hover:border-white/25 hover:text-white">
             <RefreshCw className="h-3 w-3" />Retry
           </button>
         </div>

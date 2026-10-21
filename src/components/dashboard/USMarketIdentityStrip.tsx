@@ -8,7 +8,7 @@ export const USMarketIdentityStrip: React.FC = () => (
         <div className="flex flex-wrap items-center gap-2">
           {['SPY','AAPL','NVDA','MSFT'].map((symbol) => <div key={symbol} className="rounded-xl border border-line bg-canvas px-3 py-2"><MarketAssetIdentity symbol={symbol} compact /></div>)}
         </div>
-        <p className="max-w-2xl text-[8px] leading-4 text-secondary">{MARKET_MARK_DISCLOSURE} Neutral identity marks are used where a separately licensed logo asset is not bundled.</p>
+        <p className="max-w-2xl text-xs leading-4 text-secondary">{MARKET_MARK_DISCLOSURE} Neutral identity marks are used where a separately licensed logo asset is not bundled.</p>
       </div>
     </div>
   </section>

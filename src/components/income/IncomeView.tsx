@@ -232,8 +232,8 @@ export const IncomeView: React.FC = () => {
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
                           <h3 className="truncate font-black text-ink">{source.description}</h3>
-                          <span className="rounded-full bg-canvas px-2 py-0.5 text-[11px] font-bold text-secondary">{source.type}</span>
-                          <span className="rounded-full bg-canvas px-2 py-0.5 text-[11px] font-bold text-secondary">{source.taxStatus}</span>
+                          <span className="rounded-full bg-canvas px-2 py-0.5 text-xs font-bold text-secondary">{source.type}</span>
+                          <span className="rounded-full bg-canvas px-2 py-0.5 text-xs font-bold text-secondary">{source.taxStatus}</span>
                         </div>
                         <p className="mt-1 text-sm font-bold text-ink">
                           {formatCurrency(source.amount, source.currency)} <span className="font-normal text-secondary">· {source.frequency}</span>
@@ -242,7 +242,7 @@ export const IncomeView: React.FC = () => {
                           {source.startDate}{source.endDate ? ` to ${source.endDate}` : ' onward'}
                           {normalizedMonthly > 0 ? ` · ${formatCurrency(normalizedMonthly, source.currency)}/month normalized` : ''}
                         </p>
-                        {source.tags.length ? <div className="mt-2 flex flex-wrap gap-1.5">{source.tags.map((tag) => <span key={tag} className="rounded-md border border-line px-2 py-0.5 text-[11px] text-secondary">#{tag}</span>)}</div> : null}
+                        {source.tags.length ? <div className="mt-2 flex flex-wrap gap-1.5">{source.tags.map((tag) => <span key={tag} className="rounded-md border border-line px-2 py-0.5 text-xs text-secondary">#{tag}</span>)}</div> : null}
                       </div>
                     </div>
                     <div className="flex gap-2 md:justify-end">

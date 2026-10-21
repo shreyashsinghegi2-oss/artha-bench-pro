@@ -13,8 +13,8 @@
 .mk-card:hover{box-shadow:0 22px 44px rgba(15,23,42,.1);border-color:#cbd5e1}
 .mk-card header{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
 .mk-card h3{margin:0;font-size:15px;font-weight:900;color:#0f172a;letter-spacing:-.01em}
-.mk-card header span{display:block;font-size:11px;font-weight:600;color:#64748b}
-.mk-fresh{flex:none;border-radius:999px;padding:3px 8px;background:#f1f5f9;color:#334155!important;font-size:10px!important;font-weight:800!important;white-space:nowrap}
+.mk-card header span{display:block;font-size:12px;font-weight:600;color:#64748b}
+.mk-fresh{flex:none;border-radius:999px;padding:3px 8px;background:#f1f5f9;color:#334155!important;font-size:12px!important;font-weight:800!important;white-space:nowrap}
 .mk-price{display:block;margin-top:6px;font-size:clamp(22px,2.2vw,28px);font-weight:900;letter-spacing:-.02em;color:#0f172a;font-variant-numeric:tabular-nums;transform:translateZ(20px);border-radius:6px}
 .mk-price.flash-up{animation:mk-flash-up 1.2s ease}
 .mk-price.flash-down{animation:mk-flash-down 1.2s ease}
@@ -26,8 +26,8 @@
 .mk-spark.up{color:#16a34a}.mk-spark.down{color:#dc2626}
 .mk-spark-line{stroke-dasharray:1;stroke-dashoffset:1;animation:mk-draw 1.4s cubic-bezier(.2,.7,.2,1) .2s forwards}
 @keyframes mk-draw{to{stroke-dashoffset:0}}
-.mk-spark-empty{display:grid;place-items:center;border:1px dashed #cbd5e1;border-radius:10px;font-size:11px;color:#64748b}
-.mk-card footer{margin-top:auto;display:flex;flex-wrap:wrap;gap:2px 10px;font-size:11px;color:#64748b}
+.mk-spark-empty{display:grid;place-items:center;border:1px dashed #cbd5e1;border-radius:10px;font-size:12px;color:#64748b}
+.mk-card footer{margin-top:auto;display:flex;flex-wrap:wrap;gap:2px 10px;font-size:12px;color:#64748b}
 .mk-warn{color:#b45309;font-weight:700}
 .mk-card.is-error{border-color:#fde68a;background:#fffdf5}
 .mk-unavailable{display:flex;gap:8px;align-items:flex-start;margin:12px 0;color:#92400e;font-size:13px}
@@ -35,7 +35,7 @@
 .mk-sk{display:block;border-radius:8px;background:linear-gradient(90deg,#eef2f6,#f8fafc,#eef2f6);background-size:200% 100%;animation:mk-shimmer 1.4s linear infinite}
 .mk-sk-price{height:30px;width:70%;margin-top:10px}.mk-sk-change{height:14px;width:45%}.mk-sk-spark{height:46px;width:100%;margin-top:6px}.mk-sk-foot{height:12px;width:80%;margin-top:auto}
 @keyframes mk-shimmer{to{background-position:-200% 0}}
-.mk-disclaimer{margin:14px 0 0;font-size:11.5px;color:#64748b}
+.mk-disclaimer{margin:14px 0 0;font-size:12px;color:#64748b}
 
 /* ── Terminal ──────────────────────────────────────────── */
 .mk-terminal-head{margin-top:44px}
@@ -59,7 +59,7 @@
 .mt-title{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
 .mt-title b{font-size:18px;font-weight:900;color:#f8fafc}
 .mt-title>span{font-size:12px;color:#94a3b8}
-.mt-status{display:inline-flex;align-items:center;gap:6px;font-size:11px!important;font-weight:800;color:#fbbf24!important;border:1px solid rgba(251,191,36,.3);border-radius:999px;padding:2px 8px}
+.mt-status{display:inline-flex;align-items:center;gap:6px;font-size:12px!important;font-weight:800;color:#fbbf24!important;border:1px solid rgba(251,191,36,.3);border-radius:999px;padding:2px 8px}
 .mt-status i{width:7px;height:7px;border-radius:50%;background:currentColor}
 .mt-status.live{color:#4ade80!important;border-color:rgba(74,222,128,.35)}
 .mt-status.live i{animation:mt-pulse 1.6s infinite}
@@ -81,7 +81,7 @@
 .mt-overlay span{color:#94a3b8;font-size:13px;max-width:420px}
 .mt-overlay button{display:inline-flex;align-items:center;gap:6px;min-height:44px;margin-top:4px;padding:0 16px;border-radius:10px;border:1px solid #2dd4bf;background:transparent;color:#5eead4;font:inherit;font-weight:800;cursor:pointer}
 .mt-note{position:absolute;left:14px;top:10px;right:80px;z-index:2;font-size:12px;color:#fcd34d;background:rgba(10,15,23,.85);border:1px solid rgba(252,211,77,.25);border-radius:8px;padding:6px 10px;pointer-events:none}
-.mt-foot{display:flex;flex-wrap:wrap;gap:4px 16px;padding:10px 16px 12px;border-top:1px solid #1e293b;font-size:11.5px;color:#94a3b8}
+.mt-foot{display:flex;flex-wrap:wrap;gap:4px 16px;padding:10px 16px 12px;border-top:1px solid #1e293b;font-size:12px;color:#94a3b8}
 .mt-foot .up{color:#4ade80}.mt-foot .down{color:#f87171}
 .mt-disclaimer{flex-basis:100%;color:#64748b}
 .mt-terminal:fullscreen{border-radius:0}

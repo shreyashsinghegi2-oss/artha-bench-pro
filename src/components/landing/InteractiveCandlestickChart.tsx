@@ -147,8 +147,8 @@ export const InteractiveCandlestickChart: React.FC<Props> = ({ showIndicators = 
   }, [candles, showIndicators]);
 
   return <div className="relative h-[300px] w-full sm:h-[420px] lg:h-[540px]" aria-label="Interactive crypto candlestick chart">
-    <div className="pointer-events-none absolute left-3 top-3 z-10 rounded-lg border border-[#262626] bg-[#0B0B0C] px-2.5 py-1.5 text-[9px] font-semibold text-[#CBD5E1]">Scroll/pinch to zoom · Drag to pan</div>
+    <div className="pointer-events-none absolute left-3 top-3 z-10 rounded-lg border border-[#262626] bg-[#0B0B0C] px-2.5 py-1.5 text-xs font-semibold text-[#CBD5E1]">Scroll/pinch to zoom · Drag to pan</div>
     <div ref={containerRef} className="h-full w-full" />
-    <div className="pointer-events-none absolute bottom-2 left-3 z-10 text-[8px] font-semibold text-[#94A3B8]">TradingView Lightweight Charts</div>
+    <div className="pointer-events-none absolute bottom-2 left-3 z-10 text-xs font-semibold text-[#94A3B8]">TradingView Lightweight Charts</div>
   </div>;
 };

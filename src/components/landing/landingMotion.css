@@ -165,7 +165,7 @@
 #business-brief .news-meta *{color:inherit}
 #business-brief .news-cta{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 14px;border-radius:999px;background:#f8fafc;color:#0f172a!important;font-weight:900;transition:transform .2s,box-shadow .2s}
 #business-brief a:hover .news-cta,#business-brief a:focus-visible .news-cta{transform:translateY(-1px);box-shadow:0 8px 20px rgba(0,0,0,.35)}
-#business-brief .news-category-badge{display:inline-flex;align-items:center;border-radius:999px;border:1px solid rgba(94,234,212,.45);background:rgba(4,47,46,.88);padding:4px 10px;font-size:10px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:#ccfbf1!important}
+#business-brief .news-category-badge{display:inline-flex;align-items:center;border-radius:999px;border:1px solid rgba(94,234,212,.45);background:rgba(4,47,46,.88);padding:4px 10px;font-size:12px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:#ccfbf1!important}
 #business-brief .featured-story-media{isolation:isolate}
 @media (max-width:640px){#business-brief .news-scrim{height:82%}#business-brief h3.news-headline{font-size:22px}#business-brief .news-dek{display:none}}
 @media (hover:hover) and (pointer:fine){
@@ -235,16 +235,16 @@ html:has(.connected-landing){scroll-behavior:smooth;scroll-padding-top:80px}
 .rv-top{display:flex;justify-content:space-between;align-items:center}
 .rv-stars{display:inline-flex;gap:2px;color:#d6dde3}
 .rv-stars .on{color:#f5a524;fill:#f5a524}
-.rv-feature{font-size:10.5px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:#0f7b6c;background:#ecfdf5;border-radius:999px;padding:3px 9px}
+.rv-feature{font-size:12px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:#0f7b6c;background:#ecfdf5;border-radius:999px;padding:3px 9px}
 .rv-card blockquote{margin:0;font-size:14.5px;line-height:1.6;color:#1e293b}
 .rv-card blockquote svg{display:block;margin-bottom:6px;color:#99d8cb}
 .rv-card figcaption{display:flex;align-items:center;gap:10px;margin-top:auto}
 .rv-avatar{width:38px;height:38px;flex:none;border-radius:50%;display:grid;place-items:center;font-size:13px;font-weight:900;color:#fff;background:linear-gradient(135deg,#0f7b6c,#14b8a6)}
 .rv-card figcaption b{display:block;font-size:13.5px;color:#0f172a}
 .rv-card figcaption small{display:block;font-size:12px;color:#64748b}
-.rv-tag{margin-left:auto;font-size:10px;font-weight:800;color:#92400e;background:#fef3c7;border-radius:999px;padding:3px 8px}
+.rv-tag{margin-left:auto;font-size:12px;font-weight:800;color:#92400e;background:#fef3c7;border-radius:999px;padding:3px 8px}
 .rv-static{display:none}
-.rv-note{margin-top:8px;font-size:11.5px;color:#64748b}
+.rv-note{margin-top:8px;font-size:12px;color:#64748b}
 @media (max-width:640px){.rv-card{width:280px}.rv-track{animation-duration:45s}}
 @media (prefers-reduced-motion:reduce){
   .rv-rows{display:none}
@@ -336,7 +336,7 @@ html:has(.connected-landing){scroll-behavior:smooth;scroll-padding-top:80px}
 .rv-row:hover .rv-track{animation-play-state:paused}
 .rv-card{position:relative;background:#fff;border:1px solid #e8edf2;box-shadow:0 1px 2px rgba(15,23,42,.04),0 12px 30px -18px rgba(15,23,42,.18)}
 .rv-card:hover{transform:scale(1.06);z-index:2;border-color:#bbf7d0;box-shadow:0 2px 4px rgba(15,23,42,.05),0 30px 60px -24px rgba(5,150,105,.35)}
-.rv-id{display:flex;align-items:center;gap:6px;padding-bottom:10px;border-bottom:1px dashed #e8edf2;font-size:10.5px;font-weight:700;letter-spacing:.04em;color:#047857;text-transform:uppercase}
+.rv-id{display:flex;align-items:center;gap:6px;padding-bottom:10px;border-bottom:1px dashed #e8edf2;font-size:12px;font-weight:700;letter-spacing:.04em;color:#047857;text-transform:uppercase}
 .rv-id code{margin-left:auto;font:600 11px/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.06em;text-transform:none;color:#334155;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:6px;padding:3px 6px}
 .rv-stars{align-items:center}
 .rv-stars b{margin-left:6px;font-size:12.5px;color:#0f172a}
@@ -364,12 +364,12 @@ html:has(.connected-landing){scroll-behavior:smooth;scroll-padding-top:80px}
 .rv-card{width:260px;gap:8px;padding:13px 14px 12px;border-radius:14px}
 .rv-card:hover{transform:scale(1.04)}
 .rv-card blockquote{font-size:13px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
-.rv-stars b{font-size:11.5px;margin-left:4px}
-.rv-feature{font-size:9.5px;padding:2px 7px}
+.rv-stars b{font-size:12px;margin-left:4px}
+.rv-feature{font-size:12px;padding:2px 7px}
 .rv-avatar{width:28px;height:28px;font-size:12px}
 .rv-card figcaption b{font-size:12.5px}
-.rv-card figcaption small{font-size:11px}
-.rv-tag{font-size:9px;padding:2px 6px}
+.rv-card figcaption small{font-size:12px}
+.rv-tag{font-size:12px;padding:2px 6px}
 @media (max-width:640px){.rv-card{width:230px}}
 /* Sign-up block after reviews */
 .cl-signup-end{padding:72px 0 88px;background:linear-gradient(180deg,#fff,#ecfdf5);text-align:center}

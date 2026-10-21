@@ -54,15 +54,15 @@ export const EmbeddedFinanceAdvisor: React.FC<Props> = ({ module, title, descrip
     <section className="rounded-3xl border border-interactive/20 bg-surface p-5 shadow-sm sm:p-6" aria-labelledby={`${module}-advisor-title`}>
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="max-w-3xl">
-          <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[.14em] text-interactive"><AssistantLogo size={20}/> ArthaMind Financial Advisor Intelligence</div>
+          <div className="flex items-center gap-2 text-xs font-black uppercase tracking-[.14em] text-interactive"><AssistantLogo size={20}/> ArthaMind Financial Advisor Intelligence</div>
           <h2 id={`${module}-advisor-title`} className="mt-2 text-xl font-black text-ink">{title}</h2>
           <p className="mt-2 text-xs leading-5 text-secondary">{description}</p>
         </div>
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-success-fill/25 bg-success-soft px-3 py-1.5 text-[9px] font-black text-success"><ShieldCheck className="h-3 w-3" /> Evidence-grounded</span>
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-success-fill/25 bg-success-soft px-3 py-1.5 text-xs font-black text-success"><ShieldCheck className="h-3 w-3" /> Evidence-grounded</span>
       </div>
 
       <div className="mt-4 flex flex-wrap gap-2">
-        {questions.map((item) => <button key={item} type="button" disabled={busy} onClick={() => void ask(item)} className="inline-flex items-center gap-1.5 rounded-xl border border-line bg-canvas px-3 py-2 text-left text-[10px] font-bold text-secondary transition hover:text-ink disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-interactive">{item}<ArrowRight className="h-3 w-3" /></button>)}
+        {questions.map((item) => <button key={item} type="button" disabled={busy} onClick={() => void ask(item)} className="inline-flex items-center gap-1.5 rounded-xl border border-line bg-canvas px-3 py-2 text-left text-xs font-bold text-secondary transition hover:text-ink disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-interactive">{item}<ArrowRight className="h-3 w-3" /></button>)}
       </div>
 
       <div className="mt-4"><WebSearchToggle/></div>
@@ -74,12 +74,12 @@ export const EmbeddedFinanceAdvisor: React.FC<Props> = ({ module, title, descrip
 
       {messages.length > 0 && <div className="mt-4 max-h-[440px] space-y-3 overflow-y-auto rounded-2xl border border-line bg-canvas p-3" aria-live="polite">
         {messages.map((message) => message.role === 'user'
-          ? <div key={message.id} className="ml-8 rounded-xl bg-interactive-soft p-3 text-xs leading-5 text-ink"><div className="mb-1 text-[9px] font-black uppercase">You</div>{message.text}</div>
-          : <article key={message.id} className="rounded-xl border border-line bg-surface p-3 text-xs leading-5 text-secondary"><div className="mb-2 flex items-center gap-2 text-[9px] font-black uppercase tracking-wider text-interactive"><AssistantLogo size={14}/> ArthaMind advisor</div><div className="whitespace-pre-wrap">{message.text}</div><ListenBar compact text={message.text}/></article>)}
+          ? <div key={message.id} className="ml-8 rounded-xl bg-interactive-soft p-3 text-xs leading-5 text-ink"><div className="mb-1 text-xs font-black uppercase">You</div>{message.text}</div>
+          : <article key={message.id} className="rounded-xl border border-line bg-surface p-3 text-xs leading-5 text-secondary"><div className="mb-2 flex items-center gap-2 text-xs font-black uppercase tracking-wider text-interactive"><AssistantLogo size={14}/> ArthaMind advisor</div><div className="whitespace-pre-wrap">{message.text}</div><ListenBar compact text={message.text}/></article>)}
         <ThinkingSteps active={busy} compact/>
       </div>}
 
-      <details className="mt-4 rounded-xl border border-line bg-canvas p-3 text-[9px] leading-4 text-secondary">
+      <details className="mt-4 rounded-xl border border-line bg-canvas p-3 text-xs leading-4 text-secondary">
         <summary className="flex cursor-pointer list-none items-center justify-between gap-2 font-black text-ink">What data can this advisor use? <ChevronDown className="h-3 w-3" /></summary>
         <p className="mt-2">{evidenceNote ?? 'Only the deterministic snapshot supplied by this page and the authenticated workspace context used to create it. ArthaMind cannot silently edit records or override a calculation.'}</p>
         <p className="mt-1">Snapshot generated: {String(evidence.generatedAt ?? evidence.calculatedAt ?? 'on page load')}</p>

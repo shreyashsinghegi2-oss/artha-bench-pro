@@ -27,7 +27,7 @@ export const SocialAuthButtons: React.FC = () => {
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center gap-3 text-[10px] font-bold uppercase tracking-[0.12em] text-secondary">
+      <div className="flex items-center gap-3 text-xs font-bold uppercase tracking-[0.12em] text-secondary">
         <span className="h-px flex-1 bg-line" />
         Or continue with
         <span className="h-px flex-1 bg-line" />
@@ -46,16 +46,16 @@ export const SocialAuthButtons: React.FC = () => {
             ) : provider.id === 'github' ? (
               <Github className="h-4 w-4" />
             ) : (
-              <span aria-hidden="true" className="flex h-4 min-w-4 items-center justify-center text-[11px] font-black">{provider.monogram}</span>
+              <span aria-hidden="true" className="flex h-4 min-w-4 items-center justify-center text-xs font-black">{provider.monogram}</span>
             )}
             {provider.label}
           </button>
         ))}
       </div>
-      <p className="text-center text-[9px] leading-4 text-secondary">
+      <p className="text-center text-xs leading-4 text-secondary">
         Social sign-in works when that provider is enabled in Supabase Auth. Email/password remains available independently.
       </p>
-      {error && <div className="rounded-xl border border-danger/25 bg-danger-soft px-3 py-2 text-[10px] text-danger">{error}</div>}
+      {error && <div className="rounded-xl border border-danger/25 bg-danger-soft px-3 py-2 text-xs text-danger">{error}</div>}
     </div>
   );
 };

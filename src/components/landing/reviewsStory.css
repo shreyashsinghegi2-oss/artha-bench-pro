@@ -15,7 +15,7 @@
 .rs-lg{width:430px;padding:22px 24px}.rs-lg blockquote{font-size:19px;line-height:1.5;color:#353d39}
 .rs-card figcaption{display:flex;align-items:center;gap:10px}
 .rs-card figcaption b{display:block;font-size:12.5px;font-weight:600;color:#1d2421}
-.rs-card figcaption small{display:block;font-size:11.5px;color:#868d89}
+.rs-card figcaption small{display:block;font-size:12px;color:#868d89}
 .rs-lg figcaption b{font-size:15px}.rs-lg figcaption small{font-size:13px}
 .rs-place{flex:none;display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:#f1f3f2;border:1px solid #e3e6e4;color:#5b6560}
 .rs-lg .rs-place{width:38px;height:38px}
@@ -43,15 +43,15 @@
 .rs-cta:hover{background:#fff;transform:translateY(-2px)}
 .rs-cta:focus-visible{outline:3px solid #34c46f;outline-offset:3px}
 
-.rs-note{position:absolute;z-index:4;right:16px;bottom:12px;margin:0;font-size:10.5px;color:#9aa29e;opacity:calc(1 - var(--dark) * 1.5);pointer-events:none}
+.rs-note{position:absolute;z-index:4;right:16px;bottom:12px;margin:0;font-size:12px;color:#9aa29e;opacity:calc(1 - var(--dark) * 1.5);pointer-events:none}
 
 @media (max-width:720px){
   .rs-section{height:520vh}
   .rs-card{padding:11px 13px;border-radius:13px;gap:9px}
-  .rs-sm,.rs-md,.rs-lg{width:46vw}.rs-sm blockquote{font-size:11px}.rs-md blockquote{font-size:12px}
+  .rs-sm,.rs-md,.rs-lg{width:46vw}.rs-sm blockquote{font-size:12px}.rs-md blockquote{font-size:12px}
   .rs-lg{padding:13px 15px}.rs-lg blockquote{font-size:13px}
-  .rs-card figcaption b,.rs-lg figcaption b{font-size:11px}
-  .rs-card figcaption small,.rs-lg figcaption small{font-size:10px}
+  .rs-card figcaption b,.rs-lg figcaption b{font-size:12px}
+  .rs-card figcaption small,.rs-lg figcaption small{font-size:12px}
   .rs-place,.rs-lg .rs-place{width:24px;height:24px}
   .rs-desk{display:none}.rs-mob{display:flex}
   .rs-half-l{transform:translateY(calc(var(--split) * -15vh))}
@@ -72,11 +72,11 @@
 .rs-count{font-variant-numeric:tabular-nums;color:color-mix(in srgb,#7be0a0 calc(var(--dark,0) * 100%),#0f5c4a)}
 .rs-section .rs-sm{padding:12px 14px;gap:9px;border-radius:14px}
 .rs-section .rs-sm blockquote{font-size:12px;line-height:1.45}
-.rs-section .rs-sm figcaption b{font-size:12px}.rs-section .rs-sm figcaption small{font-size:11px}
+.rs-section .rs-sm figcaption b{font-size:12px}.rs-section .rs-sm figcaption small{font-size:12px}
 .rs-section .rs-sm .rs-place{width:26px;height:26px}
 @media (max-width:720px){
   .rs-section .rs-sm{width:44vw;padding:9px 10px;gap:6px;border-radius:12px}
-  .rs-section .rs-sm blockquote{font-size:10.5px;line-height:1.4}
+  .rs-section .rs-sm blockquote{font-size:12px;line-height:1.4}
   .rs-section .rs-sm .rs-place{display:none}
-  .rs-section .rs-sm figcaption b{font-size:10.5px}.rs-section .rs-sm figcaption small{font-size:9.5px}
+  .rs-section .rs-sm figcaption b{font-size:12px}.rs-section .rs-sm figcaption small{font-size:12px}
 }

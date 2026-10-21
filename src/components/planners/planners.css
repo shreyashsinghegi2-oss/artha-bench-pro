@@ -1,7 +1,7 @@
 .pk{padding:28px 20px 64px;color:var(--text-primary)}
 .pk .good{--t:#059669}.pk .bad{--t:#dc2626}.pk .warn{--t:#d97706}.pk .info{--t:#2563eb}
 .pk-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:14px;margin-bottom:18px}
-.pk-head small{font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#059669}
+.pk-head small{font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#059669}
 .pk-head h1{margin:6px 0;font-size:clamp(22px,2.4vw,30px);letter-spacing:-.02em}
 .pk-head p{margin:0;max-width:720px;font-size:14px;line-height:1.55;color:var(--text-secondary)}
 .pk-head button{height:36px;padding:0 14px;border-radius:10px;border:1px solid var(--border-subtle);background:var(--bg-surface);color:var(--text-secondary);font-weight:700;font-size:12.5px;cursor:pointer}
@@ -22,10 +22,10 @@
 .pk-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
 .pk-kpi{position:relative;display:grid;gap:2px;padding:13px 14px 13px 17px;border-radius:15px;border:1px solid color-mix(in srgb,var(--t) 25%,var(--border-subtle));background:linear-gradient(160deg,color-mix(in srgb,var(--t) 9%,var(--bg-surface)),var(--bg-surface) 70%);overflow:hidden;animation:pk-in .4s ease-out both}
 .pk-kpi::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--t)}
-.pk-kpi small{font-size:11px;font-weight:700;color:var(--text-secondary)}
+.pk-kpi small{font-size:12px;font-weight:700;color:var(--text-secondary)}
 .pk-kpi b{font-size:20px;letter-spacing:-.01em;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pk-kpi.bad b{color:#dc2626}.pk-kpi.good b{color:#047857}
-.pk-kpi span{font-size:11.5px;font-weight:600;color:var(--t)}
+.pk-kpi span{font-size:12px;font-weight:600;color:var(--t)}
 .pk-kpi.big b{font-size:24px}
 .pk-card{position:relative;display:grid;gap:12px;padding:18px;border-radius:18px;border:1px solid color-mix(in srgb,var(--t,#94a3b8) 22%,var(--border-subtle));background:var(--bg-surface);overflow:hidden}
 .pk-card::before{content:"";position:absolute;left:0;right:0;top:0;height:4px;background:var(--t,transparent)}
@@ -33,14 +33,14 @@
 .pk-card h3{display:flex;align-items:center;gap:7px;margin:0;font-size:15px}
 .pk-card h3 svg{color:var(--t)}
 .pk-card>header small{flex-basis:100%;font-size:12px;color:var(--text-secondary)}
-.pk-status{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:999px;font-size:10.5px;font-weight:800;color:var(--t);background:color-mix(in srgb,var(--t) 12%,transparent);border:1px solid color-mix(in srgb,var(--t) 30%,transparent)}
+.pk-status{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:999px;font-size:12px;font-weight:800;color:var(--t);background:color-mix(in srgb,var(--t) 12%,transparent);border:1px solid color-mix(in srgb,var(--t) 30%,transparent)}
 .pk-grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .pk-chart{position:relative}
 .pk-chart svg{display:block;width:100%;height:auto}
 .pk-grid{stroke:var(--border-subtle);stroke-dasharray:3 5}
 .pk-line{animation:pk-draw 1s ease-out}
-.pk-axis{font-size:11px;fill:var(--text-secondary)}
-.pk-marker{font-size:11px;font-weight:800;fill:#dc2626}
+.pk-axis{font-size:12px;fill:var(--text-secondary)}
+.pk-marker{font-size:12px;font-weight:800;fill:#dc2626}
 .pk-cursor{stroke:var(--text-secondary);stroke-dasharray:3 3;opacity:.6}
 .pk-tip{position:absolute;top:6px;right:8px;padding:5px 10px;border-radius:9px;background:#0f172a;color:#fff;font-size:12px;font-variant-numeric:tabular-nums}
 .pk-legend{display:flex;flex-wrap:wrap;gap:14px;font-size:12px;font-weight:600;color:var(--text-secondary)}
@@ -59,7 +59,7 @@
 .pk-kv b.pos{color:#047857}.pk-kv b.neg{color:#dc2626}
 .pk-tips{margin:0;padding:0;list-style:none;display:grid;gap:8px}
 .pk-tips li{padding:10px 12px 10px 14px;border-radius:12px;border-left:3px solid var(--t);background:color-mix(in srgb,var(--t) 7%,transparent);font-size:13px;line-height:1.5}
-.pk-note{margin:0;font-size:11.5px;line-height:1.5;color:var(--text-secondary)}
+.pk-note{margin:0;font-size:12px;line-height:1.5;color:var(--text-secondary)}
 .pk-ai-quick{display:flex;flex-wrap:wrap;gap:8px}
 .pk-ai-quick button{padding:8px 13px;border-radius:999px;border:1px solid var(--border-subtle);background:var(--bg-surface);color:var(--text-primary);font:inherit;font-size:12.5px;font-weight:700;cursor:pointer}
 .pk-ai-quick button.primary{background:#2563eb;border-color:#2563eb;color:#fff}

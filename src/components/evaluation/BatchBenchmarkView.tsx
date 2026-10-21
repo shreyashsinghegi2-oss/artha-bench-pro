@@ -166,7 +166,7 @@ export const BatchBenchmarkView: React.FC = () => {
         <div className="space-y-3 border-t border-line pt-5">
           <div className="flex items-center justify-between gap-3 text-xs font-semibold text-ink">
             <span>Benchmark Scenarios ({scenarios.length} ready)</span>
-            <span className="text-[10px] text-secondary">Dataset: ARTHA-V1-BENCHMARK</span>
+            <span className="text-xs text-secondary">Dataset: ARTHA-V1-BENCHMARK</span>
           </div>
 
           <div className="max-h-64 space-y-2 overflow-y-auto pr-1">
@@ -174,12 +174,12 @@ export const BatchBenchmarkView: React.FC = () => {
               <div key={scenario.scenarioId} className="flex items-center justify-between gap-3 rounded-xl border border-line bg-canvas p-3 text-xs text-secondary">
                 <div className="min-w-0 space-y-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-mono text-[10px] font-bold text-interactive">{scenario.scenarioId}</span>
-                    <span className="rounded bg-subtle px-1.5 py-0.5 font-mono text-[10px] text-ink">{scenario.category}</span>
+                    <span className="font-mono text-xs font-bold text-interactive">{scenario.scenarioId}</span>
+                    <span className="rounded bg-subtle px-1.5 py-0.5 font-mono text-xs text-ink">{scenario.category}</span>
                   </div>
                   <p className="line-clamp-2 text-xs leading-5 text-ink">{scenario.query}</p>
                 </div>
-                <span className="shrink-0 rounded-lg bg-success-soft px-2 py-1 font-mono text-[9px] font-bold text-success">{scenario.expectedNumericalAnswer ?? 'Deterministic / qualitative'}</span>
+                <span className="shrink-0 rounded-lg bg-success-soft px-2 py-1 font-mono text-xs font-bold text-success">{scenario.expectedNumericalAnswer ?? 'Deterministic / qualitative'}</span>
               </div>
             ))}
           </div>
@@ -198,7 +198,7 @@ export const BatchBenchmarkView: React.FC = () => {
           <div className="flex flex-col gap-4 border-b border-line pb-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h2 className="flex items-center gap-2 text-sm font-black text-ink"><CheckCircle2 className="h-4 w-4 text-success" />Systematic Batch Evaluation</h2>
-              <p className="mt-1 text-[10px] leading-5 text-secondary">{stats.totalCount} scenarios · {stats.totalDurationMs} ms · {stats.primaryModel} / {stats.secondaryModel} · {stats.regionProfile} profile</p>
+              <p className="mt-1 text-xs leading-5 text-secondary">{stats.totalCount} scenarios · {stats.totalDurationMs} ms · {stats.primaryModel} / {stats.secondaryModel} · {stats.regionProfile} profile</p>
             </div>
             <div className="flex gap-2">
               <button onClick={handleExportCSV} className="inline-flex items-center gap-1.5 rounded-xl border border-line-strong bg-subtle px-3 py-1.5 text-xs font-semibold text-ink transition hover:bg-hover"><FileSpreadsheet className="h-3.5 w-3.5 text-success" />Export CSV</button>
@@ -218,7 +218,7 @@ export const BatchBenchmarkView: React.FC = () => {
               <div className="flex items-center justify-between px-2 pt-1">
                 <div>
                   <h3 className="text-xs font-black text-ink">Seven-dimension batch spider chart</h3>
-                  <p className="mt-0.5 text-[10px] text-secondary">Average of the real reliability score from every completed scenario.</p>
+                  <p className="mt-0.5 text-xs text-secondary">Average of the real reliability score from every completed scenario.</p>
                 </div>
                 <ShieldCheck className="h-4 w-4 text-success" />
               </div>
@@ -230,9 +230,9 @@ export const BatchBenchmarkView: React.FC = () => {
                 <div key={dimension.id} className="flex items-center justify-between gap-3 rounded-xl border border-line bg-canvas px-3.5 py-3">
                   <div className="min-w-0">
                     <div className="text-xs font-bold text-ink">{dimension.name}</div>
-                    <div className="mt-0.5 text-[10px] leading-4 text-secondary">Average across the completed benchmark run.</div>
+                    <div className="mt-0.5 text-xs leading-4 text-secondary">Average across the completed benchmark run.</div>
                   </div>
-                  <span className={`shrink-0 rounded-lg border px-2 py-1 font-mono text-[11px] font-black ${scoreTone(dimension.rawScore)}`}>{dimension.rawScore} / 100</span>
+                  <span className={`shrink-0 rounded-lg border px-2 py-1 font-mono text-xs font-black ${scoreTone(dimension.rawScore)}`}>{dimension.rawScore} / 100</span>
                 </div>
               ))}
             </div>
@@ -241,7 +241,7 @@ export const BatchBenchmarkView: React.FC = () => {
           <div className="space-y-3">
             <div>
               <h3 className="text-xs font-black text-ink">Individual Scenario Results</h3>
-              <p className="mt-1 text-[10px] text-secondary">Open any scenario to inspect all seven reliability dimensions. Full evidence remains available in Verified Reports.</p>
+              <p className="mt-1 text-xs text-secondary">Open any scenario to inspect all seven reliability dimensions. Full evidence remains available in Verified Reports.</p>
             </div>
             <div className="max-h-[560px] space-y-2 overflow-y-auto pr-1">
               {progress.results.map((result) => (
@@ -249,21 +249,21 @@ export const BatchBenchmarkView: React.FC = () => {
                   <summary className="flex cursor-pointer list-none items-center justify-between gap-4">
                     <div className="min-w-0 space-y-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-mono text-[10px] font-bold text-interactive">{result.scenarioId}</span>
-                        <span className="rounded bg-subtle px-1.5 py-0.5 font-mono text-[10px] text-ink">{result.category}</span>
-                        <span className={`rounded-full border px-2 py-0.5 text-[9px] font-black ${result.passed ? 'border-success-fill/30 bg-success-soft text-success' : 'border-danger/30 bg-danger-soft text-danger'}`}>{result.passed ? 'PASSED' : 'FAILED'}</span>
+                        <span className="font-mono text-xs font-bold text-interactive">{result.scenarioId}</span>
+                        <span className="rounded bg-subtle px-1.5 py-0.5 font-mono text-xs text-ink">{result.category}</span>
+                        <span className={`rounded-full border px-2 py-0.5 text-xs font-black ${result.passed ? 'border-success-fill/30 bg-success-soft text-success' : 'border-danger/30 bg-danger-soft text-danger'}`}>{result.passed ? 'PASSED' : 'FAILED'}</span>
                       </div>
                       <p className="line-clamp-2 text-xs leading-5 text-ink">{result.query}</p>
                     </div>
                     <div className="shrink-0 text-right">
-                      <span className="block text-[9px] uppercase tracking-wider text-secondary">Overall</span>
+                      <span className="block text-xs uppercase tracking-wider text-secondary">Overall</span>
                       <span className={`font-mono text-sm font-black ${result.overallScore >= 80 ? 'text-success' : result.overallScore >= 60 ? 'text-warning' : 'text-danger'}`}>{result.overallScore}%</span>
                     </div>
                   </summary>
                   <div className="mt-3 grid gap-2 border-t border-line pt-3 sm:grid-cols-2 lg:grid-cols-4">
                     {(result.dimensions || []).map((dimension) => (
                       <div key={dimension.id} className="rounded-lg border border-line bg-surface px-3 py-2">
-                        <div className="text-[9px] font-bold text-secondary">{dimension.name}</div>
+                        <div className="text-xs font-bold text-secondary">{dimension.name}</div>
                         <div className={`mt-0.5 font-mono text-xs font-black ${dimension.rawScore >= 80 ? 'text-success' : dimension.rawScore >= 60 ? 'text-warning' : 'text-danger'}`}>{dimension.rawScore} / 100</div>
                       </div>
                     ))}
@@ -280,7 +280,7 @@ export const BatchBenchmarkView: React.FC = () => {
 
 const Metric: React.FC<{ label: string; value: string; tone: 'success' | 'interactive' }> = ({ label, value, tone }) => (
   <div className="rounded-2xl border border-line bg-canvas p-4 text-center">
-    <span className="block text-[10px] text-secondary">{label}</span>
+    <span className="block text-xs text-secondary">{label}</span>
     <span className={`mt-1 block text-lg font-extrabold ${tone === 'success' ? 'text-success' : 'text-interactive'}`}>{value}</span>
   </div>
 );

@@ -14,15 +14,15 @@ export const ArthaMindHeroVisual: React.FC = () => (
       <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
         <div className="flex items-center gap-2.5">
           <ArthaMindLogo className="h-7 w-7" compact />
-          <div><div className="text-[11px] font-bold text-slate-900">Research snapshot</div><div className="text-[8px] text-slate-400">Illustrative market context</div></div>
+          <div><div className="text-xs font-bold text-slate-900">Research snapshot</div><div className="text-xs text-slate-400">Illustrative market context</div></div>
         </div>
-        <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[8px] font-semibold text-slate-500">Demo</span>
+        <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-500">Demo</span>
       </div>
 
       <div className="p-4 sm:p-5">
         <div className="flex items-end justify-between gap-4">
-          <div><div className="text-[10px] font-semibold text-slate-500">NIFTY 50</div><div className="mt-1 text-xl font-black tracking-tight text-slate-950">Market research view</div></div>
-          <div className="text-right"><div className="text-[9px] font-semibold text-emerald-700">+0.42% ↑</div><div className="mt-0.5 text-[8px] text-slate-400">illustrative</div></div>
+          <div><div className="text-xs font-semibold text-slate-500">NIFTY 50</div><div className="mt-1 text-xl font-black tracking-tight text-slate-950">Market research view</div></div>
+          <div className="text-right"><div className="text-xs font-semibold text-emerald-700">+0.42% ↑</div><div className="mt-0.5 text-xs text-slate-400">illustrative</div></div>
         </div>
 
         <svg viewBox="0 0 450 210" className="mt-4 block h-auto w-full" role="img" aria-labelledby="hero-chart-title hero-chart-desc">
@@ -44,12 +44,12 @@ export const ArthaMindHeroVisual: React.FC = () => (
         </svg>
 
         <div className="mt-3 grid gap-2 sm:grid-cols-3">
-          <div className="rounded-xl bg-slate-50 px-3 py-2.5"><div className="text-[8px] uppercase tracking-[0.12em] text-slate-400">Question</div><div className="mt-1 text-[9px] font-semibold leading-4 text-slate-700">What may be driving this move?</div></div>
-          <div className="rounded-xl bg-slate-50 px-3 py-2.5"><div className="text-[8px] uppercase tracking-[0.12em] text-slate-400">Evidence</div><div className="mt-1 text-[9px] font-semibold leading-4 text-slate-700">Sources and assumptions visible</div></div>
-          <div className="rounded-xl bg-slate-50 px-3 py-2.5"><div className="text-[8px] uppercase tracking-[0.12em] text-slate-400">Boundary</div><div className="mt-1 text-[9px] font-semibold leading-4 text-slate-700">Personal context stays off</div></div>
+          <div className="rounded-xl bg-slate-50 px-3 py-2.5"><div className="text-xs uppercase tracking-[0.12em] text-slate-400">Question</div><div className="mt-1 text-xs font-semibold leading-4 text-slate-700">What may be driving this move?</div></div>
+          <div className="rounded-xl bg-slate-50 px-3 py-2.5"><div className="text-xs uppercase tracking-[0.12em] text-slate-400">Evidence</div><div className="mt-1 text-xs font-semibold leading-4 text-slate-700">Sources and assumptions visible</div></div>
+          <div className="rounded-xl bg-slate-50 px-3 py-2.5"><div className="text-xs uppercase tracking-[0.12em] text-slate-400">Boundary</div><div className="mt-1 text-xs font-semibold leading-4 text-slate-700">Personal context stays off</div></div>
         </div>
       </div>
     </div>
-    <p className="mt-3 text-center text-[8px] uppercase tracking-[0.14em] text-slate-600">Illustrative research preview — not live market data</p>
+    <p className="mt-3 text-center text-xs uppercase tracking-[0.14em] text-slate-600">Illustrative research preview — not live market data</p>
   </div>
 );

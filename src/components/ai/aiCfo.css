@@ -30,10 +30,10 @@
 .cfo-dots i:nth-child(2){animation-delay:.15s}.cfo-dots i:nth-child(3){animation-delay:.3s}
 @keyframes cfo-bounce{0%,80%,100%{transform:translateY(0);opacity:.4}40%{transform:translateY(-5px);opacity:1}}
 .cfo-brief-head{display:flex;align-items:center;gap:10px;margin-bottom:8px}
-.cfo-brief-head small{display:block;font-size:9px;letter-spacing:.16em;text-transform:uppercase;font-weight:900;color:var(--cfo-g)}
+.cfo-brief-head small{display:block;font-size:12px;letter-spacing:.16em;text-transform:uppercase;font-weight:900;color:var(--cfo-g)}
 .cfo-brief-head b{display:block;font-size:15px;line-height:1.3}
 .cfo-brief-icon{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;background:var(--cfo-soft);color:var(--cfo-g);flex:none}
-.cfo-tag{margin-left:auto;font-size:10px;font-weight:800;border-radius:999px;padding:3px 8px}
+.cfo-tag{margin-left:auto;font-size:12px;font-weight:800;border-radius:999px;padding:3px 8px}
 .cfo-tag-warn{background:#fef3c7;color:var(--cfo-warn)}
 .cfo-bottom-line{margin:0;font-size:14.5px;font-weight:600;white-space:pre-wrap}
 .cfo-caret{display:inline-block;width:2px;height:1em;margin-left:2px;vertical-align:-2px;background:var(--cfo-g);animation:cfo-blink .8s steps(1) infinite}
@@ -41,18 +41,18 @@
 .cfo-brief-body{display:grid;gap:10px;margin-top:12px}
 .cfo-block,.cfo-brief-foot{opacity:0;animation:cfo-in .5s cubic-bezier(.2,.7,.2,1) forwards;animation-delay:calc(var(--d,0) * 120ms)}
 .cfo-block{border:1px solid var(--cfo-bd);border-radius:12px;padding:10px 12px;background:#fbfdfc}
-.cfo-block h4{margin:0 0 6px;display:flex;align-items:center;gap:6px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--cfo-g)}
+.cfo-block h4{margin:0 0 6px;display:flex;align-items:center;gap:6px;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--cfo-g)}
 .cfo-block ul,.cfo-block ol{margin:0;padding:0;list-style:none;display:grid;gap:6px;font-size:13px}
 .cfo-steps li{display:grid;gap:1px;padding-left:10px;border-left:2px solid #bfe3dc}
 .cfo-steps b{font-size:12.5px}
 .cfo-steps span{color:#334155}
 .cfo-block-actions{background:linear-gradient(135deg,#f0fdfa,#fff);border-color:#b7e0d8}
 .cfo-block-actions li{display:flex;gap:8px;align-items:flex-start}
-.cfo-num{flex:none;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:900;color:#fff;background:var(--cfo-g)}
+.cfo-num{flex:none;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:900;color:#fff;background:var(--cfo-g)}
 .cfo-block-risks{background:#fffbeb;border-color:#fde68a}
 .cfo-block-risks h4{color:var(--cfo-warn)}
 .cfo-block-risks li{color:#78350f}
-.cfo-brief-foot{display:flex;flex-wrap:wrap;align-items:center;gap:10px;font-size:11px;color:var(--cfo-mut)}
+.cfo-brief-foot{display:flex;flex-wrap:wrap;align-items:center;gap:10px;font-size:12px;color:var(--cfo-mut)}
 .cfo-open{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--cfo-g);background:var(--cfo-g);color:#fff;border-radius:10px;padding:6px 11px;font:inherit;font-size:12px;font-weight:800;cursor:pointer;transition:transform .2s,box-shadow .2s}
 .cfo-open:hover{}
 .cfo-compose{display:flex;align-items:flex-end;gap:8px;padding:10px;border-top:1px solid var(--cfo-bd);background:#fff}
@@ -66,9 +66,9 @@
 /* Guided CFO intake + profile snapshot */
 .cfo-plan-cta{display:grid;grid-template-columns:auto 1fr;align-items:center;column-gap:10px;text-align:left;margin-top:10px;border:1px solid var(--cfo-g);background:linear-gradient(135deg,var(--cfo-g),#0d9488);color:#fff;border-radius:14px;padding:11px 16px;font:inherit;font-size:14px;font-weight:800;cursor:pointer;box-shadow:0 12px 28px rgba(15,123,108,.25);transition:transform .2s,box-shadow .2s}
 .cfo-plan-cta svg{grid-row:span 2}
-.cfo-plan-cta span{grid-column:2;font-size:11px;font-weight:600;opacity:.85}
+.cfo-plan-cta span{grid-column:2;font-size:12px;font-weight:600;opacity:.85}
 .cfo-plan-cta:hover{}
-.cfo-or{margin-top:6px;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--cfo-mut)}
+.cfo-or{margin-top:6px;font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--cfo-mut)}
 .cfo-intake{display:flex;flex-direction:column;gap:10px}
 .cfo-ask{font-size:14.5px;font-weight:600;max-width:560px}
 .cfo-progress{display:block;height:3px;border-radius:3px;background:var(--cfo-bd);overflow:hidden;margin-bottom:10px}
@@ -86,15 +86,15 @@
 .cfo-profile .cfo-brief-head{margin-bottom:10px}
 .cfo-profile-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin:0}
 .cfo-profile-grid div{border:1px solid var(--cfo-bd);border-radius:10px;padding:8px 10px;background:#fbfdfc;min-width:0}
-.cfo-profile-grid dt{font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--cfo-mut)}
+.cfo-profile-grid dt{font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--cfo-mut)}
 .cfo-profile-grid dd{margin:2px 0 0;font-weight:800;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
 .cfo-profile-grid dd.pos{color:#059669}
 .cfo-profile-grid dd.neg{color:#be123c}
-.cfo-profile-note{margin:10px 0 0;font-size:11px;color:var(--cfo-mut)}
+.cfo-profile-note{margin:10px 0 0;font-size:12px;color:var(--cfo-mut)}
 @media (max-width:420px){.cfo-profile-grid{grid-template-columns:1fr 1fr}.cfo-plan-cta{width:100%}}
 @media (prefers-reduced-motion:reduce){.cfo-chat *,.cfo-chat *::before,.cfo-chat *::after{animation:none!important;transition:none!important}.cfo-chips button,.cfo-block,.cfo-brief-foot{opacity:1}}
 .cfo-web{display:flex;justify-content:flex-start;padding:8px 10px 0;border-top:1px solid var(--cfo-bd);background:#fff}.cfo-web+.cfo-compose{border-top:0}
-.cfo-block-sources ul{list-style:none;margin:0;padding:0;display:grid;gap:4px}.cfo-block-sources li{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:var(--cfo-mut,#475569)}.cfo-block-sources li small{flex:none;color:#94a3b8;font-size:11px}
+.cfo-block-sources ul{list-style:none;margin:0;padding:0;display:grid;gap:4px}.cfo-block-sources li{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:var(--cfo-mut,#475569)}.cfo-block-sources li small{flex:none;color:#94a3b8;font-size:12px}
 .cfo-orb.cfo-orb-brand{width:64px;height:64px;border-radius:20px;background:#fff;border:1px solid #e3e8e6;box-shadow:0 14px 30px -12px rgba(15,23,42,.25)}
 
 /* Chat: darker, larger text for every message. */

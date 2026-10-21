@@ -27,7 +27,7 @@ export const WebSearchToggle: React.FC<{ className?: string; compact?: boolean }
   }, []);
   const title = `Web search: ${LABEL[mode]}. ${HELP[mode]}${provider ? ` Source: ${provider}.` : ''} Click to change.`;
   return <span className="inline-flex flex-wrap items-center gap-1.5"><button type="button" onClick={() => setWebSearchMode(NEXT[mode])} title={title} aria-label={title}
-    className={`inline-flex h-7 shrink-0 items-center gap-1.5 rounded-full border px-2.5 text-[11px] font-bold transition-colors ${mode === 'off' ? 'border-line bg-surface text-secondary' : 'border-[#1f8f4e]/40 bg-[#1f8f4e]/10 text-[#1f8f4e]'} ${className}`.trim()}>
+    className={`inline-flex h-7 shrink-0 items-center gap-1.5 rounded-full border px-2.5 text-xs font-bold transition-colors ${mode === 'off' ? 'border-line bg-surface text-secondary' : 'border-[#1f8f4e]/40 bg-[#1f8f4e]/10 text-[#1f8f4e]'} ${className}`.trim()}>
     <Globe className="h-3.5 w-3.5" aria-hidden="true"/>{compact ? LABEL[mode] : <>Web search · {LABEL[mode]}</>}
   </button><MyDataToggle compact={compact}/></span>;
 };
@@ -41,7 +41,7 @@ export const MyDataToggle: React.FC<{ compact?: boolean }> = ({ compact }) => {
   useEffect(() => { const s = (e: Event) => setOn(Boolean((e as CustomEvent<boolean>).detail)); window.addEventListener(USE_MY_DATA_EVENT, s); return () => window.removeEventListener(USE_MY_DATA_EVENT, s); }, []);
   const title = on ? 'Your saved numbers (income, spending, loans, portfolio, plans) are used in every ArthaMind answer. Click to turn off.' : 'Turn on to let every ArthaMind answer use your saved numbers from all features. Off by default.';
   return <button type="button" onClick={() => setUseMyData(!on)} title={title} aria-label={title} aria-pressed={on}
-    className={`inline-flex h-7 shrink-0 items-center gap-1.5 rounded-full border px-2.5 text-[11px] font-bold transition-colors ${on ? 'border-[#2563eb]/40 bg-[#2563eb]/10 text-[#2563eb]' : 'border-line bg-surface text-secondary'}`}>
+    className={`inline-flex h-7 shrink-0 items-center gap-1.5 rounded-full border px-2.5 text-xs font-bold transition-colors ${on ? 'border-[#2563eb]/40 bg-[#2563eb]/10 text-[#2563eb]' : 'border-line bg-surface text-secondary'}`}>
     <UserRoundCheck className="h-3.5 w-3.5" aria-hidden="true"/>{compact ? (on ? 'My data' : 'My data off') : <>Use my data · {on ? 'On' : 'Off'}</>}
   </button>;
 };

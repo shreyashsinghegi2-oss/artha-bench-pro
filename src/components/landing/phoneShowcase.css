@@ -12,7 +12,7 @@
 .ps-steps li.on{opacity:1;background:#fafafa;border-color:#e5e5e5;transform:translateX(6px)}
 .ps-step-n{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;font-size:12px;font-weight:900;border:1px solid #d4d4d4;color:#0a0a0a;transition:background .45s,color .45s,border-color .45s}
 .ps-steps li.on .ps-step-n{background:#0a0a0a;color:#fff;border-color:#0a0a0a}
-.ps-steps small{display:block;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:800;color:#737373}
+.ps-steps small{display:block;font-size:12px;letter-spacing:.14em;text-transform:uppercase;font-weight:800;color:#737373}
 .ps-steps b{display:block;margin-top:2px;font-size:17px;color:#0a0a0a}
 .ps-steps p{margin:4px 0 0;font-size:14px;line-height:1.6;color:#525252;max-height:0;overflow:hidden;transition:max-height .5s ease}
 .ps-steps li.on p{max-height:120px}
@@ -23,17 +23,17 @@
 .ps-stage{display:flex;flex-direction:column;align-items:center;gap:14px;perspective:1200px}
 .ps-phone{position:relative;width:300px;height:610px;border-radius:48px;background:#0a0a0a;padding:14px;box-shadow:0 0 0 2px #262626,0 50px 90px -40px rgba(0,0,0,.55),0 30px 60px -30px rgba(0,0,0,.35);transform-style:preserve-3d}
 .ps-notch{position:absolute;top:22px;left:50%;width:92px;height:24px;margin-left:-46px;border-radius:14px;background:#0a0a0a;z-index:3}
-.ps-status{position:absolute;top:14px;left:14px;right:14px;height:44px;display:flex;justify-content:space-between;align-items:center;padding:0 26px;font-size:11px;font-weight:800;color:#0a0a0a;z-index:2}
+.ps-status{position:absolute;top:14px;left:14px;right:14px;height:44px;display:flex;justify-content:space-between;align-items:center;padding:0 26px;font-size:12px;font-weight:800;color:#0a0a0a;z-index:2}
 .ps-viewport{position:relative;height:100%;border-radius:36px;background:#fff;overflow:hidden}
 .ps-strip{height:400%;display:flex;flex-direction:column;will-change:transform}
 .ps-screen{flex:1 0 25%;height:25%;padding:64px 20px 70px;display:flex;flex-direction:column;gap:12px;box-sizing:border-box}
-.ps-app-kicker{font-size:10px;font-weight:900;letter-spacing:.16em;text-transform:uppercase;color:#737373}
+.ps-app-kicker{font-size:12px;font-weight:900;letter-spacing:.16em;text-transform:uppercase;color:#737373}
 .ps-screen h4{margin:0;font-size:20px;line-height:1.25;color:#0a0a0a}
 .ps-big{margin:0;font-size:32px!important;font-weight:900;letter-spacing:-.02em;color:#0a0a0a}
 .ps-note{margin:-6px 0 0;font-size:12px;color:#737373}
 .ps-ring{--deg:0deg;align-self:center;margin:6px 0 4px;width:150px;height:150px;border-radius:50%;display:grid;place-content:center;text-align:center;background:radial-gradient(closest-side,#fff 78%,transparent 79%),conic-gradient(#0a0a0a var(--deg),#e5e5e5 0)}
 .ps-ring b{font-size:42px;line-height:1;color:#0a0a0a}
-.ps-ring span{font-size:11px;font-weight:700;color:#737373}
+.ps-ring span{font-size:12px;font-weight:700;color:#737373}
 .ps-rows{list-style:none;margin:0;padding:0;display:grid;gap:0}
 .ps-rows li{display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid #f0f0f0;font-size:13px}
 .ps-rows span{color:#525252}
@@ -48,11 +48,11 @@
 .ps-progress{height:10px;border-radius:5px;background:#ececec;overflow:hidden}
 .ps-progress i{display:block;height:100%;background:#0a0a0a;border-radius:5px;transform-origin:left;animation:ps-grow 1.2s cubic-bezier(.2,.7,.2,1) both}
 @keyframes ps-grow{from{transform:scaleX(0)}}
-.ps-tabs{position:absolute;left:14px;right:14px;bottom:14px;height:58px;border-radius:0 0 36px 36px;display:flex;justify-content:space-around;align-items:center;background:#fff;border-top:1px solid #f0f0f0;font-size:10.5px;font-weight:800;color:#a3a3a3}
+.ps-tabs{position:absolute;left:14px;right:14px;bottom:14px;height:58px;border-radius:0 0 36px 36px;display:flex;justify-content:space-around;align-items:center;background:#fff;border-top:1px solid #f0f0f0;font-size:12px;font-weight:800;color:#a3a3a3}
 .ps-tabs span{position:relative;padding:6px 8px;transition:color .35s}
 .ps-tabs span.on{color:#0a0a0a}
 .ps-tabs span.on::after{content:"";position:absolute;left:50%;bottom:-2px;width:18px;height:3px;margin-left:-9px;border-radius:2px;background:#0a0a0a}
-.ps-sample{margin:0;max-width:300px;text-align:center;font-size:11.5px;color:#737373}
+.ps-sample{margin:0;max-width:300px;text-align:center;font-size:12px;color:#737373}
 
 @media (max-width:899px){
   .ps-grid{grid-template-columns:1fr;gap:36px}

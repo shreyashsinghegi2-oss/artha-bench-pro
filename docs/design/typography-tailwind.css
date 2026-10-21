@@ -1,0 +1,44 @@
+/* Tailwind v4 (the platform uses @import "tailwindcss"). Add after the import. */
+@theme {
+  --font-heading: 'Manrope', 'Noto Sans', 'Mukta', sans-serif;
+  --font-body: 'Inter', 'Noto Sans', 'Mukta', sans-serif;
+
+  --text-display: 40px;
+  --text-display--line-height: 1.15;
+  --text-display--font-weight: 700;
+
+  --text-h1: 28px;
+  --text-h1--line-height: 1.2;
+  --text-h1--font-weight: 700;
+
+  --text-h2: 22px;
+  --text-h2--line-height: 1.3;
+  --text-h2--font-weight: 600;
+
+  --text-h3: 18px;
+  --text-h3--line-height: 1.35;
+  --text-h3--font-weight: 600;
+
+  --text-body: 16px;
+  --text-body--line-height: 1.6;
+  --text-body--font-weight: 400;
+
+  --text-small: 14px;
+  --text-small--line-height: 1.5;
+  --text-small--font-weight: 400;
+
+  --text-label: 12px;
+  --text-label--line-height: 1.4;
+  --text-label--font-weight: 500;
+
+  --text-kpi: 20px;
+  --text-kpi--font-weight: 700;
+
+  --text-table: 14px;
+  --text-table--font-weight: 500;
+
+  --text-donut: 18px;
+  --text-donut--font-weight: 600;
+}
+/* Usage: class="text-h1 font-heading", "text-body font-body", "text-kpi tabular-nums".
+   Tailwind v4 maps --font-* to font-heading / font-body, and --text-* to text-* utilities. */

@@ -1,0 +1,94 @@
+/* ArthaMind typography tokens. Families are fixed by the brand: Manrope (headings), Inter (body and UI),
+   Noto Sans and Mukta for Indian scripts. Sizes are CSS px; mobile values apply below 768px.
+   Floor: 12px for labels and axis ticks only. Body is never below 14px; table data never below 13px. */
+
+:root {
+  /* Families */
+  --font-heading: 'Manrope', 'Noto Sans', 'Mukta', sans-serif;
+  --font-body:    'Inter', 'Noto Sans', 'Mukta', sans-serif;
+
+  /* Colour (brand + neutrals used by type) */
+  --color-accent: #0F766E;
+  --color-text: #0F172A;
+  --color-text-muted: #475569;     /* 7.58:1 on #FFFFFF */
+  --color-text-faint: #64748B;     /* 4.76:1 on #FFFFFF: captions only */
+  --color-bg: #FFFFFF;
+  --color-bg-alt: #F8FAFC;
+  --color-on-accent: #FFFFFF;      /* text on a solid accent: 5.47:1 on #0F766E */
+
+  /* Scale: size / line-height / weight, desktop */
+  --type-display-size: 40px;  --type-display-lh: 1.15; --type-display-weight: 700;
+  --type-h1-size: 28px;       --type-h1-lh: 1.2;       --type-h1-weight: 700;
+  --type-h2-size: 22px;       --type-h2-lh: 1.3;       --type-h2-weight: 600;
+  --type-h3-size: 18px;       --type-h3-lh: 1.35;      --type-h3-weight: 600;
+  --type-body-size: 16px;     --type-body-lh: 1.6;     --type-body-weight: 400;
+  --type-small-size: 14px;    --type-small-lh: 1.5;    --type-small-weight: 400;
+  --type-label-size: 12px;    --type-label-lh: 1.4;    --type-label-weight: 500;
+
+  /* Financial figures */
+  --type-kpi-size: 20px;      --type-kpi-weight: 700;  --type-kpi-font: var(--font-body);
+  --type-table-size: 14px;    --type-table-weight: 500;
+  --type-donut-size: 18px;    --type-donut-weight: 600;
+}
+
+@media (max-width: 767px) {
+  :root {
+    --type-display-size: 32px;
+    --type-h1-size: 24px;
+    --type-h2-size: 20px;
+    --type-h3-size: 17px;
+    --type-body-size: 15px;
+    --type-small-size: 13px;
+  }
+}
+
+/* Base */
+html { font-family: var(--font-body); -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+body { font-family: var(--font-body); font-size: var(--type-body-size); line-height: var(--type-body-lh); font-weight: var(--type-body-weight); color: var(--color-text); }
+
+/* Roles */
+.type-display { font-family: var(--font-heading); font-size: var(--type-display-size); line-height: var(--type-display-lh); font-weight: var(--type-display-weight); letter-spacing: -0.02em; }
+.type-h1      { font-family: var(--font-heading); font-size: var(--type-h1-size); line-height: var(--type-h1-lh); font-weight: var(--type-h1-weight); letter-spacing: -0.015em; }
+.type-h2      { font-family: var(--font-heading); font-size: var(--type-h2-size); line-height: var(--type-h2-lh); font-weight: var(--type-h2-weight); }
+.type-h3      { font-family: var(--font-heading); font-size: var(--type-h3-size); line-height: var(--type-h3-lh); font-weight: var(--type-h3-weight); }
+.type-body    { font-family: var(--font-body); font-size: var(--type-body-size); line-height: var(--type-body-lh); font-weight: var(--type-body-weight); }
+.type-small   { font-family: var(--font-body); font-size: var(--type-small-size); line-height: var(--type-small-lh); font-weight: var(--type-small-weight); }
+.type-label   { font-family: var(--font-body); font-size: var(--type-label-size); line-height: var(--type-label-lh); font-weight: var(--type-label-weight); }
+
+/* Financial figures: always tabular so amounts align in columns. */
+.type-kpi     { font-family: var(--type-kpi-font); font-size: var(--type-kpi-size); font-weight: var(--type-kpi-weight); font-variant-numeric: tabular-nums; }
+.type-table-num { font-family: var(--font-body); font-size: var(--type-table-size); font-weight: var(--type-table-weight); font-variant-numeric: tabular-nums; }
+.type-donut-center { font-family: var(--font-body); font-size: var(--type-donut-size); font-weight: var(--type-donut-weight); font-variant-numeric: tabular-nums; }
+.tnum { font-variant-numeric: tabular-nums; }
+
+/* Dark theme: one heading step lighter (700 to 600, 600 to 500); body stays 400.
+   Accent text on dark uses #14B8A6 (7.17:1 on #0F172A), because #0F766E is 3.26:1 there. */
+[data-theme="dark"] {
+  --color-accent: #14B8A6;
+  --color-text: #F1F5F9;
+  --color-text-muted: #CBD5E1;
+  --color-text-faint: #94A3B8;
+  --color-bg: #0F172A;
+  --color-bg-alt: #1E293B;
+  --color-on-accent: #0F172A;      /* dark text on the #14B8A6 accent: 7.17:1 (white would be 2.5:1) */
+  --type-display-weight: 600;
+  --type-h1-weight: 600;
+  --type-h2-weight: 500;
+  --type-h3-weight: 500;
+  --type-kpi-weight: 600;
+}
+[data-theme="dark"] body,
+[data-theme="dark"] .type-h1, [data-theme="dark"] .type-h2, [data-theme="dark"] .type-h3, [data-theme="dark"] .type-display {
+  color: var(--color-text);
+}
+
+/* Indian scripts: fallback families load only for the active language (see figma-type-spec.md).
+   Devanagari, Bengali, Gujarati, Gurmukhi, Odia, Assamese need taller line boxes for matras. */
+:lang(hi), :lang(mr), :lang(bn), :lang(gu), :lang(pa), :lang(or), :lang(as) { line-height: 1.7; }
+:lang(ta), :lang(te), :lang(kn), :lang(ml) { line-height: 1.6; }
+/* Never force Inter on script text: the fallback chain handles it. */
+:lang(hi), :lang(mr), :lang(bn), :lang(gu), :lang(pa), :lang(or), :lang(as),
+:lang(ta), :lang(te), :lang(kn), :lang(ml) { font-family: 'Noto Sans', 'Mukta', sans-serif; }
+
+/* Accessibility floor */
+.type-label, .type-small, .type-body, .type-table-num { min-width: 0; }

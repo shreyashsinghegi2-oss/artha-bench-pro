@@ -58,3 +58,25 @@ export function freedomPromptLines(verified: VerifiedFreedom | null): string {
   const age = verified.freedomAge === null ? 'not reached within the planning horizon' : `age ${verified.freedomAge}`;
   return `Verified freedom plan from the platform (quote exactly; never recalculate, invent or change it): freedom age ${age}, freedom number ₹${Math.round(verified.corpus).toLocaleString('en-IN')}, growth ${Math.round(verified.preRetirementReturn * 100)}% a year, inflation ${Math.round(verified.inflation * 100)}% a year.`;
 }
+
+const FREEDOM_QUESTION = /\b(financ\w*\s+free\w*|freedom|retire\w*|retirement)\b/i;
+
+/** True when a question asks about the freedom age or retirement, which is answered from the verified figures. */
+export function isFreedomQuestion(question: string): boolean {
+  return FREEDOM_QUESTION.test(question);
+}
+
+/**
+ * The plain-language answer to a freedom question, built only from the verified figures and the stated method.
+ * No model is involved, so the answer is the same figures the dashboard shows.
+ */
+export function freedomAnswerText(verified: VerifiedFreedom): string {
+  const growth = Math.round(verified.preRetirementReturn * 100);
+  const inflation = Math.round(verified.inflation * 100);
+  const number = `₹${Math.round(verified.corpus).toLocaleString('en-IN')}`;
+  const method = `This uses the same calculation as your dashboard: your investments and monthly savings grow ${growth}% a year, your expenses rise ${inflation}% a year with inflation, and you are free once your investments can cover those expenses.`;
+  if (verified.freedomAge === null) {
+    return `At your current numbers, your investments do not reach your freedom number (${number}) within the planning horizon. ${method} Raising your monthly savings or reducing expenses moves this age earlier.`;
+  }
+  return `You can be financially free at age ${verified.freedomAge}. Your freedom number is ${number}. ${method} Figures on your dashboard are the same.`;
+}

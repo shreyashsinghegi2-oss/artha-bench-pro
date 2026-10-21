@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { freedomConflict, freedomPromptLines, type VerifiedFreedom } from '../src/services/verifiedFreedom';
+import { freedomAnswerText, freedomConflict, freedomPromptLines, isFreedomQuestion, type VerifiedFreedom } from '../src/services/verifiedFreedom';
 import { safeAnswerText } from '../server/aiGateway';
 import { cfoPlanPrompt } from '../src/services/cfoAnalysis';
 
@@ -51,5 +51,26 @@ describe('raw model output never reaches the screen', () => {
 
   it('leaves ordinary text unchanged', () => {
     expect(safeAnswerText('Your emergency fund covers 10 months.')).toBe('Your emergency fund covers 10 months.');
+  });
+});
+
+describe('freedom questions are answered from the verified figures', () => {
+  it('recognises freedom and retirement questions only', () => {
+    expect(isFreedomQuestion('Till which age I will be financially free?')).toBe(true);
+    expect(isFreedomQuestion('When can I retire?')).toBe(true);
+    expect(isFreedomQuestion('Old vs new tax regime for a ₹18,00,000 salary')).toBe(false);
+  });
+
+  it('states the verified age, number and method', () => {
+    const text = freedomAnswerText(verified);
+    expect(text).toContain('age 34');
+    expect(text).toContain('₹3,68,00,000');
+    expect(text).toContain('10% a year');
+    expect(text).toContain('6% a year');
+  });
+
+  it('says when the freedom number is not reached', () => {
+    const text = freedomAnswerText({ ...verified, freedomAge: null });
+    expect(text).toContain('do not reach your freedom number');
   });
 });

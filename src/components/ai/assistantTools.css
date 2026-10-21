@@ -17,3 +17,5 @@
 @keyframes am-shimmer{to{background-position:-200% 0}}
 @keyframes am-step-in{from{opacity:0;transform:translateY(4px)}}
 @media (prefers-reduced-motion:reduce){.am-steps li,.am-steps li.now span,.am-mic.on,.am-spin{animation:none}}
+
+.am-mic-wrap .am-mic-live{margin-left:8px;font-size:12px;font-weight:600;color:#dc2626;white-space:nowrap}

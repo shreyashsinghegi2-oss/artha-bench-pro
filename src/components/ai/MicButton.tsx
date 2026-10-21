@@ -32,6 +32,7 @@ export const MicButton: React.FC<{ onText: (text: string) => void; onFinal?: (te
       aria-label={listening ? 'Stop listening' : 'Speak your question'} title={supported ? (listening ? 'Listening… tap to stop' : 'Speak your question') : 'Voice input works in Chrome or Edge'}>
       {listening ? <Square size={14}/> : <Mic size={15}/>}
     </button>
+    {listening && <span className="am-mic-live" aria-live="polite">Listening… tap to stop</span>}
     {error && <span className="am-mic-err" role="alert">{error}</span>}
   </span>;
 };

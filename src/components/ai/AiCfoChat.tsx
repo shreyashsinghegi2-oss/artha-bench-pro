@@ -4,7 +4,7 @@ import { WebSearchToggle } from './WebSearchToggle';
 import { ArrowRight, ArrowUp, BriefcaseBusiness, CircleAlert, ClipboardList, Globe, ListChecks, RotateCcw, ShieldAlert, Sparkles, UserRound } from 'lucide-react';
 import { askAiCfo, type CfoLanguage, type CfoReply, type CfoTurn } from '../../services/cfoApi';
 import { buildCfoHealthReport, cfoPlanPrompt, formatInr, type CfoHealthReport } from '../../services/cfoAnalysis';
-import { freedomAnswerText, freedomConflict, freedomPromptLines, isFreedomQuestion, verifiedFreedomFromStorage } from '../../services/verifiedFreedom';
+import { freedomConflict, freedomPromptLines, verifiedFreedomFromStorage } from '../../services/verifiedFreedom';
 import { CFO_QUESTIONS, CfoIntake, type CfoProfile } from './CfoIntake';
 import './aiCfo.css';
 import { ArthaMindLogoMark } from '../branding/ArthaMindBrand';
@@ -147,17 +147,10 @@ export const AiCfoChat: React.FC<Props> = ({ suggestFor, externalPrompt, compact
     const history: CfoTurn[] = messages.filter((message) => !message.error && !message.reply?.fallback && !message.profile).map((message) => ({ role: message.role, content: message.role === 'user' ? message.text : (message.reply?.answer || message.text) }));
     setMessages((current) => [...current, { id: newId(), role: 'user', text: display || question }]);
     setDraft('');
-    const verified = verifiedFreedomFromStorage();
-    if (verified && isFreedomQuestion(display || question)) {
-      // Freedom questions are answered from the verified figures, so they match the dashboard and never depend on the model.
-      const answer = freedomAnswerText(verified);
-      setMessages((current) => [...current, { id: newId(), role: 'assistant', text: answer, reply: { answer, structured: null, provider: 'verified', model: 'platform-calculator', fallback: false }, prompt: question }]);
-      return;
-    }
     setBusy(true);
     try {
-      const reply = await askAiCfo(question, history, language);
-      const note = freedomConflict(reply.answer, verified);
+      const reply = await askAiCfo(question, history, language, { displayText: display });
+      const note = freedomConflict(reply.answer, verifiedFreedomFromStorage());
       if (note) reply.answer = `${reply.answer}\n\n${note}`;
       setMessages((current) => [...current, { id: newId(), role: 'assistant', text: reply.answer, reply, prompt: question }]);
     } catch (error) {

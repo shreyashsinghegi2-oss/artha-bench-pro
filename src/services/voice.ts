@@ -143,7 +143,7 @@ function listenInBrowser(lang: string, onText: (text: string) => void): { done: 
   const Ctor = recognitionCtor();
   if (!Ctor) return { done: Promise.reject(new Error('Voice input works in Chrome or Edge. Please type your question.')), stop: () => undefined };
   const rec = new Ctor();
-  rec.lang = lang; rec.interimResults = true; rec.continuous = false; rec.maxAlternatives = 1;
+  rec.lang = lang; rec.interimResults = true; rec.continuous = true; rec.maxAlternatives = 1;
   let finalText = '', failure: string | null = null;
   const done = new Promise<string>((resolve, reject) => {
     rec.onresult = (e) => {

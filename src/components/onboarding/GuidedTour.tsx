@@ -60,7 +60,6 @@ const STEPS: Array<{ target: string; title: string; text: string }> = [
   { target: 'a[aria-label="Open your complete dashboard"]', title: 'Your full dashboard', text: 'Tap here to see all your money in one place: income, spending, loans, savings and goals.' },
   { target: '.sb-nav, nav.tb', title: 'All your tools', text: 'Income, spending, budget, EMIs, tax and planners live here. Each one already has your numbers.' },
   { target: '.pai-launch', title: 'Ask anything', text: 'Stuck? Tap here and ask in your own words, like “How much should I save each month?”' },
-  { target: '.va-launch', title: 'Or just speak', text: 'Tap the mic and ask by voice in your language. Answers are short and simple.' },
 ];
 
 type Rect = { top: number; left: number; width: number; height: number };

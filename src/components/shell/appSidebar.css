@@ -32,7 +32,6 @@
   .tb a,.tb button{display:grid;justify-items:center;gap:2px;padding:4px 0;border:0;background:none;color:var(--text-secondary);font:700 10.5px Inter,system-ui,sans-serif;text-decoration:none;cursor:pointer}
   .tb .on{color:#0f9d8a}
   body.has-tabbar{padding-bottom:calc(64px + env(safe-area-inset-bottom))}
-  body.has-tabbar .va-launch{bottom:calc(76px + env(safe-area-inset-bottom))}
   body.has-tabbar .pai-launch{bottom:calc(76px + env(safe-area-inset-bottom))}
 }
 .tb-sheet{position:fixed;inset:0;z-index:130;background:rgba(2,6,23,.45);display:flex;align-items:flex-end}

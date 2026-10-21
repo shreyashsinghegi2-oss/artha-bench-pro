@@ -12,6 +12,7 @@ import { loadTutorProgress, streak } from '../../services/tutorProgress';
 import { StructuredFinancialAnswerView } from '../ai/StructuredFinancialAnswer';
 import { ThinkingSteps } from '../ai/ThinkingSteps';
 import { answersSummary } from '../../services/onboarding';
+import { freedomConflict, verifiedFreedomFromStorage, withVerifiedFigures } from '../../services/verifiedFreedom';
 
 const inr = (v: number) => `${v < 0 ? '−' : ''}₹${Math.abs(Math.round(v)).toLocaleString('en-IN')}`;
 const pct = (v: number) => `${Math.round(v * 100)}%`;
@@ -184,12 +185,15 @@ export const DashboardAI: React.FC<{ summary: string }> = ({ summary }) => {
     try {
       const res = await fetch('/api/ai/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
         task: 'cfo',
-        prompt: `You are this person's CFO, writing their complete advisory. Use every number and answer below plus today's market and news context. Cover, in order: the verdict; strengths to keep; weaknesses ranked by urgency with the numbers behind each; cash flow, debt, emergency fund, insurance, tax regime, goals and retirement, and an investment mix that fits their risk mindset and timeline; the limits of this analysis (what was self-reported or assumed); and a 30/60/90-day action plan with amounts.\n\nDASHBOARD\n${summary}\n\nQuestion: ${q}`,
+        prompt: withVerifiedFigures(`You are this person's CFO, writing their complete advisory. Use every number and answer below plus today's market and news context. Cover, in order: the verdict; strengths to keep; weaknesses ranked by urgency with the numbers behind each; cash flow, debt, emergency fund, insurance, tax regime, goals and retirement, and an investment mix that fits their risk mindset and timeline; the limits of this analysis (what was self-reported or assumed); and a 30/60/90-day action plan with amounts.\n\nDASHBOARD\n${summary}\n\nQuestion: ${q}`, verifiedFreedomFromStorage()),
         context: { detail: 'detailed' },
       }) });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || 'ArthaMind could not answer right now.');
       if (!data.structuredAnswer) throw new Error('No analysis came back. Please try again.');
+      // The advisor quotes the verified freedom plan; any age or return it states that differs gets a correction on top.
+      const note = freedomConflict(JSON.stringify(data.structuredAnswer), verifiedFreedomFromStorage());
+      if (note) data.structuredAnswer.directAnswer = `${note}\n\n${data.structuredAnswer.directAnswer ?? ''}`;
       setAnswer(data.structuredAnswer);
       if (save) try { localStorage.setItem(DASH_ANALYSIS_KEY, JSON.stringify({ at: Date.now(), hash, answer: data.structuredAnswer })); } catch { /* storage full */ }
     } catch (e) { setError(e instanceof Error ? e.message : 'Please try again.'); }

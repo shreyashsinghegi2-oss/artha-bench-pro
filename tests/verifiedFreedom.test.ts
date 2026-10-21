@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { freedomAnswerText, freedomConflict, freedomPromptLines, isFreedomQuestion, type VerifiedFreedom } from '../src/services/verifiedFreedom';
+import { freedomAnswerText, freedomConflict, freedomPromptLines, isFreedomQuestion, withVerifiedFigures, type VerifiedFreedom } from '../src/services/verifiedFreedom';
 import { safeAnswerText } from '../server/aiGateway';
 import { cfoPlanPrompt } from '../src/services/cfoAnalysis';
 
@@ -72,5 +72,18 @@ describe('freedom questions are answered from the verified figures', () => {
   it('says when the freedom number is not reached', () => {
     const text = freedomAnswerText({ ...verified, freedomAge: null });
     expect(text).toContain('do not reach your freedom number');
+  });
+});
+
+describe('every answer uses one set of freedom figures', () => {
+  it('flags the advisor brief that states age 61 and 11%', () => {
+    const note = freedomConflict('You reach a ₹6 crore corpus around age 61 with an 11% annual return.', verified);
+    expect(note).toContain('freedom age is 34');
+    expect(note).toContain('10% a year');
+  });
+
+  it('appends the verified figures to a model prompt, and leaves the prompt alone without them', () => {
+    expect(withVerifiedFigures('Plan my money', verified)).toContain('freedom age age 34');
+    expect(withVerifiedFigures('Plan my money', null)).toBe('Plan my money');
   });
 });

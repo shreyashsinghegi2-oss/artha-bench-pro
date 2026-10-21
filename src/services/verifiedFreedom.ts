@@ -15,9 +15,9 @@ export interface VerifiedFreedom {
 
 /** Null when the person has no saved money profile yet. */
 export function verifiedFreedomFromStorage(): VerifiedFreedom | null {
-  const profile = loadMoneyProfile();
-  if (!profile) return null;
   try {
+    const profile = loadMoneyProfile();
+    if (!profile) return null;
     const d = buildCompleteDashboard({ profile, loans: loadEmiRecords(), income: loadIncomeSources(), expenses: loadExpenses() });
     return {
       freedomAge: d.report.freedom.freedomAge,
@@ -59,7 +59,7 @@ export function freedomPromptLines(verified: VerifiedFreedom | null): string {
   return `Verified freedom plan from the platform (quote exactly; never recalculate, invent or change it): freedom age ${age}, freedom number ₹${Math.round(verified.corpus).toLocaleString('en-IN')}, growth ${Math.round(verified.preRetirementReturn * 100)}% a year, inflation ${Math.round(verified.inflation * 100)}% a year.`;
 }
 
-const FREEDOM_QUESTION = /\b(financ\w*\s+free\w*|freedom|retire\w*|retirement)\b/i;
+const FREEDOM_QUESTION = /\b(financ\w*\s+free\w*|freedom|retire\w*|which age|what age|when can i (stop|quit)|free by age)\b/i;
 
 /** True when a question asks about the freedom age or retirement, which is answered from the verified figures. */
 export function isFreedomQuestion(question: string): boolean {
@@ -79,4 +79,13 @@ export function freedomAnswerText(verified: VerifiedFreedom): string {
     return `At your current numbers, your investments do not reach your freedom number (${number}) within the planning horizon. ${method} Raising your monthly savings or reducing expenses moves this age earlier.`;
   }
   return `You can be financially free at age ${verified.freedomAge}. Your freedom number is ${number}. ${method} Figures on your dashboard are the same.`;
+}
+
+/**
+ * The prompt for a model answer, with the verified freedom figures appended when they exist, so the model
+ * quotes them instead of working its own out.
+ */
+export function withVerifiedFigures(prompt: string, verified: VerifiedFreedom | null): string {
+  if (!verified) return prompt;
+  return `${prompt}\n\n${freedomPromptLines(verified)}`;
 }

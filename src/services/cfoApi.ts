@@ -1,5 +1,6 @@
 import type { StructuredFinancialAnswer } from '../types';
-import { freedomAnswerText, isFreedomQuestion, verifiedFreedomFromStorage, withVerifiedFigures } from './verifiedFreedom';
+import { verifiedFreedomFromStorage, withVerifiedFigures } from './verifiedFreedom';
+import { localAnswer } from './verifiedAnswers';
 
 export type CfoLanguage = 'english' | 'hindi' | 'hinglish';
 export interface CfoTurn { role: 'user' | 'assistant'; content: string }
@@ -20,12 +21,10 @@ const TIMEOUT_MS = 45_000;
 export async function askAiCfo(prompt: string, history: CfoTurn[] = [], language: CfoLanguage = 'english', options: { replyLanguage?: string; voice?: boolean; displayText?: string } = {}): Promise<CfoReply> {
   const trimmed = prompt.trim();
   if (!trimmed) throw new Error('Type a question for your ArthaMind CFO.');
+  // Questions the platform's own figures answer (dashboard, freedom, EMI, SIP) never wait for the model.
+  const local = localAnswer(options.displayText ?? trimmed);
+  if (local) return { answer: local, structured: null, provider: 'verified', model: 'platform-calculator', fallback: false };
   const verified = verifiedFreedomFromStorage();
-  // Freedom questions are answered from the verified figures, so they match the dashboard and never depend on the model.
-  if (verified && isFreedomQuestion(options.displayText ?? trimmed)) {
-    const answer = freedomAnswerText(verified);
-    return { answer, structured: null, provider: 'verified', model: 'platform-calculator', fallback: false };
-  }
   const controller = new AbortController();
   const timer = window.setTimeout(() => controller.abort(), TIMEOUT_MS);
   try {

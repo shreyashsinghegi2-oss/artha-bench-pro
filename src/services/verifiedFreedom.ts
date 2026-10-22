@@ -1,4 +1,4 @@
-import { buildCompleteDashboard } from './completeDashboard';
+import { buildCompleteDashboard, type CompleteDashboard } from './completeDashboard';
 import { loadEmiRecords } from './emiStorage';
 import { loadIncomeSources } from './incomeStorage';
 import { loadMoneyProfile } from './moneyProfile';
@@ -13,21 +13,30 @@ export interface VerifiedFreedom {
   inflation: number;
 }
 
-/** Null when the person has no saved money profile yet. */
-export function verifiedFreedomFromStorage(): VerifiedFreedom | null {
+/** The full dashboard built from the saved profile and records; null when there is no saved profile yet. */
+export function verifiedDashboardFromStorage(): CompleteDashboard | null {
   try {
     const profile = loadMoneyProfile();
     if (!profile) return null;
-    const d = buildCompleteDashboard({ profile, loans: loadEmiRecords(), income: loadIncomeSources(), expenses: loadExpenses() });
-    return {
-      freedomAge: d.report.freedom.freedomAge,
-      corpus: d.report.freedom.corpusNeeded,
-      preRetirementReturn: MONEY_CHECK_ASSUMPTIONS.preRetirementReturn,
-      inflation: MONEY_CHECK_ASSUMPTIONS.inflation,
-    };
+    return buildCompleteDashboard({ profile, loans: loadEmiRecords(), income: loadIncomeSources(), expenses: loadExpenses() });
   } catch {
     return null;
   }
+}
+
+export function freedomFromDashboard(d: CompleteDashboard): VerifiedFreedom {
+  return {
+    freedomAge: d.report.freedom.freedomAge,
+    corpus: d.report.freedom.corpusNeeded,
+    preRetirementReturn: MONEY_CHECK_ASSUMPTIONS.preRetirementReturn,
+    inflation: MONEY_CHECK_ASSUMPTIONS.inflation,
+  };
+}
+
+/** Null when the person has no saved money profile yet. */
+export function verifiedFreedomFromStorage(): VerifiedFreedom | null {
+  const d = verifiedDashboardFromStorage();
+  return d ? freedomFromDashboard(d) : null;
 }
 
 /**

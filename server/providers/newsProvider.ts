@@ -95,6 +95,15 @@ function getConfiguration() {
   };
 }
 
+/** NewsData.io rejects a q longer than 100 characters (422). Cut at a word and drop a dangling OR/AND. */
+export function fitNewsQuery(query: string, max = 100): string {
+  const q = query.trim();
+  if (q.length <= max) return q;
+  const cut = q.slice(0, max).replace(/\s+\S*$/, '').replace(/\s+(OR|AND)$/i, '').trim();
+  const opens = (cut.match(/\(/g) ?? []).length - (cut.match(/\)/g) ?? []).length;
+  return opens > 0 ? `${cut}${')'.repeat(opens)}`.slice(0, max) : cut;
+}
+
 function buildQuery(query: string, category: string, region: string) {
   const parts: string[] = [];
   if (query.trim()) parts.push(query.trim());
@@ -121,11 +130,11 @@ async function fetchNewsData(query: string, category: string, region: string, pa
   url.searchParams.set('language', 'en');
   const normalizedCategory = category.trim().toLowerCase();
   const builtQuery = buildQuery(query, category, region);
-  if (builtQuery) url.searchParams.set('q', builtQuery);
+  if (builtQuery) url.searchParams.set('q', fitNewsQuery(builtQuery));
   if (normalizedCategory !== 'all' && providerName === 'NewsData.io') url.searchParams.set('category', mapCategory(category));
   if (normalizedCategory === 'all' && providerName === 'NewsData.io' && url.pathname.endsWith('/latest')) {
     url.searchParams.set('category', 'business,technology');
-    url.searchParams.set('q', builtQuery || '(business OR finance OR markets OR economy OR companies OR stocks OR crypto OR technology OR AI OR central bank)');
+    url.searchParams.set('q', fitNewsQuery(builtQuery || '(business OR finance OR markets OR economy OR stocks OR crypto OR technology)'));
   }
   url.searchParams.set('image', '1');
   url.searchParams.set('removeduplicate', '1');

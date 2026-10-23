@@ -2429,6 +2429,13 @@ function getConfiguration2() {
     baseUrl: process.env.BUSINESS_NEWS_BASE_URL?.trim() || DEFAULT_NEWSDATA_URL
   };
 }
+function fitNewsQuery(query, max = 100) {
+  const q = query.trim();
+  if (q.length <= max) return q;
+  const cut = q.slice(0, max).replace(/\s+\S*$/, "").replace(/\s+(OR|AND)$/i, "").trim();
+  const opens = (cut.match(/\(/g) ?? []).length - (cut.match(/\)/g) ?? []).length;
+  return opens > 0 ? `${cut}${")".repeat(opens)}`.slice(0, max) : cut;
+}
 function buildQuery(query, category, region) {
   const parts = [];
   if (query.trim()) parts.push(query.trim());
@@ -2453,11 +2460,11 @@ async function fetchNewsData(query, category, region, page, endpointUrl = getCon
   url.searchParams.set("language", "en");
   const normalizedCategory = category.trim().toLowerCase();
   const builtQuery = buildQuery(query, category, region);
-  if (builtQuery) url.searchParams.set("q", builtQuery);
+  if (builtQuery) url.searchParams.set("q", fitNewsQuery(builtQuery));
   if (normalizedCategory !== "all" && providerName === "NewsData.io") url.searchParams.set("category", mapCategory(category));
   if (normalizedCategory === "all" && providerName === "NewsData.io" && url.pathname.endsWith("/latest")) {
     url.searchParams.set("category", "business,technology");
-    url.searchParams.set("q", builtQuery || "(business OR finance OR markets OR economy OR companies OR stocks OR crypto OR technology OR AI OR central bank)");
+    url.searchParams.set("q", fitNewsQuery(builtQuery || "(business OR finance OR markets OR economy OR stocks OR crypto OR technology)"));
   }
   url.searchParams.set("image", "1");
   url.searchParams.set("removeduplicate", "1");
@@ -5927,6 +5934,23 @@ async function callGroqChat(systemPrompt2, userPrompt, modelName, history) {
   const text = finalizeGroundedText(raw);
   return text;
 }
+var GROQ_ATTEMPT_TIMEOUTS_MS = [18e3, 2e4];
+var isRetryableStatus = (status) => status === 429 || status >= 500;
+async function postWithRetry(send) {
+  let lastResponse = null;
+  let lastError = new Error("Groq request failed.");
+  for (const timeoutMs2 of GROQ_ATTEMPT_TIMEOUTS_MS) {
+    try {
+      const response = await send(timeoutMs2);
+      if (!isRetryableStatus(response.status)) return response;
+      lastResponse = response;
+    } catch (error) {
+      lastError = error;
+    }
+  }
+  if (lastResponse) return lastResponse;
+  throw lastError;
+}
 async function callGroqStructuredFinancialAnswer(systemPrompt2, userPrompt, options = {}) {
   const fallbackQuestion = options.fallbackQuestion || userPrompt;
   const fail = (reason, text = generateFallbackChatResponse(fallbackQuestion)) => {
@@ -5947,7 +5971,7 @@ Return one valid JSON object only. It must match the supplied Artha financial-an
     userPrompt,
     options.history
   );
-  const requestStructuredCompletion = (requestMessages, responseFormat) => fetch("https://api.groq.com/openai/v1/chat/completions", {
+  const requestStructuredCompletion = (requestMessages, responseFormat) => postWithRetry((timeoutMs2) => fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${apiKey}`,
@@ -5960,8 +5984,8 @@ Return one valid JSON object only. It must match the supplied Artha financial-an
       max_tokens: 3500,
       response_format: responseFormat
     }),
-    signal: AbortSignal.timeout(25e3)
-  });
+    signal: AbortSignal.timeout(timeoutMs2)
+  }));
   let response;
   try {
     response = await requestStructuredCompletion(

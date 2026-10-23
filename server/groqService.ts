@@ -307,6 +307,27 @@ export async function callGroqChat(
  * GPT-OSS models use strict JSON Schema mode; custom configured models retain
  * compatibility through JSON Object mode and server-side Zod validation.
  */
+/** First attempt, then one retry; together they fit inside the 60 s function limit with room for grounding. */
+const GROQ_ATTEMPT_TIMEOUTS_MS = [18_000, 20_000];
+const isRetryableStatus = (status: number) => status === 429 || status >= 500;
+
+/** Runs a request up to twice, retrying only a timeout, a rate limit or a server error. */
+export async function postWithRetry(send: (timeoutMs: number) => Promise<Response>): Promise<Response> {
+  let lastResponse: Response | null = null;
+  let lastError: unknown = new Error('Groq request failed.');
+  for (const timeoutMs of GROQ_ATTEMPT_TIMEOUTS_MS) {
+    try {
+      const response = await send(timeoutMs);
+      if (!isRetryableStatus(response.status)) return response;
+      lastResponse = response;
+    } catch (error) {
+      lastError = error;
+    }
+  }
+  if (lastResponse) return lastResponse;
+  throw lastError;
+}
+
 export async function callGroqStructuredFinancialAnswer(
   systemPrompt: string,
   userPrompt: string,
@@ -344,7 +365,7 @@ export async function callGroqStructuredFinancialAnswer(
     requestMessages: Array<{ role: string; content: string }>,
     responseFormat: Record<string, unknown>,
   ) =>
-    fetch('https://api.groq.com/openai/v1/chat/completions', {
+    postWithRetry((timeoutMs) => fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${apiKey}`,
@@ -357,8 +378,8 @@ export async function callGroqStructuredFinancialAnswer(
         max_tokens: 3_500,
         response_format: responseFormat,
       }),
-      signal: AbortSignal.timeout(25_000),
-    });
+      signal: AbortSignal.timeout(timeoutMs),
+    }));
 
   let response: Response;
   try {

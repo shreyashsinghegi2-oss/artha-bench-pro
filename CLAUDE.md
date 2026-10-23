@@ -9,7 +9,6 @@ Personal-finance web app for Indian families: money health check, tax (old vs ne
 - AI: `server/aiGateway.ts`, Groq first, NVIDIA NIM fallback, then an offline template. Answers are grounded by `server/fetch/` (Fetch → Refine → Verify) and the RAG in `rag/`.
 - Numbers never come from the AI: `src/services/calculators.ts`, `indiaTaxEngine.ts`, `portfolio.ts` (XIRR), `src/simulation/` (Monte Carlo), and the optional certified `precision-engine/` (FastAPI).
 - Architecture details: `docs/SYSTEM_DESIGN.md`.
-- `scam-detector/`: a separate Vercel project (root directory `scam-detector`, own URL), not part of the ArthaMind app: an API and web page that classify messages as scam or genuine. NumPy-only scoring in `api/_lite.py`; the exported model is in `model/`; the training data and code live elsewhere. See its README.
 
 ## Commands
 - `npm run dev`: local dev server
